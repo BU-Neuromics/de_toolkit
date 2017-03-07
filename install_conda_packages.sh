@@ -1,1 +1,1 @@
-conda install python=3.5 docopt pandas pytest
+conda install python=3.5 docopt pandas pytest rpy2

@@ -1,4 +1,14 @@
-from .norm import deseq2, trimmed_mean, reference, custom_norm
+'''
+Usage:
+  detk-norm [<args>...]
+  detk-de [<args>...]
+  detk-transform [<args>...]
+  detk-filter [<args>...]
+  detk-stats [<args>...]
+  detk help [<args>...]
+'''
+from docopt import docopt
+import de_toolkit.norm as norm
 from .util import load_count_mat_file
 
 class CountMatrix(object) :
@@ -12,3 +22,10 @@ class CountMatrix(object) :
 
   def normalized(self,method='deseq2') :
     pass
+
+def main() :
+  
+  args = docopt(__doc__)
+
+  if args['norm'] :
+    norm.main()

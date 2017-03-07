@@ -1,3 +1,13 @@
+'''
+Usage:
+  detk-norm deseq2 <counts_fn>
+  detk-norm trimmed_mean <counts_fn>
+  detk-norm reference <counts_fn>
+  detk-norm library<counts_fn>
+  detk-norm fpkm <counts_fn>
+  detk-norm custom <counts_fn>
+'''
+from docopt import docopt
 import sys
 import numpy as np
 
@@ -55,3 +65,7 @@ def fpkm(count_mat,annotation) :
 
 def custom_norm(count_mat,factors) :
   pass
+
+def main() :
+
+  args = docopt(__doc__)

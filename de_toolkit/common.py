@@ -42,12 +42,16 @@ def main() :
     from .norm import main
     main()
   elif args['de'] :
-    de.main()
+    from .de import main
+    main()
   elif args['transform'] :
-    transform.main()
+    from .transform import main
+    main()
   elif args['filter'] :
-    filter.main()
+    from .filter import main
+    main()
   elif args['stats'] :
-    stats.main()
+    from .stats import main
+    main()
   elif args['help'] :
     docopt(__doc__,['-h'])

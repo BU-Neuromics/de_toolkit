@@ -1,1 +1,1 @@
-from .de_toolkit import CountMatrix
+from .common import CountMatrix

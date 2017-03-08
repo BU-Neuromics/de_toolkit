@@ -15,7 +15,7 @@ setup(name='de_toolkit',
       ,packages=find_packages()
       ,entry_points={
         'console_scripts': [
-          'detk=de_toolkit.de_toolkit:main'
+          'detk=de_toolkit.common:main'
           ,'detk-norm=de_toolkit.norm:main'
           ,'detk-de=de_toolkit.de:main'
           ,'detk-transform=de_toolkit.transform:main'

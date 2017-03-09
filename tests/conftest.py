@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import csv
 import os
 import pytest
@@ -23,10 +24,64 @@ def fake_counts_data() :
   return data
 
 @pytest.fixture(scope='session')
-def fake_counts_csv(request) :
+def fake_big_counts_data() :
+  from numpy.random import negative_binomial, randint, uniform
+  data = [
+    ['gene','a','b','c']
+  ]
+  for i in range(1000) :
+    n = randint(5,40)
+    p = uniform(0.1,0.3)
+    data.append([
+      'gene{}'.format(i)
+      ,negative_binomial(n,p)
+      ,negative_binomial(n,p)
+      ,negative_binomial(n,p)
+    ])
+  return data
+
+@contextmanager
+def temp_csv_wrap(data,sep) :
   with tempfile.NamedTemporaryFile('wt',delete=False) as f :
-    tmp_f = csv.writer(f)
-    for r in fake_counts_data() :
+    tmp_f = csv.writer(f,delimiter=sep)
+    for r in data :
+      tmp_f.writerow(r)
+
+  yield f
+
+  # cleanup the csv
+  os.remove(f.name)
+
+@pytest.fixture(scope='session')
+def fake_counts_csv(request,fake_counts_data) :
+  with temp_csv_wrap(fake_counts_data,',') as f :
+    yield f.name
+
+@pytest.fixture(scope='session')
+def fake_counts_tsv(request,fake_counts_data) :
+  with temp_csv_wrap(fake_counts_data,'\t') as f :
+    yield f.name
+
+@pytest.fixture(scope='session')
+def fake_big_counts_csv(request,fake_big_counts_data) :
+  with temp_csv_wrap(fake_big_counts_data,',') as f :
+    yield f.name
+
+@pytest.fixture(scope='session')
+def fake_column_data(request) :
+  covs = [
+    ['sample','category','cont_cov']
+    ,['a','case',0.1]
+    ,['b','case',1.0]
+    ,['c','cont',10.0]
+  ]
+  return covs
+
+@pytest.fixture(scope='session')
+def fake_column_data_csv(request,fake_column_data) :
+  with tempfile.NamedTemporaryFile('wt',delete=False) as f :
+    tmp_f = csv.writer(f,delimiter='\t')
+    for r in fake_column_data :
       tmp_f.writerow(r)
 
   yield f.name
@@ -35,10 +90,10 @@ def fake_counts_csv(request) :
   os.remove(f.name)
 
 @pytest.fixture(scope='session')
-def fake_counts_tsv(request) :
+def fake_gtf(request,fake_counts_data) :
   with tempfile.NamedTemporaryFile('wt',delete=False) as f :
     tmp_f = csv.writer(f,delimiter='\t')
-    for r in fake_counts_data() :
+    for r in fake_counts_data :
       tmp_f.writerow(r)
 
   yield f.name
@@ -47,13 +102,42 @@ def fake_counts_tsv(request) :
   os.remove(f.name)
 
 @pytest.fixture(scope='session')
-def fake_gtf(request) :
-  with tempfile.NamedTemporaryFile('wt',delete=False) as f :
-    tmp_f = csv.writer(f,delimiter='\t')
-    for r in fake_counts_data() :
-      tmp_f.writerow(r)
+def fake_design(request) :
+  return '~ category'
 
-  yield f.name
+def make_counts_obj(
+  counts_csv
+  ,column_data_csv
+  ,design) :
+  from de_toolkit.util import load_count_mat_file
 
-  # cleanup the csv
-  os.remove(f.name)
+  counts_obj = load_count_mat_file(counts_csv)
+  counts_obj.add_column_data(column_data_csv)
+  counts_obj.add_design(design)
+
+  return counts_obj
+
+@pytest.fixture
+def fake_counts_obj(
+  fake_counts_csv
+  ,fake_column_data_csv
+  ,fake_design) :
+
+  return make_counts_obj(
+    fake_counts_csv
+    ,fake_column_data_csv
+    ,fake_design
+  )
+
+@pytest.fixture
+def fake_big_counts_obj(
+  fake_big_counts_csv
+  ,fake_column_data_csv
+  ,fake_design) :
+
+  return make_counts_obj(
+    fake_big_counts_csv
+    ,fake_column_data_csv
+    ,fake_design
+  )
+

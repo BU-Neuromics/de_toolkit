@@ -8,9 +8,6 @@ import tempfile
 
 def test_load_count_mat_file(fake_counts_csv, fake_counts_data) :
 
-  print(fake_counts_csv)
-  print(fake_counts_data)
-
   from de_toolkit.util import load_count_mat_file
 
   #with tempfile.NamedTemporaryFile('wt',delete=False) as f :

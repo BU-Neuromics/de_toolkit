@@ -6,11 +6,12 @@ def test_transform_cli(fake_counts_csv) :
   with pytest.raises(docopt.DocoptExit) :
     main(argv=None)
 
-def test_transform_vst_cli(fake_counts_csv):
-  main(['vst',fake_counts_csv])
-def test_transform_vst(fake_counts_csv):
+def test_transform_vst_cli(fake_big_counts_csv,fake_column_data_csv):
+  main(['vst',fake_big_counts_csv,fake_column_data_csv])
+def test_transform_vst(fake_big_counts_obj):
   from de_toolkit.transform import vst
-  pass
+
+  vst(fake_big_counts_obj)
 
 #def test_transform_ruvseq_cli(fake_counts_csv):
 #  main(['ruvseq',fake_counts_csv])

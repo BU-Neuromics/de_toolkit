@@ -12,8 +12,9 @@ import pandas
 
 class CountMatrix(object) :
   def __init__(self,count_f) :
-    self.model = None
-    self.covariates = None
+    self.design = None
+    self.column_data = None
+    self.transformed = {}
 
     self.counts = pandas.read_csv(
       count_f
@@ -25,14 +26,23 @@ class CountMatrix(object) :
     self.sample_names = self.counts.columns
     self.count_names = self.counts.index
 
-  def add_covariates(self,cov_f) :
-    self.covariates = pandas.read_csv(
+  def add_column_data(self,cov_f) :
+    self.column_data = pandas.read_csv(
       cov_f
       ,sep=None
+      ,engine='python'
+      ,index_col=0
     )
 
-  def normalized(self,method='deseq2') :
+  def add_design(self,design) :
+    self.design = design
+
+  def transform(self,transf) :
+    self.transformed[transf.__name__] = transf(self)
+
+  def add_normalized(self,method='deseq2') :
     pass
+
 
 def main() :
   

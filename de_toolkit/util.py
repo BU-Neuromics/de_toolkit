@@ -21,12 +21,73 @@ def stub(f) :
 
 @require_rpy2
 def require_deseq2(f) :
+  from rpy2.rinterface import RRuntimeError
   try :
     from rpy2.robjects.packages import importr
     deseq = importr('DESeq2')
-  except ImportError as e :
+  except RRuntimeError as e :
     raise Exception('DESeq2 must be installed to use this function')
   return f
+
+@require_rpy2
+def count_obj_to_r_matrix(count_obj) :
+
+  from rpy2 import robjects
+  import rpy2.rlike.container as rlc
+  from rpy2.robjects.packages import importr
+
+  base = importr('base')
+
+  # create a numerical matrix of counts
+  nrow, ncol = count_obj.counts.shape
+  counts = base.matrix(
+    robjects.IntVector(count_obj.counts.unstack())
+    ,nrow=nrow
+    ,ncol=ncol
+  )
+  counts.rownames = robjects.StrVector(count_obj.counts.index.tolist())
+  counts.colnames = robjects.StrVector(count_obj.counts.columns.tolist())
+
+  return counts
+
+@require_rpy2
+def column_data_rtype_dict(count_obj) :
+
+  from collections import OrderedDict
+  import numpy
+  from rpy2 import robjects
+  import rpy2.rlike.container as rlc
+  from rpy2.robjects.packages import importr
+
+  dtype_to_rtype_map = {
+    numpy.dtype('float64'): robjects.FloatVector
+    ,numpy.dtype('int64'): robjects.IntVector
+    ,numpy.dtype('O'): robjects.StrVector
+  }
+  d = OrderedDict()
+
+  for k,v in count_obj.column_data.iteritems() :
+    rtype = dtype_to_rtype_map[v.dtype]
+    d[k] = rtype(v.tolist())
+
+  return d
+
+@require_rpy2
+def column_data_to_r_dataframe(count_obj) :
+
+  from rpy2 import robjects
+  import rpy2.rlike.container as rlc
+  from rpy2.robjects.packages import importr
+
+  # TODO: figure out how to pick the correct robject function
+  # based on pandas column dtype
+  col_data_kv = list(column_data_rtype_dict(count_obj).items())
+  od = rlc.OrdDict(col_data_kv)
+
+  colData = robjects.DataFrame(od)
+  colData.rownames = robjects.StrVector(count_obj.column_data.index.tolist())
+
+  return colData
 
 @require_deseq2
 def count_obj_to_DESeq2(count_obj) :
@@ -39,28 +100,13 @@ def count_obj_to_DESeq2(count_obj) :
   # TODO: consider wrapping this in a try except
   deseq = importr('DESeq2')
 
-  # create a numerical matrix of counts
-  nrow, ncol = count_obj.counts.shape
-  counts = base.matrix(
-    robjects.IntVector(count_obj.counts.unstack())
-    ,nrow=nrow
-    ,ncol=ncol
-  )
-  counts.rownames = robjects.StrVector(count_obj.counts.index.tolist())
-  counts.colnames = robjects.StrVector(count_obj.counts.columns.tolist())
+  countData = count_obj_to_r_matrix(count_obj)
 
   # create a dataframe of the column_data, if there are any
-  countData = counts
   if count_obj.column_data is None :
     raise Exception('DESeq2 requires colData, add column dataframe to count object')
 
-  # TODO: figure out how to pick the correct robject function
-  # based on pandas column dtype
-  col_data_kv = [(k,robjects.StrVector(v.tolist())) for k,v in count_obj.column_data.iteritems()]
-  od = rlc.OrdDict(col_data_kv)
-
-  colData = robjects.DataFrame(od)
-  colData.rownames = robjects.StrVector(count_obj.column_data.index.tolist())
+  colData = column_data_to_r_dataframe(count_obj)
 
   # by default, the design is assumed the be in the first non-sample name column
   # of column_data

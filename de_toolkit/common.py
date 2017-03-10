@@ -44,7 +44,7 @@ class CountMatrix(object) :
     pass
 
 
-def main() :
+def main(argv=None) :
   
   args = docopt(__doc__)
 
@@ -65,3 +65,6 @@ def main() :
     main()
   elif args['help'] :
     docopt(__doc__,['-h'])
+
+if __name__ == '__main__' :
+  main()

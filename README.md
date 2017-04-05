@@ -62,3 +62,21 @@ functions:
     - DESeq2 (bioconductor)
     - RUVSeq (bioconductor)
     - logistf (CRAN)
+
+We suggest using [anaconda](http://anaconda.org) to create an environment that contains the software
+necessary, e.g.:
+
+```
+conda create -n de_toolkit python=3.5
+./install_conda_packages.sh
+Rscript install_r_packages.sh # if you want to use logistf
+```
+
+In development, when you want to run the toolkit, use the `setup.py` script:
+
+```
+python setup.py install
+```
+
+This should make the `detk` and its subtools available on the command line. Whenever you make changes
+to the code you will need to run this command again.

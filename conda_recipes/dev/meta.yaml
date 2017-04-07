@@ -34,7 +34,7 @@ requirements:
 
 about:
   home: https://bitbucket.org/bubioinformaticshub/de_toolkit
-  license: GPLv3
+  license: MIT
   license_file: LICENSE
 
 build:

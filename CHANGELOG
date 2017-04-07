@@ -1,0 +1,12 @@
+
+# 0.1.1 - 2017-04-07
+
+Added Firth's logistic regression functionality and tests with CLI output
+
+# 0.1 - 2017-04-06
+
+Initial release
+  - very limited functionality, what do you want it's the first release
+  - no CLI output support
+  - DESeq2 and library size normalization methods and tests implemented
+  - lots o' stubs

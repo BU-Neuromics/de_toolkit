@@ -15,6 +15,9 @@ requirements:
     - r-docopt
     - rpy2
     - bioconductor-deseq2
+    - pytest-runner
+    - pytest
+    - future
   run:
     - python >=3.5
     - docopt
@@ -23,10 +26,16 @@ requirements:
     - r-docopt
     - rpy2
     - bioconductor-deseq2
+    - pytest
+    - future
+  test:
+    - pytest-runner
+    - pytest
+    - future
 
 about:
   home: https://bitbucket.org/bubioinformaticshub/de_toolkit
-  license: GPLv3
+  license: MIT
   license_file: LICENSE
 
 build:

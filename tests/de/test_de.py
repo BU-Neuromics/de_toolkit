@@ -8,10 +8,29 @@ def test_de_cli() :
 
 def test_firth_cli(fake_counts_csv,fake_column_data_csv) :
   main(['firth','category ~ ',fake_counts_csv,fake_column_data_csv])
+
+def test_firth_cli_w_cov(fake_counts_csv,fake_column_data_csv) :
+  main(['firth','category ~ cont_cov',fake_counts_csv,fake_column_data_csv])
+
 def test_firth(fake_counts_obj) :
   from de_toolkit.de import firth_logistic_regression
 
   fake_counts_obj.add_design('category ~')
 
-  firth_logistic_regression(fake_counts_obj)
-  lkjlakj
+  firth_out = firth_logistic_regression(fake_counts_obj)
+
+def test_firth_w_cov(fake_counts_obj) :
+  from de_toolkit.de import firth_logistic_regression
+
+  fake_counts_obj.add_design('category ~ cont_cov')
+
+  firth_out = firth_logistic_regression(fake_counts_obj)
+
+def test_firth_w_bad_cov(fake_counts_obj) :
+  from de_toolkit.de import firth_logistic_regression
+  from de_toolkit.common import InvalidDesignException
+
+  fake_counts_obj.add_design('category ~ cont_covx')
+
+  with pytest.raises(InvalidDesignException) :
+    firth_out = firth_logistic_regression(fake_counts_obj)

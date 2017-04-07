@@ -1,0 +1,33 @@
+package:
+  name: de_toolkit
+  version: "0.1"
+
+source:
+  git_url: https://bitbucket.org/bubioinformaticshub/de_toolkit
+  git_rev: "0.1"
+
+requirements:
+  build:
+    - python >=3.5
+    - docopt
+    - pandas
+    - numpy
+    - r-docopt
+    - rpy2
+    - bioconductor-deseq2
+  run:
+    - python >=3.5
+    - docopt
+    - pandas
+    - numpy
+    - r-docopt
+    - rpy2
+    - bioconductor-deseq2
+
+about:
+  home: https://bitbucket.org/bubioinformaticshub/de_toolkit
+  license: GPLv3
+  license_file: LICENSE
+
+build:
+  script: python setup.py install

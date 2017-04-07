@@ -10,6 +10,8 @@ Usage:
 from docopt import docopt
 import pandas
 
+class InvalidDesignException(Exception): pass
+
 class CountMatrix(object) :
   def __init__(self,count_f) :
     self.design = None
@@ -43,7 +45,27 @@ class CountMatrix(object) :
   def add_normalized(self,method='deseq2') :
     pass
 
+  def check_model(self) :
+    '''Make sure the design variables match the column data.
+    Raise InvalidDesignException if variables specified in the design
+    do not appear in the column data.
+    '''
 
+    if self.design is not None :
+      if self.column_data is None :
+        raise InvalidDesignException(
+          'Design specified but no column data provided. Both must be '
+          'added to CountMatrix object to use a design.'
+        )
+      vars = self.design.split(' ')
+      vars = [_.strip() for _ in vars if _.strip() not in ('~','')]
+
+      for var in vars :
+        if var not in self.column_data.columns :
+          raise InvalidDesignException((
+            'Variable {} not found in column data columns {}. Check formula '
+            'and/or column data columns.').format(var,self.column_data.columns)
+          )
 def main(argv=None) :
   
   args = docopt(__doc__)

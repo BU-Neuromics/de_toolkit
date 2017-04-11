@@ -111,13 +111,6 @@ def custom_norm(count_mat,factors) :
 def writer(count_obj) :
   file = 'testing.tsv'
   count_obj.to_csv(file, sep='\t', index=False)
-  
-  #print(matrix[0])
-  # with open(file, 'w') as o:
-  #   for i in range(len(matrix)):
-  #     line = (str(matrix[i]))
-  #     strippedlined = line.strip('[]')
-  #     o.write('{}\n'.format(strippedline))
 
 def main() :
 
@@ -133,12 +126,3 @@ def main() :
       sys.stdout.write('{}'.format(deseq2(count_obj)))
     else:
       writer(deseq2(count_obj,['File']))
-      
-    # else :
-    #   f = args['--output']
-
-    # norm_out.to_csv(f,sep='\t')
-
-
-#  if args['-o'] :
- #   writer(deseq2(count_obj))

@@ -1,14 +1,19 @@
 '''
 Usage:
-  detk-norm deseq2 <counts_fn>
+  detk-norm deseq2 <counts_fn> (--output=FILE)
   detk-norm trimmed_mean <counts_fn>
   detk-norm library <counts_fn>
   detk-norm fpkm <counts_fn> <gtf>
   detk-norm custom <counts_fn>
+
+Options:
+ -o FILE --output=FILE    Destination of primary output [default: stdout]
+
 '''
 from docopt import docopt
 import sys
 import numpy as np
+import pandas
 from .util import stub, load_count_mat_file
 
 class NormalizationException(Exception) : pass
@@ -51,12 +56,39 @@ def estimateSizeFactors(cnts) :
 
   return sizeFactors
 
-def deseq2(count_mat) :
+def deseq2(count_obj) :
+
+  # sizeFactors = estimateSizeFactors(count_mat)
+  # norm_cnts = count_mat/sizeFactors
+
+  # return norm_cnts
+
+  count_mat = count_obj.counts.as_matrix()
 
   sizeFactors = estimateSizeFactors(count_mat)
   norm_cnts = count_mat/sizeFactors
+  
 
-  return norm_cnts
+  normalized = pandas.DataFrame(norm_cnts
+
+    ,index=count_obj.counts.index
+
+    ,columns=count_obj.counts.columns
+
+  )
+  return normalized
+  # count_objects = pandas.DataFrame(norm_cnts
+
+  #   ,index=count_obj.counts.index
+
+  #   ,columns=count_obj.counts.columns
+
+  # )
+
+#  return count_obj
+
+
+
 
 @stub
 def trimmed_mean(count_mat) :
@@ -76,14 +108,37 @@ def fpkm(count_mat,annotation) :
 def custom_norm(count_mat,factors) :
   pass
 
+def writer(count_obj) :
+  file = 'testing.tsv'
+  count_obj.to_csv(file, sep='\t', index=False)
+  
+  #print(matrix[0])
+  # with open(file, 'w') as o:
+  #   for i in range(len(matrix)):
+  #     line = (str(matrix[i]))
+  #     strippedlined = line.strip('[]')
+  #     o.write('{}\n'.format(strippedline))
+
 def main() :
 
   args = docopt(__doc__)
 
-  count_obj = load_count_mat_file(args['<count_fn>'])
+  count_obj = load_count_mat_file(args['<counts_fn>'])
 
   if '<cov_fn>' in args :
     count_obj.add_covariates(args['<cov_fn>'])
 
   if args['deseq2'] :
-    deseq2(count_obj)
+    if args['--output'] == 'stdout' :
+      sys.stdout.write('{}'.format(deseq2(count_obj)))
+    #else:
+     # writer(deseq2(count_obj))
+      
+    # else :
+    #   f = args['--output']
+
+    # norm_out.to_csv(f,sep='\t')
+
+
+#  if args['-o'] :
+ #   writer(deseq2(count_obj))

@@ -131,8 +131,8 @@ def main() :
   if args['deseq2'] :
     if args['--output'] == 'stdout' :
       sys.stdout.write('{}'.format(deseq2(count_obj)))
-    #else:
-     # writer(deseq2(count_obj))
+    else:
+      writer(deseq2(count_obj))
       
     # else :
     #   f = args['--output']

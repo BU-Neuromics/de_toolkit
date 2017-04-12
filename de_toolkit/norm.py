@@ -1,13 +1,13 @@
 '''
 Usage:
-  detk-norm deseq2 <counts_fn> (--output=FILE)
+  detk-norm deseq2 <counts_fn> [options]
   detk-norm trimmed_mean <counts_fn>
   detk-norm library <counts_fn>
   detk-norm fpkm <counts_fn> <gtf>
   detk-norm custom <counts_fn>
 
 Options:
- -o FILE --output=FILE    Destination of primary output [default: stdout]
+  -o FILE --output=FILE    Destination of primary output [default: stdout]
 
 '''
 from docopt import docopt
@@ -58,11 +58,6 @@ def estimateSizeFactors(cnts) :
 
 def deseq2(count_obj) :
 
-  # sizeFactors = estimateSizeFactors(count_mat)
-  # norm_cnts = count_mat/sizeFactors
-
-  # return norm_cnts
-
   count_mat = count_obj.counts.as_matrix()
 
   sizeFactors = estimateSizeFactors(count_mat)
@@ -77,15 +72,6 @@ def deseq2(count_obj) :
 
   )
   return normalized
-  # count_objects = pandas.DataFrame(norm_cnts
-
-  #   ,index=count_obj.counts.index
-
-  #   ,columns=count_obj.counts.columns
-
-  # )
-
-#  return count_obj
 
 
 
@@ -108,10 +94,6 @@ def fpkm(count_mat,annotation) :
 def custom_norm(count_mat,factors) :
   pass
 
-def writer(count_obj) :
-  file = 'testing.tsv'
-  count_obj.to_csv(file, sep='\t', index=False)
-
 def main() :
 
   args = docopt(__doc__)
@@ -121,8 +103,6 @@ def main() :
   if '<cov_fn>' in args :
     count_obj.add_covariates(args['<cov_fn>'])
 
-  if args['deseq2'] :
-    if args['--output'] == 'stdout' :
-      sys.stdout.write('{}'.format(deseq2(count_obj)))
-    else:
-      writer(deseq2(count_obj,['File']))
+  count_obj.normalized['deseq2'] = deseq2(count_obj)
+  fp = sys.stdout if args['--output']=='stdout' else args['--output']
+  count_obj.normalized['deseq2'].to_csv(fp)

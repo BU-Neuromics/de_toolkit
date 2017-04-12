@@ -33,6 +33,29 @@ def test_estimateSizeFactors_allzero() :
   with pytest.raises(NormalizationException) :
     estimateSizeFactors(cnts)
 
+def test_estimateSizeFactors_somezero() :
+
+  from de_toolkit.norm import estimateSizeFactors
+
+  # the matrix is constructed such that the size factors are
+  # 1/4, 1, 4
+  # the geometric mean of each row is the middle sample
+  cnts = np.array([
+    [2.0,4.0,8.0,0]
+    ,[3.0,9.0,27.0,81.0]
+    ,[4.0,16.0,64.0,256.0] # <- this is the median normalized factor
+    ,[5.0,25.0,125.0,625.0]
+    ,[6.0,36.0,216.0,0]
+  ])
+
+  geom_mean = cnts[2,:].prod()**(1/4)
+
+  true_size_factors = cnts[2,:]/geom_mean
+
+  size_factors = estimateSizeFactors(cnts)
+  assert np.allclose(size_factors, true_size_factors)
+
+
 def test_deseq2() :
 
   from de_toolkit.norm import deseq2

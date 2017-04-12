@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(name='de_toolkit',
-      version='0.1'
+      version=open('VERSION').read().strip()
       ,description='Suite of tools for working with count data'
       ,author='Adam Labadorf'
       ,author_email='labadorf@bu.edu'

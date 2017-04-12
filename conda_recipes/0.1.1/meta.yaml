@@ -8,7 +8,7 @@ source:
 
 requirements:
   build:
-    - python >=3.5
+    - python
     - docopt
     - pandas
     - numpy
@@ -19,7 +19,7 @@ requirements:
     - pytest
     - future
   run:
-    - python >=3.5
+    - python
     - docopt
     - pandas
     - numpy

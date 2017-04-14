@@ -73,9 +73,6 @@ def deseq2(count_obj) :
   )
   return normalized
 
-
-
-
 @stub
 def trimmed_mean(count_mat) :
   pass
@@ -94,15 +91,16 @@ def fpkm(count_mat,annotation) :
 def custom_norm(count_mat,factors) :
   pass
 
-def main() :
+def main(argv=None) :
 
-  args = docopt(__doc__)
+  args = docopt(__doc__,argv=argv)
 
   count_obj = load_count_mat_file(args['<counts_fn>'])
 
   if '<cov_fn>' in args :
     count_obj.add_covariates(args['<cov_fn>'])
 
-  count_obj.normalized['deseq2'] = deseq2(count_obj)
-  fp = sys.stdout if args['--output']=='stdout' else args['--output']
-  count_obj.normalized['deseq2'].to_csv(fp)
+  if args['deseq2'] :
+    count_obj.normalized['deseq2'] = deseq2(count_obj)
+    fp = sys.stdout if args['--output']=='stdout' else args['--output']
+    count_obj.normalized['deseq2'].to_csv(fp)

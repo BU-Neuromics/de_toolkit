@@ -138,9 +138,11 @@ def make_counts_obj(
   ,design) :
   from de_toolkit import CountMatrixFile
 
-  counts_obj = CountMatrixFile(counts_csv)
-  counts_obj.add_column_data(column_data_csv)
-  counts_obj.add_design(design)
+  counts_obj = CountMatrixFile(
+    counts_csv
+    ,column_data_csv
+    ,design
+  )
 
   return counts_obj
 

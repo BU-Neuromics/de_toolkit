@@ -38,27 +38,25 @@ def test_estimateSizeFactors_allzero(fake_counts_numpy_matrix) :
   from de_toolkit.norm import estimateSizeFactors, NormalizationException
 
   # set the first column to zero
+  cnts = fake_counts_numpy_matrix.copy()
   cnts[:,0] = 0
 
   with pytest.raises(NormalizationException) :
     estimateSizeFactors(cnts)
 
-def test_estimateSizeFactors_somezero() :
+def test_estimateSizeFactors_somezero(fake_counts_numpy_matrix) :
 
   from de_toolkit.norm import estimateSizeFactors
 
   # the matrix is constructed such that the size factors are
   # 1/4, 1, 4
   # the geometric mean of each row is the middle sample
-  cnts = np.array([
-    [2.0,4.0,8.0,0]
-    ,[3.0,9.0,27.0,81.0]
-    ,[4.0,16.0,64.0,256.0] # <- this is the median normalized factor
-    ,[5.0,25.0,125.0,625.0]
-    ,[6.0,36.0,216.0,0]
-  ])
+  cnts = fake_counts_numpy_matrix.copy()
+  cnts[0,2] = cnts[4,2] = 0
 
-  geom_mean = cnts[2,:].prod()**(1/4)
+  # the is the median normalized factor is in cnts[2,:]
+
+  geom_mean = cnts[2,:].prod()**(1/cnts.shape[1])
 
   true_size_factors = cnts[2,:]/geom_mean
 
@@ -66,24 +64,17 @@ def test_estimateSizeFactors_somezero() :
   assert np.allclose(size_factors, true_size_factors)
 
 
-def test_deseq2() :
+def test_deseq2(fake_counts_obj) :
 
-  from de_toolkit import CountMatrix
   from de_toolkit.norm import deseq2
 
-  cnts = np.array([
-    [2.0,4.0,8.0]
-    ,[3.0,9.0,27.0]
-    ,[4.0,16.0,64.0]
-    ,[5.0,25.0,125.0]
-    ,[6.0,36.0,216.0]
-  ])
+  cnts = fake_counts_obj.counts.as_matrix()
 
   true_size_factors = cnts[2,:]/cnts[2,1]
 
   true_norm_cnts = cnts/true_size_factors
 
-  norm_cnts = deseq2(cnts)
+  norm_cnts = deseq2(fake_counts_obj)
 
   assert np.allclose(norm_cnts, true_norm_cnts)
 

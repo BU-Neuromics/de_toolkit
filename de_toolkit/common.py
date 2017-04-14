@@ -15,9 +15,15 @@ class InvalidDesignException(Exception): pass
 
 
 class CountMatrix(object) :
-  def __init__(self,counts,index=None,columns=None) :
-    self.design = None
-    self.column_data = None
+  def __init__(self
+      ,counts
+      ,index=None
+      ,columns=None
+      ,column_data=None
+      ,design=None
+     ) :
+    self.column_data = column_data
+    self.design = design
 
     self.counts = counts
     if index is not None :
@@ -70,6 +76,37 @@ class CountMatrix(object) :
             'Variable {} not found in column data columns {}. Check formula '
             'and/or column data columns.').format(var,self.column_data.columns)
           )
+
+class CountMatrixFile(CountMatrix) :
+
+  def __init__(self
+    ,count_f
+    ,column_data_f=None
+    ,design=None
+   ) :
+
+    counts = pandas.read_csv(
+      count_f
+      ,sep=None # sniff the format automatically
+      ,engine='python'
+      ,index_col=0
+    )
+
+    column_data = None
+    if column_data_f is not None :
+      column_data = pandas.read_csv(
+        column_data_f
+        ,sep=None
+        ,engine='python'
+        ,index_col=0
+      )
+
+    CountMatrix.__init__(self
+      ,counts
+      ,column_data=column_data
+      ,design=design
+    )
+
 def main(argv=None) :
   
   args = docopt(__doc__)
@@ -91,21 +128,6 @@ def main(argv=None) :
     main()
   elif args['help'] :
     docopt(__doc__,['-h'])
-
-
-class CountMatrixFile(CountMatrix) :
-
-  def __init__(self,count_f) :
-
-    counts = pandas.read_csv(
-      count_f
-      ,sep=None # sniff the format automatically
-      ,engine='python'
-      ,index_col=0
-    )
-
-    CountMatrix.__init__(self,counts,counts.index,counts.columns)
-
 
 if __name__ == '__main__' :
   main()

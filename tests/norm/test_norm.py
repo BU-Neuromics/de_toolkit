@@ -34,7 +34,7 @@ def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
   # cleanup the csv
   os.remove(f.name)
 
-def test_estimateSizeFactors_py_vs_rpy(fake_counts_numpy_matrix) :
+def test_estimateSizeFactors(fake_counts_numpy_matrix) :
 
   from de_toolkit.norm import estimateSizeFactors, estimateSizeFactors_rpy
 
@@ -43,26 +43,12 @@ def test_estimateSizeFactors_py_vs_rpy(fake_counts_numpy_matrix) :
   # the geometric mean of each row is the middle sample
   cnts = fake_counts_numpy_matrix
 
-  deseq2_size_factors = estimateSizeFactors_rpy(cnts)
-
-  size_factors = estimateSizeFactors(cnts)
-
-  assert np.allclose(size_factors, deseq2_size_factors)
-
-def test_estimateSizeFactors(fake_counts_numpy_matrix) :
-
-  from de_toolkit.norm import estimateSizeFactors
-
-  # the matrix is constructed such that the size factors are
-  # 1/4, 1, 4
-  # the geometric mean of each row is the middle sample
-  cnts = fake_counts_numpy_matrix
-
   true_size_factors = cnts[2,:]/cnts[2,1]
-
+  deseq2_size_factors = estimateSizeFactors_rpy(cnts)
   size_factors = estimateSizeFactors(cnts)
 
   assert np.allclose(size_factors, true_size_factors)
+  assert np.allclose(size_factors, deseq2_size_factors)
 
 def test_estimateSizeFactors_allzero(fake_counts_numpy_matrix) :
   # make sure the function raises when all rows contain one zero
@@ -77,7 +63,7 @@ def test_estimateSizeFactors_allzero(fake_counts_numpy_matrix) :
 
 def test_estimateSizeFactors_somezero(fake_counts_numpy_matrix) :
 
-  from de_toolkit.norm import estimateSizeFactors
+  from de_toolkit.norm import estimateSizeFactors, estimateSizeFactors_rpy
 
   # the matrix is constructed such that the size factors are
   # 1/4, 1, 4
@@ -90,9 +76,11 @@ def test_estimateSizeFactors_somezero(fake_counts_numpy_matrix) :
   geom_mean = cnts[2,:].prod()**(1/cnts.shape[1])
 
   true_size_factors = cnts[2,:]/geom_mean
-
+  deseq2_size_factors = estimateSizeFactors_rpy(cnts)
   size_factors = estimateSizeFactors(cnts)
+
   assert np.allclose(size_factors, true_size_factors)
+  assert np.allclose(size_factors, deseq2_size_factors)
 
 def test_deseq2(fake_counts_obj) :
 
@@ -108,6 +96,29 @@ def test_deseq2(fake_counts_obj) :
 
   assert np.allclose(norm_cnts, true_norm_cnts)
 
+
+def test_deseq2_py_vs_rpy(fake_counts_obj) :
+
+  from de_toolkit.norm import deseq2, deseq2_rpy
+
+  rpy_norm_counts = deseq2_rpy(fake_counts_obj)
+  py_norm_counts = deseq2(fake_counts_obj)
+
+  assert np.allclose(rpy_norm_counts,py_norm_counts)
+
+def test_deseq2_py_vs_rpy_somezero(fake_counts_obj) :
+
+  from de_toolkit.norm import deseq2, deseq2_rpy
+
+  print(fake_counts_obj.counts)
+  fake_counts_obj.counts.ix[0,2] = 0
+  fake_counts_obj.counts.ix[4,2] = 0
+  print(fake_counts_obj.counts)
+
+  rpy_norm_counts = deseq2_rpy(fake_counts_obj)
+  py_norm_counts = deseq2(fake_counts_obj)
+
+  assert np.allclose(rpy_norm_counts,py_norm_counts)
 
 
 def test_library_size() :

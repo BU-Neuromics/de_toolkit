@@ -1,1 +1,1 @@
-from .common import CountMatrix
+from .common import CountMatrix, CountMatrixFile

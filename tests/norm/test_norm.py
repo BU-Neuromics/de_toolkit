@@ -1,14 +1,53 @@
 import docopt
 import numpy as np
+import os
+import pandas
 import pytest
-from de_toolkit.norm import main
+import tempfile
 
 def test_norm_cli():
+  from de_toolkit.norm import main
   with pytest.raises(docopt.DocoptExit) :
     main(argv=None)
 
 def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
+  from de_toolkit.norm import main
   main(['deseq2',fake_counts_csv])
+
+def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
+
+  from de_toolkit import CountMatrixFile
+  from de_toolkit.norm import main, deseq2
+
+  f = tempfile.NamedTemporaryFile('wt',delete=False)
+  f.close() # close the file so the command can write to it cross-platform
+
+  main(['deseq2',fake_counts_csv,'--output={}'.format(f.name)])
+
+  in_counts = CountMatrixFile(fake_counts_csv)
+  norm_counts = deseq2(in_counts)
+
+  out_counts = CountMatrixFile(f.name)
+
+  assert np.allclose(norm_counts,out_counts.counts)
+
+  # cleanup the csv
+  os.remove(f.name)
+
+def test_estimateSizeFactors_py_vs_rpy(fake_counts_numpy_matrix) :
+
+  from de_toolkit.norm import estimateSizeFactors, estimateSizeFactors_rpy
+
+  # the matrix is constructed such that the size factors are
+  # 1/4, 1, 4
+  # the geometric mean of each row is the middle sample
+  cnts = fake_counts_numpy_matrix
+
+  deseq2_size_factors = estimateSizeFactors_rpy(cnts)
+
+  size_factors = estimateSizeFactors(cnts)
+
+  assert np.allclose(size_factors, deseq2_size_factors)
 
 def test_estimateSizeFactors(fake_counts_numpy_matrix) :
 
@@ -17,14 +56,6 @@ def test_estimateSizeFactors(fake_counts_numpy_matrix) :
   # the matrix is constructed such that the size factors are
   # 1/4, 1, 4
   # the geometric mean of each row is the middle sample
-  cnts = np.array([
-    [2.0,4.0,8.0]
-    ,[3.0,9.0,27.0]
-    ,[4.0,16.0,64.0]
-    ,[5.0,25.0,125.0]
-    ,[6.0,36.0,216.0]
-  ])
-
   cnts = fake_counts_numpy_matrix
 
   true_size_factors = cnts[2,:]/cnts[2,1]
@@ -63,7 +94,6 @@ def test_estimateSizeFactors_somezero(fake_counts_numpy_matrix) :
   size_factors = estimateSizeFactors(cnts)
   assert np.allclose(size_factors, true_size_factors)
 
-
 def test_deseq2(fake_counts_obj) :
 
   from de_toolkit.norm import deseq2
@@ -77,6 +107,8 @@ def test_deseq2(fake_counts_obj) :
   norm_cnts = deseq2(fake_counts_obj)
 
   assert np.allclose(norm_cnts, true_norm_cnts)
+
+
 
 def test_library_size() :
 

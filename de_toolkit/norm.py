@@ -1,14 +1,19 @@
 '''
 Usage:
-  detk-norm deseq2 <counts_fn>
+  detk-norm deseq2 <counts_fn> [options]
   detk-norm trimmed_mean <counts_fn>
   detk-norm library <counts_fn>
   detk-norm fpkm <counts_fn> <gtf>
   detk-norm custom <counts_fn>
+
+Options:
+  -o FILE --output=FILE    Destination of primary output [default: stdout]
+
 '''
 from docopt import docopt
 import sys
 import numpy as np
+import pandas
 from .util import stub, load_count_mat_file
 
 class NormalizationException(Exception) : pass
@@ -51,12 +56,25 @@ def estimateSizeFactors(cnts) :
 
   return sizeFactors
 
-def deseq2(count_mat) :
+def deseq2(count_obj) :
+
+  count_mat = count_obj.counts.as_matrix()
 
   sizeFactors = estimateSizeFactors(count_mat)
   norm_cnts = count_mat/sizeFactors
+  
 
-  return norm_cnts
+  normalized = pandas.DataFrame(norm_cnts
+
+    ,index=count_obj.counts.index
+
+    ,columns=count_obj.counts.columns
+
+  )
+  return normalized
+
+
+
 
 @stub
 def trimmed_mean(count_mat) :
@@ -80,10 +98,11 @@ def main() :
 
   args = docopt(__doc__)
 
-  count_obj = load_count_mat_file(args['<count_fn>'])
+  count_obj = load_count_mat_file(args['<counts_fn>'])
 
   if '<cov_fn>' in args :
     count_obj.add_covariates(args['<cov_fn>'])
 
-  if args['deseq2'] :
-    deseq2(count_obj)
+  count_obj.normalized['deseq2'] = deseq2(count_obj)
+  fp = sys.stdout if args['--output']=='stdout' else args['--output']
+  count_obj.normalized['deseq2'].to_csv(fp)

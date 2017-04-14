@@ -27,6 +27,7 @@ class CountMatrix(object) :
 
     self.sample_names = self.counts.columns
     self.count_names = self.counts.index
+    self.normalized = {}
 
   def add_column_data(self,cov_f) :
     self.column_data = pandas.read_csv(

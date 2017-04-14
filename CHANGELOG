@@ -1,3 +1,7 @@
+# 0.2.2 - (unreleased)
+
+Added py vs rpy2 deseq2 norm cross check tests
+Reorganized some of the CountMatrix constructor signatures
 
 # 0.2.1 - 2017-04-14
 

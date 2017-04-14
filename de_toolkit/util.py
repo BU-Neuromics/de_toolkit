@@ -1,9 +1,9 @@
-from .common import CountMatrix
+from .common import CountMatrixFile
 from contextlib import contextmanager
 
 def load_count_mat_file(count_fn) :
   with open(count_fn) as f :
-    count_obj = CountMatrix(f)
+    count_obj = CountMatrixFile(f)
   return count_obj
 
 def require_rpy2(f) :

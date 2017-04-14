@@ -14,7 +14,8 @@ from docopt import docopt
 import sys
 import numpy as np
 import pandas
-from .util import stub, load_count_mat_file, require_deseq2
+from .common import CountMatrixFile
+from .util import stub, require_deseq2, pandas_to_rmatrix, pandas_to_rdataframe
 
 class NormalizationException(Exception) : pass
 
@@ -96,7 +97,6 @@ def estimateSizeFactors_rpy(cnts) :
 
   return list(deseq2_size_factors)
 
-@require_deseq2
 def deseq2(count_obj) :
 
   count_mat = count_obj.counts.as_matrix()
@@ -113,6 +113,31 @@ def deseq2(count_obj) :
 
   )
   return normalized
+
+@require_deseq2
+def deseq2_rpy(count_obj) :
+
+  from rpy2 import robjects
+  import rpy2.rlike.container as rlc
+  from rpy2.robjects.packages import importr
+  from rpy2.rinterface import RRuntimeError
+
+  deseq2 = importr('DESeq2')
+
+  cnts = pandas_to_rmatrix(count_obj.counts)
+
+  colData = pandas_to_rdataframe(count_obj.column_data)
+
+  dds = deseq2.DESeqDataSetFromMatrix(
+    countData = cnts
+    ,colData = colData
+    ,design = robjects.Formula(count_obj.design if count_obj.design else '~')
+  )
+  dds = deseq2.estimateSizeFactors_DESeqDataSet(dds)
+
+  norm_counts = deseq2.counts_DESeqDataSet(dds,normalized=True)
+
+  return norm_counts
 
 @stub
 def trimmed_mean(count_mat) :
@@ -136,7 +161,7 @@ def main(argv=None) :
 
   args = docopt(__doc__,argv=argv)
 
-  count_obj = load_count_mat_file(args['<counts_fn>'])
+  count_obj = CountMatrixFile(args['<counts_fn>'])
 
   if '<cov_fn>' in args :
     count_obj.add_covariates(args['<cov_fn>'])

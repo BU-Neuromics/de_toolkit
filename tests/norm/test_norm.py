@@ -1,7 +1,16 @@
+import docopt
 import numpy as np
 import pytest
+from de_toolkit.norm import main
 
-def test_estimateSizeFactors() :
+def test_norm_cli():
+  with pytest.raises(docopt.DocoptExit) :
+    main(argv=None)
+
+def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
+  main(['deseq2',fake_counts_csv])
+
+def test_estimateSizeFactors(fake_counts_numpy_matrix) :
 
   from de_toolkit.norm import estimateSizeFactors
 
@@ -16,20 +25,21 @@ def test_estimateSizeFactors() :
     ,[6.0,36.0,216.0]
   ])
 
+  cnts = fake_counts_numpy_matrix
+
   true_size_factors = cnts[2,:]/cnts[2,1]
 
   size_factors = estimateSizeFactors(cnts)
+
   assert np.allclose(size_factors, true_size_factors)
 
-def test_estimateSizeFactors_allzero() :
+def test_estimateSizeFactors_allzero(fake_counts_numpy_matrix) :
   # make sure the function raises when all rows contain one zero
   from de_toolkit.norm import estimateSizeFactors, NormalizationException
 
-  cnts = np.array([
-    [0,1,2]
-    ,[0,2,4]
-    ,[0,3,9]
-  ])
+  # set the first column to zero
+  cnts[:,0] = 0
+
   with pytest.raises(NormalizationException) :
     estimateSizeFactors(cnts)
 
@@ -58,6 +68,7 @@ def test_estimateSizeFactors_somezero() :
 
 def test_deseq2() :
 
+  from de_toolkit import CountMatrix
   from de_toolkit.norm import deseq2
 
   cnts = np.array([

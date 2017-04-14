@@ -4,21 +4,21 @@ import pandas
 import pytest
 import tempfile
 
-#fake_counts_data = pytest.fake_counts_data
+#fake_counts_text_data = pytest.fake_counts_text_data
 
-def test_load_count_mat_file(fake_counts_csv, fake_counts_data) :
+def test_load_count_mat_file(fake_counts_csv, fake_counts_text_data) :
 
   from de_toolkit.util import load_count_mat_file
 
   #with tempfile.NamedTemporaryFile('wt',delete=False) as f :
 #
 #    tmp_f = csv.writer(f)
-#    for r in fake_counts_data() :
+#    for r in fake_counts_text_data() :
 #      tmp_f.writerow(r)
 
   count_obj = load_count_mat_file(fake_counts_csv)
 
-  data = fake_counts_data
+  data = fake_counts_text_data
   data = pandas.DataFrame(data[1:],columns=data[0])
   data.index = data.gene
   del data['gene']

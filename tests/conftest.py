@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 import csv
 import os
+import pandas
 import pytest
 from subprocess import Popen
 import tempfile
@@ -13,15 +14,42 @@ def check_exit_status() :
     return p.returncode in exits
   return f
 
+# fixture tree:
+# fake_counts_text_data
+#   -> fake_counts_csv
+#   -> fake_counts_tsv
+#   -> fake_counts_obj
+#   -> fake_counts_pandas_dataframe
+#     -> fake_counts_numpy_matrix
+# fake_big_counts
+#   -> fake_big_counts_csv
+#   -> fake_big_counts_obj
+# fake_design
+# fake_column_data
+#   -> fake_column_data_csv
+
 @pytest.fixture(scope='session')
-def fake_counts_data() :
+def fake_counts_text_data() :
   data = [
     ['gene','a','b','c']
     ,['gene1','2.0','4.0','8.0']
     ,['gene2','3.0','9.0','27.0']
     ,['gene3','4.0','16.0','64.0']
+    ,['gene4','5.0','25.0','125.0']
+    ,['gene5','6.0','36.0','216.0']
   ]
   return data
+
+@pytest.fixture(scope='session')
+def fake_counts_pandas_dataframe(fake_counts_text_data) :
+  import csv
+  return pandas.read_table(fake_counts_text_data
+    ,index_col=0
+  )
+
+@pytest.fixture(scope='session')
+def fake_counts_numpy_matrix(fake_counts_pandas_dataframe) :
+  return fake_counts_pandas_dataframe.as_matrix()
 
 @pytest.fixture(scope='session')
 def fake_big_counts_data() :
@@ -53,13 +81,13 @@ def temp_csv_wrap(data,sep) :
   os.remove(f.name)
 
 @pytest.fixture(scope='session')
-def fake_counts_csv(request,fake_counts_data) :
-  with temp_csv_wrap(fake_counts_data,',') as f :
+def fake_counts_csv(request,fake_counts_text_data) :
+  with temp_csv_wrap(fake_counts_text_data,',') as f :
     yield f.name
 
 @pytest.fixture(scope='session')
-def fake_counts_tsv(request,fake_counts_data) :
-  with temp_csv_wrap(fake_counts_data,'\t') as f :
+def fake_counts_tsv(request,fake_counts_text_data) :
+  with temp_csv_wrap(fake_counts_text_data,'\t') as f :
     yield f.name
 
 @pytest.fixture(scope='session')
@@ -90,10 +118,10 @@ def fake_column_data_csv(request,fake_column_data) :
   os.remove(f.name)
 
 @pytest.fixture(scope='session')
-def fake_gtf(request,fake_counts_data) :
+def fake_gtf(request,fake_counts_text_data) :
   with tempfile.NamedTemporaryFile('wt',delete=False) as f :
     tmp_f = csv.writer(f,delimiter='\t')
-    for r in fake_counts_data :
+    for r in fake_counts_text_data :
       tmp_f.writerow(r)
 
   yield f.name
@@ -109,9 +137,9 @@ def make_counts_obj(
   counts_csv
   ,column_data_csv
   ,design) :
-  from de_toolkit.util import load_count_mat_file
+  from de_toolkit import CountMatrixFile
 
-  counts_obj = load_count_mat_file(counts_csv)
+  counts_obj = CountMatrixFile(counts_csv)
   counts_obj.add_column_data(column_data_csv)
   counts_obj.add_design(design)
 

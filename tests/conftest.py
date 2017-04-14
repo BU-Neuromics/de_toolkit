@@ -41,9 +41,8 @@ def fake_counts_text_data() :
   return data
 
 @pytest.fixture(scope='session')
-def fake_counts_pandas_dataframe(fake_counts_text_data) :
-  import csv
-  return pandas.read_table(fake_counts_text_data
+def fake_counts_pandas_dataframe(fake_counts_csv) :
+  return pandas.read_csv(fake_counts_csv
     ,index_col=0
   )
 

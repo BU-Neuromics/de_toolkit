@@ -12,21 +12,36 @@ import pandas
 
 class InvalidDesignException(Exception): pass
 
-class CountMatrix(object) :
-  def __init__(self,count_f) :
-    self.design = None
-    self.column_data = None
-    self.transformed = {}
+class CountMatrixFile(CountMatrix) :
 
-    self.counts = pandas.read_csv(
+  def __init__(self,count_f) :
+
+    counts = pandas.read_csv(
       count_f
       ,sep=None # sniff the format automatically
       ,engine='python'
       ,index_col=0
     )
 
+    CountMatrix.__init__(self,counts,counts.index,counts.columns)
+
+
+class CountMatrix(object) :
+  def __init__(self,counts,index=None,columns=None) :
+    self.design = None
+    self.column_data = None
+
+    self.counts = counts
+    if index :
+      self.counts.index = index
+    if columns :
+      self.counts.columns = columns
+
     self.sample_names = self.counts.columns
     self.count_names = self.counts.index
+
+    # members to keep track of count mutations
+    self.transformed = {}
     self.normalized = {}
 
   def add_column_data(self,cov_f) :

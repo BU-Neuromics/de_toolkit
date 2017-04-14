@@ -10,20 +10,8 @@ Usage:
 from docopt import docopt
 import pandas
 
+
 class InvalidDesignException(Exception): pass
-
-class CountMatrixFile(CountMatrix) :
-
-  def __init__(self,count_f) :
-
-    counts = pandas.read_csv(
-      count_f
-      ,sep=None # sniff the format automatically
-      ,engine='python'
-      ,index_col=0
-    )
-
-    CountMatrix.__init__(self,counts,counts.index,counts.columns)
 
 
 class CountMatrix(object) :
@@ -32,9 +20,9 @@ class CountMatrix(object) :
     self.column_data = None
 
     self.counts = counts
-    if index :
+    if index is not None :
       self.counts.index = index
-    if columns :
+    if columns is not None :
       self.counts.columns = columns
 
     self.sample_names = self.counts.columns
@@ -103,6 +91,21 @@ def main(argv=None) :
     main()
   elif args['help'] :
     docopt(__doc__,['-h'])
+
+
+class CountMatrixFile(CountMatrix) :
+
+  def __init__(self,count_f) :
+
+    counts = pandas.read_csv(
+      count_f
+      ,sep=None # sniff the format automatically
+      ,engine='python'
+      ,index_col=0
+    )
+
+    CountMatrix.__init__(self,counts,counts.index,counts.columns)
+
 
 if __name__ == '__main__' :
   main()

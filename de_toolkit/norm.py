@@ -14,28 +14,44 @@ from docopt import docopt
 import sys
 import numpy as np
 import pandas
-from .util import stub, load_count_mat_file
+from .util import stub, load_count_mat_file, require_deseq2
 
 class NormalizationException(Exception) : pass
 
-# DESeq2 v1.3.34 uses this R code for normalization
-#estimateSizeFactorsForMatrix <- function( counts, locfunc = median, geoMeans )
+# DESeq2 v1.14.1 uses this R code for normalization
+#function (counts, locfunc = stats::median, geoMeans, controlGenes) 
 #{
-#  if (missing(geoMeans)) {
-#    loggeomeans <- rowMeans(log(counts))
-#  } else {
-#    if (length(geoMeans) != nrow(counts)) {
-#      stop('geoMeans should be as long as the number of rows of counts')
+#    if (missing(geoMeans)) {
+#        loggeomeans <- rowMeans(log(counts))
 #    }
-#    loggeomeans <- log(geoMeans)
-#  }
-#  if (all(is.infinite(loggeomeans))) {
-#    stop('every gene contains at least one zero, cannot compute log geometric means')
-#  }
-#  apply(counts, 2, function(cnts) {
-#    exp(locfunc((log(cnts) - loggeomeans)[is.finite(loggeomeans) & cnts > 0]))
-#  })
+#    else {
+#        if (length(geoMeans) != nrow(counts)) {
+#            stop("geoMeans should be as long as the number of rows of counts")
+#        }
+#        loggeomeans <- log(geoMeans)
+#    }
+#    if (all(is.infinite(loggeomeans))) {
+#        stop("every gene contains at least one zero, cannot compute log geometric means")
+#    }
+#    sf <- if (missing(controlGenes)) {
+#        apply(counts, 2, function(cnts) {
+#            exp(locfunc((log(cnts) - loggeomeans)[is.finite(loggeomeans) & 
+#                cnts > 0]))
+#        })
+#    }
+#    else {
+#        if (!(is.numeric(controlGenes) | is.logical(controlGenes))) {
+#            stop("controlGenes should be either a numeric or logical vector")
+#        }
+#        loggeomeansSub <- loggeomeans[controlGenes]
+#        apply(counts[controlGenes, , drop = FALSE], 2, function(cnts) {
+#            exp(locfunc((log(cnts) - loggeomeansSub)[is.finite(loggeomeansSub) & 
+#                cnts > 0]))
+#        })
+#    }
+#    sf
 #}
+
 
 def estimateSizeFactors(cnts) :
 
@@ -56,6 +72,31 @@ def estimateSizeFactors(cnts) :
 
   return sizeFactors
 
+@require_deseq2
+def estimateSizeFactors_rpy(cnts) :
+
+  from rpy2 import robjects
+  import rpy2.rlike.container as rlc
+  from rpy2.robjects.packages import importr
+  from rpy2.rinterface import RRuntimeError
+
+  base = importr('base')
+
+  deseq2 = importr('DESeq2')
+
+  m = robjects.r.matrix(
+    robjects.FloatVector(
+      cnts.ravel()
+    )
+    ,nrow=cnts.shape[0]
+    ,byrow=True
+  )
+
+  deseq2_size_factors = deseq2.estimateSizeFactorsForMatrix(m)
+
+  return list(deseq2_size_factors)
+
+@require_deseq2
 def deseq2(count_obj) :
 
   count_mat = count_obj.counts.as_matrix()

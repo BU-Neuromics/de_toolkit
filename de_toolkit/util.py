@@ -149,3 +149,48 @@ def rpy2_console_wrapper() :
   rpy2.rinterface.set_writeconsole_regular(old_writeconsole_regular)
   rpy2.rinterface.set_writeconsole_warnerror(old_writeconsole_warnerror)
 
+@require_rpy2
+def pandas_to_rmatrix(df) :
+
+  from rpy2 import robjects
+
+  cnts = df.as_matrix()
+
+  m = robjects.r.matrix(
+    robjects.FloatVector(
+      cnts.ravel()
+    )
+    ,nrow=cnts.shape[0]
+    ,byrow=True
+  )
+
+  return m
+
+@require_rpy2
+def pandas_to_rdataframe(df) :
+
+  from rpy2 import robjects
+  import rpy2.rlike.container as rlc
+
+  # this converts all columns in df to the appropriate
+  # R vector type (i.e. IntVector, FloatVector, StrVector, or BoolVector)
+
+  r_dict = []
+  for col, vals in df.items() :
+    f = None
+    dtype = vals.dtype
+    if dtype == int :
+      f = robjects.IntVector
+    elif dtype == float :
+      f = robjects.FloatVector
+    elif dtype == object :
+      f = robjects.StrVector
+    elif dtype == bool :
+      f = robjects.BoolVector
+    else :
+      raise Exception(('Unrecognized dtype in dataframe ({}), cannot convert '
+        'to r dataframe').format(dtype))
+
+    r_dict.append((str(col), f(vals)))
+
+  return robjects.DataFrame(rlc.OrdDict(r_dict))

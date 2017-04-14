@@ -18,10 +18,11 @@ from .util import (
   ,count_obj_to_r_matrix
   ,load_count_mat_file
   ,require_rpy2
+  ,require_deseq2
   ,stub
 )
 
-@require_rpy2
+@require_deseq2
 def deseq2(count_obj) :
   import rpy2
   pass

@@ -1,4 +1,12 @@
 
+# 0.2.1 - 2017-04-14
+
+DESeq2 norm tests and CLI usage bug fix
+
+# 0.2.0 - 2017-04-12
+
+detk-norm deseq2 output option added
+
 # 0.1.1 - 2017-04-07
 
 Added Firth's logistic regression functionality and tests with CLI output

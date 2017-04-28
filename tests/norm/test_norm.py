@@ -34,7 +34,6 @@ def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
   # cleanup the csv
   os.remove(f.name)
 
-"""
 def test_estimateSizeFactors(fake_counts_numpy_matrix) :
 
   from de_toolkit.norm import estimateSizeFactors, estimateSizeFactors_rpy
@@ -141,4 +140,3 @@ def test_library_size() :
   norm_cnts = library_size(cnts)
 
   assert np.allclose(norm_cnts, true_norm_cnts)
-"""

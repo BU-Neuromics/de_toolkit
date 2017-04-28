@@ -13,7 +13,7 @@ requirements:
     - pandas
     - numpy
     - r-docopt
-    - rpy2
+    - rpy2 >= 2.7.3
     - bioconductor-deseq2
     - pytest-runner
     - pytest
@@ -24,7 +24,7 @@ requirements:
     - pandas
     - numpy
     - r-docopt
-    - rpy2
+    - rpy2 >= 2.7.3
     - bioconductor-deseq2
     - pytest
     - future

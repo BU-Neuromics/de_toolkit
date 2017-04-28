@@ -8,23 +8,23 @@ source:
 
 requirements:
   build:
-    - python
+    - python >= 3.5
     - docopt
     - pandas
     - numpy
     - r-docopt
-    - rpy2
+    - rpy2 >= 2.7.3
     - bioconductor-deseq2
     - pytest-runner
     - pytest
     - future
   run:
-    - python
+    - python >= 3.5
     - docopt
     - pandas
     - numpy
     - r-docopt
-    - rpy2
+    - rpy2 >= 2.7.3
     - bioconductor-deseq2
     - pytest
     - future

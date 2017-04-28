@@ -29,7 +29,7 @@ def check_exit_status() :
 #   -> fake_column_data_pandas_dataframe
 #   -> fake_column_data_csv
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def fake_counts_text_data() :
   data = [
     ['gene','a','b','c']
@@ -41,17 +41,17 @@ def fake_counts_text_data() :
   ]
   return data
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def fake_counts_pandas_dataframe(fake_counts_csv) :
   return pandas.read_csv(fake_counts_csv
     ,index_col=0
   )
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def fake_counts_numpy_matrix(fake_counts_pandas_dataframe) :
   return fake_counts_pandas_dataframe.as_matrix()
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def fake_big_counts_data() :
   from numpy.random import negative_binomial, randint, uniform
   data = [
@@ -80,22 +80,22 @@ def temp_csv_wrap(data,sep) :
   # cleanup the csv
   os.remove(f.name)
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def fake_counts_csv(request,fake_counts_text_data) :
   with temp_csv_wrap(fake_counts_text_data,',') as f :
     yield f.name
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def fake_counts_tsv(request,fake_counts_text_data) :
   with temp_csv_wrap(fake_counts_text_data,'\t') as f :
     yield f.name
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def fake_big_counts_csv(request,fake_big_counts_data) :
   with temp_csv_wrap(fake_big_counts_data,',') as f :
     yield f.name
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def fake_column_data(request) :
   covs = [
     ['sample','category','cont_cov']
@@ -105,14 +105,14 @@ def fake_column_data(request) :
   ]
   return covs
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def fake_column_data_pandas_dataframe(fake_column_data):
   data = fake_column_data
   covs = pandas.DataFrame(data[1:],columns=data[0])
   covs.index = covs['sample']
   return covs
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def fake_column_data_csv(request,fake_column_data) :
   with tempfile.NamedTemporaryFile('wt',delete=False) as f :
     tmp_f = csv.writer(f,delimiter='\t')
@@ -124,7 +124,7 @@ def fake_column_data_csv(request,fake_column_data) :
   # cleanup the csv
   os.remove(f.name)
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def fake_gtf(request,fake_counts_text_data) :
   with tempfile.NamedTemporaryFile('wt',delete=False) as f :
     tmp_f = csv.writer(f,delimiter='\t')
@@ -136,7 +136,7 @@ def fake_gtf(request,fake_counts_text_data) :
   # cleanup the csv
   os.remove(f.name)
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def fake_design(request) :
   return '~ category'
 

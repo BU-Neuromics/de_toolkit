@@ -19,8 +19,8 @@ class SampleMismatchException(Exception): pass
 class CountMatrix(object) :
   def __init__(self
       ,counts
-      ,index=None
-      ,columns=None
+      ,count_names=None
+      ,sample_names=None
       ,column_data=None
       ,design=None
       ,strict=False
@@ -29,24 +29,26 @@ class CountMatrix(object) :
     self.design = design
 
     self.counts = counts
-    if index is not None :
-      self.counts.index = index
-    if columns is not None :
-      self.counts.columns = columns
+    if count_names is not None :
+      self.counts.index = count_names
+    if sample_names is not None :
+      self.counts.columns = sample_names
 
     self.sample_names = self.counts.columns
     self.count_names = self.counts.index
 
     if self.column_data is not None :
       # line up the sample names from the column_data and counts matrices
-      if strict and not all(self.sample_names == self.count_names) :
+      if strict and (
+        len(self.column_data.index) != len(self.counts.columns) or
+        not all(self.column_data.index == self.counts.columns)
+      ) :
         raise SampleMismatchException('When *strict* is supplied, the columns '
           'of the counts file must correspond exactly to the row names in the '
           'column_data matrix')
       else :
-        common_names = self.sample_names.intersection(self.count_names)
+        common_names = self.sample_names.intersection(self.column_data.index)
         self.sample_names = common_names
-        self.count_names = common_names
         self.counts = self.counts[common_names]
         self.column_data = self.column_data.loc[common_names]
 

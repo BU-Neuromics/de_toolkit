@@ -108,8 +108,8 @@ def fake_column_data(request) :
 @pytest.fixture(scope='session')
 def fake_column_data_pandas_dataframe(fake_column_data):
   data = fake_column_data
-  df = pandas.DataFrame(data[1:],columns=data[0])
-  df.index = covs['sample']
+  covs = pandas.DataFrame(data[1:],columns=data[0])
+  covs.index = covs['sample']
   return covs
 
 @pytest.fixture(scope='session')

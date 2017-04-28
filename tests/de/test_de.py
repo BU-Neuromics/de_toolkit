@@ -12,6 +12,7 @@ def test_firth_cli(fake_counts_csv,fake_column_data_csv) :
 def test_firth_cli_w_cov(fake_counts_csv,fake_column_data_csv) :
   main(['firth','category ~ cont_cov',fake_counts_csv,fake_column_data_csv])
 
+"""
 def test_firth(fake_counts_obj) :
   from de_toolkit.de import firth_logistic_regression
 
@@ -34,3 +35,4 @@ def test_firth_w_bad_cov(fake_counts_obj) :
 
   with pytest.raises(InvalidDesignException) :
     firth_out = firth_logistic_regression(fake_counts_obj)
+"""

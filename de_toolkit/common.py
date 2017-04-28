@@ -6,13 +6,15 @@ Usage:
   detk filter [<args>...]
   detk stats [<args>...]
   detk help [<args>...]
+
+Options:
+
 '''
 from docopt import docopt
 import pandas
 
-
 class InvalidDesignException(Exception): pass
-
+class SampleMismatchException(Exception): pass
 
 class CountMatrix(object) :
   def __init__(self
@@ -21,6 +23,7 @@ class CountMatrix(object) :
       ,columns=None
       ,column_data=None
       ,design=None
+      ,strict=False
      ) :
     self.column_data = column_data
     self.design = design
@@ -33,6 +36,19 @@ class CountMatrix(object) :
 
     self.sample_names = self.counts.columns
     self.count_names = self.counts.index
+
+    if self.column_data is not None :
+      # line up the sample names from the column_data and counts matrices
+      if strict and not all(self.sample_names == self.count_names) :
+        raise SampleMismatchException('When *strict* is supplied, the columns '
+          'of the counts file must correspond exactly to the row names in the '
+          'column_data matrix')
+      else :
+        common_names = self.sample_names.intersection(self.count_names)
+        self.sample_names = common_names
+        self.count_names = common_names
+        self.counts = self.counts[common_names]
+        self.column_data = self.column_data.loc[common_names]
 
     # members to keep track of count mutations
     self.transformed = {}
@@ -83,6 +99,7 @@ class CountMatrixFile(CountMatrix) :
     ,count_f
     ,column_data_f=None
     ,design=None
+    ,**kwargs
    ) :
 
     counts = pandas.read_csv(
@@ -105,6 +122,7 @@ class CountMatrixFile(CountMatrix) :
       ,counts
       ,column_data=column_data
       ,design=design
+      ,**kwargs
     )
 
 def main(argv=None) :

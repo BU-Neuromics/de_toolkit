@@ -8,10 +8,15 @@ Options:
   -o FILE --output=FILE    Destination of primary output [default: stdout]
   --rda=RDA                Filename passed to saveRDS() R function of the result
                            objects from the analysis
+  --strict    Require that the sample order indicated by the column names in the
+              counts file are the same as, and in the same order as, the
+              sample order in the row names of the covariates file
+
 '''
 from docopt import docopt
 import pandas
 import sys
+from .common import CountMatrixFile
 from .util import (
   column_data_rtype_dict
   ,column_data_to_r_dataframe
@@ -152,11 +157,13 @@ def main(argv=None) :
 
   args = docopt(__doc__,argv=argv)
 
-  count_obj = load_count_mat_file(args['<count_fn>'])
-
-  count_obj.add_design(args['<design>'])
-
-  count_obj.add_column_data(args['<cov_fn>'])
+  #count_obj = load_count_mat_file(args['<count_fn>'])
+  count_obj = CountMatrixFile(
+    args['<count_fn>']
+    ,args['<cov_fn>']
+    ,design=args['<design>']
+    ,strict=args.get('--strict',False)
+  )
 
   if args['deseq2'] :
     count_obj.add_design(args['<design>'])

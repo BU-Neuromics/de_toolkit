@@ -75,6 +75,10 @@ def firth_logistic_regression(count_obj,rda=None) :
   colData_rtype_dict[endog] = robjects.IntVector(endog_vals)
   design_formula = robjects.Formula(design)
 
+  # fits stores a list of tuples of the form (rfit,'status')
+  # the status records info from firth about the specific gene
+  # currently it only stores whether the profile likelihood or Wald
+  # method was used to calculate confidence intervals
   fits = []
   for i in range(count_obj.counts.shape[0]) :
     gene_counts = count_obj.counts.ix[i]
@@ -82,7 +86,27 @@ def firth_logistic_regression(count_obj,rda=None) :
 
     od = rlc.OrdDict(list(colData_rtype_dict.items()))
     data = robjects.DataFrame(od)
-    fit = logistf.logistf(design_formula,data=data)
+
+    # issue #3 is caused by the Firth profile likelihood based confidence
+    # interval method producing incoherent results on certain data (can't
+    # figure out what exactly)
+    # attempt the regression with profile likelihood on by default and if
+    # it crashes fall back on the Wald method and move on
+    try :
+      fit = (
+        logistf.logistf(design_formula,data=data,pl=True)
+        ,'PL'
+      )
+    except RRuntimeError as exc :
+      # capture this exact error, otherwise raise
+      if 'NA/NaN/Inf in foreign function call (arg 10)' in str(exc) :
+        fit = (
+          logistf.logistf(design_formula,data=data,pl=False)
+          ,'Wald'
+        )
+      else :
+        raise
+
     fits.append(fit)
 
   # members of fit list
@@ -98,7 +122,7 @@ def firth_logistic_regression(count_obj,rda=None) :
   )
 
   # these are the model variables
-  var_names = list(fits[0].rx2('terms'))
+  var_names = list(fits[0][0].rx2('terms'))
 
   int_i = var_names.index('(Intercept)')
   var_names[int_i] = 'int'
@@ -108,12 +132,12 @@ def firth_logistic_regression(count_obj,rda=None) :
 
   firth_props = pandas.DataFrame([]
    ,index=count_obj.counts.index.tolist()
-   ,columns=colnames
+   ,columns=colnames+['status']
   )
 
   for i,row in enumerate(firth_props.index) :
 
-    fit = fits[i]
+    fit,status = fits[i]
 
     # coefficients
     cols = ['{}__beta'.format(_) for _ in var_names]
@@ -134,6 +158,9 @@ def firth_logistic_regression(count_obj,rda=None) :
     # loglik
     #cols = ['{}__loglik'.format(_) for _ in var_names]
     #firth_props.loc[row,cols] = fit.rx2('loglik')
+
+    # status
+    firth_props.loc[row,'status'] = status
 
   stats = importr('stats')
 

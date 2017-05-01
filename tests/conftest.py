@@ -6,6 +6,8 @@ import pytest
 from subprocess import Popen
 import tempfile
 
+################################################################################
+# utility functions
 @pytest.fixture
 def check_exit_status() :
   def f(cmd,exits=[0]):
@@ -14,20 +16,104 @@ def check_exit_status() :
     return p.returncode in exits
   return f
 
+################################################################################
+
+################################################################################
+# fixtures
+
 # fixture tree:
-# fake_counts_text_data
+
+# fake_column_data - 3 samples, one categorical, one continuous cov
+#   -> fake_column_data_pandas_dataframe
+#   -> fake_column_data_csv
+
+# fake_huge_column_data - 26 samples, one categorical, one continuous cov
+#   -> fake_huge_column_data_pandas_dataframe
+#   -> fake_huge_column_data_csv
+
+# fake_counts_text_data - 6 genes, 3 samples (fake_column_data)
 #   -> fake_counts_csv
 #   -> fake_counts_tsv
 #   -> fake_counts_obj
 #   -> fake_counts_pandas_dataframe
 #     -> fake_counts_numpy_matrix
-# fake_big_counts
+
+# fake_big_counts - 1000 genes, 3 samples (fake_column_data)
 #   -> fake_big_counts_csv
 #   -> fake_big_counts_obj
+
+# fake_huge_counts - 30000 genes, 26 samples (fake_huge_column_data)
+#   -> fake_huge_counts_csv
+#   -> fake_huge_counts_obj
+
 # fake_design
+
+################################################################################
+
+
+
+
+################################################################################
 # fake_column_data
-#   -> fake_column_data_pandas_dataframe
-#   -> fake_column_data_csv
+
+@pytest.fixture()
+def fake_column_data(request) :
+  covs = [
+    ['sample','category','cont_cov']
+    ,['a','case',0.1]
+    ,['b','case',1.0]
+    ,['c','cont',10.0]
+  ]
+  return covs
+
+@pytest.fixture()
+def fake_column_data_pandas_dataframe(fake_column_data):
+  data = fake_column_data
+  covs = pandas.DataFrame(data[1:],columns=data[0])
+  covs.index = covs['sample']
+  return covs
+
+@pytest.fixture()
+def fake_column_data_csv(request,fake_column_data) :
+  with temp_csv_wrap(fake_column_data,',') as f :
+    yield f.name
+
+################################################################################
+
+################################################################################
+# fake_column_data
+
+@pytest.fixture()
+def fake_huge_column_data(request) :
+  import math
+  import random
+  import string
+  names = string.ascii_lowercase
+  covs = [
+    ['sample','category','cont_cov']
+  ]+list(zip(
+    names
+    ,['case']*math.floor(len(names)/2)+['cont']*math.ceil(len(names)/2)
+    ,[10*random.random() for _ in names]
+  ))
+  return covs
+
+@pytest.fixture()
+def fake_huge_column_data_pandas_dataframe(fake_huge_column_data):
+  data = fake_huge_column_data
+  covs = pandas.DataFrame(data[1:],columns=data[0])
+  covs.index = covs['sample']
+  return covs
+
+@pytest.fixture()
+def fake_huge_column_data_csv(request,fake_huge_column_data) :
+  with temp_csv_wrap(fake_huge_column_data,',') as f :
+    yield f.name
+
+################################################################################
+
+################################################################################
+# fake_counts_data
 
 @pytest.fixture()
 def fake_counts_text_data() :
@@ -52,6 +138,34 @@ def fake_counts_numpy_matrix(fake_counts_pandas_dataframe) :
   return fake_counts_pandas_dataframe.as_matrix()
 
 @pytest.fixture()
+def fake_counts_csv(request,fake_counts_text_data) :
+  with temp_csv_wrap(fake_counts_text_data,',') as f :
+    yield f.name
+
+@pytest.fixture()
+def fake_counts_tsv(request,fake_counts_text_data) :
+  with temp_csv_wrap(fake_counts_text_data,'\t') as f :
+    yield f.name
+
+@pytest.fixture
+def fake_counts_obj(
+  fake_counts_csv
+  ,fake_column_data_csv
+  ,fake_design) :
+
+  return make_counts_obj(
+    fake_counts_csv
+    ,fake_column_data_csv
+    ,fake_design
+  )
+
+################################################################################
+
+
+################################################################################
+# big counts data
+
+@pytest.fixture()
 def fake_big_counts_data() :
   from numpy.random import negative_binomial, randint, uniform
   data = [
@@ -68,6 +182,63 @@ def fake_big_counts_data() :
     ])
   return data
 
+@pytest.fixture()
+def fake_big_counts_csv(request,fake_big_counts_data) :
+  with temp_csv_wrap(fake_big_counts_data,',') as f :
+    yield f.name
+
+@pytest.fixture
+def fake_big_counts_obj(
+  fake_big_counts_csv
+  ,fake_column_data_csv
+  ,fake_design) :
+
+  return make_counts_obj(
+    fake_big_counts_csv
+    ,fake_column_data_csv
+    ,fake_design
+  )
+
+################################################################################
+
+
+################################################################################
+# realistic (huge) counts data
+@pytest.fixture()
+def fake_huge_counts_data() :
+  from numpy.random import negative_binomial, randint, uniform
+  import string
+  data = [
+    ['gene']+list(string.ascii_lowercase)
+  ]
+  for i in range(30000) :
+    n = randint(5,40)
+    p = uniform(0.1,0.3)
+    data.append(['gene{}'.format(i)]+
+      [negative_binomial(n,p) for _ in range(len(string.ascii_lowercase))]
+    )
+  return data
+
+@pytest.fixture()
+def fake_huge_counts_csv(request,fake_huge_counts_data) :
+  with temp_csv_wrap(fake_huge_counts_data,',') as f :
+    yield f.name
+
+@pytest.fixture
+def fake_huge_counts_obj(
+  fake_huge_counts_csv
+  ,fake_column_data_csv
+  ,fake_design) :
+
+  return make_counts_obj(
+    fake_huge_counts_csv
+    ,fake_column_data_csv
+    ,fake_design
+  )
+
+################################################################################
+
+
 @contextmanager
 def temp_csv_wrap(data,sep) :
   with tempfile.NamedTemporaryFile('wt',delete=False) as f :
@@ -76,50 +247,6 @@ def temp_csv_wrap(data,sep) :
       tmp_f.writerow(r)
 
   yield f
-
-  # cleanup the csv
-  os.remove(f.name)
-
-@pytest.fixture()
-def fake_counts_csv(request,fake_counts_text_data) :
-  with temp_csv_wrap(fake_counts_text_data,',') as f :
-    yield f.name
-
-@pytest.fixture()
-def fake_counts_tsv(request,fake_counts_text_data) :
-  with temp_csv_wrap(fake_counts_text_data,'\t') as f :
-    yield f.name
-
-@pytest.fixture()
-def fake_big_counts_csv(request,fake_big_counts_data) :
-  with temp_csv_wrap(fake_big_counts_data,',') as f :
-    yield f.name
-
-@pytest.fixture()
-def fake_column_data(request) :
-  covs = [
-    ['sample','category','cont_cov']
-    ,['a','case',0.1]
-    ,['b','case',1.0]
-    ,['c','cont',10.0]
-  ]
-  return covs
-
-@pytest.fixture()
-def fake_column_data_pandas_dataframe(fake_column_data):
-  data = fake_column_data
-  covs = pandas.DataFrame(data[1:],columns=data[0])
-  covs.index = covs['sample']
-  return covs
-
-@pytest.fixture()
-def fake_column_data_csv(request,fake_column_data) :
-  with tempfile.NamedTemporaryFile('wt',delete=False) as f :
-    tmp_f = csv.writer(f,delimiter='\t')
-    for r in fake_column_data :
-      tmp_f.writerow(r)
-
-  yield f.name
 
   # cleanup the csv
   os.remove(f.name)
@@ -154,27 +281,4 @@ def make_counts_obj(
 
   return counts_obj
 
-@pytest.fixture
-def fake_counts_obj(
-  fake_counts_csv
-  ,fake_column_data_csv
-  ,fake_design) :
-
-  return make_counts_obj(
-    fake_counts_csv
-    ,fake_column_data_csv
-    ,fake_design
-  )
-
-@pytest.fixture
-def fake_big_counts_obj(
-  fake_big_counts_csv
-  ,fake_column_data_csv
-  ,fake_design) :
-
-  return make_counts_obj(
-    fake_big_counts_csv
-    ,fake_column_data_csv
-    ,fake_design
-  )
 

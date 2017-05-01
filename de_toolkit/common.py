@@ -48,6 +48,15 @@ class CountMatrix(object) :
           'column_data matrix')
       else :
         common_names = self.sample_names.intersection(self.column_data.index)
+
+        # fix to "no memory available" bitbucket issue #4 when matrices are
+        # empty
+        if len(common_names) < 2 :
+          raise SampleMismatchException('No sample names were found to be in '
+            'common between the counts and column data or specified sample '
+            'names. Check that the first column of the column_data matrix '
+            'contains at least 2 values in common')
+
         self.sample_names = common_names
         self.counts = self.counts[common_names]
         self.column_data = self.column_data.loc[common_names]

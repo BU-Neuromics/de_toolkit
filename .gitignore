@@ -5,3 +5,4 @@ dist
 *.swp
 *.pyc
 .cache/
+*.csv

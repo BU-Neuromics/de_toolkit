@@ -1,6 +1,12 @@
 # Changelog
 
-## (unreleased)
+## [ 0.2.3 ]
+### Changed
+- fixed issues #3 and #4
+- Firth DE attempts to use profile likelihood to estimate confidence intervals
+  but falls back to Wald if that fails
+- better handling of sample name mismatches between counts and column data
+  files
 
 ## [ 0.2.2 ]
 ### Added

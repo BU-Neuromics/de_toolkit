@@ -90,3 +90,38 @@ def test_firth_bad_counts() :
   assert firth_out.status[0] == 'PL'
   assert firth_out.status[1] == 'Wald'
 
+# this is a full sized, real dataset
+# it takes a long time to run, so only use when making big changes
+"""
+def test_firth_full_test() :
+  import os
+  import pandas
+  from de_toolkit.common import CountMatrix
+  from de_toolkit.de import firth_logistic_regression
+
+  base_dir = os.path.join('tests','de')
+
+  # bad_counts.csv contains real gene data that have been found to give
+  # Firth difficulty, in order:
+  #   1. gene is fine
+  #   2. gene crashes on the profile likelihood method, and so reverts to Wald
+  counts = pandas.read_csv(
+    os.path.join(base_dir,'all_mRNA_nonzero_norm_counts_trim.csv')
+    ,index_col=0
+  )
+  cov = pandas.read_csv(
+    os.path.join(base_dir,'sample_info__batch_PD3.csv')
+    ,index_col=1
+  )
+
+  mat = CountMatrix(
+    counts
+    ,column_data=cov
+    ,design='Condition ~'
+  )
+
+  firth_out = firth_logistic_regression(mat)
+
+  #assert firth_out.status[0] == 'PL'
+  #assert firth_out.status[1] == 'Wald'
+"""

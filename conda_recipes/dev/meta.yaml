@@ -7,23 +7,25 @@ source:
 
 requirements:
   build:
-    - python >=3.5
+    - python
     - docopt
     - pandas
     - numpy
     - r-docopt
-    - rpy2 >= 2.7.3
+    - rpy2
     - bioconductor-deseq2
     - pytest-runner
     - pytest
     - future
+    - git
+    - git-lfs
   run:
-    - python >=3.5
+    - python
     - docopt
     - pandas
     - numpy
     - r-docopt
-    - rpy2 >= 2.7.3
+    - rpy2
     - bioconductor-deseq2
     - pytest
     - future
@@ -38,5 +40,4 @@ about:
   license_file: LICENSE
 
 build:
-  script: python setup.py install
-  number: 1
+  script: "git lfs install && python setup.py install"

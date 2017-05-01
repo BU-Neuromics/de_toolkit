@@ -18,6 +18,8 @@ requirements:
     - pytest-runner
     - pytest
     - future
+    - git
+    - git-lfs
   run:
     - python
     - docopt
@@ -40,3 +42,4 @@ about:
 
 build:
   script: python setup.py install
+  number: 1

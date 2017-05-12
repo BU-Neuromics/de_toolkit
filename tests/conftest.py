@@ -59,10 +59,10 @@ def check_exit_status() :
 @pytest.fixture()
 def fake_column_data(request) :
   covs = [
-    ['sample','category','cont_cov']
-    ,['a','case',0.1]
-    ,['b','case',1.0]
-    ,['c','cont',10.0]
+    ['sample','category','cont_cov','const_cov']
+    ,['a','case',0.1,1]
+    ,['b','case',1.0,1]
+    ,['c','cont',10.0,1]
   ]
   return covs
 
@@ -90,11 +90,12 @@ def fake_huge_column_data(request) :
   import string
   names = string.ascii_lowercase
   covs = [
-    ['sample','category','cont_cov']
+    ['sample','category','cont_cov','const_cov']
   ]+list(zip(
     names
     ,['case']*math.floor(len(names)/2)+['cont']*math.ceil(len(names)/2)
     ,[10*random.random() for _ in names]
+    ,[1 for _ in names]
   ))
   return covs
 

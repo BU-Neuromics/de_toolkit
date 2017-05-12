@@ -56,9 +56,10 @@ mkl                       2017.0.1                      0    anaconda
 ncurses                   5.9                          10    anaconda
 numpy                     1.12.1                   py35_0    anaconda
 openssl                   1.0.2k                        1    anaconda
-pandas                    0.19.2              np112py35_1    anaconda
+pandas                    0.20.1              np112py35_0    anaconda
 pango                     1.40.3                        1    anaconda
 pathtools                 0.1.2                    py35_0    bioconda
+patsy                     0.4.1                    py35_0    anaconda
 pcre                      8.39                          1    anaconda
 pip                       9.0.1                    py35_1    anaconda
 pixman                    0.34.0                        0    anaconda

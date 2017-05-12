@@ -11,10 +11,50 @@ Options:
 
 '''
 from docopt import docopt
+import patsy
 import pandas
+import re
 
 class InvalidDesignException(Exception): pass
 class SampleMismatchException(Exception): pass
+
+patsy_lite_patts = {
+  'cat_ref': (
+    '([a-zA-Z]\w+)[[](\w+)[]]'
+    ,lambda m : r'C({}, Treatment("{}"))'.format(*m)
+  )
+  ,'cat_lev': (
+    '(\w+)[[]((?:\w+,)+\w+)[]]'
+    ,lambda m: 'C({}, levels=["{}"])'.format(m[0],'","'.join(m[1].split(',')))
+  )
+}
+
+def patsy_lite(design) :
+  '''Convert detk 'patsy-lite' syntax into formal patsy syntax. This is
+  done by splitting the design string on whitespace, transforming each
+  element by a set of regex substitutions, and returning the space joined
+  string.
+
+  Current conversions are:
+
+    - variable[ref] -> C(variable, Treatment("ref"))
+    - variable[level1,level2,level3...] -> C(variable, levels=["level1","level2","level3"])
+
+
+  '''
+
+  # split the design by whitespace
+  terms = design.split()
+
+  # iterate and substitute terms if rules apply to them
+  for i in range(len(terms)) :
+    term = terms[i]
+    for rule, (patt, repl) in patsy_lite_patts.items() :
+      m = re.match(patt,term)
+      if m is not None :
+        terms[i] = repl(m.groups())
+
+  return ' '.join(terms)
 
 class CountMatrix(object) :
   def __init__(self

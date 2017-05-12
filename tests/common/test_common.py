@@ -6,6 +6,15 @@ def test_cli() :
   with pytest.raises(docopt.DocoptExit) :
     main(argv=None)
 
+def test_patsy_lite() :
+  from de_toolkit.common import patsy_lite
+
+  assert patsy_lite('var') == 'var'
+  assert patsy_lite('var[lev]') == 'C(var, Treatment("lev"))'
+  assert patsy_lite('var[lev] ~ 1') == 'C(var, Treatment("lev")) ~ 1'
+  assert patsy_lite('1 ~ var[lev]') == '1 ~ C(var, Treatment("lev"))'
+  assert patsy_lite('var[lev1,lev2]') == 'C(var, levels=["lev1","lev2"])'
+
 def test_CountMatrix(
   fake_counts_pandas_dataframe
   ,fake_column_data_pandas_dataframe

@@ -1,5 +1,9 @@
 # Changelog
 
+## unreleased
+### Added
+- patsy dependency and model specification support
+
 ## [ 0.2.3 ]
 ### Changed
 - fixed issues #3 and #4

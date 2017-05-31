@@ -66,6 +66,7 @@ pixman                    0.34.0                        0    anaconda
 port-for                  0.3.1                    py35_1    conda-forge
 py                        1.4.33                   py35_0    anaconda
 pygments                  2.2.0                    py35_0    anaconda
+pyparsing                 2.1.4                    py35_0    anaconda
 pytest                    3.0.7                    py35_0    anaconda
 python                    3.5.3                         1    anaconda
 python-dateutil           2.6.0                    py35_0    anaconda

@@ -72,33 +72,6 @@ def test_CountMatrix(
   )
   assert sorted(mat.sample_names) == sorted(fake_column_data_pandas_dataframe.index)
 
-  # with disjoint sample names
-  # fixes #4, when R receives empty matrices
-  with pytest.raises(SampleMismatchException) :
-    mat = CountMatrix(
-      fake_counts_pandas_dataframe
-      ,sample_names=['x{}'.format(_) for _ in fake_counts_pandas_dataframe.columns]
-      ,column_data=fake_column_data_pandas_dataframe
-    )
-
-def test_CountMatrix_design(fake_counts_obj) :
-  from de_toolkit.common import InvalidDesignException
-
-  # ok?
-  fake_counts_obj.add_design('category[cont] ~ cont_cov + counts')
-  fake_counts_obj.add_design('category ~ cont_cov + counts')
-
-  assert False
-
-  # missing counts
-  with pytest.raises(InvalidDesignException) :
-    fake_counts_obj.add_design('C(category,Treatment("cont")) ~ cont_cov')
-
-  # column not found in column data
-  with pytest.raises(InvalidDesignException) :
-    fake_counts_obj.add_design('category ~ cont_cov + bad_cov + counts')
-
-
 def test_CountMatrixFile(
   fake_counts_csv
   ,fake_column_data_csv

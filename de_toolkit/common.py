@@ -26,7 +26,7 @@ class CountMatrix(object) :
       ,strict=False
      ) :
     self.column_data = column_data
-    self.add_design(design)
+    self.design = design
 
     self.counts = counts
     if count_names is not None :
@@ -73,15 +73,8 @@ class CountMatrix(object) :
       ,index_col=0
     )
 
-  def add_design(self,design,validate=True) :
-    '''Add a design to the counts object. The term *counts* must be included
-    in the design somewhere, otherwise an exception is raised.'''
-
+  def add_design(self,design) :
     self.design = design
-
-    if design is not None and validate :
-
-      self.check_model()
 
   def transform(self,transf) :
     self.transformed[transf.__name__] = transf(self)
@@ -101,11 +94,15 @@ class CountMatrix(object) :
           'Design specified but no column data provided. Both must be '
           'added to CountMatrix object to use a design.'
         )
+      vars = self.design.split(' ')
+      vars = [_.strip() for _ in vars if _.strip() not in ('~','')]
 
-      if self.design.split().count('counts') != 1 :
-         raise InvalidDesignException(
-          'The term *counts* must be specified somewhere in the design.'
-         )
+      for var in vars :
+        if var not in self.column_data.columns :
+          raise InvalidDesignException((
+            'Variable {} not found in column data columns {}. Check formula '
+            'and/or column data columns.').format(var,self.column_data.columns)
+          )
 
 class CountMatrixFile(CountMatrix) :
 

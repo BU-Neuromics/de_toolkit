@@ -69,7 +69,7 @@ necessary, e.g.:
 ```
 conda create -n de_toolkit python=3.5
 ./install_conda_packages.sh
-Rscript install_r_packages.sh # if you want to use logistf
+Rscript install_r_packages.R # if you want to use logistf
 ```
 
 In development, when you want to run the toolkit, use the `setup.py` script:

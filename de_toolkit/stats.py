@@ -59,6 +59,13 @@ def colzero(count_mat) :
 				zero_count+=1
 		zero_counts.append(zero_count)
 
+	output={}
+	output['name'] = 'colzero'
+	output['stats'] = {}
+	output['stats']['zeros'] = []
+	
+	return output
+
 def rowzero(count_mat) :
 	'''Row-wise distribution of zero counts'''
 	pass

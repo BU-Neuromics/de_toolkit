@@ -21,10 +21,19 @@ def summary(count_mat) :
 
 def base(count_mat) :
 	'''Basic statistics of the counts file'''	
-	cnts = count_mat.counts.as_matrix()
+	cnts=[[2,4,8],[1,1,1],[1,1,1],[1,1,1],[1,1,1]]
+	#cnts = count_mat.counts.as_matrix()
 	num_cols=len(cnts[0])
 	num_rows=len(cnts)
-	output=[num_cols,num_rows]
+
+	output={}
+	output['name'] = 'base'
+	output['stats'] = {}
+	output['stats']['num_cols'] = num_cols
+	output['stats']['num_rows'] = num_rows
+
+	json.dumps(output)
+	
 	return output
 
 def coldist(count_mat) :
@@ -37,7 +46,18 @@ def rowdist(count_mat) :
 
 def colzero(count_mat) :
 	'''Column-wise distribution of zero counts'''
-	pass
+	
+	cnts = count_mat.counts.as_matrix()
+	num_cols=len(cnts[0])
+	num_rows=len(cnts)
+	
+	zero_counts =[]
+	for i in range(0, num_cols):
+		zero_count = 0
+		for j in range(0, num_rows):
+			if cnts[j][i]==0:
+				zero_count+=1
+		zero_counts.append(zero_count)
 
 def rowzero(count_mat) :
 	'''Row-wise distribution of zero counts'''
@@ -46,3 +66,5 @@ def rowzero(count_mat) :
 def entropy(count_mat) :
 	'''Row-wise sample entropy calculation'''
 	pass
+
+

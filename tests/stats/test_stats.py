@@ -4,7 +4,8 @@ import os
 import pandas                                                                   
 import pytest                                                                   
 import tempfile                       
-import json                                          
+import json           
+import math                               
 
 from de_toolkit.stats import base                                                                               
 #test for base function
@@ -178,3 +179,42 @@ def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
 		nonzero_row_means.append(nonzero_row_mean)
 
 	assert true_nonzero_row_means == nonzero_row_means
+
+from de_toolkit.stats import entropy
+
+#test that entropy function gets correct row names
+def test_stats_entropy_names(fake_counts_obj):
+	json_output = entropy(fake_counts_obj)
+	output = json.loads(json_output)
+	entropies = output.get('stats', {}).get('entropies')
+
+	true_row_names = ['gene1', 'gene2', 'gene3', 'gene4', 'gene5']
+
+	row_names = []
+	for i in range(0, len(entropies)):
+		row = entropies[i]
+		row_name = row.get('name')
+		row_names.append(row_name)
+
+	assert true_row_names == row_names
+
+#test that entropy function calculates correct entropy values
+def test_stats_entropies(fake_counts_obj):
+	json_output = entropy(fake_counts_obj)
+	output = json.loads(json_output)
+	entropies = output.get('stats', {}).get('entropies')
+	
+	H1 = -((2/14)*math.log(2/14,2) + (4/14)*math.log(4/14,2) + (8/14)*math.log(8/14,2))
+	H2 = -((3/39)*math.log(3/39,2) + (9/39)*math.log(9/39,2) + (27/39)*math.log(27/39,2))
+	H3 = -((4/84)*math.log(4/84,2) + (16/84)*math.log(16/84,2) + (64/84)*math.log(64/84,2))
+	H4 = -((5/155)*math.log(5/155,2) + (25/155)*math.log(25/155,2) + (125/155)*math.log(125/155,2))
+	H5 = -((6/258)*math.log(6/258,2) + (36/258)*math.log(36/258,2) + (216/258)*math.log(216/258,2))
+	true_entropies = [H1, H2, H3, H4, H5]
+
+	row_entropies = []
+	for i in range(0, len(entropies)):
+		row = entropies[i]
+		row_entropy = row.get('entropy')
+		row_entropies.append(row_entropy)
+
+	assert true_entropies == row_entropies

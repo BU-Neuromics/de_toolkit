@@ -1,4 +1,5 @@
 import json
+import math
 
 '''
 Usage:
@@ -170,9 +171,51 @@ def rowzero(count_mat) :
 		row['nonzero_mean'] = nonzero_row_means[i]
 		output['stats']['zeros'].append(row)
 
+	#Return output in JSON format
 	return json.dumps(output, sort_keys=True, indent=4)
 
 def entropy(count_mat) :
 	'''Row-wise sample entropy calculation'''
-	pass
+			
+	#Get counts, number of columns, number of rows, and gene names
+	cnts = count_mat.counts.as_matrix()
+	num_cols=len(cnts[0])
+	num_rows=len(cnts)
+	row_names = count_mat.count_names
+
+	#Calculate probabilities for each count by row
+	probs = []
+	for i in range(0, num_rows):
+		row_probs = []
+		sum = 0.0
+		for j in range(0, num_cols):
+			sum+=cnts[i][j]
+		for j in range(0, num_cols):
+			row_probs.append(cnts[i][j]/sum)
+		probs.append(row_probs)
+
+	#Calculate entropies
+	entropies = []
+	for i in range(0, num_rows):
+		H = 0.0
+		row_probs = probs[i]
+		for j in range(0, len(row_probs)):
+			H += row_probs[j]*math.log(row_probs[j], 2)
+		H = -1*H
+		entropies.append(H)
+
+	#Format output
+	output = {}
+	output['name'] = 'entropy'
+	output['stats'] = {}
+	output['stats']['entropies'] = []
+
+	for i in range(0, num_rows):
+		row = {}
+		row['name'] = row_names[i]
+		row['entropy'] = entropies[i]
+		output['stats']['entropies'].append(row)
+
+	#Return output in JSON format
+	return json.dumps(output, sort_keys=True, indent=4)
 

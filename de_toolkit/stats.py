@@ -1,10 +1,11 @@
 import json
 import math
 from collections import OrderedDict
+import argparse
 
 '''
 Usage:
-	detk-stats summary [options] <counts_fn>
+	detk-stats summary [options] [--json=<json_fn>] [--html=<html_fn>] <counts_fn>
 	detk-stats base <counts_fn>
 	detk-stats coldist [options] [--bins=<bins>] [--log] [--density] <counts_fn>
 	detk-stats rowdist [options] [--bins=<bins>] [--log] [--density] <counts_fn>
@@ -19,7 +20,10 @@ Options:
 from docopt import docopt
 
 def summary(count_mat) :
-	pass
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--json", help="Name of JSON output file")
+	parser.add_argument("--html", help="Name of HTML output file")
+	args = parser.parse_args()
 
 def base(count_mat) :
 	'''Basic statistics of the counts file'''	

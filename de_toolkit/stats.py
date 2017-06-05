@@ -24,7 +24,6 @@ def base(count_mat) :
 	cnts = count_mat.counts.as_matrix()
 	num_cols=len(cnts[0])
 	num_rows=len(cnts)
-	col_names=count_mat.count_names
 
 	output={}
 	output['name'] = 'base'
@@ -48,7 +47,8 @@ def colzero(count_mat) :
 	cnts = count_mat.counts.as_matrix()
 	num_cols=len(cnts[0])
 	num_rows=len(cnts)
-	
+	col_names=count_mat.sample_names
+
 	zero_counts =[]
 	for i in range(0, num_cols):
 		zero_count = 0

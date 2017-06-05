@@ -7,6 +7,7 @@ import tempfile
 import json                                          
 
 from de_toolkit.stats import base                                                                               
+#test for base function
 def test_stats_base(fake_counts_obj): 
 	json_output = base(fake_counts_obj)
 	output=json.loads(json_output)
@@ -16,6 +17,7 @@ def test_stats_base(fake_counts_obj):
 
 from de_toolkit.stats import colzero
 
+#test that colzero function gets correct column names
 def test_stats_colzero_names(fake_counts_obj):
 	json_output = colzero(fake_counts_obj)
 	output=json.loads(json_output)

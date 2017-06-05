@@ -1,5 +1,6 @@
 import json
 import math
+from collections import OrderedDict
 
 '''
 Usage:
@@ -29,12 +30,9 @@ def base(count_mat) :
 	num_rows=len(cnts)
 
 	#Format output
-	output={}
-	output['name'] = 'base'
-	output['stats'] = {}
-	output['stats']['num_cols'] = num_cols
-	output['stats']['num_rows'] = num_rows
-
+	base_output = OrderedDict([['num_cols', num_cols], ['num_rows', num_rows]])
+	output = OrderedDict([['name', 'base'], ['stats', base_output]])
+	
 	#Return output in JSON format
 	return json.dumps(output, sort_keys=True, indent=4)
 
@@ -93,18 +91,16 @@ def colzero(count_mat) :
 		nonzero_col_means.append(mean)
 
 	#Format output
-	output={}
-	output['name'] = 'colzero'
-	output['stats'] = {}
+	output = OrderedDict([['name', 'colzero'], ['stats', {}]])
 	output['stats']['zeros'] = []
 
 	for i in range(0, num_cols):
-		col = {}
-		col['name'] = col_names[i]
-		col['zero_count'] = zero_counts[i]
-		col['zero_frac'] = zero_fracs[i]
-		col['mean'] = col_means[i]
-		col['nonzero_mean'] = nonzero_col_means[i]
+		col = OrderedDict([['name', col_names[i]],
+		['zero_count', zero_counts[i]],
+		['zero_frac', zero_fracs[i]],
+		['mean', col_means[i]],
+		['nonzero_mean', nonzero_col_means[i]]])
+		
 		output['stats']['zeros'].append(col)
 	
 	#Return output in JSON format
@@ -157,18 +153,16 @@ def rowzero(count_mat) :
 		nonzero_row_means.append(mean)
 
 	#Format output
-	output = {}
-	output['name'] = 'rowzero'
-	output['stats'] = {}
+	output = OrderedDict([['name', 'rowzero'], ['stats', {}]])
 	output['stats']['zeros'] = []
 
 	for i in range(0, num_rows):
-		row = {}
-		row['name'] = row_names[i]
-		row['zero_count'] = zero_counts[i]
-		row['zero_frac'] = zero_fracs[i]
-		row['mean'] = row_means[i]
-		row['nonzero_mean'] = nonzero_row_means[i]
+		row = OrderedDict([['name', row_names[i]],
+		['zero_count', zero_counts[i]],
+		['zero_frac', zero_fracs[i]],
+		['mean', row_means[i]],
+		['nonzero_mean', nonzero_row_means[i]]])
+
 		output['stats']['zeros'].append(row)
 
 	#Return output in JSON format
@@ -205,17 +199,15 @@ def entropy(count_mat) :
 		entropies.append(H)
 
 	#Format output
-	output = {}
-	output['name'] = 'entropy'
-	output['stats'] = {}
+	output = OrderedDict([['name', 'entropy'], ['stats', {}]])
 	output['stats']['entropies'] = []
 
 	for i in range(0, num_rows):
-		row = {}
-		row['name'] = row_names[i]
-		row['entropy'] = entropies[i]
+		row = OrderedDict([['name', row_names[i]],
+		['entropy', entropies[i]]])
+
 		output['stats']['entropies'].append(row)
 
 	#Return output in JSON format
-	return json.dumps(output, sort_keys=True, indent=4)
+	return json.dumps(output, indent=4)
 

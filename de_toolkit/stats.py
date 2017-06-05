@@ -24,6 +24,7 @@ def base(count_mat) :
 	cnts = count_mat.counts.as_matrix()
 	num_cols=len(cnts[0])
 	num_rows=len(cnts)
+	col_names=count_mat.count_names
 
 	output={}
 	output['name'] = 'base'
@@ -56,12 +57,46 @@ def colzero(count_mat) :
 				zero_count+=1
 		zero_counts.append(zero_count)
 
+	zero_fracs = []
+	for i in range(0, num_cols):
+		zero_frac=zero_counts[i]/num_rows
+		zero_fracs.append(zero_frac)
+	
+	col_means = []
+	for i in range(0, num_cols):
+		mean = 0.0
+		for j in range(0, num_rows):
+			mean+=cnts[j][i]
+		mean=mean/num_rows
+		col_means.append(mean)
+
+	nonzero_col_means = []
+	for i in range(0, num_cols):
+		mean=0.0
+		num=0
+		for j in range(0, num_rows):
+			if cnts[j][i] != 0:
+				mean+=cnts[j][i]
+				num+=1
+		if num != 0:
+			mean=mean/num
+		nonzero_col_means.append(mean)
+
 	output={}
 	output['name'] = 'colzero'
 	output['stats'] = {}
 	output['stats']['zeros'] = []
+
+	for i in range(0, num_cols):
+		col = {}
+		col['name'] = col_names[i]
+		col['zero_count'] = zero_counts[i]
+		col['zero_frac'] = zero_fracs[i]
+		col['mean'] = col_means[i]
+		col['nonzero_mean'] = nonzero_col_means[i]
+		output['stats']['zeros'].append(col)
 	
-	return output
+	return json.dumps(output, sort_keys=True, indent=4)
 
 def rowzero(count_mat) :
 	'''Row-wise distribution of zero counts'''

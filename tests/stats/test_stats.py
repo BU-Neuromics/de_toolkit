@@ -18,12 +18,12 @@ def test_stats_base(fake_counts_obj):
 from de_toolkit.stats import colzero
 
 #test that colzero function gets correct column names
-def test_stats_colzero_names(fake_counts_obj):
-	json_output = colzero(fake_counts_obj)
+def test_stats_colzero_names(fake_counts_obj_with_zeros):
+	json_output = colzero(fake_counts_obj_with_zeros)
 	output=json.loads(json_output)
 	zeros = output.get('stats', {}).get('zeros')
 
-	true_col_names = fake_counts_obj.sample_names.tolist()
+	true_col_names = fake_counts_obj_with_zeros.sample_names.tolist()
 	col_names = []
 	for i in range(0, len(zeros)):
 		col = zeros[i]
@@ -31,4 +31,3 @@ def test_stats_colzero_names(fake_counts_obj):
 		col_names.append(name)
 	
 	assert true_col_names==col_names
-

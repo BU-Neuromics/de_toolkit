@@ -32,9 +32,7 @@ def base(count_mat) :
 	output['stats']['num_cols'] = num_cols
 	output['stats']['num_rows'] = num_rows
 
-	json.dumps(output)
-	
-	return output
+	return json.dumps(output, sort_keys=True, indent=4)
 
 def coldist(count_mat) :
 	'''Column-wise distribution of counts'''
@@ -73,5 +71,4 @@ def rowzero(count_mat) :
 def entropy(count_mat) :
 	'''Row-wise sample entropy calculation'''
 	pass
-
 

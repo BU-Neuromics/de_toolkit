@@ -21,8 +21,7 @@ def summary(count_mat) :
 
 def base(count_mat) :
 	'''Basic statistics of the counts file'''	
-	cnts=[[2,4,8],[1,1,1],[1,1,1],[1,1,1],[1,1,1]]
-	#cnts = count_mat.counts.as_matrix()
+	cnts = count_mat.counts.as_matrix()
 	num_cols=len(cnts[0])
 	num_rows=len(cnts)
 

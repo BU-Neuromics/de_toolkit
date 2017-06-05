@@ -48,3 +48,19 @@ def test_stats_colzero_zero_counts(fake_counts_obj_with_zeros):
 		zero_counts.append(zero_count)
 
 	assert true_zero_counts==zero_counts
+
+#test that colzero function gets correct zero fractions
+def test_stats_colzero_zero_fracs(fake_counts_obj_with_zeros):
+	json_output = colzero(fake_counts_obj_with_zeros)
+	output=json.loads(json_output)
+	zeros = output.get('stats', {}).get('zeros')
+
+	true_zero_fracs = [1/5, 2/5, 3/5]
+
+	zero_fracs = []
+	for i in range(0, len(zeros)):
+		col = zeros[i]
+		zero_frac = col.get('zero_frac')
+		zero_fracs.append(zero_frac)
+
+	assert true_zero_fracs == zero_fracs

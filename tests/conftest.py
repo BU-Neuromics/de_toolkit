@@ -38,6 +38,13 @@ def check_exit_status() :
 #   -> fake_counts_pandas_dataframe
 #     -> fake_counts_numpy_matrix
 
+# fake_counts_text_data_with_zeros - 6 genes, 3 samples (fake_column_data_with_zeros)
+#   -> fake_counts_csv_with_zeros
+#   -> fake_counts_tsv_with_zeros
+#   -> fake_counts_obj_with_zeros
+#   -> fake_counts_pandas_dataframe_with_zeros
+#     -> fake_counts_numpy_matrix_with_zeros
+
 # fake_big_counts - 1000 genes, 3 samples (fake_column_data)
 #   -> fake_big_counts_csv
 #   -> fake_big_counts_obj
@@ -155,6 +162,55 @@ def fake_counts_obj(
 
   return make_counts_obj(
     fake_counts_csv
+    ,fake_column_data_csv
+    ,fake_design
+  )
+
+################################################################################
+
+################################################################################
+# fake_counts_data_with_zeros
+
+@pytest.fixture()
+def fake_counts_text_data_with_zeros() :
+  data = [
+    ['gene','a','b','c']
+    ,['gene1','2.0','4.0','0.0']
+    ,['gene2','0.0','9.0','0.0']
+    ,['gene3','4.0','0.0','0.0']
+    ,['gene4','5.0','0.0','125.0']
+    ,['gene5','6.0','36.0','216.0']
+  ]
+  return data
+
+@pytest.fixture()
+def fake_counts_pandas_dataframe_with_zeros(fake_counts_csv_with_zeros) :
+  return pandas.read_csv(fake_counts_csv_with_zeros
+    ,index_col=0
+  )
+
+@pytest.fixture()
+def fake_counts_numpy_matrix(fake_counts_pandas_dataframe_with_zeros) :
+  return fake_counts_pandas_dataframe_with_zeros.as_matrix()
+
+@pytest.fixture()
+def fake_counts_csv_with_zeros(request,fake_counts_text_data_with_zeros) :
+  with temp_csv_wrap(fake_counts_text_data_with_zeros,',') as f :
+    yield f.name
+
+@pytest.fixture()
+def fake_counts_tsv_with_zeros(request,fake_counts_text_data_with_zeros) :
+  with temp_csv_wrap(fake_counts_text_data_with_zeros,'\t') as f :
+    yield f.name
+
+@pytest.fixture
+def fake_counts_obj_with_zeros(
+  fake_counts_csv_with_zeros
+  ,fake_column_data_csv
+  ,fake_design) :
+
+  return make_counts_obj(
+    fake_counts_csv_with_zeros
     ,fake_column_data_csv
     ,fake_design
   )

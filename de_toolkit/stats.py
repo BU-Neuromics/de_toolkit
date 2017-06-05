@@ -111,7 +111,66 @@ def colzero(count_mat) :
 
 def rowzero(count_mat) :
 	'''Row-wise distribution of zero counts'''
-	pass
+	
+	#Get counts, number of columns, number of rows, and gene names
+	cnts = count_mat.counts.as_matrix()
+	num_cols=len(cnts[0])
+	num_rows=len(cnts)
+	row_names = count_mat.count_names
+	
+	#Calculate zero counts for each row
+	zero_counts =[]
+	for i in range(0, num_rows):
+		zero_count = 0
+		for j in range(0, num_cols):
+			if cnts[i][j]==0:
+				zero_count+=1
+		zero_counts.append(zero_count)
+	
+	#Calculate zero fractions for each rows
+	zero_fracs = []
+	for i in range(0, num_rows):
+		zero_frac=zero_counts[i]/num_cols
+		zero_fracs.append(zero_frac)
+
+	#Calculate means for each row
+	row_means = []
+	for i in range(0, num_rows):
+		mean = 0.0
+		for j in range(0, num_cols):
+			mean+=cnts[i][j]
+		mean=mean/num_cols
+		row_means.append(mean)
+	
+	#Calculate the means of only the nonzero counts for each row
+	nonzero_row_means = []
+	for i in range(0, num_rows):
+		mean = 0.0
+		num = 0
+		for j in range(0, num_cols):
+			if cnts[i][j] != 0:
+				mean+=cnts[i][j]
+				num+=1
+		if num != 0:
+			mean=mean/num
+		nonzero_row_means.append(mean)
+
+	#Format output
+	output = {}
+	output['name'] = 'rowzero'
+	output['stats'] = {}
+	output['stats']['zeros'] = []
+
+	for i in range(0, num_rows):
+		row = {}
+		row['name'] = row_names[i]
+		row['zero_count'] = zero_counts[i]
+		row['zero_frac'] = zero_fracs[i]
+		row['mean'] = row_means[i]
+		row['nonzero_mean'] = nonzero_row_means[i]
+		output['stats']['zeros'].append(row)
+
+	return json.dumps(output, sort_keys=True, indent=4)
 
 def entropy(count_mat) :
 	'''Row-wise sample entropy calculation'''

@@ -23,8 +23,8 @@ def test_stats_colzero_names(fake_counts_obj_with_zeros):
 	output=json.loads(json_output)
 	zeros = output.get('stats', {}).get('zeros')
 
-	true_col_names = fake_counts_obj_with_zeros.sample_names.tolist()
-	
+	true_col_names = ['a', 'b', 'c']	
+
 	col_names = []
 	for i in range(0, len(zeros)):
 		col = zeros[i]
@@ -96,3 +96,85 @@ def test_stats_colzero_nonzero_col_means(fake_counts_obj_with_zeros):
 		nonzero_col_means.append(nonzero_col_mean)
 	
 	assert true_nonzero_col_means == nonzero_col_means
+
+from de_toolkit.stats import rowzero
+
+#test that rowzero function gets correct row names
+def test_stats_rowzero_names(fake_counts_obj_with_zeros):
+	json_output = rowzero(fake_counts_obj_with_zeros)
+	output = json.loads(json_output)
+	zeros = output.get('stats', {}).get('zeros')
+
+	true_row_names = ['gene1', 'gene2', 'gene3', 'gene4', 'gene5']
+
+	row_names = []
+	for i in range(0, len(zeros)):
+		row = zeros[i]
+		row_name = row.get('name')
+		row_names.append(row_name)
+
+	assert true_row_names == row_names
+
+#test that rowzero function gets correct zero counts
+def test_stats_rowzero_zero_counts(fake_counts_obj_with_zeros):
+	json_output = rowzero(fake_counts_obj_with_zeros)
+	output = json.loads(json_output)
+	zeros = output.get('stats', {}).get('zeros')
+
+	true_zero_counts = [1, 2, 2, 1, 0]
+
+	zero_counts = []
+	for i in range(0, len(zeros)):
+		row = zeros[i]
+		zero_count = row.get('zero_count')
+		zero_counts.append(zero_count)
+
+	assert true_zero_counts == zero_counts
+
+#test that rowzero function gets correct zero fractions
+def test_stats_rowzero_zero_fracs(fake_counts_obj_with_zeros):
+	json_output = rowzero(fake_counts_obj_with_zeros)
+	output = json.loads(json_output)
+	zeros = output.get('stats', {}).get('zeros')
+
+	true_zero_fracs = [1/3, 2/3, 2/3, 1/3, 0]
+
+	zero_fracs = []
+	for i in range(0, len(zeros)):
+		row = zeros[i]
+		zero_frac = row.get('zero_frac')
+		zero_fracs.append(zero_frac)
+
+	assert true_zero_fracs == zero_fracs
+
+#test that rowzero function gets correct row means
+def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
+	json_output = rowzero(fake_counts_obj_with_zeros)
+	output = json.loads(json_output)
+	zeros = output.get('stats', {}).get('zeros')
+
+	true_row_means = [(2+4)/3, 9/3, 4/3, (5+125)/3, (6+36+216)/3]
+
+	row_means = []
+	for i in range(0, len(zeros)):
+		row = zeros[i]
+		row_mean = row.get('mean')
+		row_means.append(row_mean)
+
+	assert true_row_means == row_means
+
+#test that rowzero function gets correct nonzero row means
+def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
+	json_output = rowzero(fake_counts_obj_with_zeros)
+	output = json.loads(json_output)
+	zeros = output.get('stats', {}).get('zeros')
+
+	true_nonzero_row_means = [(2+4)/2, 9, 4, (5+125)/2, (6+36+216)/3]
+
+	nonzero_row_means = []
+	for i in range(0, len(zeros)):
+		row = zeros[i]
+		nonzero_row_mean = row.get('nonzero_mean')
+		nonzero_row_means.append(nonzero_row_mean)
+
+	assert true_nonzero_row_means == nonzero_row_means

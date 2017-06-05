@@ -21,16 +21,20 @@ def summary(count_mat) :
 
 def base(count_mat) :
 	'''Basic statistics of the counts file'''	
+	
+	#Get counts, number of columns, and number of rows
 	cnts = count_mat.counts.as_matrix()
 	num_cols=len(cnts[0])
 	num_rows=len(cnts)
 
+	#Format output
 	output={}
 	output['name'] = 'base'
 	output['stats'] = {}
 	output['stats']['num_cols'] = num_cols
 	output['stats']['num_rows'] = num_rows
 
+	#Return output in JSON format
 	return json.dumps(output, sort_keys=True, indent=4)
 
 def coldist(count_mat) :
@@ -44,11 +48,13 @@ def rowdist(count_mat) :
 def colzero(count_mat) :
 	'''Column-wise distribution of zero counts'''
 	
+	#Get counts, number of columns, number of rows, and sample names
 	cnts = count_mat.counts.as_matrix()
 	num_cols=len(cnts[0])
 	num_rows=len(cnts)
 	col_names=count_mat.sample_names
 
+	#Calculate zero counts for each column
 	zero_counts =[]
 	for i in range(0, num_cols):
 		zero_count = 0
@@ -57,11 +63,13 @@ def colzero(count_mat) :
 				zero_count+=1
 		zero_counts.append(zero_count)
 
+	#Calculate zero fractions for each column
 	zero_fracs = []
 	for i in range(0, num_cols):
 		zero_frac=zero_counts[i]/num_rows
 		zero_fracs.append(zero_frac)
 	
+	#Calculate means for each column
 	col_means = []
 	for i in range(0, num_cols):
 		mean = 0.0
@@ -70,6 +78,7 @@ def colzero(count_mat) :
 		mean=mean/num_rows
 		col_means.append(mean)
 
+	#Calculate the means of only the nonzero counts in each column
 	nonzero_col_means = []
 	for i in range(0, num_cols):
 		mean=0.0
@@ -82,6 +91,7 @@ def colzero(count_mat) :
 			mean=mean/num
 		nonzero_col_means.append(mean)
 
+	#Format output
 	output={}
 	output['name'] = 'colzero'
 	output['stats'] = {}
@@ -96,6 +106,7 @@ def colzero(count_mat) :
 		col['nonzero_mean'] = nonzero_col_means[i]
 		output['stats']['zeros'].append(col)
 	
+	#Return output in JSON format
 	return json.dumps(output, sort_keys=True, indent=4)
 
 def rowzero(count_mat) :

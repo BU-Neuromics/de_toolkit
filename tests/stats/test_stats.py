@@ -80,3 +80,19 @@ def test_stats_colzero_col_means(fake_counts_obj_with_zeros):
 		col_means.append(col_mean)
 
 	assert true_col_means == col_means
+
+#test that colzero function gets correct nonzero column means
+def test_stats_colzero_nonzero_col_means(fake_counts_obj_with_zeros):
+	json_output = colzero(fake_counts_obj_with_zeros)
+	output = json.loads(json_output)
+	zeros = output.get('stats', {}).get('zeros')
+
+	true_nonzero_col_means = [(2+4+5+6)/4, (4+9+36)/3, (125+216)/2]
+
+	nonzero_col_means = []
+	for i in range(0, len(zeros)):
+		col = zeros[i]
+		nonzero_col_mean = col.get('nonzero_mean')
+		nonzero_col_means.append(nonzero_col_mean)
+	
+	assert true_nonzero_col_means == nonzero_col_means

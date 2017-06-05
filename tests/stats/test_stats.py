@@ -64,3 +64,19 @@ def test_stats_colzero_zero_fracs(fake_counts_obj_with_zeros):
 		zero_fracs.append(zero_frac)
 
 	assert true_zero_fracs == zero_fracs
+
+#test that colzero function gets correct column means
+def test_stats_colzero_col_means(fake_counts_obj_with_zeros):
+	json_output = colzero(fake_counts_obj_with_zeros)
+	output = json.loads(json_output)
+	zeros = output.get('stats', {}).get('zeros')
+	
+	true_col_means = [(2+4+5+6)/5, (4+9+36)/5, (125+216)/5]
+
+	col_means = []
+	for i in range(0, len(zeros)):
+		col = zeros[i]
+		col_mean = col.get('mean')
+		col_means.append(col_mean)
+
+	assert true_col_means == col_means

@@ -31,8 +31,8 @@ def summary(count_mat) :
 	args = parser.parse_args()
 
 def base(count_mat) :
-	'''Basic statistics of the counts file'''	
-	
+	'''Basic statistics of the counts file'''
+
 	#Get counts, number of columns, and number of rows
 	cnts = count_mat.counts.as_matrix()
 	num_cols=len(cnts[0])
@@ -41,64 +41,66 @@ def base(count_mat) :
 	#Format output
 	base_output = OrderedDict([['num_cols', num_cols], ['num_rows', num_rows]])
 	output = OrderedDict([['name', 'base'], ['stats', base_output]])
-	
+
 	#Return output in JSON format
 	return json.dumps(output, sort_keys=True, indent=4)
 
 def coldist(count_mat) :
 	'''Column-wise distribution of counts'''
-    output = {}
-    output['name'] = 'coldist'
-    output['stats'] = {}
-    output['stats']['pct'] = list(range(5, 100, 5))
-        
-    output['stats']['dists'] = []
-    for s in count_mat.sample_names:
+	output = {}
+	output['name'] = 'coldist'
+	output['stats'] = {}
+	output['stats']['pct'] = list(range(5, 100, 5))
+
+	output['stats']['dists'] = []
+	for s in count_mat.sample_names:
         #to access the data in each column
-        data = getattr(count_mat.counts,s)
-                
+		data = getattr(count_mat.counts,s)
+
         #for the upper and lower outliers
-        Q1 = np.percentile(data, 25)
-        Q3 = np.percentile(data, 75)
-        IQR =  np.percentile(data, 75) - np.percentile(data, 25)
-                
+		Q1 = np.percentile(data, 25)
+		Q3 = np.percentile(data, 75)
+		IQR =  np.percentile(data, 75) - np.percentile(data, 25)
+
         #for the histogram bin edges and count numbers
-        (n, bins, patches) = plt.hist(data, bins=20, label='hst')
-                
+		(n, bins, patches) = plt.hist(data, bins=20, label='hst')
+
         #make the dict for each sample
-        output['stats']['dists'].append({'name':s, 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
-        
-    return json.dumps(output, indent = 4, sort_keys = True)
+		output['stats']['dists'].append({'name':s, 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
+
+	return json.dumps(output, indent = 4, sort_keys = True)
 
 
 def rowdist(count_mat) :
 	'''Row-wise distribution of counts'''
-    output = {}
-    output['name'] = 'rowdist'
-    output['stats'] = {}
-    output['stats']['pct'] = list(range(5, 100, 5))
-        
-    output['stats']['dists'] = []
-    for i in range(len(count_mat.count_names)):
+	output = {}
+	output['name'] = 'rowdist'
+	output['stats'] = {}
+	output['stats']['pct'] = list(range(5, 100, 5))
+
+	output['stats']['dists'] = []
+	for i in range(len(count_mat.count_names)):
         #to access the data in each row
-        data = count_mat.counts.iloc[i]
-                
+		data = count_mat.counts.iloc[i]
+
         #for the upper and lower outliers
-        Q1 = np.percentile(data, 25)
-        Q3 = np.percentile(data, 75)
-        IQR =  np.percentile(data, 75) - np.percentile(data, 25)
-                
+		Q1 = np.percentile(data, 25)
+		Q3 = np.percentile(data, 75)
+		IQR =  np.percentile(data, 75) - np.percentile(data, 25)
+
         #for the histogram bin edges and count numbers
-        (n, bins, patches) = plt.hist(data, bins=20, label='hst')
-                
+		(n, bins, patches) = plt.hist(data, bins=20, label='hst')
+
         #make the dict for each row
-        output['stats']['dists'].append({'name':CountMatrix(rowdist_pd_df).count_names[i], 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
-        
-    return json.dumps(output, indent = 4, sort_keys = True)
+		output['stats']['dists'].append({'name':count_mat.count_names[i], 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
+
+	return json.dumps(output, indent = 4, sort_keys = True)
+
+
 
 def colzero(count_mat) :
 	'''Column-wise distribution of zero counts'''
-	
+
 	#Get counts, number of columns, number of rows, and sample names
 	cnts = count_mat.counts.as_matrix()
 	num_cols=len(cnts[0])
@@ -119,7 +121,7 @@ def colzero(count_mat) :
 	for i in range(0, num_cols):
 		zero_frac=zero_counts[i]/num_rows
 		zero_fracs.append(zero_frac)
-	
+
 	#Calculate means for each column
 	col_means = []
 	for i in range(0, num_cols):
@@ -152,21 +154,21 @@ def colzero(count_mat) :
 		['zero_frac', zero_fracs[i]],
 		['mean', col_means[i]],
 		['nonzero_mean', nonzero_col_means[i]]])
-		
+
 		output['stats']['zeros'].append(col)
-	
+
 	#Return output in JSON format
 	return json.dumps(output, sort_keys=True, indent=4)
 
 def rowzero(count_mat) :
 	'''Row-wise distribution of zero counts'''
-	
+
 	#Get counts, number of columns, number of rows, and gene names
 	cnts = count_mat.counts.as_matrix()
 	num_cols=len(cnts[0])
 	num_rows=len(cnts)
 	row_names = count_mat.count_names
-	
+
 	#Calculate zero counts for each row
 	zero_counts =[]
 	for i in range(0, num_rows):
@@ -175,7 +177,7 @@ def rowzero(count_mat) :
 			if cnts[i][j]==0:
 				zero_count+=1
 		zero_counts.append(zero_count)
-	
+
 	#Calculate zero fractions for each rows
 	zero_fracs = []
 	for i in range(0, num_rows):
@@ -190,7 +192,7 @@ def rowzero(count_mat) :
 			mean+=cnts[i][j]
 		mean=mean/num_cols
 		row_means.append(mean)
-	
+
 	#Calculate the means of only the nonzero counts for each row
 	nonzero_row_means = []
 	for i in range(0, num_rows):
@@ -222,7 +224,7 @@ def rowzero(count_mat) :
 
 def entropy(count_mat) :
 	'''Row-wise sample entropy calculation'''
-			
+
 	#Get counts, number of columns, number of rows, and gene names
 	cnts = count_mat.counts.as_matrix()
 	num_cols=len(cnts[0])
@@ -262,4 +264,3 @@ def entropy(count_mat) :
 
 	#Return output in JSON format
 	return json.dumps(output, indent=4)
-

@@ -2,6 +2,12 @@ import json
 import math
 from collections import OrderedDict
 import argparse
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+import pandas
+from common import *
+from docopt import docopt
 
 '''
 Usage:
@@ -17,7 +23,6 @@ Options:
 	-o FILE --output=FILE    Destination of primary output [default: stdout]
 
 '''
-from docopt import docopt
 
 def summary(count_mat) :
 	parser = argparse.ArgumentParser()
@@ -42,11 +47,54 @@ def base(count_mat) :
 
 def coldist(count_mat) :
 	'''Column-wise distribution of counts'''
-	pass
+    output = {}
+    output['name'] = 'coldist'
+    output['stats'] = {}
+    output['stats']['pct'] = list(range(5, 100, 5))
+        
+    output['stats']['dists'] = []
+    for s in count_mat.sample_names:
+    #to access the data in each column
+    data = getattr(count_mat.counts,s)
+                
+    #for the upper and lower outliers
+    Q1 = np.percentile(data, 25)
+    Q3 = np.percentile(data, 75)
+    IQR =  np.percentile(data, 75) - np.percentile(data, 25)
+                
+    #for the histogram bin edges and count numbers
+    (n, bins, patches) = plt.hist(data, bins=20, label='hst')
+                
+    #make the dict for each sample
+    output['stats']['dists'].append({'name':s, 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
+        
+    return json.dumps(output, indent = 4, sort_keys = True)
+
 
 def rowdist(count_mat) :
 	'''Row-wise distribution of counts'''
-	pass
+    output = {}
+    output['name'] = 'rowdist'
+    output['stats'] = {}
+    output['stats']['pct'] = list(range(5, 100, 5))
+        
+    output['stats']['dists'] = []
+    for i in range(len(count_mat.count_names)):
+        #to access the data in each row
+        data = count_mat.counts.iloc[i]
+                
+            #for the upper and lower outliers
+            Q1 = np.percentile(data, 25)
+            Q3 = np.percentile(data, 75)
+            IQR =  np.percentile(data, 75) - np.percentile(data, 25)
+                
+            #for the histogram bin edges and count numbers
+            (n, bins, patches) = plt.hist(data, bins=20, label='hst')
+                
+            #make the dict for each row
+            output['stats']['dists'].append({'name':CountMatrix(rowdist_pd_df).count_names[i], 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
+        
+        return json.dumps(output, indent = 4, sort_keys = True)
 
 def colzero(count_mat) :
 	'''Column-wise distribution of zero counts'''

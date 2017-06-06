@@ -1,23 +1,31 @@
-import docopt                                                                   
-import numpy as np                                                              
-import os                                                                       
-import pandas                                                                   
-import pytest                                                                   
-import tempfile                       
-import json           
-import math                               
+import docopt
+import numpy as np
+import os
+import pandas
+import pytest
+import tempfile
+import json
+import math
+from de_toolkit.common import *
+from de_toolkit.stats import *
 
-from de_toolkit.stats import base                                                                               
 #test for base function
-def test_stats_base(fake_counts_obj): 
+def test_stats_base(fake_counts_obj):
 	json_output = base(fake_counts_obj)
 	output=json.loads(json_output)
 	cols = output.get('stats', {}).get('num_cols')
 	rows = output.get('stats', {}).get('num_rows')
-	
-	assert cols==3 and rows==5 
 
-from de_toolkit.stats import colzero
+	assert cols==3 and rows==5
+
+
+#test for coldist function
+def test_stats_coldist_mean():
+	coldist_pd_df = pandas.read_csv('tests/stats/coldist_fake_csv.csv',index_col=0) #something wrong with importing the files
+	coldist_pd_matrix = CountMatrix(coldist_pd_df)
+	return coldist(coldist_pd_matrix)
+
+print(test_stats_coldist_mean())
 
 #test that colzero function gets correct column names
 def test_stats_colzero_names(fake_counts_obj_with_zeros):
@@ -25,14 +33,14 @@ def test_stats_colzero_names(fake_counts_obj_with_zeros):
 	output=json.loads(json_output)
 	zeros = output.get('stats', {}).get('zeros')
 
-	true_col_names = ['a', 'b', 'c']	
+	true_col_names = ['a', 'b', 'c']
 
 	col_names = []
 	for i in range(0, len(zeros)):
 		col = zeros[i]
 		name = col.get('name')
 		col_names.append(name)
-	
+
 	assert true_col_names==col_names
 
 #test that colzero function gets correct zero counts
@@ -42,7 +50,7 @@ def test_stats_colzero_zero_counts(fake_counts_obj_with_zeros):
 	zeros = output.get('stats', {}).get('zeros')
 
 	true_zero_counts = [1, 2, 3]
-	
+
 	zero_counts = []
 	for i in range(0, len(zeros)):
 		col = zeros[i]
@@ -72,7 +80,7 @@ def test_stats_colzero_col_means(fake_counts_obj_with_zeros):
 	json_output = colzero(fake_counts_obj_with_zeros)
 	output = json.loads(json_output)
 	zeros = output.get('stats', {}).get('zeros')
-	
+
 	true_col_means = [(2+4+5+6)/5, (4+9+36)/5, (125+216)/5]
 
 	col_means = []
@@ -96,10 +104,9 @@ def test_stats_colzero_nonzero_col_means(fake_counts_obj_with_zeros):
 		col = zeros[i]
 		nonzero_col_mean = col.get('nonzero_mean')
 		nonzero_col_means.append(nonzero_col_mean)
-	
+
 	assert true_nonzero_col_means == nonzero_col_means
 
-from de_toolkit.stats import rowzero
 
 #test that rowzero function gets correct row names
 def test_stats_rowzero_names(fake_counts_obj_with_zeros):
@@ -181,7 +188,7 @@ def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
 
 	assert true_nonzero_row_means == nonzero_row_means
 
-from de_toolkit.stats import entropy
+
 
 #test that entropy function gets correct row names
 def test_stats_entropy_names(fake_counts_obj):
@@ -204,7 +211,7 @@ def test_stats_entropies(fake_counts_obj):
 	json_output = entropy(fake_counts_obj)
 	output = json.loads(json_output)
 	entropies = output.get('stats', {}).get('entropies')
-	
+
 	H1 = -((2/14)*math.log(2/14,2) + (4/14)*math.log(4/14,2) + (8/14)*math.log(8/14,2))
 	H2 = -((3/39)*math.log(3/39,2) + (9/39)*math.log(9/39,2) + (27/39)*math.log(27/39,2))
 	H3 = -((4/84)*math.log(4/84,2) + (16/84)*math.log(16/84,2) + (64/84)*math.log(64/84,2))

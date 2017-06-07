@@ -63,8 +63,6 @@ def coldist(count_mat) :
 	for s in count_mat.sample_names:
         #to access the data in each column
 		data = getattr(count_mat.counts,s).tolist()
-		print(data)
-
 
         #for the upper and lower outliers
 		Q1 = np.percentile(data, 25)
@@ -80,8 +78,6 @@ def coldist(count_mat) :
 	return output
 
 
-
-
 def rowdist(count_mat) :
 	'''Row-wise distribution of counts'''
 	output = {}
@@ -90,11 +86,9 @@ def rowdist(count_mat) :
 	output['stats']['pct'] = list(range(5, 100, 5))
 
 	output['stats']['dists'] = []
-
-
 	for i in range(len(count_mat.count_names)):
         #to access the data in each row
-		data = count_mat.counts.iloc[i]
+		data = count_mat.counts.iloc[i].tolist()
 
         #for the upper and lower outliers
 		Q1 = np.percentile(data, 25)
@@ -108,6 +102,7 @@ def rowdist(count_mat) :
 		output['stats']['dists'].append({'name':count_mat.count_names[i], 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
 
 	return output
+
 
 
 def colzero(count_mat) :

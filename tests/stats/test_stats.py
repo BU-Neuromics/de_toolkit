@@ -17,7 +17,7 @@ def test_stats_base(fake_counts_obj):
 
 	assert cols==3 and rows==5
 
-#========================================================
+
 #test that coldist function gets correct column names
 def test_stats_coldist_names(fake_count_coldist_obj):
 	output = coldist(fake_count_coldist_obj)
@@ -53,10 +53,10 @@ def test_stats_rowdist_dist(fake_count_rowdist_obj):
 	row_dist_func = [d['dist'] for d in row_dists]
 	print(row_dist_func)
 
-	row_dist_true = [[3.0 for i in range(20)] for j in range(3)]
+	row_dist_true = [[1.0 for i in range(20)] for j in range(3)]
 	assert row_dist_func == row_dist_true
 
-#========================================================
+
 #test that colzero function gets correct column names
 def test_stats_colzero_names(fake_counts_obj_with_zeros):
 	output = colzero(fake_counts_obj_with_zeros)

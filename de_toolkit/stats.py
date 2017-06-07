@@ -8,7 +8,7 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import pandas
 from docopt import docopt
-
+from de_toolkit.common import *
 '''
 Usage:
 	detk-stats summary [options] [--json=<json_fn>] [--html=<html_fn>] <counts_fn>
@@ -49,7 +49,7 @@ def base(count_mat) :
 	base_output = OrderedDict([['num_cols', num_cols], ['num_rows', num_rows]])
 	output = OrderedDict([['name', 'base'], ['stats', base_output]])
 
-	#Return output 
+	#Return output
 	return output
 
 def coldist(count_mat) :
@@ -63,7 +63,8 @@ def coldist(count_mat) :
 	for s in count_mat.sample_names:
         #to access the data in each column
 		data = getattr(count_mat.counts,s).tolist()
-		
+		print(data)
+
 
         #for the upper and lower outliers
 		Q1 = np.percentile(data, 25)
@@ -77,6 +78,9 @@ def coldist(count_mat) :
 		output['stats']['dists'].append({'name':s, 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
 
 	return output
+
+
+
 
 def rowdist(count_mat) :
 	'''Row-wise distribution of counts'''
@@ -227,7 +231,7 @@ def rowzero(count_mat) :
 
 		output['stats']['zeros'].append(row)
 
-	#Return output 
+	#Return output
 	return output
 
 def entropy(count_mat) :

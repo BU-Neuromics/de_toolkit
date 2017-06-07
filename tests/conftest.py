@@ -23,7 +23,7 @@ def check_exit_status() :
 
 # fixture tree:
 
-# fake_column_data - 3 samples, one categorical, one continuous cov
+# fake_column_data - 20 samples, one categorical, one continuous cov
 #   -> fake_column_data_pandas_dataframe
 #   -> fake_column_data_csv
 
@@ -44,6 +44,16 @@ def check_exit_status() :
 #   -> fake_counts_obj_with_zeros
 #   -> fake_counts_pandas_dataframe_with_zeros
 #     -> fake_counts_numpy_matrix_with_zeros
+
+# fake_count_list_data_coldist - 60 genes, 3 samples (test the coldist function)
+#   -> fake_count_coldist_csv
+#   -> fake_count_dist_pandas_dataframe
+#   -> fake_count_dist_matrix
+#   ->fake_count_coldist_obj
+
+#  fake_count_list_data_rowdist - 3 genes, 20 samples (test the rowdist function)
+#   -> fake_count_rowdist_csv
+#   -> fake_count_rowdist_obj
 
 # fake_big_counts - 1000 genes, 3 samples (fake_column_data)
 #   -> fake_big_counts_csv
@@ -70,6 +80,23 @@ def fake_column_data(request) :
     ,['a','case',0.1]
     ,['b','case',1.0]
     ,['c','cont',10.0]
+    ,['d','case',1.0]
+    ,['e','case',1.0]
+    ,['f','case',1.0]
+    ,['g','case',1.0]
+    ,['h','case',1.0]
+    ,['i','case',1.0]
+    ,['j','case',1.0]
+    ,['k','case',1.0]
+    ,['l','case',1.0]
+    ,['m','case',1.0]
+    ,['n','case',1.0]
+    ,['o','case',1.0]
+    ,['p','case',1.0]
+    ,['q','case',1.0]
+    ,['r','case',1.0]
+    ,['s','case',1.0]
+    ,['t','case',1.0]
   ]
   return covs
 
@@ -271,16 +298,16 @@ def fake_count_coldist_obj(
   )
 
 ################################################################################
-print([i for i in range(1,40, 2)])
+
 ################################################################################
 # fake count data to test the rowdist
 @pytest.fixture()
 def fake_count_list_data_rowdist() :
   data = [
-  [ 'gene', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'sample8', 'sample9', 'sample10', 'sample11', 'sample12', 'sample13', 'sample14', 'sample15', 'sample16', 'sample17', 'sample18', 'sample19', 'sample20', 'sample21', 'sample22', 'sample23', 'sample24', 'sample25', 'sample26', 'sample27', 'sample28', 'sample29', 'sample30', 'sample31', 'sample32', 'sample33', 'sample34', 'sample35', 'sample36', 'sample37', 'sample38', 'sample39', 'sample40', 'sample41', 'sample42', 'sample43', 'sample44', 'sample45', 'sample46', 'sample47', 'sample48', 'sample49', 'sample50', 'sample51', 'sample52', 'sample53', 'sample54', 'sample55', 'sample56', 'sample57', 'sample58', 'sample59', 'sample60'],
-  [ 'gene1', 1, 1, 1, 6, 6, 6, 11, 11, 11, 16, 16, 16, 21, 21, 21, 26, 26, 26, 31, 31, 31, 36, 36, 36, 41, 41, 41, 46, 46, 46, 51, 51, 51, 56, 56, 56, 61, 61, 61, 66, 66, 66, 71, 71, 71, 76, 76, 76, 81, 81, 81, 86, 86, 86, 91, 91, 91, 96, 96, 96],
-  [ 'gene2', 2, 2, 2, 7, 7, 7, 12, 12, 12, 17, 17, 17, 22, 22, 22, 27, 27, 27, 32, 32, 32, 37, 37, 37, 42, 42, 42, 47, 47, 47, 52, 52, 52, 57, 57, 57, 62, 62, 62, 67, 67, 67, 72, 72, 72, 77, 77, 77, 82, 82, 82, 87, 87, 87, 92, 92, 92, 97, 97, 97],
-  [ 'gene3', 3, 3, 3, 8, 8, 8, 13, 13, 13, 18, 18, 18, 23, 23, 23, 28, 28, 28, 33, 33, 33, 38, 38, 38, 43, 43, 43, 48, 48, 48, 53, 53, 53, 58, 58, 58, 63, 63, 63, 68, 68, 68, 73, 73, 73, 78, 78, 78, 83, 83, 83, 88, 88, 88, 93, 93, 93, 98, 98, 98]
+  [ 'gene', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'],
+  [ 'gene1', 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39],
+  [ 'gene2', 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40],
+  [ 'gene3', 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41]
   ]
   return data
 
@@ -290,18 +317,6 @@ def fake_count_list_data_rowdist() :
 def fake_count_rowdist_csv(request,fake_count_list_data_rowdist) :
   with temp_csv_wrap(fake_count_list_data_rowdist,',') as f :
     yield f.name
-
-#convert to pandas data frame from csv
-@pytest.fixture()
-def fake_count_dist_pandas_dataframe(fake_count_rowdist_csv) :
-  return pandas.read_csv(fake_count_rowdist_csv
-    ,index_col=0
-  )
-
-#convert to matrix from pandas data frame
-@pytest.fixture()
-def fake_count_dist_matrix(fake_count_dist_pandas_dataframe) :
-  return fake_count_dist_pandas_dataframe.as_matrix()
 
 
 @pytest.fixture

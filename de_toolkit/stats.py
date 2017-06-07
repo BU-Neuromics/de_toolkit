@@ -6,7 +6,6 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas
-from common import *
 from docopt import docopt
 
 '''
@@ -55,7 +54,8 @@ def coldist(count_mat) :
 	output['stats']['dists'] = []
 	for s in count_mat.sample_names:
         #to access the data in each column
-		data = getattr(count_mat.counts,s)
+		data = getattr(count_mat.counts,s).tolist()
+		
 
         #for the upper and lower outliers
 		Q1 = np.percentile(data, 25)
@@ -71,6 +71,7 @@ def coldist(count_mat) :
 	return json.dumps(output, indent = 4, sort_keys = True)
 
 
+
 def rowdist(count_mat) :
 	'''Row-wise distribution of counts'''
 	output = {}
@@ -79,6 +80,8 @@ def rowdist(count_mat) :
 	output['stats']['pct'] = list(range(5, 100, 5))
 
 	output['stats']['dists'] = []
+
+
 	for i in range(len(count_mat.count_names)):
         #to access the data in each row
 		data = count_mat.counts.iloc[i]

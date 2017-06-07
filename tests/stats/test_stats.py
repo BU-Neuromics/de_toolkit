@@ -18,8 +18,8 @@ def test_stats_base(fake_counts_obj):
 	assert cols==3 and rows==5
 
 #test that coldist function gets correct column names
-def test_stats_coldist_names(fake_big_counts_obj):
-	output = coldist(fake_big_counts_obj)
+def test_stats_coldist_names(fake_count_coldist_obj):
+	output = coldist(fake_count_coldist_obj)
 	col_dists = output.get('stats').get('dists')
 	col_name_func = [d['name'] for d in col_dists]
 

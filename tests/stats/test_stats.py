@@ -229,3 +229,25 @@ def test_stats_entropies(fake_counts_obj):
 		row_entropies.append(row_entropy)
 
 	assert true_entropies == row_entropies
+
+#test that entropy function calculates correct entropy values when there are 0 counts
+def test_stats_entropies(fake_counts_obj_with_zeros):
+	json_output = entropy(fake_counts_obj_with_zeros)
+	output = json.loads(json_output)
+	entropies = output.get('stats', {}).get('entropies')
+
+	H1 = -((2/6)*math.log(2/6,2) + (4/6)*math.log(4/6,2))
+	H2 = -((9/9)*math.log(9/9,2))
+	H3 = -((4/4)*math.log(4/4,2))
+	H4 = -((5/130)*math.log(5/130,2) + (125/130)*math.log(125/130,2))
+	H5 = -((6/258)*math.log(6/258,2) + (36/258)*math.log(36/258,2) + (216/258)*math.log(216/258,2))
+	true_entropies = [H1, H2, H3, H4, H5]
+
+	row_entropies = []
+	for i in range(0, len(entropies)):
+		row = entropies[i]
+		row_entropy = row.get('entropy')
+		row_entropies.append(row_entropy)
+
+
+	assert true_entropies == row_entropies

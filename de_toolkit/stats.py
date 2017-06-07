@@ -251,7 +251,8 @@ def entropy(count_mat) :
 		H = 0.0
 		row_probs = probs[i]
 		for j in range(0, len(row_probs)):
-			H += row_probs[j]*math.log(row_probs[j], 2)
+			if row_probs[j] != 0.0:
+				H += row_probs[j]*math.log(row_probs[j], 2)
 		H = -1*H
 		entropies.append(H)
 

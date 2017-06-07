@@ -4,6 +4,7 @@ from collections import OrderedDict
 import argparse
 import numpy as np
 import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import pandas
 from docopt import docopt

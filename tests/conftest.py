@@ -238,10 +238,24 @@ def fake_big_counts_data() :
     ])
   return data
 
+#convert to csv from 2-D list
 @pytest.fixture()
 def fake_big_counts_csv(request,fake_big_counts_data) :
   with temp_csv_wrap(fake_big_counts_data,',') as f :
     yield f.name
+
+#convert to pandas data frame from csv
+@pytest.fixture()
+def fake_big_counts_pandas_dataframe(fake_big_counts_csv) :
+  return pandas.read_csv(fake_big_counts_csv
+    ,index_col=0
+  )
+
+#convert to matrix from pandas data frame
+@pytest.fixture()
+def fake_big_counts_matrix(fake_big_counts_pandas_dataframe) :
+  return fake_big_counts_pandas_dataframe.as_matrix()
+
 
 @pytest.fixture
 def fake_big_counts_obj(
@@ -255,6 +269,7 @@ def fake_big_counts_obj(
     ,fake_design
   )
 
+print(fake_big_counts_obj)
 ################################################################################
 
 
@@ -337,4 +352,4 @@ def make_counts_obj(
 
   return counts_obj
 
-
+print(fake_big_counts_data())

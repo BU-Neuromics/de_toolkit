@@ -18,15 +18,17 @@ def test_stats_base(fake_counts_obj):
 
 	assert cols==3 and rows==5
 
-'''
-#test for coldist function
-def test_stats_coldist_mean():
-	coldist_pd_df = pandas.read_csv('tests/stats/coldist_fake_csv.csv',index_col=0) #something wrong with importing the files
-	coldist_pd_matrix = CountMatrix(coldist_pd_df)
-	return coldist(coldist_pd_matrix)
+#test that coldist function gets correct column names
+def test_stats_coldist_names(fake_big_counts_obj):
+	json_output = coldist(fake_big_counts_obj)
+	output = json.loads(json_output)
+	col_dists = output.get('stats').get('dists')
+	col_name_func = [d['name'] for d in col_dists]
 
-print(test_stats_coldist_mean())
-'''
+	col_name_true = ['a','b','c']
+	assert col_name_func == col_name_true
+
+
 
 #test that colzero function gets correct column names
 def test_stats_colzero_names(fake_counts_obj_with_zeros):

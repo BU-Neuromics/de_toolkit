@@ -166,6 +166,112 @@ def fake_counts_obj(
     ,fake_design
   )
 
+
+################################################################################
+
+################################################################################
+# fake count data to test the coldist
+@pytest.fixture()
+def fake_count_list_data_coldist() :
+  data = [
+  ['gene','a','b','c'],
+  ['gene1', 1, 2, 3],
+  ['gene2', 1, 2, 3],
+  ['gene3', 1, 2, 3],
+  ['gene4', 6, 7, 8],
+  ['gene5', 6, 7, 8],
+  ['gene6', 6, 7, 8],
+  ['gene7', 11, 12, 13],
+  ['gene8', 11, 12, 13],
+  ['gene9', 11, 12, 13],
+  ['gene10', 16, 17, 18],
+  ['gene11', 16, 17, 18],
+  ['gene12', 16, 17, 18],
+  ['gene13', 21, 22, 23],
+  ['gene14', 21, 22, 23],
+  ['gene15', 21, 22, 23],
+  ['gene16', 26, 27, 28],
+  ['gene17', 26, 27, 28],
+  ['gene18', 26, 27, 28],
+  ['gene19', 31, 32, 33],
+  ['gene20', 31, 32, 33],
+  ['gene21', 31, 32, 33],
+  ['gene22', 36, 37, 38],
+  ['gene23', 36, 37, 38],
+  ['gene24', 36, 37, 38],
+  ['gene25', 41, 42, 43],
+  ['gene26', 41, 42, 43],
+  ['gene27', 41, 42, 43],
+  ['gene28', 46, 47, 48],
+  ['gene29', 46, 47, 48],
+  ['gene30', 46, 47, 48],
+  ['gene31', 51, 52, 53],
+  ['gene32', 51, 52, 53],
+  ['gene33', 51, 52, 53],
+  ['gene34', 56, 57, 58],
+  ['gene35', 56, 57, 58],
+  ['gene36', 56, 57, 58],
+  ['gene37', 61, 62, 63],
+  ['gene38', 61, 62, 63],
+  ['gene39', 61, 62, 63],
+  ['gene40', 66, 67, 68],
+  ['gene41', 66, 67, 68],
+  ['gene42', 66, 67, 68],
+  ['gene43', 71, 72, 73],
+  ['gene44', 71, 72, 73],
+  ['gene45', 71, 72, 73],
+  ['gene46', 76, 77, 78],
+  ['gene47', 76, 77, 78],
+  ['gene48', 76, 77, 78],
+  ['gene49', 81, 82, 83],
+  ['gene50', 81, 82, 83],
+  ['gene51', 81, 82, 83],
+  ['gene52', 86, 87, 88],
+  ['gene53', 86, 87, 88],
+  ['gene54', 86, 87, 88],
+  ['gene55', 91, 92, 93],
+  ['gene56', 91, 92, 93],
+  ['gene57', 91, 92, 93],
+  ['gene58', 96, 97, 98],
+  ['gene59', 96, 97, 98],
+  ['gene60', 96, 97, 98]
+  ]
+  return data
+
+
+#convert to csv from 2-D list
+@pytest.fixture()
+def fake_count_coldist_csv(request,fake_count_list_data_coldist) :
+  with temp_csv_wrap(fake_count_list_data_coldist,',') as f :
+    yield f.name
+
+#convert to pandas data frame from csv
+@pytest.fixture()
+def fake_count_dist_pandas_dataframe(fake_count_coldist_csv) :
+  return pandas.read_csv(fake_count_coldist_csv
+    ,index_col=0
+  )
+
+#convert to matrix from pandas data frame
+@pytest.fixture()
+def fake_count_dist_matrix(fake_count_dist_pandas_dataframe) :
+  return fake_count_dist_pandas_dataframe.as_matrix()
+
+
+@pytest.fixture
+def fake_count_coldist_obj(
+  fake_count_coldist_csv
+  ,fake_column_data_csv
+  ,fake_design) :
+
+  return make_counts_obj(
+    fake_count_coldist_csv
+    ,fake_column_data_csv
+    ,fake_design
+  )
+
+
+
 ################################################################################
 
 ################################################################################

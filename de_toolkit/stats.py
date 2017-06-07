@@ -24,10 +24,17 @@ Options:
 '''
 
 def summary(count_mat) :
-	parser = argparse.ArgumentParser()
-	parser.add_argument("--json", help="Name of JSON output file")
-	parser.add_argument("--html", help="Name of HTML output file")
-	args = parser.parse_args()
+	'''Compute summary statistics on a counts matrix file'''
+
+	total_output = []
+	total_output.append(base(count_mat))
+	total_output.append(coldist(count_mat))
+	total_output.append(rowdist(count_mat))
+	total_output.append(colzero(count_mat))
+	total_output.append(rowzero(count_mat))
+	total_output.append(entropy(count_mat))
+
+	return total_output
 
 def base(count_mat) :
 	'''Basic statistics of the counts file'''

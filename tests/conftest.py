@@ -270,6 +270,51 @@ def fake_count_coldist_obj(
     ,fake_design
   )
 
+################################################################################
+print([i for i in range(1,40, 2)])
+################################################################################
+# fake count data to test the rowdist
+@pytest.fixture()
+def fake_count_list_data_rowdist() :
+  data = [
+  [ 'gene', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'sample8', 'sample9', 'sample10', 'sample11', 'sample12', 'sample13', 'sample14', 'sample15', 'sample16', 'sample17', 'sample18', 'sample19', 'sample20', 'sample21', 'sample22', 'sample23', 'sample24', 'sample25', 'sample26', 'sample27', 'sample28', 'sample29', 'sample30', 'sample31', 'sample32', 'sample33', 'sample34', 'sample35', 'sample36', 'sample37', 'sample38', 'sample39', 'sample40', 'sample41', 'sample42', 'sample43', 'sample44', 'sample45', 'sample46', 'sample47', 'sample48', 'sample49', 'sample50', 'sample51', 'sample52', 'sample53', 'sample54', 'sample55', 'sample56', 'sample57', 'sample58', 'sample59', 'sample60'],
+  [ 'gene1', 1, 1, 1, 6, 6, 6, 11, 11, 11, 16, 16, 16, 21, 21, 21, 26, 26, 26, 31, 31, 31, 36, 36, 36, 41, 41, 41, 46, 46, 46, 51, 51, 51, 56, 56, 56, 61, 61, 61, 66, 66, 66, 71, 71, 71, 76, 76, 76, 81, 81, 81, 86, 86, 86, 91, 91, 91, 96, 96, 96],
+  [ 'gene2', 2, 2, 2, 7, 7, 7, 12, 12, 12, 17, 17, 17, 22, 22, 22, 27, 27, 27, 32, 32, 32, 37, 37, 37, 42, 42, 42, 47, 47, 47, 52, 52, 52, 57, 57, 57, 62, 62, 62, 67, 67, 67, 72, 72, 72, 77, 77, 77, 82, 82, 82, 87, 87, 87, 92, 92, 92, 97, 97, 97],
+  [ 'gene3', 3, 3, 3, 8, 8, 8, 13, 13, 13, 18, 18, 18, 23, 23, 23, 28, 28, 28, 33, 33, 33, 38, 38, 38, 43, 43, 43, 48, 48, 48, 53, 53, 53, 58, 58, 58, 63, 63, 63, 68, 68, 68, 73, 73, 73, 78, 78, 78, 83, 83, 83, 88, 88, 88, 93, 93, 93, 98, 98, 98]
+  ]
+  return data
+
+
+#convert to csv from 2-D list
+@pytest.fixture()
+def fake_count_rowdist_csv(request,fake_count_list_data_rowdist) :
+  with temp_csv_wrap(fake_count_list_data_rowdist,',') as f :
+    yield f.name
+
+#convert to pandas data frame from csv
+@pytest.fixture()
+def fake_count_dist_pandas_dataframe(fake_count_rowdist_csv) :
+  return pandas.read_csv(fake_count_rowdist_csv
+    ,index_col=0
+  )
+
+#convert to matrix from pandas data frame
+@pytest.fixture()
+def fake_count_dist_matrix(fake_count_dist_pandas_dataframe) :
+  return fake_count_dist_pandas_dataframe.as_matrix()
+
+
+@pytest.fixture
+def fake_count_rowdist_obj(
+  fake_count_rowdist_csv
+  ,fake_column_data_csv
+  ,fake_design) :
+
+  return make_counts_obj(
+    fake_count_rowdist_csv
+    ,fake_column_data_csv
+    ,fake_design
+  )
 
 
 ################################################################################
@@ -457,5 +502,3 @@ def make_counts_obj(
   )
 
   return counts_obj
-
-print(fake_big_counts_data())

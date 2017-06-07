@@ -23,6 +23,7 @@ def test_stats_coldist_names(fake_count_coldist_obj):
 	output = coldist(fake_count_coldist_obj)
 	col_dists = output.get('stats').get('dists')
 	col_name_func = [d['name'] for d in col_dists]
+	print(col_name_func)
 
 	col_name_true = ['a','b','c']
 	assert col_name_func == col_name_true
@@ -36,7 +37,24 @@ def test_stats_coldist_dist(fake_count_coldist_obj):
 	col_dist_true = [[3.0 for i in range(20)] for j in range(3)]
 	assert col_dist_func == col_dist_true
 
+#test that rowdist function gets correct row names
+def test_stats_rowdist_names(fake_count_rowdist_obj):
+	output = rowdist(fake_count_rowdist_obj)
+	row_dists = output.get('stats').get('dists')
+	row_name_func = [d['name'] for d in row_dists]
 
+	row_name_true = ['gene1','gene2','gene3']
+	assert row_name_func == row_name_true
+
+#test that rowdist function gets correct row dists
+def test_stats_rowdist_dist(fake_count_rowdist_obj):
+	output = rowdist(fake_count_rowdist_obj)
+	row_dists = output.get('stats').get('dists')
+	row_dist_func = [d['dist'] for d in row_dists]
+	print(row_dist_func)
+
+	row_dist_true = [[3.0 for i in range(20)] for j in range(3)]
+	assert row_dist_func == row_dist_true
 
 #========================================================
 #test that colzero function gets correct column names

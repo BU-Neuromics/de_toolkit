@@ -48,8 +48,8 @@ def base(count_mat) :
 	base_output = OrderedDict([['num_cols', num_cols], ['num_rows', num_rows]])
 	output = OrderedDict([['name', 'base'], ['stats', base_output]])
 
-	#Return output in JSON format
-	return json.dumps(output, sort_keys=True, indent=4)
+	#Return output 
+	return output
 
 def coldist(count_mat) :
 	'''Column-wise distribution of counts'''
@@ -75,9 +75,7 @@ def coldist(count_mat) :
         #make the dict for each sample
 		output['stats']['dists'].append({'name':s, 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
 
-	return json.dumps(output, indent = 4, sort_keys = True)
-
-
+	return output
 
 def rowdist(count_mat) :
 	'''Row-wise distribution of counts'''
@@ -104,8 +102,7 @@ def rowdist(count_mat) :
         #make the dict for each row
 		output['stats']['dists'].append({'name':count_mat.count_names[i], 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
 
-	return json.dumps(output, indent = 4, sort_keys = True)
-
+	return output
 
 
 def colzero(count_mat) :
@@ -167,8 +164,8 @@ def colzero(count_mat) :
 
 		output['stats']['zeros'].append(col)
 
-	#Return output in JSON format
-	return json.dumps(output, sort_keys=True, indent=4)
+	#Return output
+	return output
 
 def rowzero(count_mat) :
 	'''Row-wise distribution of zero counts'''
@@ -229,8 +226,8 @@ def rowzero(count_mat) :
 
 		output['stats']['zeros'].append(row)
 
-	#Return output in JSON format
-	return json.dumps(output, sort_keys=True, indent=4)
+	#Return output 
+	return output
 
 def entropy(count_mat) :
 	'''Row-wise sample entropy calculation'''
@@ -273,5 +270,5 @@ def entropy(count_mat) :
 
 		output['stats']['entropies'].append(row)
 
-	#Return output in JSON format
-	return json.dumps(output, indent=4)
+	#Return output
+	return output

@@ -11,8 +11,7 @@ from de_toolkit.stats import *
 
 #test for base function
 def test_stats_base(fake_counts_obj):
-	json_output = base(fake_counts_obj)
-	output=json.loads(json_output)
+	output = base(fake_counts_obj)
 	cols = output.get('stats', {}).get('num_cols')
 	rows = output.get('stats', {}).get('num_rows')
 
@@ -20,8 +19,7 @@ def test_stats_base(fake_counts_obj):
 
 #test that coldist function gets correct column names
 def test_stats_coldist_names(fake_big_counts_obj):
-	json_output = coldist(fake_big_counts_obj)
-	output = json.loads(json_output)
+	output = coldist(fake_big_counts_obj)
 	col_dists = output.get('stats').get('dists')
 	col_name_func = [d['name'] for d in col_dists]
 
@@ -32,8 +30,7 @@ def test_stats_coldist_names(fake_big_counts_obj):
 
 #test that colzero function gets correct column names
 def test_stats_colzero_names(fake_counts_obj_with_zeros):
-	json_output = colzero(fake_counts_obj_with_zeros)
-	output=json.loads(json_output)
+	output = colzero(fake_counts_obj_with_zeros)
 	zeros = output.get('stats', {}).get('zeros')
 
 	true_col_names = ['a', 'b', 'c']
@@ -48,8 +45,7 @@ def test_stats_colzero_names(fake_counts_obj_with_zeros):
 
 #test that colzero function gets correct zero counts
 def test_stats_colzero_zero_counts(fake_counts_obj_with_zeros):
-	json_output = colzero(fake_counts_obj_with_zeros)
-	output=json.loads(json_output)
+	output = colzero(fake_counts_obj_with_zeros)
 	zeros = output.get('stats', {}).get('zeros')
 
 	true_zero_counts = [1, 2, 3]
@@ -64,8 +60,7 @@ def test_stats_colzero_zero_counts(fake_counts_obj_with_zeros):
 
 #test that colzero function gets correct zero fractions
 def test_stats_colzero_zero_fracs(fake_counts_obj_with_zeros):
-	json_output = colzero(fake_counts_obj_with_zeros)
-	output=json.loads(json_output)
+	output = colzero(fake_counts_obj_with_zeros)
 	zeros = output.get('stats', {}).get('zeros')
 
 	true_zero_fracs = [1/5, 2/5, 3/5]
@@ -80,8 +75,7 @@ def test_stats_colzero_zero_fracs(fake_counts_obj_with_zeros):
 
 #test that colzero function gets correct column means
 def test_stats_colzero_col_means(fake_counts_obj_with_zeros):
-	json_output = colzero(fake_counts_obj_with_zeros)
-	output = json.loads(json_output)
+	output = colzero(fake_counts_obj_with_zeros)
 	zeros = output.get('stats', {}).get('zeros')
 
 	true_col_means = [(2+4+5+6)/5, (4+9+36)/5, (125+216)/5]
@@ -96,8 +90,7 @@ def test_stats_colzero_col_means(fake_counts_obj_with_zeros):
 
 #test that colzero function gets correct nonzero column means
 def test_stats_colzero_nonzero_col_means(fake_counts_obj_with_zeros):
-	json_output = colzero(fake_counts_obj_with_zeros)
-	output = json.loads(json_output)
+	output = colzero(fake_counts_obj_with_zeros)
 	zeros = output.get('stats', {}).get('zeros')
 
 	true_nonzero_col_means = [(2+4+5+6)/4, (4+9+36)/3, (125+216)/2]
@@ -113,8 +106,7 @@ def test_stats_colzero_nonzero_col_means(fake_counts_obj_with_zeros):
 
 #test that rowzero function gets correct row names
 def test_stats_rowzero_names(fake_counts_obj_with_zeros):
-	json_output = rowzero(fake_counts_obj_with_zeros)
-	output = json.loads(json_output)
+	output = rowzero(fake_counts_obj_with_zeros)
 	zeros = output.get('stats', {}).get('zeros')
 
 	true_row_names = ['gene1', 'gene2', 'gene3', 'gene4', 'gene5']
@@ -129,8 +121,7 @@ def test_stats_rowzero_names(fake_counts_obj_with_zeros):
 
 #test that rowzero function gets correct zero counts
 def test_stats_rowzero_zero_counts(fake_counts_obj_with_zeros):
-	json_output = rowzero(fake_counts_obj_with_zeros)
-	output = json.loads(json_output)
+	output = rowzero(fake_counts_obj_with_zeros)
 	zeros = output.get('stats', {}).get('zeros')
 
 	true_zero_counts = [1, 2, 2, 1, 0]
@@ -145,8 +136,7 @@ def test_stats_rowzero_zero_counts(fake_counts_obj_with_zeros):
 
 #test that rowzero function gets correct zero fractions
 def test_stats_rowzero_zero_fracs(fake_counts_obj_with_zeros):
-	json_output = rowzero(fake_counts_obj_with_zeros)
-	output = json.loads(json_output)
+	output = rowzero(fake_counts_obj_with_zeros)
 	zeros = output.get('stats', {}).get('zeros')
 
 	true_zero_fracs = [1/3, 2/3, 2/3, 1/3, 0]
@@ -161,8 +151,7 @@ def test_stats_rowzero_zero_fracs(fake_counts_obj_with_zeros):
 
 #test that rowzero function gets correct row means
 def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
-	json_output = rowzero(fake_counts_obj_with_zeros)
-	output = json.loads(json_output)
+	output = rowzero(fake_counts_obj_with_zeros)
 	zeros = output.get('stats', {}).get('zeros')
 
 	true_row_means = [(2+4)/3, 9/3, 4/3, (5+125)/3, (6+36+216)/3]
@@ -177,8 +166,7 @@ def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
 
 #test that rowzero function gets correct nonzero row means
 def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
-	json_output = rowzero(fake_counts_obj_with_zeros)
-	output = json.loads(json_output)
+	output = rowzero(fake_counts_obj_with_zeros)
 	zeros = output.get('stats', {}).get('zeros')
 
 	true_nonzero_row_means = [(2+4)/2, 9, 4, (5+125)/2, (6+36+216)/3]
@@ -195,8 +183,7 @@ def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
 
 #test that entropy function gets correct row names
 def test_stats_entropy_names(fake_counts_obj):
-	json_output = entropy(fake_counts_obj)
-	output = json.loads(json_output)
+	output = entropy(fake_counts_obj)
 	entropies = output.get('stats', {}).get('entropies')
 
 	true_row_names = ['gene1', 'gene2', 'gene3', 'gene4', 'gene5']
@@ -211,8 +198,7 @@ def test_stats_entropy_names(fake_counts_obj):
 
 #test that entropy function calculates correct entropy values
 def test_stats_entropies(fake_counts_obj):
-	json_output = entropy(fake_counts_obj)
-	output = json.loads(json_output)
+	output = entropy(fake_counts_obj)
 	entropies = output.get('stats', {}).get('entropies')
 
 	H1 = -((2/14)*math.log(2/14,2) + (4/14)*math.log(4/14,2) + (8/14)*math.log(8/14,2))
@@ -232,8 +218,7 @@ def test_stats_entropies(fake_counts_obj):
 
 #test that entropy function calculates correct entropy values when there are 0 counts
 def test_stats_entropies(fake_counts_obj_with_zeros):
-	json_output = entropy(fake_counts_obj_with_zeros)
-	output = json.loads(json_output)
+	output = entropy(fake_counts_obj_with_zeros)
 	entropies = output.get('stats', {}).get('entropies')
 
 	H1 = -((2/6)*math.log(2/6,2) + (4/6)*math.log(4/6,2))

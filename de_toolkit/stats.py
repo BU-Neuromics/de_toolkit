@@ -8,7 +8,8 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import pandas
 from docopt import docopt
-from de_toolkit.common import *
+from common import * 
+
 '''
 Usage:
 	detk-stats summary [options] [--json=<json_fn>] [--html=<html_fn>] <counts_fn>
@@ -272,3 +273,30 @@ def entropy(count_mat) :
 
 	#Return output
 	return output
+
+def main():
+	
+	#Create commandline arguments to pass in data files and selected method
+	parser = argparse.ArgumentParser()
+	parser.add_argument("cfile", help="Name of input column data file")
+	parser.add_argument("file", help="Name of input data file")
+	parser.add_argument("method", 
+		choices=['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy', 'summary'],
+		help="Choose one of the specified functions to be run")
+	args = parser.parse_args()
+
+	#Create CountMatrix object from given data
+	counts_obj = CountMatrixFile(args.file, args.cfile, '~ category')
+	
+	#Dictionary containing the methods that can be called 
+	funcs = {'base': base, 'coldist': coldist, 'rowdist': rowdist, 'colzero': colzero,
+                'rowzero': rowzero, 'entropy':entropy, 'summary': summary}
+
+	#Run specified method
+	chosen_func = funcs[args.method]
+	output = chosen_func(counts_obj)
+	funcs_present = [args.method]
+
+	
+if __name__ == '__main__':
+	main()

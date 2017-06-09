@@ -1,0 +1,1246 @@
+<html>
+<title>Stats Module Output</title>
+<head>
+<style>
+table, th, td{
+        border: 1px solid black;
+        border-collapse: collapse;
+}
+th, td{
+        padding: 5px;
+        text-align: center;
+}
+</style>
+</head>
+<p><center>Stats Module Output</center></p>
+</br>
+<p >Base:
+</br>
+<table>
+  <tr>
+    <th>Number of Columns</th>
+    <th>Number of Rows</th>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>1000</td>
+  </tr>
+</table>
+</p>
+<p >Coldist:
+</br>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load("current", {packages:["corechart"]});
+      google.charts.setOnLoadCallback(drawChart);
+
+        function drawChart(){
+var array = [['a', 49,89,44,240,9,26,111,12,93,219,63,93,116,54,57,80,36,116,0,94,90,127,34,150,91,0,102,21,42,191,45,8,91,219,115,145,150,22,48,32,129,0,53,86,60,147,30,193,45,83,140,135,45,61,71,48,40,85,52,56,234,61,191,38,0,133,23,159,181,100,18,0,81,158,166,104,93,156,95,79,137,309,206,47,37,88,0,159,224,187,151,84,97,16,47,0,58,123,118,252,171,32,125,49,57,223,0,92,61,26,63,80,0,52,109,13,39,197,100,27,0,136,0,71,0,137,102,111,18,25,0,29,0,132,7,29,112,113,123,191,26,0,7,0,84,12,154,59,29,0,90,218,54,53,275,50,189,171,69,79,56,230,101,33,145,97,146,90,163,112,0,44,0,216,98,0,32,41,193,193,84,174,24,147,114,60,219,285,56,29,125,30,17,64,62,53,72,61,20,29,88,49,0,108,167,12,23,9,4,21,0,28,106,92,12,212,0,88,145,0,223,38,131,57,105,216,0,28,121,145,99,19,92,178,41,0,129,25,109,51,182,121,36,217,0,52,106,84,328,65,19,97,171,25,129,199,160,150,0,109,169,309,15,52,93,110,87,239,67,80,66,78,17,40,95,22,0,69,163,0,256,90,0,152,108,53,107,81,314,66,117,61,36,340,123,88,47,17,303,108,83,234,40,133,0,123,0,279,25,20,115,190,177,121,107,6,56,85,121,36,63,16,23,0,79,0,77,156,183,62,230,52,51,34,0,33,152,250,49,0,110,13,55,0,57,280,82,19,23,86,31,79,0,0,59,70,292,12,44,99,0,46,197,211,238,0,21,161,0,16,0,51,80,0,28,210,144,222,90,37,31,75,133,143,0,37,205,128,0,138,52,20,112,148,81,29,182,0,28,13,190,122,109,265,108,49,212,58,187,162,52,102,32,0,143,115,81,85,96,58,115,167,53,104,20,56,160,62,115,107,54,0,0,194,82,0,49,129,44,168,105,16,148,0,142,79,98,100,38,81,236,54,130,0,307,0,79,168,0,37,46,24,44,36,140,0,113,174,40,108,0,133,205,0,175,17,48,51,250,45,34,103,180,18,79,0,113,79,153,148,58,24,54,54,89,76,36,19,43,125,0,53,127,210,14,66,73,59,0,64,80,81,192,0,101,104,0,34,86,91,26,102,0,68,106,44,57,37,95,32,59,128,53,66,13,86,0,34,131,98,0,0,319,128,65,88,61,0,226,122,100,123,0,87,133,122,63,133,114,133,108,59,118,23,101,44,0,48,132,38,117,75,23,101,172,140,30,69,69,139,185,204,21,110,91,87,111,0,259,0,159,0,54,40,161,40,290,73,276,63,68,0,0,66,0,190,107,85,180,89,0,56,89,163,256,33,0,75,41,118,83,27,48,80,26,118,166,26,0,86,46,91,0,184,49,111,39,131,0,77,94,249,0,279,121,42,59,41,32,62,171,55,91,50,129,117,94,267,140,93,83,72,205,198,96,77,154,38,251,84,69,28,42,26,67,114,60,0,66,214,154,268,247,0,49,158,175,44,155,23,32,64,28,79,53,28,0,59,88,58,48,137,79,47,68,73,211,96,69,26,161,80,132,21,62,42,20,68,122,59,108,189,0,110,142,37,82,47,85,54,71,25,95,0,154,116,129,135,83,18,152,0,94,0,83,75,37,0,38,68,20,72,65,74,43,106,31,87,81,185,45,0,42,128,113,53,80,45,181,54,110,144,0,99,210,135,37,207,0,283,62,155,30,122,88,75,100,119,82,0,91,0,58,15,0,42,79,174,42,218,222,253,0,45,111,99,25,33,83,63,0,200,64,180,76,24,20,68,93,48,43,82,0,150,0,73,92,54,43,202,0,75,57,311,5,25,163,115,22,0,186,167,24,109,26,156,50,113,77,19,0,68,35,46,180,102,125,42,128,79,31,0,77,0,0,41,37,108,103,65,199,209,78,0,304,39,20,50,0,78,25,231,164,0,195,51,185,12,87,125,181,201,49,68,145,62,284,80,54,67,151,28,120,57,140,8,58,201,245,147,0,0,0,95,0,0,167,36,0,89,43,147,55,30,88,27,139,100,187,90,0,84,122,62,95,97,85,159,7,52,133,74,134,73,107,211,38,110,0,57,5,72,256,227,75,132,14,48,63,24,0,101,88,86,314,50,97,104,82,242,92,64,139,203,91,92,116,84,264,186,59,56,53,71,217,0,64,61,139,80,21,0,101,156,51,104,63,93,76,280,],['b', 42,103,0,0,12,93,101,6,183,214,40,0,109,27,20,109,50,92,68,60,0,0,69,192,70,0,40,25,52,175,94,7,68,144,115,118,113,19,54,23,0,67,40,134,0,130,31,181,62,50,115,140,73,55,51,0,25,0,43,0,0,62,142,31,30,100,19,0,272,125,21,0,66,118,95,0,117,181,55,0,143,106,155,0,55,111,23,118,281,136,0,90,0,13,52,153,69,65,130,345,144,16,136,43,39,153,34,128,0,24,61,99,177,39,125,17,54,259,52,56,193,111,138,0,69,0,83,87,39,58,196,80,39,173,25,30,111,183,121,114,35,46,22,196,74,27,186,43,41,0,49,217,62,46,152,19,204,161,40,63,48,221,122,23,0,106,163,87,177,85,70,63,0,190,53,141,42,59,138,152,69,182,12,135,85,63,198,326,30,44,73,38,6,44,24,86,33,43,11,49,97,57,152,142,222,38,28,25,13,20,124,46,134,167,9,0,75,79,156,134,373,59,0,69,125,227,77,25,233,96,24,15,73,383,7,181,68,26,59,25,197,101,51,128,0,74,82,75,0,57,31,91,123,21,153,191,81,132,20,99,147,329,31,45,0,109,127,199,41,114,55,70,11,47,0,24,80,71,159,0,357,160,26,93,103,60,66,81,223,92,116,40,0,249,89,93,57,7,278,111,57,211,52,0,173,63,0,260,51,16,73,153,201,134,133,5,43,60,146,68,100,10,36,16,64,75,73,138,158,66,207,0,51,62,29,36,114,222,69,0,82,8,82,289,98,197,91,39,36,101,0,140,184,152,58,82,0,19,7,63,30,126,233,197,257,93,30,159,61,26,74,79,91,54,21,154,193,146,118,22,57,107,115,120,0,58,112,128,114,176,87,17,125,257,120,52,226,72,47,24,0,147,112,285,0,39,0,76,261,134,58,61,31,91,111,68,33,62,126,0,101,0,90,86,18,41,94,94,98,67,105,0,150,101,97,97,45,114,47,155,84,18,122,108,149,81,88,105,32,27,0,77,82,19,274,36,59,134,29,33,26,42,71,56,168,148,134,151,15,79,111,0,127,102,0,14,37,73,255,33,56,108,164,26,58,102,133,84,0,132,67,43,78,46,142,44,46,20,44,0,54,42,0,167,33,118,28,51,184,0,0,119,197,94,74,109,26,22,58,89,18,61,229,84,0,42,64,41,135,67,68,148,60,69,25,88,184,55,110,93,103,82,226,229,83,71,81,41,320,121,142,70,419,40,148,104,110,122,0,181,131,55,117,37,158,47,0,36,155,49,98,57,19,89,273,153,59,0,49,142,206,203,52,80,165,100,93,161,271,138,171,48,58,0,148,91,243,0,286,58,137,114,0,94,111,179,81,107,123,0,0,43,119,0,261,28,163,100,56,152,80,31,15,41,9,0,210,22,50,102,34,61,0,150,52,0,58,0,31,68,94,202,83,211,184,35,71,59,64,57,156,32,98,45,175,90,113,200,144,101,44,34,174,126,0,122,95,62,213,97,52,57,46,47,0,50,39,118,84,260,75,320,181,259,50,234,167,34,188,0,24,48,27,88,25,14,224,68,98,44,32,0,47,33,82,44,125,70,88,31,105,97,106,33,61,50,47,0,190,55,87,233,222,104,194,0,100,78,58,40,159,55,53,235,79,85,73,106,124,16,100,63,0,0,53,69,40,110,19,105,20,64,78,0,30,114,56,0,141,0,48,113,0,179,127,16,88,40,184,63,135,114,0,86,161,184,25,186,83,179,24,188,28,0,28,83,0,108,0,129,98,66,65,50,145,56,110,108,21,230,301,183,83,123,96,169,30,15,65,44,151,229,0,230,32,43,27,61,86,70,37,118,287,163,187,105,110,30,63,246,79,100,115,189,12,14,0,115,24,63,211,196,23,111,20,214,47,77,99,21,101,92,27,0,232,94,0,19,122,54,31,115,46,236,160,0,0,108,146,0,162,225,40,0,259,30,15,77,118,92,64,116,200,197,190,70,149,14,168,136,204,151,69,70,223,0,0,0,0,46,136,105,142,27,144,22,62,146,145,232,179,66,102,88,108,79,0,46,80,32,48,116,43,39,81,24,175,341,193,121,0,99,109,0,0,104,113,118,20,40,127,97,76,87,90,242,37,77,17,56,15,101,176,163,89,107,20,44,64,19,0,91,157,64,419,83,89,145,0,277,65,74,0,203,66,91,127,0,0,89,48,58,95,81,233,40,41,53,126,84,25,14,138,0,0,119,60,0,39,207,],['c', 43,64,43,262,18,62,80,23,113,201,71,49,66,37,35,99,27,146,123,60,151,111,32,151,91,164,54,33,71,176,53,9,71,174,51,124,63,22,51,9,132,58,33,71,113,116,44,214,51,67,130,129,50,97,86,62,15,89,62,50,142,57,232,25,50,150,15,100,200,166,20,339,68,108,128,113,95,226,68,45,149,235,217,63,29,102,31,109,176,198,0,106,133,22,0,138,37,138,132,265,120,15,143,59,51,255,41,60,62,44,131,79,128,42,87,32,100,223,48,61,157,153,106,122,44,230,67,95,5,55,213,25,30,149,14,51,95,80,149,180,36,47,24,135,41,26,224,37,42,25,70,277,48,46,183,9,190,173,38,55,23,193,109,32,143,94,227,127,213,89,71,68,73,200,108,103,32,40,172,223,58,195,23,133,79,57,306,305,41,48,86,53,21,37,45,68,22,49,6,51,80,99,98,153,192,17,11,18,21,11,62,68,123,104,56,173,78,44,102,157,247,55,78,70,107,193,163,21,235,167,52,25,164,341,38,115,80,34,118,16,179,135,42,158,83,57,83,56,253,63,64,81,153,38,199,242,106,143,25,92,87,313,20,32,115,116,98,192,37,59,78,83,21,17,75,17,70,71,146,53,339,172,44,148,147,70,106,55,324,96,124,49,36,246,96,128,124,7,377,73,68,347,34,141,132,141,41,200,44,7,60,163,219,165,89,6,26,81,163,43,104,19,18,42,90,44,55,197,199,80,193,59,55,81,38,46,84,255,45,237,115,7,87,233,71,337,99,17,25,137,65,106,229,178,77,113,336,15,29,115,49,90,218,302,262,78,18,195,63,29,98,75,78,29,13,183,205,248,105,33,30,88,138,168,87,52,101,115,83,129,77,7,130,176,129,54,234,78,50,7,145,145,94,211,90,79,219,86,179,147,41,83,60,79,124,73,46,73,83,41,99,141,52,82,19,98,161,72,158,72,66,68,160,164,26,138,50,125,80,114,98,10,94,120,120,79,85,75,40,60,246,87,51,31,194,64,80,115,25,15,15,34,33,24,189,120,137,118,25,153,120,168,110,122,162,20,63,41,163,31,47,100,225,18,65,86,166,90,183,111,35,37,43,24,108,52,37,21,39,134,83,35,175,253,26,113,40,31,196,83,114,90,175,126,93,150,22,23,106,108,22,76,288,62,57,60,76,40,157,81,49,141,75,63,17,56,188,28,134,76,138,86,313,165,94,32,108,62,264,139,90,103,283,36,260,117,68,110,150,144,142,75,115,33,115,25,62,46,134,42,118,91,37,104,179,175,53,90,87,114,177,207,24,83,107,62,132,116,225,152,234,53,63,51,110,54,267,62,311,35,117,45,189,89,139,137,154,90,182,70,102,72,87,206,285,29,243,159,41,181,85,17,37,92,27,132,221,21,29,94,26,52,135,275,62,118,101,78,42,93,101,181,101,285,138,43,33,44,36,46,145,69,94,46,109,140,80,144,117,66,52,24,182,98,149,121,114,62,159,70,67,33,55,12,32,38,61,64,104,214,60,329,249,208,24,208,242,67,165,54,51,62,20,80,38,31,232,78,85,59,29,79,87,29,124,64,148,104,141,59,116,96,71,12,63,37,89,93,118,57,73,171,265,94,111,24,69,80,69,86,107,45,58,195,95,85,168,144,97,33,97,65,70,107,142,90,40,74,52,87,24,52,69,173,74,151,11,103,106,141,82,186,66,147,147,50,68,29,283,39,112,99,62,64,108,261,17,151,113,211,50,176,45,91,27,78,89,118,109,88,71,85,58,31,153,165,101,152,39,243,188,242,62,87,107,112,29,28,71,87,119,251,60,217,58,37,23,53,97,57,32,81,228,110,182,81,102,31,57,211,72,114,98,189,21,16,266,161,62,92,235,232,32,126,29,173,34,85,107,18,92,99,27,69,210,123,95,24,114,72,30,97,58,383,132,43,36,147,124,86,160,214,85,95,205,31,19,46,43,42,80,243,205,151,212,80,161,29,137,189,165,182,28,44,205,36,261,47,33,95,92,138,83,15,143,16,68,183,211,201,146,56,84,100,94,30,222,47,119,152,33,128,63,54,118,11,187,214,232,74,129,75,127,97,70,67,97,174,5,43,146,96,161,84,105,289,23,95,46,106,11,89,295,288,126,153,6,54,97,23,78,92,118,87,328,81,124,117,92,282,50,55,83,112,62,138,141,67,325,154,70,53,82,37,171,72,50,0,144,74,15,31,123,112,28,113,28,86,45,263,],];
+
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'x');
+    data.addColumn('number', 'series0');
+data.addColumn('number', 'series1');
+data.addColumn('number', 'series2');
+data.addColumn('number', 'series3');
+data.addColumn('number', 'series4');
+data.addColumn('number', 'series5');
+data.addColumn('number', 'series6');
+data.addColumn('number', 'series7');
+data.addColumn('number', 'series8');
+data.addColumn('number', 'series9');
+data.addColumn('number', 'series10');
+data.addColumn('number', 'series11');
+data.addColumn('number', 'series12');
+data.addColumn('number', 'series13');
+data.addColumn('number', 'series14');
+data.addColumn('number', 'series15');
+data.addColumn('number', 'series16');
+data.addColumn('number', 'series17');
+data.addColumn('number', 'series18');
+data.addColumn('number', 'series19');
+data.addColumn('number', 'series20');
+data.addColumn('number', 'series21');
+data.addColumn('number', 'series22');
+data.addColumn('number', 'series23');
+data.addColumn('number', 'series24');
+data.addColumn('number', 'series25');
+data.addColumn('number', 'series26');
+data.addColumn('number', 'series27');
+data.addColumn('number', 'series28');
+data.addColumn('number', 'series29');
+data.addColumn('number', 'series30');
+data.addColumn('number', 'series31');
+data.addColumn('number', 'series32');
+data.addColumn('number', 'series33');
+data.addColumn('number', 'series34');
+data.addColumn('number', 'series35');
+data.addColumn('number', 'series36');
+data.addColumn('number', 'series37');
+data.addColumn('number', 'series38');
+data.addColumn('number', 'series39');
+data.addColumn('number', 'series40');
+data.addColumn('number', 'series41');
+data.addColumn('number', 'series42');
+data.addColumn('number', 'series43');
+data.addColumn('number', 'series44');
+data.addColumn('number', 'series45');
+data.addColumn('number', 'series46');
+data.addColumn('number', 'series47');
+data.addColumn('number', 'series48');
+data.addColumn('number', 'series49');
+data.addColumn('number', 'series50');
+data.addColumn('number', 'series51');
+data.addColumn('number', 'series52');
+data.addColumn('number', 'series53');
+data.addColumn('number', 'series54');
+data.addColumn('number', 'series55');
+data.addColumn('number', 'series56');
+data.addColumn('number', 'series57');
+data.addColumn('number', 'series58');
+data.addColumn('number', 'series59');
+data.addColumn('number', 'series60');
+data.addColumn('number', 'series61');
+data.addColumn('number', 'series62');
+data.addColumn('number', 'series63');
+data.addColumn('number', 'series64');
+data.addColumn('number', 'series65');
+data.addColumn('number', 'series66');
+data.addColumn('number', 'series67');
+data.addColumn('number', 'series68');
+data.addColumn('number', 'series69');
+data.addColumn('number', 'series70');
+data.addColumn('number', 'series71');
+data.addColumn('number', 'series72');
+data.addColumn('number', 'series73');
+data.addColumn('number', 'series74');
+data.addColumn('number', 'series75');
+data.addColumn('number', 'series76');
+data.addColumn('number', 'series77');
+data.addColumn('number', 'series78');
+data.addColumn('number', 'series79');
+data.addColumn('number', 'series80');
+data.addColumn('number', 'series81');
+data.addColumn('number', 'series82');
+data.addColumn('number', 'series83');
+data.addColumn('number', 'series84');
+data.addColumn('number', 'series85');
+data.addColumn('number', 'series86');
+data.addColumn('number', 'series87');
+data.addColumn('number', 'series88');
+data.addColumn('number', 'series89');
+data.addColumn('number', 'series90');
+data.addColumn('number', 'series91');
+data.addColumn('number', 'series92');
+data.addColumn('number', 'series93');
+data.addColumn('number', 'series94');
+data.addColumn('number', 'series95');
+data.addColumn('number', 'series96');
+data.addColumn('number', 'series97');
+data.addColumn('number', 'series98');
+data.addColumn('number', 'series99');
+data.addColumn('number', 'series100');
+data.addColumn('number', 'series101');
+data.addColumn('number', 'series102');
+data.addColumn('number', 'series103');
+data.addColumn('number', 'series104');
+data.addColumn('number', 'series105');
+data.addColumn('number', 'series106');
+data.addColumn('number', 'series107');
+data.addColumn('number', 'series108');
+data.addColumn('number', 'series109');
+data.addColumn('number', 'series110');
+data.addColumn('number', 'series111');
+data.addColumn('number', 'series112');
+data.addColumn('number', 'series113');
+data.addColumn('number', 'series114');
+data.addColumn('number', 'series115');
+data.addColumn('number', 'series116');
+data.addColumn('number', 'series117');
+data.addColumn('number', 'series118');
+data.addColumn('number', 'series119');
+data.addColumn('number', 'series120');
+data.addColumn('number', 'series121');
+data.addColumn('number', 'series122');
+data.addColumn('number', 'series123');
+data.addColumn('number', 'series124');
+data.addColumn('number', 'series125');
+data.addColumn('number', 'series126');
+data.addColumn('number', 'series127');
+data.addColumn('number', 'series128');
+data.addColumn('number', 'series129');
+data.addColumn('number', 'series130');
+data.addColumn('number', 'series131');
+data.addColumn('number', 'series132');
+data.addColumn('number', 'series133');
+data.addColumn('number', 'series134');
+data.addColumn('number', 'series135');
+data.addColumn('number', 'series136');
+data.addColumn('number', 'series137');
+data.addColumn('number', 'series138');
+data.addColumn('number', 'series139');
+data.addColumn('number', 'series140');
+data.addColumn('number', 'series141');
+data.addColumn('number', 'series142');
+data.addColumn('number', 'series143');
+data.addColumn('number', 'series144');
+data.addColumn('number', 'series145');
+data.addColumn('number', 'series146');
+data.addColumn('number', 'series147');
+data.addColumn('number', 'series148');
+data.addColumn('number', 'series149');
+data.addColumn('number', 'series150');
+data.addColumn('number', 'series151');
+data.addColumn('number', 'series152');
+data.addColumn('number', 'series153');
+data.addColumn('number', 'series154');
+data.addColumn('number', 'series155');
+data.addColumn('number', 'series156');
+data.addColumn('number', 'series157');
+data.addColumn('number', 'series158');
+data.addColumn('number', 'series159');
+data.addColumn('number', 'series160');
+data.addColumn('number', 'series161');
+data.addColumn('number', 'series162');
+data.addColumn('number', 'series163');
+data.addColumn('number', 'series164');
+data.addColumn('number', 'series165');
+data.addColumn('number', 'series166');
+data.addColumn('number', 'series167');
+data.addColumn('number', 'series168');
+data.addColumn('number', 'series169');
+data.addColumn('number', 'series170');
+data.addColumn('number', 'series171');
+data.addColumn('number', 'series172');
+data.addColumn('number', 'series173');
+data.addColumn('number', 'series174');
+data.addColumn('number', 'series175');
+data.addColumn('number', 'series176');
+data.addColumn('number', 'series177');
+data.addColumn('number', 'series178');
+data.addColumn('number', 'series179');
+data.addColumn('number', 'series180');
+data.addColumn('number', 'series181');
+data.addColumn('number', 'series182');
+data.addColumn('number', 'series183');
+data.addColumn('number', 'series184');
+data.addColumn('number', 'series185');
+data.addColumn('number', 'series186');
+data.addColumn('number', 'series187');
+data.addColumn('number', 'series188');
+data.addColumn('number', 'series189');
+data.addColumn('number', 'series190');
+data.addColumn('number', 'series191');
+data.addColumn('number', 'series192');
+data.addColumn('number', 'series193');
+data.addColumn('number', 'series194');
+data.addColumn('number', 'series195');
+data.addColumn('number', 'series196');
+data.addColumn('number', 'series197');
+data.addColumn('number', 'series198');
+data.addColumn('number', 'series199');
+data.addColumn('number', 'series200');
+data.addColumn('number', 'series201');
+data.addColumn('number', 'series202');
+data.addColumn('number', 'series203');
+data.addColumn('number', 'series204');
+data.addColumn('number', 'series205');
+data.addColumn('number', 'series206');
+data.addColumn('number', 'series207');
+data.addColumn('number', 'series208');
+data.addColumn('number', 'series209');
+data.addColumn('number', 'series210');
+data.addColumn('number', 'series211');
+data.addColumn('number', 'series212');
+data.addColumn('number', 'series213');
+data.addColumn('number', 'series214');
+data.addColumn('number', 'series215');
+data.addColumn('number', 'series216');
+data.addColumn('number', 'series217');
+data.addColumn('number', 'series218');
+data.addColumn('number', 'series219');
+data.addColumn('number', 'series220');
+data.addColumn('number', 'series221');
+data.addColumn('number', 'series222');
+data.addColumn('number', 'series223');
+data.addColumn('number', 'series224');
+data.addColumn('number', 'series225');
+data.addColumn('number', 'series226');
+data.addColumn('number', 'series227');
+data.addColumn('number', 'series228');
+data.addColumn('number', 'series229');
+data.addColumn('number', 'series230');
+data.addColumn('number', 'series231');
+data.addColumn('number', 'series232');
+data.addColumn('number', 'series233');
+data.addColumn('number', 'series234');
+data.addColumn('number', 'series235');
+data.addColumn('number', 'series236');
+data.addColumn('number', 'series237');
+data.addColumn('number', 'series238');
+data.addColumn('number', 'series239');
+data.addColumn('number', 'series240');
+data.addColumn('number', 'series241');
+data.addColumn('number', 'series242');
+data.addColumn('number', 'series243');
+data.addColumn('number', 'series244');
+data.addColumn('number', 'series245');
+data.addColumn('number', 'series246');
+data.addColumn('number', 'series247');
+data.addColumn('number', 'series248');
+data.addColumn('number', 'series249');
+data.addColumn('number', 'series250');
+data.addColumn('number', 'series251');
+data.addColumn('number', 'series252');
+data.addColumn('number', 'series253');
+data.addColumn('number', 'series254');
+data.addColumn('number', 'series255');
+data.addColumn('number', 'series256');
+data.addColumn('number', 'series257');
+data.addColumn('number', 'series258');
+data.addColumn('number', 'series259');
+data.addColumn('number', 'series260');
+data.addColumn('number', 'series261');
+data.addColumn('number', 'series262');
+data.addColumn('number', 'series263');
+data.addColumn('number', 'series264');
+data.addColumn('number', 'series265');
+data.addColumn('number', 'series266');
+data.addColumn('number', 'series267');
+data.addColumn('number', 'series268');
+data.addColumn('number', 'series269');
+data.addColumn('number', 'series270');
+data.addColumn('number', 'series271');
+data.addColumn('number', 'series272');
+data.addColumn('number', 'series273');
+data.addColumn('number', 'series274');
+data.addColumn('number', 'series275');
+data.addColumn('number', 'series276');
+data.addColumn('number', 'series277');
+data.addColumn('number', 'series278');
+data.addColumn('number', 'series279');
+data.addColumn('number', 'series280');
+data.addColumn('number', 'series281');
+data.addColumn('number', 'series282');
+data.addColumn('number', 'series283');
+data.addColumn('number', 'series284');
+data.addColumn('number', 'series285');
+data.addColumn('number', 'series286');
+data.addColumn('number', 'series287');
+data.addColumn('number', 'series288');
+data.addColumn('number', 'series289');
+data.addColumn('number', 'series290');
+data.addColumn('number', 'series291');
+data.addColumn('number', 'series292');
+data.addColumn('number', 'series293');
+data.addColumn('number', 'series294');
+data.addColumn('number', 'series295');
+data.addColumn('number', 'series296');
+data.addColumn('number', 'series297');
+data.addColumn('number', 'series298');
+data.addColumn('number', 'series299');
+data.addColumn('number', 'series300');
+data.addColumn('number', 'series301');
+data.addColumn('number', 'series302');
+data.addColumn('number', 'series303');
+data.addColumn('number', 'series304');
+data.addColumn('number', 'series305');
+data.addColumn('number', 'series306');
+data.addColumn('number', 'series307');
+data.addColumn('number', 'series308');
+data.addColumn('number', 'series309');
+data.addColumn('number', 'series310');
+data.addColumn('number', 'series311');
+data.addColumn('number', 'series312');
+data.addColumn('number', 'series313');
+data.addColumn('number', 'series314');
+data.addColumn('number', 'series315');
+data.addColumn('number', 'series316');
+data.addColumn('number', 'series317');
+data.addColumn('number', 'series318');
+data.addColumn('number', 'series319');
+data.addColumn('number', 'series320');
+data.addColumn('number', 'series321');
+data.addColumn('number', 'series322');
+data.addColumn('number', 'series323');
+data.addColumn('number', 'series324');
+data.addColumn('number', 'series325');
+data.addColumn('number', 'series326');
+data.addColumn('number', 'series327');
+data.addColumn('number', 'series328');
+data.addColumn('number', 'series329');
+data.addColumn('number', 'series330');
+data.addColumn('number', 'series331');
+data.addColumn('number', 'series332');
+data.addColumn('number', 'series333');
+data.addColumn('number', 'series334');
+data.addColumn('number', 'series335');
+data.addColumn('number', 'series336');
+data.addColumn('number', 'series337');
+data.addColumn('number', 'series338');
+data.addColumn('number', 'series339');
+data.addColumn('number', 'series340');
+data.addColumn('number', 'series341');
+data.addColumn('number', 'series342');
+data.addColumn('number', 'series343');
+data.addColumn('number', 'series344');
+data.addColumn('number', 'series345');
+data.addColumn('number', 'series346');
+data.addColumn('number', 'series347');
+data.addColumn('number', 'series348');
+data.addColumn('number', 'series349');
+data.addColumn('number', 'series350');
+data.addColumn('number', 'series351');
+data.addColumn('number', 'series352');
+data.addColumn('number', 'series353');
+data.addColumn('number', 'series354');
+data.addColumn('number', 'series355');
+data.addColumn('number', 'series356');
+data.addColumn('number', 'series357');
+data.addColumn('number', 'series358');
+data.addColumn('number', 'series359');
+data.addColumn('number', 'series360');
+data.addColumn('number', 'series361');
+data.addColumn('number', 'series362');
+data.addColumn('number', 'series363');
+data.addColumn('number', 'series364');
+data.addColumn('number', 'series365');
+data.addColumn('number', 'series366');
+data.addColumn('number', 'series367');
+data.addColumn('number', 'series368');
+data.addColumn('number', 'series369');
+data.addColumn('number', 'series370');
+data.addColumn('number', 'series371');
+data.addColumn('number', 'series372');
+data.addColumn('number', 'series373');
+data.addColumn('number', 'series374');
+data.addColumn('number', 'series375');
+data.addColumn('number', 'series376');
+data.addColumn('number', 'series377');
+data.addColumn('number', 'series378');
+data.addColumn('number', 'series379');
+data.addColumn('number', 'series380');
+data.addColumn('number', 'series381');
+data.addColumn('number', 'series382');
+data.addColumn('number', 'series383');
+data.addColumn('number', 'series384');
+data.addColumn('number', 'series385');
+data.addColumn('number', 'series386');
+data.addColumn('number', 'series387');
+data.addColumn('number', 'series388');
+data.addColumn('number', 'series389');
+data.addColumn('number', 'series390');
+data.addColumn('number', 'series391');
+data.addColumn('number', 'series392');
+data.addColumn('number', 'series393');
+data.addColumn('number', 'series394');
+data.addColumn('number', 'series395');
+data.addColumn('number', 'series396');
+data.addColumn('number', 'series397');
+data.addColumn('number', 'series398');
+data.addColumn('number', 'series399');
+data.addColumn('number', 'series400');
+data.addColumn('number', 'series401');
+data.addColumn('number', 'series402');
+data.addColumn('number', 'series403');
+data.addColumn('number', 'series404');
+data.addColumn('number', 'series405');
+data.addColumn('number', 'series406');
+data.addColumn('number', 'series407');
+data.addColumn('number', 'series408');
+data.addColumn('number', 'series409');
+data.addColumn('number', 'series410');
+data.addColumn('number', 'series411');
+data.addColumn('number', 'series412');
+data.addColumn('number', 'series413');
+data.addColumn('number', 'series414');
+data.addColumn('number', 'series415');
+data.addColumn('number', 'series416');
+data.addColumn('number', 'series417');
+data.addColumn('number', 'series418');
+data.addColumn('number', 'series419');
+data.addColumn('number', 'series420');
+data.addColumn('number', 'series421');
+data.addColumn('number', 'series422');
+data.addColumn('number', 'series423');
+data.addColumn('number', 'series424');
+data.addColumn('number', 'series425');
+data.addColumn('number', 'series426');
+data.addColumn('number', 'series427');
+data.addColumn('number', 'series428');
+data.addColumn('number', 'series429');
+data.addColumn('number', 'series430');
+data.addColumn('number', 'series431');
+data.addColumn('number', 'series432');
+data.addColumn('number', 'series433');
+data.addColumn('number', 'series434');
+data.addColumn('number', 'series435');
+data.addColumn('number', 'series436');
+data.addColumn('number', 'series437');
+data.addColumn('number', 'series438');
+data.addColumn('number', 'series439');
+data.addColumn('number', 'series440');
+data.addColumn('number', 'series441');
+data.addColumn('number', 'series442');
+data.addColumn('number', 'series443');
+data.addColumn('number', 'series444');
+data.addColumn('number', 'series445');
+data.addColumn('number', 'series446');
+data.addColumn('number', 'series447');
+data.addColumn('number', 'series448');
+data.addColumn('number', 'series449');
+data.addColumn('number', 'series450');
+data.addColumn('number', 'series451');
+data.addColumn('number', 'series452');
+data.addColumn('number', 'series453');
+data.addColumn('number', 'series454');
+data.addColumn('number', 'series455');
+data.addColumn('number', 'series456');
+data.addColumn('number', 'series457');
+data.addColumn('number', 'series458');
+data.addColumn('number', 'series459');
+data.addColumn('number', 'series460');
+data.addColumn('number', 'series461');
+data.addColumn('number', 'series462');
+data.addColumn('number', 'series463');
+data.addColumn('number', 'series464');
+data.addColumn('number', 'series465');
+data.addColumn('number', 'series466');
+data.addColumn('number', 'series467');
+data.addColumn('number', 'series468');
+data.addColumn('number', 'series469');
+data.addColumn('number', 'series470');
+data.addColumn('number', 'series471');
+data.addColumn('number', 'series472');
+data.addColumn('number', 'series473');
+data.addColumn('number', 'series474');
+data.addColumn('number', 'series475');
+data.addColumn('number', 'series476');
+data.addColumn('number', 'series477');
+data.addColumn('number', 'series478');
+data.addColumn('number', 'series479');
+data.addColumn('number', 'series480');
+data.addColumn('number', 'series481');
+data.addColumn('number', 'series482');
+data.addColumn('number', 'series483');
+data.addColumn('number', 'series484');
+data.addColumn('number', 'series485');
+data.addColumn('number', 'series486');
+data.addColumn('number', 'series487');
+data.addColumn('number', 'series488');
+data.addColumn('number', 'series489');
+data.addColumn('number', 'series490');
+data.addColumn('number', 'series491');
+data.addColumn('number', 'series492');
+data.addColumn('number', 'series493');
+data.addColumn('number', 'series494');
+data.addColumn('number', 'series495');
+data.addColumn('number', 'series496');
+data.addColumn('number', 'series497');
+data.addColumn('number', 'series498');
+data.addColumn('number', 'series499');
+data.addColumn('number', 'series500');
+data.addColumn('number', 'series501');
+data.addColumn('number', 'series502');
+data.addColumn('number', 'series503');
+data.addColumn('number', 'series504');
+data.addColumn('number', 'series505');
+data.addColumn('number', 'series506');
+data.addColumn('number', 'series507');
+data.addColumn('number', 'series508');
+data.addColumn('number', 'series509');
+data.addColumn('number', 'series510');
+data.addColumn('number', 'series511');
+data.addColumn('number', 'series512');
+data.addColumn('number', 'series513');
+data.addColumn('number', 'series514');
+data.addColumn('number', 'series515');
+data.addColumn('number', 'series516');
+data.addColumn('number', 'series517');
+data.addColumn('number', 'series518');
+data.addColumn('number', 'series519');
+data.addColumn('number', 'series520');
+data.addColumn('number', 'series521');
+data.addColumn('number', 'series522');
+data.addColumn('number', 'series523');
+data.addColumn('number', 'series524');
+data.addColumn('number', 'series525');
+data.addColumn('number', 'series526');
+data.addColumn('number', 'series527');
+data.addColumn('number', 'series528');
+data.addColumn('number', 'series529');
+data.addColumn('number', 'series530');
+data.addColumn('number', 'series531');
+data.addColumn('number', 'series532');
+data.addColumn('number', 'series533');
+data.addColumn('number', 'series534');
+data.addColumn('number', 'series535');
+data.addColumn('number', 'series536');
+data.addColumn('number', 'series537');
+data.addColumn('number', 'series538');
+data.addColumn('number', 'series539');
+data.addColumn('number', 'series540');
+data.addColumn('number', 'series541');
+data.addColumn('number', 'series542');
+data.addColumn('number', 'series543');
+data.addColumn('number', 'series544');
+data.addColumn('number', 'series545');
+data.addColumn('number', 'series546');
+data.addColumn('number', 'series547');
+data.addColumn('number', 'series548');
+data.addColumn('number', 'series549');
+data.addColumn('number', 'series550');
+data.addColumn('number', 'series551');
+data.addColumn('number', 'series552');
+data.addColumn('number', 'series553');
+data.addColumn('number', 'series554');
+data.addColumn('number', 'series555');
+data.addColumn('number', 'series556');
+data.addColumn('number', 'series557');
+data.addColumn('number', 'series558');
+data.addColumn('number', 'series559');
+data.addColumn('number', 'series560');
+data.addColumn('number', 'series561');
+data.addColumn('number', 'series562');
+data.addColumn('number', 'series563');
+data.addColumn('number', 'series564');
+data.addColumn('number', 'series565');
+data.addColumn('number', 'series566');
+data.addColumn('number', 'series567');
+data.addColumn('number', 'series568');
+data.addColumn('number', 'series569');
+data.addColumn('number', 'series570');
+data.addColumn('number', 'series571');
+data.addColumn('number', 'series572');
+data.addColumn('number', 'series573');
+data.addColumn('number', 'series574');
+data.addColumn('number', 'series575');
+data.addColumn('number', 'series576');
+data.addColumn('number', 'series577');
+data.addColumn('number', 'series578');
+data.addColumn('number', 'series579');
+data.addColumn('number', 'series580');
+data.addColumn('number', 'series581');
+data.addColumn('number', 'series582');
+data.addColumn('number', 'series583');
+data.addColumn('number', 'series584');
+data.addColumn('number', 'series585');
+data.addColumn('number', 'series586');
+data.addColumn('number', 'series587');
+data.addColumn('number', 'series588');
+data.addColumn('number', 'series589');
+data.addColumn('number', 'series590');
+data.addColumn('number', 'series591');
+data.addColumn('number', 'series592');
+data.addColumn('number', 'series593');
+data.addColumn('number', 'series594');
+data.addColumn('number', 'series595');
+data.addColumn('number', 'series596');
+data.addColumn('number', 'series597');
+data.addColumn('number', 'series598');
+data.addColumn('number', 'series599');
+data.addColumn('number', 'series600');
+data.addColumn('number', 'series601');
+data.addColumn('number', 'series602');
+data.addColumn('number', 'series603');
+data.addColumn('number', 'series604');
+data.addColumn('number', 'series605');
+data.addColumn('number', 'series606');
+data.addColumn('number', 'series607');
+data.addColumn('number', 'series608');
+data.addColumn('number', 'series609');
+data.addColumn('number', 'series610');
+data.addColumn('number', 'series611');
+data.addColumn('number', 'series612');
+data.addColumn('number', 'series613');
+data.addColumn('number', 'series614');
+data.addColumn('number', 'series615');
+data.addColumn('number', 'series616');
+data.addColumn('number', 'series617');
+data.addColumn('number', 'series618');
+data.addColumn('number', 'series619');
+data.addColumn('number', 'series620');
+data.addColumn('number', 'series621');
+data.addColumn('number', 'series622');
+data.addColumn('number', 'series623');
+data.addColumn('number', 'series624');
+data.addColumn('number', 'series625');
+data.addColumn('number', 'series626');
+data.addColumn('number', 'series627');
+data.addColumn('number', 'series628');
+data.addColumn('number', 'series629');
+data.addColumn('number', 'series630');
+data.addColumn('number', 'series631');
+data.addColumn('number', 'series632');
+data.addColumn('number', 'series633');
+data.addColumn('number', 'series634');
+data.addColumn('number', 'series635');
+data.addColumn('number', 'series636');
+data.addColumn('number', 'series637');
+data.addColumn('number', 'series638');
+data.addColumn('number', 'series639');
+data.addColumn('number', 'series640');
+data.addColumn('number', 'series641');
+data.addColumn('number', 'series642');
+data.addColumn('number', 'series643');
+data.addColumn('number', 'series644');
+data.addColumn('number', 'series645');
+data.addColumn('number', 'series646');
+data.addColumn('number', 'series647');
+data.addColumn('number', 'series648');
+data.addColumn('number', 'series649');
+data.addColumn('number', 'series650');
+data.addColumn('number', 'series651');
+data.addColumn('number', 'series652');
+data.addColumn('number', 'series653');
+data.addColumn('number', 'series654');
+data.addColumn('number', 'series655');
+data.addColumn('number', 'series656');
+data.addColumn('number', 'series657');
+data.addColumn('number', 'series658');
+data.addColumn('number', 'series659');
+data.addColumn('number', 'series660');
+data.addColumn('number', 'series661');
+data.addColumn('number', 'series662');
+data.addColumn('number', 'series663');
+data.addColumn('number', 'series664');
+data.addColumn('number', 'series665');
+data.addColumn('number', 'series666');
+data.addColumn('number', 'series667');
+data.addColumn('number', 'series668');
+data.addColumn('number', 'series669');
+data.addColumn('number', 'series670');
+data.addColumn('number', 'series671');
+data.addColumn('number', 'series672');
+data.addColumn('number', 'series673');
+data.addColumn('number', 'series674');
+data.addColumn('number', 'series675');
+data.addColumn('number', 'series676');
+data.addColumn('number', 'series677');
+data.addColumn('number', 'series678');
+data.addColumn('number', 'series679');
+data.addColumn('number', 'series680');
+data.addColumn('number', 'series681');
+data.addColumn('number', 'series682');
+data.addColumn('number', 'series683');
+data.addColumn('number', 'series684');
+data.addColumn('number', 'series685');
+data.addColumn('number', 'series686');
+data.addColumn('number', 'series687');
+data.addColumn('number', 'series688');
+data.addColumn('number', 'series689');
+data.addColumn('number', 'series690');
+data.addColumn('number', 'series691');
+data.addColumn('number', 'series692');
+data.addColumn('number', 'series693');
+data.addColumn('number', 'series694');
+data.addColumn('number', 'series695');
+data.addColumn('number', 'series696');
+data.addColumn('number', 'series697');
+data.addColumn('number', 'series698');
+data.addColumn('number', 'series699');
+data.addColumn('number', 'series700');
+data.addColumn('number', 'series701');
+data.addColumn('number', 'series702');
+data.addColumn('number', 'series703');
+data.addColumn('number', 'series704');
+data.addColumn('number', 'series705');
+data.addColumn('number', 'series706');
+data.addColumn('number', 'series707');
+data.addColumn('number', 'series708');
+data.addColumn('number', 'series709');
+data.addColumn('number', 'series710');
+data.addColumn('number', 'series711');
+data.addColumn('number', 'series712');
+data.addColumn('number', 'series713');
+data.addColumn('number', 'series714');
+data.addColumn('number', 'series715');
+data.addColumn('number', 'series716');
+data.addColumn('number', 'series717');
+data.addColumn('number', 'series718');
+data.addColumn('number', 'series719');
+data.addColumn('number', 'series720');
+data.addColumn('number', 'series721');
+data.addColumn('number', 'series722');
+data.addColumn('number', 'series723');
+data.addColumn('number', 'series724');
+data.addColumn('number', 'series725');
+data.addColumn('number', 'series726');
+data.addColumn('number', 'series727');
+data.addColumn('number', 'series728');
+data.addColumn('number', 'series729');
+data.addColumn('number', 'series730');
+data.addColumn('number', 'series731');
+data.addColumn('number', 'series732');
+data.addColumn('number', 'series733');
+data.addColumn('number', 'series734');
+data.addColumn('number', 'series735');
+data.addColumn('number', 'series736');
+data.addColumn('number', 'series737');
+data.addColumn('number', 'series738');
+data.addColumn('number', 'series739');
+data.addColumn('number', 'series740');
+data.addColumn('number', 'series741');
+data.addColumn('number', 'series742');
+data.addColumn('number', 'series743');
+data.addColumn('number', 'series744');
+data.addColumn('number', 'series745');
+data.addColumn('number', 'series746');
+data.addColumn('number', 'series747');
+data.addColumn('number', 'series748');
+data.addColumn('number', 'series749');
+data.addColumn('number', 'series750');
+data.addColumn('number', 'series751');
+data.addColumn('number', 'series752');
+data.addColumn('number', 'series753');
+data.addColumn('number', 'series754');
+data.addColumn('number', 'series755');
+data.addColumn('number', 'series756');
+data.addColumn('number', 'series757');
+data.addColumn('number', 'series758');
+data.addColumn('number', 'series759');
+data.addColumn('number', 'series760');
+data.addColumn('number', 'series761');
+data.addColumn('number', 'series762');
+data.addColumn('number', 'series763');
+data.addColumn('number', 'series764');
+data.addColumn('number', 'series765');
+data.addColumn('number', 'series766');
+data.addColumn('number', 'series767');
+data.addColumn('number', 'series768');
+data.addColumn('number', 'series769');
+data.addColumn('number', 'series770');
+data.addColumn('number', 'series771');
+data.addColumn('number', 'series772');
+data.addColumn('number', 'series773');
+data.addColumn('number', 'series774');
+data.addColumn('number', 'series775');
+data.addColumn('number', 'series776');
+data.addColumn('number', 'series777');
+data.addColumn('number', 'series778');
+data.addColumn('number', 'series779');
+data.addColumn('number', 'series780');
+data.addColumn('number', 'series781');
+data.addColumn('number', 'series782');
+data.addColumn('number', 'series783');
+data.addColumn('number', 'series784');
+data.addColumn('number', 'series785');
+data.addColumn('number', 'series786');
+data.addColumn('number', 'series787');
+data.addColumn('number', 'series788');
+data.addColumn('number', 'series789');
+data.addColumn('number', 'series790');
+data.addColumn('number', 'series791');
+data.addColumn('number', 'series792');
+data.addColumn('number', 'series793');
+data.addColumn('number', 'series794');
+data.addColumn('number', 'series795');
+data.addColumn('number', 'series796');
+data.addColumn('number', 'series797');
+data.addColumn('number', 'series798');
+data.addColumn('number', 'series799');
+data.addColumn('number', 'series800');
+data.addColumn('number', 'series801');
+data.addColumn('number', 'series802');
+data.addColumn('number', 'series803');
+data.addColumn('number', 'series804');
+data.addColumn('number', 'series805');
+data.addColumn('number', 'series806');
+data.addColumn('number', 'series807');
+data.addColumn('number', 'series808');
+data.addColumn('number', 'series809');
+data.addColumn('number', 'series810');
+data.addColumn('number', 'series811');
+data.addColumn('number', 'series812');
+data.addColumn('number', 'series813');
+data.addColumn('number', 'series814');
+data.addColumn('number', 'series815');
+data.addColumn('number', 'series816');
+data.addColumn('number', 'series817');
+data.addColumn('number', 'series818');
+data.addColumn('number', 'series819');
+data.addColumn('number', 'series820');
+data.addColumn('number', 'series821');
+data.addColumn('number', 'series822');
+data.addColumn('number', 'series823');
+data.addColumn('number', 'series824');
+data.addColumn('number', 'series825');
+data.addColumn('number', 'series826');
+data.addColumn('number', 'series827');
+data.addColumn('number', 'series828');
+data.addColumn('number', 'series829');
+data.addColumn('number', 'series830');
+data.addColumn('number', 'series831');
+data.addColumn('number', 'series832');
+data.addColumn('number', 'series833');
+data.addColumn('number', 'series834');
+data.addColumn('number', 'series835');
+data.addColumn('number', 'series836');
+data.addColumn('number', 'series837');
+data.addColumn('number', 'series838');
+data.addColumn('number', 'series839');
+data.addColumn('number', 'series840');
+data.addColumn('number', 'series841');
+data.addColumn('number', 'series842');
+data.addColumn('number', 'series843');
+data.addColumn('number', 'series844');
+data.addColumn('number', 'series845');
+data.addColumn('number', 'series846');
+data.addColumn('number', 'series847');
+data.addColumn('number', 'series848');
+data.addColumn('number', 'series849');
+data.addColumn('number', 'series850');
+data.addColumn('number', 'series851');
+data.addColumn('number', 'series852');
+data.addColumn('number', 'series853');
+data.addColumn('number', 'series854');
+data.addColumn('number', 'series855');
+data.addColumn('number', 'series856');
+data.addColumn('number', 'series857');
+data.addColumn('number', 'series858');
+data.addColumn('number', 'series859');
+data.addColumn('number', 'series860');
+data.addColumn('number', 'series861');
+data.addColumn('number', 'series862');
+data.addColumn('number', 'series863');
+data.addColumn('number', 'series864');
+data.addColumn('number', 'series865');
+data.addColumn('number', 'series866');
+data.addColumn('number', 'series867');
+data.addColumn('number', 'series868');
+data.addColumn('number', 'series869');
+data.addColumn('number', 'series870');
+data.addColumn('number', 'series871');
+data.addColumn('number', 'series872');
+data.addColumn('number', 'series873');
+data.addColumn('number', 'series874');
+data.addColumn('number', 'series875');
+data.addColumn('number', 'series876');
+data.addColumn('number', 'series877');
+data.addColumn('number', 'series878');
+data.addColumn('number', 'series879');
+data.addColumn('number', 'series880');
+data.addColumn('number', 'series881');
+data.addColumn('number', 'series882');
+data.addColumn('number', 'series883');
+data.addColumn('number', 'series884');
+data.addColumn('number', 'series885');
+data.addColumn('number', 'series886');
+data.addColumn('number', 'series887');
+data.addColumn('number', 'series888');
+data.addColumn('number', 'series889');
+data.addColumn('number', 'series890');
+data.addColumn('number', 'series891');
+data.addColumn('number', 'series892');
+data.addColumn('number', 'series893');
+data.addColumn('number', 'series894');
+data.addColumn('number', 'series895');
+data.addColumn('number', 'series896');
+data.addColumn('number', 'series897');
+data.addColumn('number', 'series898');
+data.addColumn('number', 'series899');
+data.addColumn('number', 'series900');
+data.addColumn('number', 'series901');
+data.addColumn('number', 'series902');
+data.addColumn('number', 'series903');
+data.addColumn('number', 'series904');
+data.addColumn('number', 'series905');
+data.addColumn('number', 'series906');
+data.addColumn('number', 'series907');
+data.addColumn('number', 'series908');
+data.addColumn('number', 'series909');
+data.addColumn('number', 'series910');
+data.addColumn('number', 'series911');
+data.addColumn('number', 'series912');
+data.addColumn('number', 'series913');
+data.addColumn('number', 'series914');
+data.addColumn('number', 'series915');
+data.addColumn('number', 'series916');
+data.addColumn('number', 'series917');
+data.addColumn('number', 'series918');
+data.addColumn('number', 'series919');
+data.addColumn('number', 'series920');
+data.addColumn('number', 'series921');
+data.addColumn('number', 'series922');
+data.addColumn('number', 'series923');
+data.addColumn('number', 'series924');
+data.addColumn('number', 'series925');
+data.addColumn('number', 'series926');
+data.addColumn('number', 'series927');
+data.addColumn('number', 'series928');
+data.addColumn('number', 'series929');
+data.addColumn('number', 'series930');
+data.addColumn('number', 'series931');
+data.addColumn('number', 'series932');
+data.addColumn('number', 'series933');
+data.addColumn('number', 'series934');
+data.addColumn('number', 'series935');
+data.addColumn('number', 'series936');
+data.addColumn('number', 'series937');
+data.addColumn('number', 'series938');
+data.addColumn('number', 'series939');
+data.addColumn('number', 'series940');
+data.addColumn('number', 'series941');
+data.addColumn('number', 'series942');
+data.addColumn('number', 'series943');
+data.addColumn('number', 'series944');
+data.addColumn('number', 'series945');
+data.addColumn('number', 'series946');
+data.addColumn('number', 'series947');
+data.addColumn('number', 'series948');
+data.addColumn('number', 'series949');
+data.addColumn('number', 'series950');
+data.addColumn('number', 'series951');
+data.addColumn('number', 'series952');
+data.addColumn('number', 'series953');
+data.addColumn('number', 'series954');
+data.addColumn('number', 'series955');
+data.addColumn('number', 'series956');
+data.addColumn('number', 'series957');
+data.addColumn('number', 'series958');
+data.addColumn('number', 'series959');
+data.addColumn('number', 'series960');
+data.addColumn('number', 'series961');
+data.addColumn('number', 'series962');
+data.addColumn('number', 'series963');
+data.addColumn('number', 'series964');
+data.addColumn('number', 'series965');
+data.addColumn('number', 'series966');
+data.addColumn('number', 'series967');
+data.addColumn('number', 'series968');
+data.addColumn('number', 'series969');
+data.addColumn('number', 'series970');
+data.addColumn('number', 'series971');
+data.addColumn('number', 'series972');
+data.addColumn('number', 'series973');
+data.addColumn('number', 'series974');
+data.addColumn('number', 'series975');
+data.addColumn('number', 'series976');
+data.addColumn('number', 'series977');
+data.addColumn('number', 'series978');
+data.addColumn('number', 'series979');
+data.addColumn('number', 'series980');
+data.addColumn('number', 'series981');
+data.addColumn('number', 'series982');
+data.addColumn('number', 'series983');
+data.addColumn('number', 'series984');
+data.addColumn('number', 'series985');
+data.addColumn('number', 'series986');
+data.addColumn('number', 'series987');
+data.addColumn('number', 'series988');
+data.addColumn('number', 'series989');
+data.addColumn('number', 'series990');
+data.addColumn('number', 'series991');
+data.addColumn('number', 'series992');
+data.addColumn('number', 'series993');
+data.addColumn('number', 'series994');
+data.addColumn('number', 'series995');
+data.addColumn('number', 'series996');
+data.addColumn('number', 'series997');
+data.addColumn('number', 'series998');
+data.addColumn('number', 'series999');
+
+    data.addColumn({ id: 'max', type: 'number', role: 'interval' });
+    data.addColumn({ id: 'min', type: 'number', role: 'interval' });
+    data.addColumn({ id: 'firstQuartile', type: 'number', role: 'interval' });
+    data.addColumn({ id: 'median', type: 'number', role: 'interval' });
+    data.addColumn({ id: 'thirdQuartile', type: 'number', role: 'interval' });
+
+    data.addRows(getBoxPlotValues(array));
+
+    /**
+     * Takes an array of input data and returns an
+     * array of the input data with the box plot
+     * interval data appended to each row.
+     */
+function getBoxPlotValues(array) {
+
+        for (var i = 0; i < array.length; i++) {
+
+            var arr = array[i].slice(1).sort(function (a, b) {
+                return a - b;
+            });
+
+            var max = arr[arr.length - 1];
+            var min = arr[0];
+            var median = getMedian(arr);
+            var num = array[i].length;
+            var index = 0;
+            var length = arr.length;
+
+            if(length%2 == 0){
+                index = length/2-1;
+            }
+            else{
+                index=Math.floor(length/2);
+            }
+
+
+            // First Quartile is the median from lowest to overall median.
+            var firstQuartile = getMedian(arr.slice(0, index));
+
+            // Third Quartile is the median from the overall median to the highest.
+            var thirdQuartile = getMedian(arr.slice(index));
+
+            array[i][num] = max;
+            array[i][num+1] = min
+            array[i][num+2] = firstQuartile;
+            array[i][num+3] = median;
+            array[i][num+4] = thirdQuartile;
+        }
+        return array;
+    }
+/*
+     * Takes an array and returns
+     * the median value.
+     */
+    function getMedian(array) {
+        var length = array.length;
+
+        /* If the array is an even length the
+         * median is the average of the two
+         * middle-most values. Otherwise the
+         * median is the middle-most value.
+         */
+        if (length % 2 === 0) {
+            var midUpper = length / 2;
+            var midLower = midUpper - 1;
+
+            return (array[midUpper] + array[midLower]) / 2;
+        } else {
+            return array[Math.floor(length / 2)];
+        }
+    }
+//series: [{ 'color': '#D3362D' }],
+    var options = {
+        title: 'Count Distribution by Column',
+        height: 500,
+        legend: { position: 'none' },
+        vAxis: {title: 'Count'},
+        hAxis: {
+            gridlines: { color: '#fff' },
+            title: 'Sample'
+        },
+        lineWidth: 0,
+        intervals: {
+            barWidth: 1,
+            boxWidth: 1,
+            lineWidth: 2,
+            style: 'boxes'
+        },
+ interval: {
+            max: {
+                style: 'bars',
+                fillOpacity: 1,
+                color: 'blue'
+            },
+            min: {
+                style: 'bars',
+                fillOpacity: 1,
+                color: 'blue'
+            },
+            firstQuartile: {
+                style: 'boxes',
+                fillOpacity: 0.7,
+                color: 'green'
+            },
+            thirdQuartile: {
+                style: 'boxes',
+                fillOpacity: 0.7,
+                color: 'red'
+            }
+        }
+    };
+   var chart = new google.visualization.LineChart(document.getElementById('box_plot'));
+
+    chart.draw(data, options);
+}
+</script>
+<div id="box_plot" style="width: 900px; height: 500px;" ></div>
+</p>
+<p >Colzero:
+ <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript">
+    google.charts.load("current", {packages:['corechart']});
+    google.charts.setOnLoadCallback(drawChart);
+    function drawChart() {
+      var data = google.visualization.arrayToDataTable([['Sample', 'Zero_Frac'],['a', 0.121],['b', 0.108],['c', 0.003],]);
+
+      var options = {
+        title: "Proportion of 0 Counts Per Sample",
+        width: 600,
+        height: 400,
+        bar: {groupWidth: "95%"},
+        legend: { position: "none" },
+        vAxis: {title:"Proportion of 0 Counts"}
+      };
+      var chart = new google.visualization.ColumnChart(document.getElementById("chart1"));
+      chart.draw(data,options);
+  }
+</script>
+<div id="chart1" style="width: 900px; height: 400px;" ></div>
+</br>
+</p>
+<p >Rowzero:
+</br>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([['Zero_frac', 'Nonzero_mean'],[0.0, 44.666666666666664],[0.0, 85.33333333333333],[0.3333333333333333, 43.5],[0.3333333333333333, 251.0],[0.0, 13.0],[0.0, 60.333333333333336],[0.0, 97.33333333333333],[0.0, 13.666666666666666],[0.0, 129.66666666666666],[0.0, 211.33333333333334],[0.0, 58.0],[0.3333333333333333, 71.0],[0.0, 97.0],[0.0, 39.333333333333336],[0.0, 37.333333333333336],[0.0, 96.0],[0.0, 37.666666666666664],[0.0, 118.0],[0.3333333333333333, 95.5],[0.0, 71.33333333333333],[0.3333333333333333, 120.5],[0.3333333333333333, 119.0],[0.0, 45.0],[0.0, 164.33333333333334],[0.0, 84.0],[0.6666666666666666, 164.0],[0.0, 65.33333333333333],[0.0, 26.333333333333332],[0.0, 55.0],[0.0, 180.66666666666666],[0.0, 64.0],[0.0, 8.0],[0.0, 76.66666666666667],[0.0, 179.0],[0.0, 93.66666666666667],[0.0, 129.0],[0.0, 108.66666666666667],[0.0, 21.0],[0.0, 51.0],[0.0, 21.333333333333332],[0.3333333333333333, 130.5],[0.3333333333333333, 62.5],[0.0, 42.0],[0.0, 97.0],[0.3333333333333333, 86.5],[0.0, 131.0],[0.0, 35.0],[0.0, 196.0],[0.0, 52.666666666666664],[0.0, 66.66666666666667],[0.0, 128.33333333333334],[0.0, 134.66666666666666],[0.0, 56.0],[0.0, 71.0],[0.0, 69.33333333333333],[0.3333333333333333, 55.0],[0.0, 26.666666666666668],[0.3333333333333333, 87.0],[0.0, 52.333333333333336],[0.3333333333333333, 53.0],[0.3333333333333333, 188.0],[0.0, 60.0],[0.0, 188.33333333333334],[0.0, 31.333333333333332],[0.3333333333333333, 40.0],[0.0, 127.66666666666667],[0.0, 19.0],[0.3333333333333333, 129.5],[0.0, 217.66666666666666],[0.0, 130.33333333333334],[0.0, 19.666666666666668],[0.6666666666666666, 339.0],[0.0, 71.66666666666667],[0.0, 128.0],[0.0, 129.66666666666666],[0.3333333333333333, 108.5],[0.0, 101.66666666666667],[0.0, 187.66666666666666],[0.0, 72.66666666666667],[0.3333333333333333, 62.0],[0.0, 143.0],[0.0, 216.66666666666666],[0.0, 192.66666666666666],[0.3333333333333333, 55.0],[0.0, 40.333333333333336],[0.0, 100.33333333333333],[0.3333333333333333, 27.0],[0.0, 128.66666666666666],[0.0, 227.0],[0.0, 173.66666666666666],[0.6666666666666666, 151.0],[0.0, 93.33333333333333],[0.3333333333333333, 115.0],[0.0, 17.0],[0.3333333333333333, 49.5],[0.3333333333333333, 145.5],[0.0, 54.666666666666664],[0.0, 108.66666666666667],[0.0, 126.66666666666667],[0.0, 287.3333333333333],[0.0, 145.0],[0.0, 21.0],[0.0, 134.66666666666666],[0.0, 50.333333333333336],[0.0, 49.0],[0.0, 210.33333333333334],[0.3333333333333333, 37.5],[0.0, 93.33333333333333],[0.3333333333333333, 61.5],[0.0, 31.333333333333332],[0.0, 85.0],[0.0, 86.0],[0.3333333333333333, 152.5],[0.0, 44.333333333333336],[0.0, 107.0],[0.0, 20.666666666666668],[0.0, 64.33333333333333],[0.0, 226.33333333333334],[0.0, 66.66666666666667],[0.0, 48.0],[0.3333333333333333, 175.0],[0.0, 133.33333333333334],[0.3333333333333333, 122.0],[0.3333333333333333, 96.5],[0.3333333333333333, 56.5],[0.3333333333333333, 183.5],[0.0, 84.0],[0.0, 97.66666666666667],[0.0, 20.666666666666668],[0.0, 46.0],[0.3333333333333333, 204.5],[0.0, 44.666666666666664],[0.3333333333333333, 34.5],[0.0, 151.33333333333334],[0.0, 15.333333333333334],[0.0, 36.666666666666664],[0.0, 106.0],[0.0, 125.33333333333333],[0.0, 131.0],[0.0, 161.66666666666666],[0.0, 32.333333333333336],[0.3333333333333333, 46.5],[0.0, 17.666666666666668],[0.3333333333333333, 165.5],[0.0, 66.33333333333333],[0.0, 21.666666666666668],[0.0, 188.0],[0.0, 46.333333333333336],[0.0, 37.333333333333336],[0.6666666666666666, 25.0],[0.0, 69.66666666666667],[0.0, 237.33333333333334],[0.0, 54.666666666666664],[0.0, 48.333333333333336],[0.0, 203.33333333333334],[0.0, 26.0],[0.0, 194.33333333333334],[0.0, 168.33333333333334],[0.0, 49.0],[0.0, 65.66666666666667],[0.0, 42.333333333333336],[0.0, 214.66666666666666],[0.0, 110.66666666666667],[0.0, 29.333333333333332],[0.3333333333333333, 144.0],[0.0, 99.0],[0.0, 178.66666666666666],[0.0, 101.33333333333333],[0.0, 184.33333333333334],[0.0, 95.33333333333333],[0.3333333333333333, 70.5],[0.0, 58.333333333333336],[0.6666666666666666, 73.0],[0.0, 202.0],[0.0, 86.33333333333333],[0.3333333333333333, 122.0],[0.0, 35.333333333333336],[0.0, 46.666666666666664],[0.0, 167.66666666666666],[0.0, 189.33333333333334],[0.0, 70.33333333333333],[0.0, 183.66666666666666],[0.0, 19.666666666666668],[0.0, 138.33333333333334],[0.0, 92.66666666666667],[0.0, 60.0],[0.0, 241.0],[0.0, 305.3333333333333],[0.0, 42.333333333333336],[0.0, 40.333333333333336],[0.0, 94.66666666666667],[0.0, 40.333333333333336],[0.0, 14.666666666666666],[0.0, 48.333333333333336],[0.0, 43.666666666666664],[0.0, 69.0],[0.0, 42.333333333333336],[0.0, 51.0],[0.0, 12.333333333333334],[0.0, 43.0],[0.0, 88.33333333333333],[0.0, 68.33333333333333],[0.3333333333333333, 125.0],[0.0, 134.33333333333334],[0.0, 193.66666666666666],[0.0, 22.333333333333332],[0.0, 20.666666666666668],[0.0, 17.333333333333332],[0.0, 12.666666666666666],[0.0, 17.333333333333332],[0.3333333333333333, 93.0],[0.0, 47.333333333333336],[0.0, 121.0],[0.0, 121.0],[0.0, 25.666666666666668],[0.3333333333333333, 192.5],[0.3333333333333333, 76.5],[0.0, 70.33333333333333],[0.0, 134.33333333333334],[0.3333333333333333, 145.5],[0.0, 281.0],[0.0, 50.666666666666664],[0.3333333333333333, 104.5],[0.0, 65.33333333333333],[0.0, 112.33333333333333],[0.0, 212.0],[0.3333333333333333, 120.0],[0.0, 24.666666666666668],[0.0, 196.33333333333334],[0.0, 136.0],[0.0, 58.333333333333336],[0.0, 19.666666666666668],[0.0, 109.66666666666667],[0.0, 300.6666666666667],[0.0, 28.666666666666668],[0.3333333333333333, 148.0],[0.0, 92.33333333333333],[0.0, 28.333333333333332],[0.0, 95.33333333333333],[0.0, 30.666666666666668],[0.0, 186.0],[0.0, 119.0],[0.0, 43.0],[0.0, 167.66666666666666],[0.6666666666666666, 83.0],[0.0, 61.0],[0.0, 90.33333333333333],[0.0, 71.66666666666667],[0.3333333333333333, 290.5],[0.0, 61.666666666666664],[0.0, 38.0],[0.0, 89.66666666666667],[0.0, 149.0],[0.0, 28.0],[0.0, 160.33333333333334],[0.0, 210.66666666666666],[0.0, 115.66666666666667],[0.0, 141.66666666666666],[0.3333333333333333, 22.5],[0.0, 100.0],[0.0, 134.33333333333334],[0.0, 317.0],[0.0, 22.0],[0.0, 43.0],[0.3333333333333333, 104.0],[0.0, 111.66666666666667],[0.0, 104.0],[0.0, 210.0],[0.0, 48.333333333333336],[0.0, 84.33333333333333],[0.0, 66.33333333333333],[0.0, 77.0],[0.0, 16.333333333333332],[0.0, 34.666666666666664],[0.3333333333333333, 85.0],[0.0, 21.0],[0.3333333333333333, 75.0],[0.0, 70.33333333333333],[0.0, 156.0],[0.6666666666666666, 53.0],[0.0, 317.3333333333333],[0.0, 140.66666666666666],[0.3333333333333333, 35.0],[0.0, 131.0],[0.0, 119.33333333333333],[0.0, 61.0],[0.0, 93.0],[0.0, 72.33333333333333],[0.0, 287.0],[0.0, 84.66666666666667],[0.0, 119.0],[0.0, 50.0],[0.3333333333333333, 36.0],[0.0, 278.3333333333333],[0.0, 102.66666666666667],[0.0, 103.0],[0.0, 76.0],[0.0, 10.333333333333334],[0.0, 319.3333333333333],[0.0, 97.33333333333333],[0.0, 69.33333333333333],[0.0, 264.0],[0.0, 42.0],[0.3333333333333333, 137.0],[0.3333333333333333, 152.5],[0.0, 109.0],[0.6666666666666666, 41.0],[0.0, 246.33333333333334],[0.0, 40.0],[0.0, 14.333333333333334],[0.0, 82.66666666666667],[0.0, 168.66666666666666],[0.0, 199.0],[0.0, 140.0],[0.0, 109.66666666666667],[0.0, 5.666666666666667],[0.0, 41.666666666666664],[0.0, 75.33333333333333],[0.0, 143.33333333333334],[0.0, 49.0],[0.0, 89.0],[0.0, 15.0],[0.0, 25.666666666666668],[0.3333333333333333, 29.0],[0.0, 77.66666666666667],[0.3333333333333333, 59.5],[0.0, 68.33333333333333],[0.0, 163.66666666666666],[0.0, 180.0],[0.0, 69.33333333333333],[0.0, 210.0],[0.3333333333333333, 55.5],[0.0, 52.333333333333336],[0.0, 59.0],[0.3333333333333333, 33.5],[0.0, 38.333333333333336],[0.0, 116.66666666666667],[0.0, 242.33333333333334],[0.0, 54.333333333333336],[0.6666666666666666, 237.0],[0.0, 102.33333333333333],[0.0, 9.333333333333334],[0.0, 74.66666666666667],[0.3333333333333333, 261.0],[0.0, 75.33333333333333],[0.0, 271.3333333333333],[0.0, 90.66666666666667],[0.0, 25.0],[0.0, 28.0],[0.0, 108.0],[0.3333333333333333, 48.0],[0.0, 108.33333333333333],[0.3333333333333333, 206.5],[0.3333333333333333, 165.0],[0.0, 64.66666666666667],[0.0, 88.33333333333333],[0.3333333333333333, 314.0],[0.0, 15.333333333333334],[0.0, 26.666666666666668],[0.0, 92.33333333333333],[0.3333333333333333, 39.5],[0.0, 87.33333333333333],[0.0, 216.0],[0.0, 236.66666666666666],[0.0, 252.33333333333334],[0.3333333333333333, 85.5],[0.0, 23.0],[0.0, 171.66666666666666],[0.3333333333333333, 62.0],[0.0, 23.666666666666668],[0.3333333333333333, 86.0],[0.0, 68.33333333333333],[0.0, 83.0],[0.3333333333333333, 41.5],[0.0, 20.666666666666668],[0.0, 182.33333333333334],[0.0, 180.66666666666666],[0.0, 205.33333333333334],[0.0, 104.33333333333333],[0.0, 30.666666666666668],[0.0, 39.333333333333336],[0.0, 90.0],[0.0, 128.66666666666666],[0.0, 143.66666666666666],[0.6666666666666666, 87.0],[0.0, 49.0],[0.0, 139.33333333333334],[0.0, 123.66666666666667],[0.3333333333333333, 98.5],[0.0, 147.66666666666666],[0.0, 72.0],[0.0, 14.666666666666666],[0.0, 122.33333333333333],[0.0, 193.66666666666666],[0.0, 110.0],[0.0, 45.0],[0.0, 214.0],[0.3333333333333333, 75.0],[0.0, 41.666666666666664],[0.0, 14.666666666666666],[0.3333333333333333, 167.5],[0.0, 138.0],[0.0, 105.0],[0.0, 253.66666666666666],[0.3333333333333333, 99.0],[0.0, 55.666666666666664],[0.3333333333333333, 215.5],[0.0, 73.33333333333333],[0.0, 209.0],[0.0, 147.66666666666666],[0.0, 50.333333333333336],[0.0, 82.0],[0.0, 41.0],[0.3333333333333333, 85.0],[0.0, 126.0],[0.0, 85.33333333333333],[0.0, 53.333333333333336],[0.0, 73.33333333333333],[0.0, 101.66666666666667],[0.3333333333333333, 49.5],[0.0, 105.0],[0.3333333333333333, 154.0],[0.0, 65.0],[0.0, 90.66666666666667],[0.0, 19.0],[0.0, 65.0],[0.0, 138.33333333333334],[0.0, 76.0],[0.0, 123.66666666666667],[0.0, 82.0],[0.0, 75.0],[0.6666666666666666, 68.0],[0.3333333333333333, 155.0],[0.0, 153.0],[0.0, 68.33333333333333],[0.3333333333333333, 117.5],[0.0, 48.0],[0.0, 122.66666666666667],[0.0, 57.0],[0.0, 145.66666666666666],[0.0, 95.66666666666667],[0.0, 14.666666666666666],[0.0, 121.33333333333333],[0.3333333333333333, 114.0],[0.0, 137.0],[0.0, 79.66666666666667],[0.0, 90.33333333333333],[0.0, 93.33333333333333],[0.0, 36.666666666666664],[0.0, 56.0],[0.3333333333333333, 241.0],[0.0, 72.66666666666667],[0.0, 87.66666666666667],[0.3333333333333333, 25.0],[0.0, 258.3333333333333],[0.3333333333333333, 50.0],[0.0, 72.66666666666667],[0.0, 139.0],[0.3333333333333333, 27.0],[0.0, 28.333333333333332],[0.0, 29.0],[0.0, 33.333333333333336],[0.0, 49.333333333333336],[0.0, 38.666666666666664],[0.0, 165.66666666666666],[0.3333333333333333, 134.0],[0.0, 128.0],[0.0, 147.66666666666666],[0.0, 26.666666666666668],[0.0, 113.33333333333333],[0.3333333333333333, 115.5],[0.3333333333333333, 150.5],[0.0, 147.33333333333334],[0.3333333333333333, 112.0],[0.3333333333333333, 168.5],[0.0, 17.0],[0.0, 49.333333333333336],[0.0, 55.0],[0.0, 222.66666666666666],[0.0, 36.333333333333336],[0.0, 45.666666666666664],[0.0, 103.66666666666667],[0.0, 189.66666666666666],[0.0, 20.666666666666668],[0.0, 67.33333333333333],[0.3333333333333333, 94.0],[0.0, 137.33333333333334],[0.0, 84.33333333333333],[0.3333333333333333, 168.0],[0.0, 130.33333333333334],[0.0, 53.333333333333336],[0.0, 34.666666666666664],[0.0, 58.333333333333336],[0.0, 41.333333333333336],[0.0, 113.0],[0.0, 57.333333333333336],[0.0, 39.666666666666664],[0.0, 20.0],[0.0, 42.0],[0.3333333333333333, 129.5],[0.3333333333333333, 68.5],[0.0, 43.333333333333336],[0.3333333333333333, 151.0],[0.0, 210.0],[0.0, 24.333333333333332],[0.0, 99.0],[0.0, 47.0],[0.0, 47.0],[0.3333333333333333, 190.0],[0.3333333333333333, 73.5],[0.3333333333333333, 97.0],[0.0, 96.66666666666667],[0.0, 188.0],[0.3333333333333333, 110.0],[0.0, 89.33333333333333],[0.0, 121.0],[0.3333333333333333, 24.0],[0.0, 26.333333333333332],[0.0, 83.33333333333333],[0.0, 96.0],[0.0, 22.0],[0.0, 79.66666666666667],[0.3333333333333333, 258.5],[0.0, 71.33333333333333],[0.3333333333333333, 81.5],[0.0, 48.666666666666664],[0.0, 65.66666666666667],[0.0, 39.333333333333336],[0.0, 129.0],[0.0, 60.0],[0.0, 58.666666666666664],[0.0, 139.0],[0.0, 62.666666666666664],[0.0, 66.0],[0.0, 18.333333333333332],[0.0, 76.66666666666667],[0.3333333333333333, 186.0],[0.0, 39.0],[0.0, 125.0],[0.0, 89.0],[0.3333333333333333, 120.5],[0.3333333333333333, 84.0],[0.0, 286.0],[0.0, 174.0],[0.0, 80.66666666666667],[0.0, 63.666666666666664],[0.0, 83.33333333333333],[0.3333333333333333, 51.5],[0.0, 270.0],[0.0, 127.33333333333333],[0.0, 110.66666666666667],[0.0, 98.66666666666667],[0.3333333333333333, 351.0],[0.0, 54.333333333333336],[0.0, 180.33333333333334],[0.0, 114.33333333333333],[0.0, 80.33333333333333],[0.0, 121.66666666666667],[0.3333333333333333, 132.0],[0.0, 152.66666666666666],[0.0, 127.0],[0.0, 63.0],[0.0, 116.66666666666667],[0.0, 31.0],[0.0, 124.66666666666667],[0.0, 38.666666666666664],[0.6666666666666666, 62.0],[0.0, 43.333333333333336],[0.0, 140.33333333333334],[0.0, 43.0],[0.0, 111.0],[0.0, 74.33333333333333],[0.0, 26.333333333333332],[0.0, 98.0],[0.0, 208.0],[0.0, 156.0],[0.0, 47.333333333333336],[0.3333333333333333, 79.5],[0.0, 68.33333333333333],[0.0, 131.66666666666666],[0.0, 189.33333333333334],[0.0, 204.66666666666666],[0.0, 32.333333333333336],[0.0, 91.0],[0.0, 121.0],[0.0, 83.0],[0.0, 112.0],[0.3333333333333333, 138.5],[0.0, 251.66666666666666],[0.3333333333333333, 145.0],[0.0, 188.0],[0.3333333333333333, 50.5],[0.0, 58.333333333333336],[0.3333333333333333, 45.5],[0.0, 139.66666666666666],[0.0, 61.666666666666664],[0.0, 266.6666666666667],[0.3333333333333333, 67.5],[0.0, 291.0],[0.0, 52.0],[0.0, 107.33333333333333],[0.3333333333333333, 79.5],[0.6666666666666666, 189.0],[0.0, 83.0],[0.3333333333333333, 125.0],[0.0, 168.66666666666666],[0.0, 114.0],[0.0, 94.0],[0.0, 161.66666666666666],[0.3333333333333333, 79.5],[0.6666666666666666, 102.0],[0.0, 57.0],[0.0, 98.33333333333333],[0.3333333333333333, 184.5],[0.0, 267.3333333333333],[0.0, 30.0],[0.3333333333333333, 203.0],[0.0, 111.33333333333333],[0.0, 46.0],[0.0, 150.33333333333334],[0.0, 82.66666666666667],[0.0, 25.0],[0.0, 33.333333333333336],[0.0, 71.0],[0.0, 20.666666666666668],[0.3333333333333333, 125.0],[0.0, 199.0],[0.0, 23.0],[0.3333333333333333, 39.5],[0.0, 94.0],[0.0, 35.333333333333336],[0.0, 68.0],[0.6666666666666666, 135.0],[0.0, 203.0],[0.0, 54.333333333333336],[0.3333333333333333, 114.5],[0.0, 66.0],[0.3333333333333333, 104.5],[0.3333333333333333, 36.5],[0.0, 79.33333333333333],[0.0, 96.33333333333333],[0.0, 210.66666666666666],[0.3333333333333333, 92.0],[0.0, 258.3333333333333],[0.0, 147.66666666666666],[0.0, 40.0],[0.0, 54.333333333333336],[0.0, 48.0],[0.0, 44.0],[0.0, 55.0],[0.0, 157.33333333333334],[0.0, 52.0],[0.0, 94.33333333333333],[0.0, 47.0],[0.0, 137.66666666666666],[0.0, 115.66666666666667],[0.0, 95.66666666666667],[0.0, 203.66666666666666],[0.0, 133.66666666666666],[0.0, 86.66666666666667],[0.0, 59.666666666666664],[0.0, 43.333333333333336],[0.0, 187.0],[0.0, 140.66666666666666],[0.3333333333333333, 122.5],[0.0, 106.66666666666667],[0.0, 121.0],[0.0, 54.0],[0.0, 207.66666666666666],[0.0, 83.66666666666667],[0.0, 62.666666666666664],[0.0, 39.333333333333336],[0.0, 47.666666666666664],[0.0, 28.333333333333332],[0.3333333333333333, 49.5],[0.0, 67.33333333333333],[0.0, 53.333333333333336],[0.3333333333333333, 91.0],[0.0, 84.66666666666667],[0.0, 229.33333333333334],[0.0, 96.33333333333333],[0.0, 305.6666666666667],[0.0, 225.66666666666666],[0.3333333333333333, 233.5],[0.0, 41.0],[0.0, 200.0],[0.0, 194.66666666666666],[0.0, 48.333333333333336],[0.0, 169.33333333333334],[0.3333333333333333, 38.5],[0.0, 35.666666666666664],[0.0, 58.0],[0.0, 25.0],[0.0, 82.33333333333333],[0.0, 38.666666666666664],[0.0, 24.333333333333332],[0.3333333333333333, 228.0],[0.0, 68.33333333333333],[0.0, 90.33333333333333],[0.0, 53.666666666666664],[0.0, 36.333333333333336],[0.3333333333333333, 108.0],[0.0, 71.0],[0.0, 36.333333333333336],[0.0, 91.33333333333333],[0.0, 60.333333333333336],[0.0, 161.33333333333334],[0.0, 90.0],[0.0, 99.33333333333333],[0.0, 38.666666666666664],[0.0, 127.33333333333333],[0.0, 91.0],[0.0, 103.0],[0.0, 22.0],[0.0, 62.0],[0.0, 43.0],[0.0, 52.0],[0.3333333333333333, 80.5],[0.0, 143.33333333333334],[0.0, 57.0],[0.0, 89.33333333333333],[0.0, 197.66666666666666],[0.3333333333333333, 243.5],[0.0, 102.66666666666667],[0.0, 149.0],[0.3333333333333333, 30.5],[0.0, 83.66666666666667],[0.0, 68.33333333333333],[0.0, 70.66666666666667],[0.0, 60.0],[0.0, 112.33333333333333],[0.0, 41.666666666666664],[0.0, 68.66666666666667],[0.3333333333333333, 215.0],[0.0, 109.33333333333333],[0.0, 95.33333333333333],[0.0, 123.33333333333333],[0.0, 128.33333333333334],[0.0, 101.33333333333333],[0.0, 22.333333333333332],[0.0, 116.33333333333333],[0.3333333333333333, 64.0],[0.3333333333333333, 82.0],[0.6666666666666666, 107.0],[0.0, 92.66666666666667],[0.0, 78.0],[0.0, 39.0],[0.3333333333333333, 92.0],[0.0, 36.333333333333336],[0.0, 86.66666666666667],[0.0, 21.333333333333332],[0.0, 62.666666666666664],[0.0, 70.66666666666667],[0.3333333333333333, 123.5],[0.0, 49.0],[0.0, 123.66666666666667],[0.0, 32.666666666666664],[0.3333333333333333, 95.0],[0.0, 109.33333333333333],[0.3333333333333333, 163.0],[0.0, 58.333333333333336],[0.3333333333333333, 149.5],[0.3333333333333333, 54.0],[0.0, 151.33333333333334],[0.0, 129.0],[0.0, 39.666666666666664],[0.0, 78.66666666666667],[0.0, 38.0],[0.0, 216.0],[0.0, 52.0],[0.0, 119.0],[0.0, 119.0],[0.6666666666666666, 62.0],[0.0, 83.0],[0.0, 159.66666666666666],[0.0, 193.33333333333334],[0.0, 26.333333333333332],[0.0, 181.33333333333334],[0.3333333333333333, 98.0],[0.0, 224.33333333333334],[0.0, 45.333333333333336],[0.0, 173.0],[0.0, 34.333333333333336],[0.3333333333333333, 106.5],[0.0, 47.666666666666664],[0.0, 78.66666666666667],[0.3333333333333333, 94.5],[0.0, 115.0],[0.3333333333333333, 95.5],[0.3333333333333333, 108.5],[0.0, 86.66666666666667],[0.3333333333333333, 75.5],[0.0, 60.333333333333336],[0.0, 32.0],[0.3333333333333333, 149.0],[0.0, 87.66666666666667],[0.0, 96.66666666666667],[0.0, 144.66666666666666],[0.0, 34.0],[0.0, 230.33333333333334],[0.0, 237.0],[0.0, 226.0],[0.3333333333333333, 72.5],[0.0, 85.0],[0.0, 104.66666666666667],[0.0, 126.66666666666667],[0.0, 28.0],[0.0, 25.333333333333332],[0.0, 73.0],[0.0, 64.66666666666667],[0.3333333333333333, 135.0],[0.0, 226.66666666666666],[0.3333333333333333, 62.0],[0.0, 209.0],[0.0, 55.333333333333336],[0.0, 34.666666666666664],[0.0, 23.333333333333332],[0.0, 60.666666666666664],[0.0, 92.0],[0.0, 58.333333333333336],[0.0, 37.333333333333336],[0.0, 93.66666666666667],[0.3333333333333333, 257.5],[0.0, 141.0],[0.3333333333333333, 184.5],[0.0, 86.33333333333333],[0.0, 101.33333333333333],[0.0, 38.333333333333336],[0.0, 54.333333333333336],[0.0, 219.66666666666666],[0.3333333333333333, 75.5],[0.0, 96.33333333333333],[0.0, 90.0],[0.0, 229.66666666666666],[0.0, 12.666666666666666],[0.0, 18.333333333333332],[0.3333333333333333, 214.5],[0.0, 130.33333333333334],[0.0, 36.0],[0.3333333333333333, 77.5],[0.0, 210.66666666666666],[0.0, 198.33333333333334],[0.0, 26.333333333333332],[0.0, 115.33333333333333],[0.0, 25.0],[0.0, 181.0],[0.0, 43.666666666666664],[0.0, 91.66666666666667],[0.0, 94.33333333333333],[0.0, 19.333333333333332],[0.3333333333333333, 96.5],[0.0, 86.33333333333333],[0.0, 29.666666666666668],[0.3333333333333333, 57.5],[0.0, 207.33333333333334],[0.0, 106.33333333333333],[0.3333333333333333, 110.0],[0.0, 28.333333333333332],[0.0, 121.33333333333333],[0.0, 68.33333333333333],[0.0, 30.666666666666668],[0.3333333333333333, 106.0],[0.0, 60.333333333333336],[0.3333333333333333, 309.5],[0.3333333333333333, 146.0],[0.3333333333333333, 42.0],[0.3333333333333333, 36.5],[0.0, 121.0],[0.0, 124.33333333333333],[0.3333333333333333, 75.5],[0.0, 173.66666666666666],[0.0, 216.0],[0.0, 67.66666666666667],[0.6666666666666666, 95.0],[0.0, 256.0],[0.0, 33.333333333333336],[0.0, 18.0],[0.0, 57.666666666666664],[0.3333333333333333, 80.5],[0.0, 70.66666666666667],[0.0, 56.333333333333336],[0.0, 196.66666666666666],[0.0, 189.66666666666666],[0.3333333333333333, 174.0],[0.0, 199.0],[0.0, 67.0],[0.0, 165.0],[0.0, 18.333333333333332],[0.0, 130.66666666666666],[0.0, 150.0],[0.0, 183.33333333333334],[0.0, 178.0],[0.0, 48.666666666666664],[0.0, 60.666666666666664],[0.0, 191.0],[0.3333333333333333, 49.0],[0.3333333333333333, 272.5],[0.3333333333333333, 63.5],[0.3333333333333333, 43.5],[0.0, 69.33333333333333],[0.0, 126.33333333333333],[0.0, 90.33333333333333],[0.0, 115.0],[0.0, 33.0],[0.0, 142.33333333333334],[0.0, 15.333333333333334],[0.0, 62.666666666666664],[0.0, 176.66666666666666],[0.0, 200.33333333333334],[0.0, 193.33333333333334],[0.3333333333333333, 162.5],[0.3333333333333333, 61.0],[0.3333333333333333, 93.0],[0.0, 94.33333333333333],[0.3333333333333333, 101.0],[0.3333333333333333, 54.5],[0.3333333333333333, 194.5],[0.0, 43.0],[0.3333333333333333, 99.5],[0.0, 91.0],[0.0, 41.333333333333336],[0.0, 130.33333333333334],[0.0, 53.666666666666664],[0.0, 41.0],[0.0, 95.66666666666667],[0.0, 20.666666666666668],[0.0, 167.0],[0.0, 218.33333333333334],[0.0, 204.0],[0.0, 95.0],[0.6666666666666666, 129.0],[0.0, 86.0],[0.0, 119.33333333333333],[0.3333333333333333, 79.5],[0.3333333333333333, 82.5],[0.0, 89.33333333333333],[0.0, 98.33333333333333],[0.0, 150.33333333333334],[0.0, 10.666666666666666],[0.0, 45.0],[0.0, 135.33333333333334],[0.0, 89.0],[0.0, 123.66666666666667],[0.0, 81.33333333333333],[0.0, 100.66666666666667],[0.0, 247.33333333333334],[0.0, 32.666666666666664],[0.0, 94.0],[0.3333333333333333, 31.5],[0.0, 73.0],[0.0, 10.333333333333334],[0.0, 87.33333333333333],[0.0, 242.33333333333334],[0.0, 226.0],[0.0, 96.66666666666667],[0.0, 130.66666666666666],[0.0, 13.333333333333334],[0.0, 48.666666666666664],[0.0, 74.66666666666667],[0.0, 22.0],[0.6666666666666666, 78.0],[0.0, 94.66666666666667],[0.0, 121.0],[0.0, 79.0],[0.0, 353.6666666666667],[0.0, 71.33333333333333],[0.0, 103.33333333333333],[0.0, 122.0],[0.3333333333333333, 87.0],[0.0, 267.0],[0.0, 69.0],[0.0, 64.33333333333333],[0.3333333333333333, 111.0],[0.0, 172.66666666666666],[0.0, 73.0],[0.0, 107.0],[0.0, 128.0],[0.3333333333333333, 75.5],[0.3333333333333333, 294.5],[0.0, 143.0],[0.0, 59.0],[0.0, 55.666666666666664],[0.0, 76.66666666666667],[0.0, 63.0],[0.0, 207.0],[0.3333333333333333, 56.0],[0.0, 51.666666666666664],[0.3333333333333333, 57.0],[0.0, 136.33333333333334],[0.0, 79.33333333333333],[0.0, 20.333333333333332],[0.3333333333333333, 22.5],[0.0, 120.66666666666667],[0.3333333333333333, 134.0],[0.3333333333333333, 39.5],[0.0, 112.0],[0.0, 50.333333333333336],[0.3333333333333333, 89.5],[0.0, 53.333333333333336],[0.0, 250.0],]);
+
+        var options = {
+          title: 'Zero Fractions vs. Nonzero Means by Gene',
+          hAxis: {title: 'Zero Fraction', minValue: 0, maxValue: 1},
+          vAxis: {title: 'Nonzero Mean', minValue: 0},
+          legend: 'none'
+        };
+
+        var chart = new google.visualization.ScatterChart(document.getElementById('chart2'));
+
+        chart.draw(data, options);
+      }
+    </script>
+<div id="chart2" style="width: 900px; height: 500px;" ></div>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load("current", {packages:["corechart"]});
+      google.charts.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([['Gene', 'Zero_frac'],['gene0', 0.0],['gene1', 0.0],['gene2', 0.3333333333333333],['gene3', 0.3333333333333333],['gene4', 0.0],['gene5', 0.0],['gene6', 0.0],['gene7', 0.0],['gene8', 0.0],['gene9', 0.0],['gene10', 0.0],['gene11', 0.3333333333333333],['gene12', 0.0],['gene13', 0.0],['gene14', 0.0],['gene15', 0.0],['gene16', 0.0],['gene17', 0.0],['gene18', 0.3333333333333333],['gene19', 0.0],['gene20', 0.3333333333333333],['gene21', 0.3333333333333333],['gene22', 0.0],['gene23', 0.0],['gene24', 0.0],['gene25', 0.6666666666666666],['gene26', 0.0],['gene27', 0.0],['gene28', 0.0],['gene29', 0.0],['gene30', 0.0],['gene31', 0.0],['gene32', 0.0],['gene33', 0.0],['gene34', 0.0],['gene35', 0.0],['gene36', 0.0],['gene37', 0.0],['gene38', 0.0],['gene39', 0.0],['gene40', 0.3333333333333333],['gene41', 0.3333333333333333],['gene42', 0.0],['gene43', 0.0],['gene44', 0.3333333333333333],['gene45', 0.0],['gene46', 0.0],['gene47', 0.0],['gene48', 0.0],['gene49', 0.0],['gene50', 0.0],['gene51', 0.0],['gene52', 0.0],['gene53', 0.0],['gene54', 0.0],['gene55', 0.3333333333333333],['gene56', 0.0],['gene57', 0.3333333333333333],['gene58', 0.0],['gene59', 0.3333333333333333],['gene60', 0.3333333333333333],['gene61', 0.0],['gene62', 0.0],['gene63', 0.0],['gene64', 0.3333333333333333],['gene65', 0.0],['gene66', 0.0],['gene67', 0.3333333333333333],['gene68', 0.0],['gene69', 0.0],['gene70', 0.0],['gene71', 0.6666666666666666],['gene72', 0.0],['gene73', 0.0],['gene74', 0.0],['gene75', 0.3333333333333333],['gene76', 0.0],['gene77', 0.0],['gene78', 0.0],['gene79', 0.3333333333333333],['gene80', 0.0],['gene81', 0.0],['gene82', 0.0],['gene83', 0.3333333333333333],['gene84', 0.0],['gene85', 0.0],['gene86', 0.3333333333333333],['gene87', 0.0],['gene88', 0.0],['gene89', 0.0],['gene90', 0.6666666666666666],['gene91', 0.0],['gene92', 0.3333333333333333],['gene93', 0.0],['gene94', 0.3333333333333333],['gene95', 0.3333333333333333],['gene96', 0.0],['gene97', 0.0],['gene98', 0.0],['gene99', 0.0],['gene100', 0.0],['gene101', 0.0],['gene102', 0.0],['gene103', 0.0],['gene104', 0.0],['gene105', 0.0],['gene106', 0.3333333333333333],['gene107', 0.0],['gene108', 0.3333333333333333],['gene109', 0.0],['gene110', 0.0],['gene111', 0.0],['gene112', 0.3333333333333333],['gene113', 0.0],['gene114', 0.0],['gene115', 0.0],['gene116', 0.0],['gene117', 0.0],['gene118', 0.0],['gene119', 0.0],['gene120', 0.3333333333333333],['gene121', 0.0],['gene122', 0.3333333333333333],['gene123', 0.3333333333333333],['gene124', 0.3333333333333333],['gene125', 0.3333333333333333],['gene126', 0.0],['gene127', 0.0],['gene128', 0.0],['gene129', 0.0],['gene130', 0.3333333333333333],['gene131', 0.0],['gene132', 0.3333333333333333],['gene133', 0.0],['gene134', 0.0],['gene135', 0.0],['gene136', 0.0],['gene137', 0.0],['gene138', 0.0],['gene139', 0.0],['gene140', 0.0],['gene141', 0.3333333333333333],['gene142', 0.0],['gene143', 0.3333333333333333],['gene144', 0.0],['gene145', 0.0],['gene146', 0.0],['gene147', 0.0],['gene148', 0.0],['gene149', 0.6666666666666666],['gene150', 0.0],['gene151', 0.0],['gene152', 0.0],['gene153', 0.0],['gene154', 0.0],['gene155', 0.0],['gene156', 0.0],['gene157', 0.0],['gene158', 0.0],['gene159', 0.0],['gene160', 0.0],['gene161', 0.0],['gene162', 0.0],['gene163', 0.0],['gene164', 0.3333333333333333],['gene165', 0.0],['gene166', 0.0],['gene167', 0.0],['gene168', 0.0],['gene169', 0.0],['gene170', 0.3333333333333333],['gene171', 0.0],['gene172', 0.6666666666666666],['gene173', 0.0],['gene174', 0.0],['gene175', 0.3333333333333333],['gene176', 0.0],['gene177', 0.0],['gene178', 0.0],['gene179', 0.0],['gene180', 0.0],['gene181', 0.0],['gene182', 0.0],['gene183', 0.0],['gene184', 0.0],['gene185', 0.0],['gene186', 0.0],['gene187', 0.0],['gene188', 0.0],['gene189', 0.0],['gene190', 0.0],['gene191', 0.0],['gene192', 0.0],['gene193', 0.0],['gene194', 0.0],['gene195', 0.0],['gene196', 0.0],['gene197', 0.0],['gene198', 0.0],['gene199', 0.0],['gene200', 0.0],['gene201', 0.0],['gene202', 0.3333333333333333],['gene203', 0.0],['gene204', 0.0],['gene205', 0.0],['gene206', 0.0],['gene207', 0.0],['gene208', 0.0],['gene209', 0.0],['gene210', 0.3333333333333333],['gene211', 0.0],['gene212', 0.0],['gene213', 0.0],['gene214', 0.0],['gene215', 0.3333333333333333],['gene216', 0.3333333333333333],['gene217', 0.0],['gene218', 0.0],['gene219', 0.3333333333333333],['gene220', 0.0],['gene221', 0.0],['gene222', 0.3333333333333333],['gene223', 0.0],['gene224', 0.0],['gene225', 0.0],['gene226', 0.3333333333333333],['gene227', 0.0],['gene228', 0.0],['gene229', 0.0],['gene230', 0.0],['gene231', 0.0],['gene232', 0.0],['gene233', 0.0],['gene234', 0.0],['gene235', 0.3333333333333333],['gene236', 0.0],['gene237', 0.0],['gene238', 0.0],['gene239', 0.0],['gene240', 0.0],['gene241', 0.0],['gene242', 0.0],['gene243', 0.0],['gene244', 0.6666666666666666],['gene245', 0.0],['gene246', 0.0],['gene247', 0.0],['gene248', 0.3333333333333333],['gene249', 0.0],['gene250', 0.0],['gene251', 0.0],['gene252', 0.0],['gene253', 0.0],['gene254', 0.0],['gene255', 0.0],['gene256', 0.0],['gene257', 0.0],['gene258', 0.3333333333333333],['gene259', 0.0],['gene260', 0.0],['gene261', 0.0],['gene262', 0.0],['gene263', 0.0],['gene264', 0.3333333333333333],['gene265', 0.0],['gene266', 0.0],['gene267', 0.0],['gene268', 0.0],['gene269', 0.0],['gene270', 0.0],['gene271', 0.0],['gene272', 0.0],['gene273', 0.0],['gene274', 0.3333333333333333],['gene275', 0.0],['gene276', 0.3333333333333333],['gene277', 0.0],['gene278', 0.0],['gene279', 0.6666666666666666],['gene280', 0.0],['gene281', 0.0],['gene282', 0.3333333333333333],['gene283', 0.0],['gene284', 0.0],['gene285', 0.0],['gene286', 0.0],['gene287', 0.0],['gene288', 0.0],['gene289', 0.0],['gene290', 0.0],['gene291', 0.0],['gene292', 0.3333333333333333],['gene293', 0.0],['gene294', 0.0],['gene295', 0.0],['gene296', 0.0],['gene297', 0.0],['gene298', 0.0],['gene299', 0.0],['gene300', 0.0],['gene301', 0.0],['gene302', 0.0],['gene303', 0.3333333333333333],['gene304', 0.3333333333333333],['gene305', 0.0],['gene306', 0.6666666666666666],['gene307', 0.0],['gene308', 0.0],['gene309', 0.0],['gene310', 0.0],['gene311', 0.0],['gene312', 0.0],['gene313', 0.0],['gene314', 0.0],['gene315', 0.0],['gene316', 0.0],['gene317', 0.0],['gene318', 0.0],['gene319', 0.0],['gene320', 0.0],['gene321', 0.0],['gene322', 0.0],['gene323', 0.3333333333333333],['gene324', 0.0],['gene325', 0.3333333333333333],['gene326', 0.0],['gene327', 0.0],['gene328', 0.0],['gene329', 0.0],['gene330', 0.0],['gene331', 0.3333333333333333],['gene332', 0.0],['gene333', 0.0],['gene334', 0.3333333333333333],['gene335', 0.0],['gene336', 0.0],['gene337', 0.0],['gene338', 0.0],['gene339', 0.6666666666666666],['gene340', 0.0],['gene341', 0.0],['gene342', 0.0],['gene343', 0.3333333333333333],['gene344', 0.0],['gene345', 0.0],['gene346', 0.0],['gene347', 0.0],['gene348', 0.0],['gene349', 0.0],['gene350', 0.3333333333333333],['gene351', 0.0],['gene352', 0.3333333333333333],['gene353', 0.3333333333333333],['gene354', 0.0],['gene355', 0.0],['gene356', 0.3333333333333333],['gene357', 0.0],['gene358', 0.0],['gene359', 0.0],['gene360', 0.3333333333333333],['gene361', 0.0],['gene362', 0.0],['gene363', 0.0],['gene364', 0.0],['gene365', 0.3333333333333333],['gene366', 0.0],['gene367', 0.0],['gene368', 0.3333333333333333],['gene369', 0.0],['gene370', 0.3333333333333333],['gene371', 0.0],['gene372', 0.0],['gene373', 0.3333333333333333],['gene374', 0.0],['gene375', 0.0],['gene376', 0.0],['gene377', 0.0],['gene378', 0.0],['gene379', 0.0],['gene380', 0.0],['gene381', 0.0],['gene382', 0.0],['gene383', 0.0],['gene384', 0.6666666666666666],['gene385', 0.0],['gene386', 0.0],['gene387', 0.0],['gene388', 0.3333333333333333],['gene389', 0.0],['gene390', 0.0],['gene391', 0.0],['gene392', 0.0],['gene393', 0.0],['gene394', 0.0],['gene395', 0.0],['gene396', 0.0],['gene397', 0.3333333333333333],['gene398', 0.0],['gene399', 0.0],['gene400', 0.3333333333333333],['gene401', 0.0],['gene402', 0.0],['gene403', 0.0],['gene404', 0.3333333333333333],['gene405', 0.0],['gene406', 0.3333333333333333],['gene407', 0.0],['gene408', 0.0],['gene409', 0.0],['gene410', 0.0],['gene411', 0.0],['gene412', 0.0],['gene413', 0.3333333333333333],['gene414', 0.0],['gene415', 0.0],['gene416', 0.0],['gene417', 0.0],['gene418', 0.0],['gene419', 0.3333333333333333],['gene420', 0.0],['gene421', 0.3333333333333333],['gene422', 0.0],['gene423', 0.0],['gene424', 0.0],['gene425', 0.0],['gene426', 0.0],['gene427', 0.0],['gene428', 0.0],['gene429', 0.0],['gene430', 0.0],['gene431', 0.6666666666666666],['gene432', 0.3333333333333333],['gene433', 0.0],['gene434', 0.0],['gene435', 0.3333333333333333],['gene436', 0.0],['gene437', 0.0],['gene438', 0.0],['gene439', 0.0],['gene440', 0.0],['gene441', 0.0],['gene442', 0.0],['gene443', 0.3333333333333333],['gene444', 0.0],['gene445', 0.0],['gene446', 0.0],['gene447', 0.0],['gene448', 0.0],['gene449', 0.0],['gene450', 0.3333333333333333],['gene451', 0.0],['gene452', 0.0],['gene453', 0.3333333333333333],['gene454', 0.0],['gene455', 0.3333333333333333],['gene456', 0.0],['gene457', 0.0],['gene458', 0.3333333333333333],['gene459', 0.0],['gene460', 0.0],['gene461', 0.0],['gene462', 0.0],['gene463', 0.0],['gene464', 0.0],['gene465', 0.3333333333333333],['gene466', 0.0],['gene467', 0.0],['gene468', 0.0],['gene469', 0.0],['gene470', 0.3333333333333333],['gene471', 0.3333333333333333],['gene472', 0.0],['gene473', 0.3333333333333333],['gene474', 0.3333333333333333],['gene475', 0.0],['gene476', 0.0],['gene477', 0.0],['gene478', 0.0],['gene479', 0.0],['gene480', 0.0],['gene481', 0.0],['gene482', 0.0],['gene483', 0.0],['gene484', 0.0],['gene485', 0.3333333333333333],['gene486', 0.0],['gene487', 0.0],['gene488', 0.3333333333333333],['gene489', 0.0],['gene490', 0.0],['gene491', 0.0],['gene492', 0.0],['gene493', 0.0],['gene494', 0.0],['gene495', 0.0],['gene496', 0.0],['gene497', 0.0],['gene498', 0.0],['gene499', 0.3333333333333333],['gene500', 0.3333333333333333],['gene501', 0.0],['gene502', 0.3333333333333333],['gene503', 0.0],['gene504', 0.0],['gene505', 0.0],['gene506', 0.0],['gene507', 0.0],['gene508', 0.3333333333333333],['gene509', 0.3333333333333333],['gene510', 0.3333333333333333],['gene511', 0.0],['gene512', 0.0],['gene513', 0.3333333333333333],['gene514', 0.0],['gene515', 0.0],['gene516', 0.3333333333333333],['gene517', 0.0],['gene518', 0.0],['gene519', 0.0],['gene520', 0.0],['gene521', 0.0],['gene522', 0.3333333333333333],['gene523', 0.0],['gene524', 0.3333333333333333],['gene525', 0.0],['gene526', 0.0],['gene527', 0.0],['gene528', 0.0],['gene529', 0.0],['gene530', 0.0],['gene531', 0.0],['gene532', 0.0],['gene533', 0.0],['gene534', 0.0],['gene535', 0.0],['gene536', 0.3333333333333333],['gene537', 0.0],['gene538', 0.0],['gene539', 0.0],['gene540', 0.3333333333333333],['gene541', 0.3333333333333333],['gene542', 0.0],['gene543', 0.0],['gene544', 0.0],['gene545', 0.0],['gene546', 0.0],['gene547', 0.3333333333333333],['gene548', 0.0],['gene549', 0.0],['gene550', 0.0],['gene551', 0.0],['gene552', 0.3333333333333333],['gene553', 0.0],['gene554', 0.0],['gene555', 0.0],['gene556', 0.0],['gene557', 0.0],['gene558', 0.3333333333333333],['gene559', 0.0],['gene560', 0.0],['gene561', 0.0],['gene562', 0.0],['gene563', 0.0],['gene564', 0.0],['gene565', 0.0],['gene566', 0.6666666666666666],['gene567', 0.0],['gene568', 0.0],['gene569', 0.0],['gene570', 0.0],['gene571', 0.0],['gene572', 0.0],['gene573', 0.0],['gene574', 0.0],['gene575', 0.0],['gene576', 0.0],['gene577', 0.3333333333333333],['gene578', 0.0],['gene579', 0.0],['gene580', 0.0],['gene581', 0.0],['gene582', 0.0],['gene583', 0.0],['gene584', 0.0],['gene585', 0.0],['gene586', 0.0],['gene587', 0.3333333333333333],['gene588', 0.0],['gene589', 0.3333333333333333],['gene590', 0.0],['gene591', 0.3333333333333333],['gene592', 0.0],['gene593', 0.3333333333333333],['gene594', 0.0],['gene595', 0.0],['gene596', 0.0],['gene597', 0.3333333333333333],['gene598', 0.0],['gene599', 0.0],['gene600', 0.0],['gene601', 0.3333333333333333],['gene602', 0.6666666666666666],['gene603', 0.0],['gene604', 0.3333333333333333],['gene605', 0.0],['gene606', 0.0],['gene607', 0.0],['gene608', 0.0],['gene609', 0.3333333333333333],['gene610', 0.6666666666666666],['gene611', 0.0],['gene612', 0.0],['gene613', 0.3333333333333333],['gene614', 0.0],['gene615', 0.0],['gene616', 0.3333333333333333],['gene617', 0.0],['gene618', 0.0],['gene619', 0.0],['gene620', 0.0],['gene621', 0.0],['gene622', 0.0],['gene623', 0.0],['gene624', 0.0],['gene625', 0.3333333333333333],['gene626', 0.0],['gene627', 0.0],['gene628', 0.3333333333333333],['gene629', 0.0],['gene630', 0.0],['gene631', 0.0],['gene632', 0.6666666666666666],['gene633', 0.0],['gene634', 0.0],['gene635', 0.3333333333333333],['gene636', 0.0],['gene637', 0.3333333333333333],['gene638', 0.3333333333333333],['gene639', 0.0],['gene640', 0.0],['gene641', 0.0],['gene642', 0.3333333333333333],['gene643', 0.0],['gene644', 0.0],['gene645', 0.0],['gene646', 0.0],['gene647', 0.0],['gene648', 0.0],['gene649', 0.0],['gene650', 0.0],['gene651', 0.0],['gene652', 0.0],['gene653', 0.0],['gene654', 0.0],['gene655', 0.0],['gene656', 0.0],['gene657', 0.0],['gene658', 0.0],['gene659', 0.0],['gene660', 0.0],['gene661', 0.0],['gene662', 0.0],['gene663', 0.0],['gene664', 0.3333333333333333],['gene665', 0.0],['gene666', 0.0],['gene667', 0.0],['gene668', 0.0],['gene669', 0.0],['gene670', 0.0],['gene671', 0.0],['gene672', 0.0],['gene673', 0.0],['gene674', 0.3333333333333333],['gene675', 0.0],['gene676', 0.0],['gene677', 0.3333333333333333],['gene678', 0.0],['gene679', 0.0],['gene680', 0.0],['gene681', 0.0],['gene682', 0.0],['gene683', 0.3333333333333333],['gene684', 0.0],['gene685', 0.0],['gene686', 0.0],['gene687', 0.0],['gene688', 0.0],['gene689', 0.3333333333333333],['gene690', 0.0],['gene691', 0.0],['gene692', 0.0],['gene693', 0.0],['gene694', 0.0],['gene695', 0.0],['gene696', 0.3333333333333333],['gene697', 0.0],['gene698', 0.0],['gene699', 0.0],['gene700', 0.0],['gene701', 0.3333333333333333],['gene702', 0.0],['gene703', 0.0],['gene704', 0.0],['gene705', 0.0],['gene706', 0.0],['gene707', 0.0],['gene708', 0.0],['gene709', 0.0],['gene710', 0.0],['gene711', 0.0],['gene712', 0.0],['gene713', 0.0],['gene714', 0.0],['gene715', 0.0],['gene716', 0.0],['gene717', 0.3333333333333333],['gene718', 0.0],['gene719', 0.0],['gene720', 0.0],['gene721', 0.0],['gene722', 0.3333333333333333],['gene723', 0.0],['gene724', 0.0],['gene725', 0.3333333333333333],['gene726', 0.0],['gene727', 0.0],['gene728', 0.0],['gene729', 0.0],['gene730', 0.0],['gene731', 0.0],['gene732', 0.0],['gene733', 0.3333333333333333],['gene734', 0.0],['gene735', 0.0],['gene736', 0.0],['gene737', 0.0],['gene738', 0.0],['gene739', 0.0],['gene740', 0.0],['gene741', 0.3333333333333333],['gene742', 0.3333333333333333],['gene743', 0.6666666666666666],['gene744', 0.0],['gene745', 0.0],['gene746', 0.0],['gene747', 0.3333333333333333],['gene748', 0.0],['gene749', 0.0],['gene750', 0.0],['gene751', 0.0],['gene752', 0.0],['gene753', 0.3333333333333333],['gene754', 0.0],['gene755', 0.0],['gene756', 0.0],['gene757', 0.3333333333333333],['gene758', 0.0],['gene759', 0.3333333333333333],['gene760', 0.0],['gene761', 0.3333333333333333],['gene762', 0.3333333333333333],['gene763', 0.0],['gene764', 0.0],['gene765', 0.0],['gene766', 0.0],['gene767', 0.0],['gene768', 0.0],['gene769', 0.0],['gene770', 0.0],['gene771', 0.0],['gene772', 0.6666666666666666],['gene773', 0.0],['gene774', 0.0],['gene775', 0.0],['gene776', 0.0],['gene777', 0.0],['gene778', 0.3333333333333333],['gene779', 0.0],['gene780', 0.0],['gene781', 0.0],['gene782', 0.0],['gene783', 0.3333333333333333],['gene784', 0.0],['gene785', 0.0],['gene786', 0.3333333333333333],['gene787', 0.0],['gene788', 0.3333333333333333],['gene789', 0.3333333333333333],['gene790', 0.0],['gene791', 0.3333333333333333],['gene792', 0.0],['gene793', 0.0],['gene794', 0.3333333333333333],['gene795', 0.0],['gene796', 0.0],['gene797', 0.0],['gene798', 0.0],['gene799', 0.0],['gene800', 0.0],['gene801', 0.0],['gene802', 0.3333333333333333],['gene803', 0.0],['gene804', 0.0],['gene805', 0.0],['gene806', 0.0],['gene807', 0.0],['gene808', 0.0],['gene809', 0.0],['gene810', 0.3333333333333333],['gene811', 0.0],['gene812', 0.3333333333333333],['gene813', 0.0],['gene814', 0.0],['gene815', 0.0],['gene816', 0.0],['gene817', 0.0],['gene818', 0.0],['gene819', 0.0],['gene820', 0.0],['gene821', 0.0],['gene822', 0.3333333333333333],['gene823', 0.0],['gene824', 0.3333333333333333],['gene825', 0.0],['gene826', 0.0],['gene827', 0.0],['gene828', 0.0],['gene829', 0.0],['gene830', 0.3333333333333333],['gene831', 0.0],['gene832', 0.0],['gene833', 0.0],['gene834', 0.0],['gene835', 0.0],['gene836', 0.3333333333333333],['gene837', 0.0],['gene838', 0.0],['gene839', 0.3333333333333333],['gene840', 0.0],['gene841', 0.0],['gene842', 0.0],['gene843', 0.0],['gene844', 0.0],['gene845', 0.0],['gene846', 0.0],['gene847', 0.0],['gene848', 0.0],['gene849', 0.0],['gene850', 0.3333333333333333],['gene851', 0.0],['gene852', 0.0],['gene853', 0.3333333333333333],['gene854', 0.0],['gene855', 0.0],['gene856', 0.3333333333333333],['gene857', 0.0],['gene858', 0.0],['gene859', 0.0],['gene860', 0.0],['gene861', 0.3333333333333333],['gene862', 0.0],['gene863', 0.3333333333333333],['gene864', 0.3333333333333333],['gene865', 0.3333333333333333],['gene866', 0.3333333333333333],['gene867', 0.0],['gene868', 0.0],['gene869', 0.3333333333333333],['gene870', 0.0],['gene871', 0.0],['gene872', 0.0],['gene873', 0.6666666666666666],['gene874', 0.0],['gene875', 0.0],['gene876', 0.0],['gene877', 0.0],['gene878', 0.3333333333333333],['gene879', 0.0],['gene880', 0.0],['gene881', 0.0],['gene882', 0.0],['gene883', 0.3333333333333333],['gene884', 0.0],['gene885', 0.0],['gene886', 0.0],['gene887', 0.0],['gene888', 0.0],['gene889', 0.0],['gene890', 0.0],['gene891', 0.0],['gene892', 0.0],['gene893', 0.0],['gene894', 0.0],['gene895', 0.3333333333333333],['gene896', 0.3333333333333333],['gene897', 0.3333333333333333],['gene898', 0.3333333333333333],['gene899', 0.0],['gene900', 0.0],['gene901', 0.0],['gene902', 0.0],['gene903', 0.0],['gene904', 0.0],['gene905', 0.0],['gene906', 0.0],['gene907', 0.0],['gene908', 0.0],['gene909', 0.0],['gene910', 0.3333333333333333],['gene911', 0.3333333333333333],['gene912', 0.3333333333333333],['gene913', 0.0],['gene914', 0.3333333333333333],['gene915', 0.3333333333333333],['gene916', 0.3333333333333333],['gene917', 0.0],['gene918', 0.3333333333333333],['gene919', 0.0],['gene920', 0.0],['gene921', 0.0],['gene922', 0.0],['gene923', 0.0],['gene924', 0.0],['gene925', 0.0],['gene926', 0.0],['gene927', 0.0],['gene928', 0.0],['gene929', 0.0],['gene930', 0.6666666666666666],['gene931', 0.0],['gene932', 0.0],['gene933', 0.3333333333333333],['gene934', 0.3333333333333333],['gene935', 0.0],['gene936', 0.0],['gene937', 0.0],['gene938', 0.0],['gene939', 0.0],['gene940', 0.0],['gene941', 0.0],['gene942', 0.0],['gene943', 0.0],['gene944', 0.0],['gene945', 0.0],['gene946', 0.0],['gene947', 0.0],['gene948', 0.3333333333333333],['gene949', 0.0],['gene950', 0.0],['gene951', 0.0],['gene952', 0.0],['gene953', 0.0],['gene954', 0.0],['gene955', 0.0],['gene956', 0.0],['gene957', 0.0],['gene958', 0.0],['gene959', 0.0],['gene960', 0.6666666666666666],['gene961', 0.0],['gene962', 0.0],['gene963', 0.0],['gene964', 0.0],['gene965', 0.0],['gene966', 0.0],['gene967', 0.0],['gene968', 0.3333333333333333],['gene969', 0.0],['gene970', 0.0],['gene971', 0.0],['gene972', 0.3333333333333333],['gene973', 0.0],['gene974', 0.0],['gene975', 0.0],['gene976', 0.0],['gene977', 0.3333333333333333],['gene978', 0.3333333333333333],['gene979', 0.0],['gene980', 0.0],['gene981', 0.0],['gene982', 0.0],['gene983', 0.0],['gene984', 0.0],['gene985', 0.3333333333333333],['gene986', 0.0],['gene987', 0.3333333333333333],['gene988', 0.0],['gene989', 0.0],['gene990', 0.0],['gene991', 0.3333333333333333],['gene992', 0.0],['gene993', 0.3333333333333333],['gene994', 0.3333333333333333],['gene995', 0.0],['gene996', 0.0],['gene997', 0.3333333333333333],['gene998', 0.0],['gene999', 0.0],]);
+
+        var options = {
+          title: 'Zero Fractions by Gene',
+          legend: { position: 'none' },
+          colors: ['green'],
+        };
+
+        var chart = new google.visualization.Histogram(document.getElementById('chart_div3'));
+        chart.draw(data, options);
+      }
+    </script>
+<div id="chart_div3" style="width: 900px; height: 500px;" ></div>
+</p>
+<p >Entropy:
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load("current", {packages:["corechart"]});
+      google.charts.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([['Gene', 'Entropy'],['gene0', 1.581555619035807],['gene1', 1.5583991029067152],['gene2', 0.9999046950184837],['gene3', 0.9986141329371139],['gene4', 1.5262349099495225],['gene5', 1.4251863658196608],['gene6', 1.571969187257476],['gene7', 1.3923995655377883],['gene8', 1.523433382024899],['gene9', 1.5840272145724246],['gene10', 1.5459446196371096],['gene11', 0.9295883040491038],['gene12', 1.545054385131166],['gene13', 1.5275950645863152],['gene14', 1.4641567229664316],['gene15', 1.573422764013301],['gene16', 1.5397181473791424],['gene17', 1.5596736828837714],['gene18', 0.9393306219532902],['gene19', 1.5500734185005856],['gene20', 0.9532798162807598],['gene21', 0.9967374423628729],['gene22', 1.4882087517159774],['gene23', 1.5749880161934673],['gene24', 1.5746274008717007],['gene25', -0.0],['gene26', 1.4706872227202372],['gene27', 1.559475981575191],['gene28', 1.5509752894889846],['gene29', 1.5837896029670637],['gene30', 1.5076472638233291],['gene31', 1.5774287729134877],['gene32', 1.5724951337794324],['gene33', 1.5637135954192511],['gene34', 1.5018412520438709],['gene35', 1.5792413314290736],['gene36', 1.5034163091151478],['gene37', 1.5816352572226278],['gene38', 1.5832975316339],['gene39', 1.4285742187141857],['gene40', 0.9999046950184837],['gene41', 0.9962572968375276],['gene42', 1.5572647344033055],['gene43', 1.5314500305008805],['gene44', 0.931196675674717],['gene45', 1.5782189734559524],['gene46', 1.5618474728062202],['gene47', 1.5814916495223421],['gene48', 1.5722158556494583],['gene49', 1.5551108995187162],['gene50', 1.5803021838300626],['gene51', 1.5841569185840787],['gene52', 1.5519400916965411],['gene53', 1.5378020731491073],['gene54', 1.5533988199210962],['gene55', 0.9882836109919162],['gene56', 1.4772170014624826],['gene57', 0.9996187548848545],['gene58', 1.5690639269838993],['gene59', 0.9976875760352552],['gene60', 0.956372268294176],['gene61', 1.584020431647938],['gene62', 1.556966193596197],['gene63', 1.5641874061753236],['gene64', 0.9544340029249649],['gene65', 1.5653755519680046],['gene66', 1.5634881426056682],['gene67', 0.9622368248769595],['gene68', 1.562220596037859],['gene69', 1.5538247968883678],['gene70', 1.5820349510217935],['gene71', -0.0],['gene72', 1.5788657085832483],['gene73', 1.5649700833504947],['gene74', 1.5486319275182499],['gene75', 0.998758820280471],['gene76', 1.5768925655133788],['gene77', 1.567976374583954],['gene78', 1.54773230532592],['gene79', 0.9450667261866615],['gene80', 1.5841156415234061],['gene81', 1.4673372521482386],['gene82', 1.5702976394942745],['gene83', 0.9846841570760806],['gene84', 1.5336896204909003],['gene85', 1.5784783861084182],['gene86', 0.9841095278800533],['gene87', 1.5649120602846742],['gene88', 1.559115593881164],['gene89', 1.5668347231522186],['gene90', -0.0],['gene91', 1.5779222656350176],['gene92', 0.9822547917538988],['gene93', 1.5505976567586577],['gene94', 0.9981592324817739],['gene95', 0.998082507968892],['gene96', 1.54047359142684],['gene97', 1.519404328958184],['gene98', 1.5832247681369684],['gene99', 1.5705805594939868],['gene100', 1.5700466442390706],['gene101', 1.491512321370904],['gene102', 1.5827669699990308],['gene103', 1.5726689331914099],['gene104', 1.567705611614839],['gene105', 1.5542043661185039],['gene106', 0.993707106604508],['gene107', 1.5200646751815512],['gene108', 0.9999523196862128],['gene109', 1.5283598739221351],['gene110', 1.4856396095128315],['gene111', 1.576889146567202],['gene112', 0.981300900107001],['gene113', 1.5738472201953821],['gene114', 1.5694475210092649],['gene115', 1.4768965581757467],['gene116', 1.4718340806363317],['gene117', 1.5759007058854513],['gene118', 1.4994227679976009],['gene119', 1.5076415584910934],['gene120', 0.992354923921686],['gene121', 1.5727175710075154],['gene122', 0.9875572424026962],['gene123', 0.949026981996036],['gene124', 0.9643986196033759],['gene125', 0.9531700210099745],['gene126', 1.5640115368191303],['gene127', 1.57751273123064],['gene128', 1.2316321646445183],['gene129', 1.5010310748533606],['gene130', 0.9987534178936208],['gene131', 1.3740585845319764],['gene132', 0.9876925088958034],['gene133', 1.5760929439311546],['gene134', 1.4137606928487998],['gene135', 1.5324337210928285],['gene136', 1.5809955489109169],['gene137', 1.501909222023688],['gene138', 1.57826375819801],['gene139', 1.5511771739632527],['gene140', 1.570493890468927],['gene141', 0.9999165959739289],['gene142', 1.4298434718890196],['gene143', 0.9753604127031603],['gene144', 1.5254997725069674],['gene145', 1.5052455785863632],['gene146', 1.5682460887923897],['gene147', 1.556674174214083],['gene148', 1.566119093443774],['gene149', -0.0],['gene150', 1.5425870162078514],['gene151', 1.5751331778239157],['gene152', 1.5770501973288822],['gene153', 1.5816505793315225],['gene154', 1.5387929738228538],['gene155', 1.2670335360783358],['gene156', 1.58407393679767],['gene157', 1.5842562493161965],['gene158', 1.5276549514755182],['gene159', 1.5685386289470253],['gene160', 1.4978815319756886],['gene161', 1.5810203167241634],['gene162', 1.5805773640538874],['gene163', 1.5673074035447943],['gene164', 0.9999652125135792],['gene165', 1.5830650267484143],['gene166', 1.5582840013697394],['gene167', 1.5625136383495883],['gene168', 1.575688978349608],['gene169', 1.5739893220994885],['gene170', 0.999963716434396],['gene171', 1.5613191140862779],['gene172', -0.0],['gene173', 1.5829437788440168],['gene174', 1.525112538463409],['gene175', 0.982432849906733],['gene176', 1.5724739285565206],['gene177', 1.560620903393648],['gene178', 1.5715555022570427],['gene179', 1.5676522816201883],['gene180', 1.5684653083824993],['gene181', 1.5833673035348317],['gene182', 1.5250061846961986],['gene183', 1.5835349859584658],['gene184', 1.5658965752685567],['gene185', 1.583759753416363],['gene186', 1.5586379272797883],['gene187', 1.5827938576859104],['gene188', 1.5392498387971831],['gene189', 1.5537835669162792],['gene190', 1.5467929037110815],['gene191', 1.545245489580699],['gene192', 1.431356409911464],['gene193', 1.5456693262334706],['gene194', 1.4888988748494398],['gene195', 1.557322579715494],['gene196', 1.4075264060422763],['gene197', 1.5696418008287858],['gene198', 1.4256132384104512],['gene199', 1.5438169944861142],['gene200', 1.5805059995516086],['gene201', 1.514105374837559],['gene202', 0.9660780975952254],['gene203', 1.5698412862567634],['gene204', 1.575248502610463],['gene205', 1.4104524170135053],['gene206', 1.4912671069685772],['gene207', 1.4757401069235816],['gene208', 1.3441279814912654],['gene209', 1.532536341581256],['gene210', 0.9182958340544896],['gene211', 1.4973720420310301],['gene212', 1.5783579587622325],['gene213', 1.5338751939541928],['gene214', 1.1140495191772324],['gene215', 0.9925852336379739],['gene216', 0.9997226475394072],['gene217', 1.5284752419483492],['gene218', 1.5623359067518665],['gene219', 0.9954890573504591],['gene220', 1.5469116526872222],['gene221', 1.5606119235287097],['gene222', 0.9531017814939863],['gene223', 1.578930611915047],['gene224', 1.580415515654777],['gene225', 1.5817093463612637],['gene226', 0.9052853757202974],['gene227', 1.5751154137325307],['gene228', 1.5272183809485456],['gene229', 1.5490875111759976],['gene230', 1.3782495646978954],['gene231', 1.553653448786858],['gene232', 1.4967054104742927],['gene233', 1.5172857325829638],['gene234', 1.3247256598811572],['gene235', 0.9638335635321142],['gene236', 1.528362972021709],['gene237', 1.5707841829783127],['gene238', 1.5271443747583513],['gene239', 1.4214956823079437],['gene240', 1.583680707744294],['gene241', 1.574928955709718],['gene242', 1.5702324938017236],['gene243', 1.5504504234985008],['gene244', -0.0],['gene245', 1.5681744546377618],['gene246', 1.574373744807094],['gene247', 1.565272194073959],['gene248', 0.9879461057067804],['gene249', 1.5827475478961253],['gene250', 1.409287309099643],['gene251', 1.5810210681927306],['gene252', 1.572000363164994],['gene253', 1.538075564045685],['gene254', 1.561624985288209],['gene255', 1.5769736135830112],['gene256', 1.5275644358654894],['gene257', 1.5829791992862225],['gene258', 0.9910760598382222],['gene259', 1.5814650346765091],['gene260', 1.5339498162166174],['gene261', 1.5844293160642904],['gene262', 1.519818263996815],['gene263', 1.5573028005537026],['gene264', 0.9919150773158515],['gene265', 1.5844129410967889],['gene266', 1.566361821162906],['gene267', 1.5780837854760932],['gene268', 1.532754728095739],['gene269', 1.5332716414211158],['gene270', 1.5704629663086258],['gene271', 1.5814483615061103],['gene272', 1.5375816403474531],['gene273', 1.4751544477026381],['gene274', 0.9899927915575188],['gene275', 1.570399543681122],['gene276', 0.9967916319816366],['gene277', 1.5848324660182822],['gene278', 1.58338723106554],['gene279', -0.0],['gene280', 1.5706323533692785],['gene281', 1.5336754643934185],['gene282', 0.9517626756348311],['gene283', 1.552670872259735],['gene284', 1.5659687403243918],['gene285', 1.5755739857457458],['gene286', 1.5526999942439557],['gene287', 1.5632540678768967],['gene288', 1.566102884111342],['gene289', 1.5664244036850237],['gene290', 1.5843214121690739],['gene291', 1.563666132172709],['gene292', 1.0],['gene293', 1.5677976955228232],['gene294', 1.5705983602339701],['gene295', 1.5641110800948952],['gene296', 1.4475358504620588],['gene297', 1.444846722965513],['gene298', 1.572700275682187],['gene299', 1.5611765993020803],['gene300', 1.5679855026881686],['gene301', 1.5497126225488151],['gene302', 1.5624090842829097],['gene303', 0.9993849858441469],['gene304', 0.9869254090519889],['gene305', 1.5116341037077121],['gene306', -0.0],['gene307', 1.5710858784456283],['gene308', 1.5268481922338895],['gene309', 1.470682281396273],['gene310', 1.5287850829943126],['gene311', 1.5788520832822126],['gene312', 1.5795336232006303],['gene313', 1.572622735327725],['gene314', 1.56550059190366],['gene315', 1.5798634010685344],['gene316', 1.5197627425894116],['gene317', 1.5691191591325753],['gene318', 1.5743799973885904],['gene319', 1.5303243332095855],['gene320', 1.552081756239461],['gene321', 1.5378552362340803],['gene322', 1.523697254107938],['gene323', 0.8497511372532974],['gene324', 1.571201347333843],['gene325', 0.9504783262723793],['gene326', 1.5703359986488366],['gene327', 1.5688188688751734],['gene328', 1.5785586931505566],['gene329', 1.576187647407279],['gene330', 1.581178303923301],['gene331', 0.997129332515102],['gene332', 1.584033684401507],['gene333', 1.5034148264663172],['gene334', 0.9869444983748494],['gene335', 1.5701321729498119],['gene336', 1.5438136627705532],['gene337', 1.582336285839465],['gene338', 1.5588977296042419],['gene339', -0.0],['gene340', 1.5699118202073175],['gene341', 1.5303120366919818],['gene342', 1.5581132579443073],['gene343', 0.9916820618052418],['gene344', 1.54872612606336],['gene345', 1.551686870708774],['gene346', 1.5807169514538484],['gene347', 1.477776322598393],['gene348', 1.5559408777120622],['gene349', 1.557231101563934],['gene350', 0.9075250687540449],['gene351', 1.5465793858789385],['gene352', 0.9914191157567566],['gene353', 0.9955175695323497],['gene354', 1.572173660417771],['gene355', 1.5553228954213285],['gene356', 0.9964560590084606],['gene357', 1.5597895278350613],['gene358', 1.3125790382230635],['gene359', 1.5429613125221875],['gene360', 0.9578630237479795],['gene361', 1.478125677074539],['gene362', 1.5815725909421507],['gene363', 1.5580211742141628],['gene364', 1.5837413483570273],['gene365', 0.9944423248022588],['gene366', 1.5504949818133702],['gene367', 1.578418100812639],['gene368', 0.9998123364204978],['gene369', 1.5428051261192173],['gene370', 0.985909442028652],['gene371', 1.5601934003165265],['gene372', 1.5815885468458895],['gene373', 0.9335289015212996],['gene374', 1.5195137292287935],['gene375', 1.5735510330615141],['gene376', 1.5690368110973236],['gene377', 1.5513394742953053],['gene378', 1.576234700449197],['gene379', 1.552667650870919],['gene380', 1.5160198773479518],['gene381', 1.5696735534501052],['gene382', 1.580642801994379],['gene383', 1.5715027605759575],['gene384', -0.0],['gene385', 1.5606550823261118],['gene386', 1.5083243679014586],['gene387', 1.5831692961393933],['gene388', 0.982063319879852],['gene389', 1.5715586992431643],['gene390', 1.5534916081093781],['gene391', 1.4690471946962462],['gene392', 1.5821577717889577],['gene393', 1.5450370863889082],['gene394', 1.5578281607419475],['gene395', 1.535569379874063],['gene396', 1.5765160690467397],['gene397', 0.9988455359952018],['gene398', 1.5428688979805023],['gene399', 1.4186066002839979],['gene400', 0.9869444983748494],['gene401', 1.5799879045384966],['gene402', 1.580835971629074],['gene403', 1.5737435035541834],['gene404', 0.9940302114769565],['gene405', 1.519930951137142],['gene406', 0.9998097147270212],['gene407', 1.5665226333269682],['gene408', 1.5632055989359626],['gene409', 1.5806358305875325],['gene410', 1.5705544396556923],['gene411', 1.554341191216381],['gene412', 1.5116728682782297],['gene413', 0.9964027516431577],['gene414', 1.5771574908556123],['gene415', 1.54282803960208],['gene416', 1.483948681442949],['gene417', 1.5731070152795135],['gene418', 1.5627574218534774],['gene419', 0.9786239947589974],['gene420', 1.5816936659923084],['gene421', 0.9948535616968605],['gene422', 1.5341537593657284],['gene423', 1.5770813560674832],['gene424', 1.5836297566360225],['gene425', 1.48880173658111],['gene426', 1.5453591777616866],['gene427', 1.5630385957194317],['gene428', 1.5555711211117043],['gene429', 1.5522724589594028],['gene430', 1.5262713407751343],['gene431', -0.0],['gene432', 0.9992492479956565],['gene433', 1.5362479906913684],['gene434', 1.4174203788103112],['gene435', 0.9779300498520691],['gene436', 1.5834876321005291],['gene437', 1.5830162681571727],['gene438', 1.5287594456468394],['gene439', 1.5663222579236669],['gene440', 1.5788720570183736],['gene441', 1.5440240964819507],['gene442', 1.5608704496672277],['gene443', 0.9980008838722996],['gene444', 1.5789871092496894],['gene445', 1.5848617517228538],['gene446', 1.5822605663166862],['gene447', 1.570201587946372],['gene448', 1.5786472652851076],['gene449', 1.4618218958229308],['gene450', 0.9996894856846348],['gene451', 1.5578972931752104],['gene452', 1.4856080671899135],['gene453', 0.9580420222262995],['gene454', 1.5597208877175586],['gene455', 0.9426831892554922],['gene456', 1.5717216339084459],['gene457', 1.5672209969296125],['gene458', 0.9960383613659183],['gene459', 1.493883413770315],['gene460', 1.4441085351082827],['gene461', 1.5489545060094523],['gene462', 1.5113990234417711],['gene463', 1.5013579287098409],['gene464', 1.5742594508642787],['gene465', 0.99211169200215],['gene466', 1.5798412256173804],['gene467', 1.5671828349648087],['gene468', 1.4772170014624826],['gene469', 1.5331942618094034],['gene470', 0.9989047442823606],['gene471', 0.9902246902198684],['gene472', 1.530423047838504],['gene473', 0.9942417967729404],['gene474', 0.9989263092591085],['gene475', 1.569907712406604],['gene476', 1.5513681646601567],['gene477', 1.5432281692268521],['gene478', 1.5575832045935192],['gene479', 1.564712022981904],['gene480', 1.5560518766350793],['gene481', 1.5842337170405751],['gene482', 1.5718404589664403],['gene483', 1.5617973954902356],['gene484', 1.572986311116944],['gene485', 0.9947688847336322],['gene486', 1.5668662255371895],['gene487', 1.5829140439074414],['gene488', 0.9942417967729404],['gene489', 1.5751187025931268],['gene490', 1.536204475692714],['gene491', 1.5454564585471586],['gene492', 1.5406129253164838],['gene493', 1.511560220767862],['gene494', 1.5581437741707722],['gene495', 1.5455650594399448],['gene496', 1.57590243088091],['gene497', 1.5837597534163632],['gene498', 1.5830333980407185],['gene499', 0.9991288007981276],['gene500', 0.9674320981530664],['gene501', 1.5640445711697524],['gene502', 0.9816997731306332],['gene503', 1.5646563517988457],['gene504', 1.5051751408073624],['gene505', 1.5417194088301551],['gene506', 1.4704715338785903],['gene507', 1.5370710830733465],['gene508', 0.9992805310649711],['gene509', 0.987915387001026],['gene510', 0.9777287741161507],['gene511', 1.5651575633357253],['gene512', 1.583134768813642],['gene513', 0.9846841570760806],['gene514', 1.5731015850565764],['gene515', 1.5647055571094128],['gene516', 0.9949848281859701],['gene517', 1.5553863532170604],['gene518', 1.5434593454401722],['gene519', 1.5793783422487517],['gene520', 1.5689762662122329],['gene521', 1.5527293456621665],['gene522', 0.9905851359056772],['gene523', 1.5729515286328049],['gene524', 0.9337938045924923],['gene525', 1.5658125128987836],['gene526', 1.5747562771766668],['gene527', 1.5836046551829677],['gene528', 1.5554614719860442],['gene529', 1.4920985074723119],['gene530', 1.5722486897792467],['gene531', 1.5823787801561395],['gene532', 1.5697238430842773],['gene533', 1.5839685666662442],['gene534', 1.5324689974981491],['gene535', 1.5572264553805124],['gene536', 0.9999165959739289],['gene537', 1.5237454147630565],['gene538', 1.57958963015535],['gene539', 1.5767040770881167],['gene540', 0.9847319530961076],['gene541', 0.999591034189098],['gene542', 1.5683874873984553],['gene543', 1.5439580409668965],['gene544', 1.5688073170004533],['gene545', 1.4776276347115886],['gene546', 1.5464615724275061],['gene547', 0.969803406471299],['gene548', 1.5702997232282585],['gene549', 1.5819701474036398],['gene550', 1.5560138632240088],['gene551', 1.5483430627818362],['gene552', 0.97275431654181],['gene553', 1.4620379211865555],['gene554', 1.517253187852433],['gene555', 1.581748853459681],['gene556', 1.5375130836439435],['gene557', 1.5806510439261663],['gene558', 0.9865446300055645],['gene559', 1.5721866053646045],['gene560', 1.575824734987481],['gene561', 1.571702075314216],['gene562', 1.5848799464764467],['gene563', 1.5579039137272637],['gene564', 1.5583701983140625],['gene565', 1.535764857254657],['gene566', -0.0],['gene567', 1.574065120219521],['gene568', 1.5810606081158873],['gene569', 1.5769686536464371],['gene570', 1.5799005390254783],['gene571', 1.559440505962176],['gene572', 1.5252703396579819],['gene573', 1.5817629373512818],['gene574', 1.5510380178843919],['gene575', 1.578822183525865],['gene576', 1.5309975288535993],['gene577', 0.987380023288353],['gene578', 1.5470652018557962],['gene579', 1.5782496995378503],['gene580', 1.5819815188709652],['gene581', 1.5849128239481334],['gene582', 1.4586692211665246],['gene583', 1.5695626761561299],['gene584', 1.5369126659473662],['gene585', 1.5580666936733096],['gene586', 1.5703473205370204],['gene587', 0.9808778598713842],['gene588', 1.5805758742898586],['gene589', 0.9983182035362713],['gene590', 1.5635468943877693],['gene591', 0.998231441895705],['gene592', 1.5820942088910646],['gene593', 0.9894340222202263],['gene594', 1.5670682857822862],['gene595', 1.4997578866222412],['gene596', 1.581220079473334],['gene597', 0.9952054930343308],['gene598', 1.5831303271345818],['gene599', 1.5427327413560448],['gene600', 1.5290207887920282],['gene601', 0.8595316914502932],['gene602', -0.0],['gene603', 1.5688306899340838],['gene604', 0.99093240356837],['gene605', 1.5713216674240056],['gene606', 1.534957938729196],['gene607', 1.5778422184048286],['gene608', 1.5633224504513341],['gene609', 0.9896748638242482],['gene610', -0.0],['gene611', 1.5536661979779298],['gene612', 1.5694536075424441],['gene613', 0.9901821612381505],['gene614', 1.5833603888182748],['gene615', 1.5812709561614362],['gene616', 0.9718085095106186],['gene617', 1.5145563563816091],['gene618', 1.5684437320397002],['gene619', 1.5635269327228256],['gene620', 1.58451586698168],['gene621', 1.542833137407047],['gene622', 1.4495428548045806],['gene623', 1.5113219219273613],['gene624', 1.452216951627797],['gene625', 0.9977366703420346],['gene626', 1.5743935367773987],['gene627', 1.578704251560156],['gene628', 0.9484103893488014],['gene629', 1.5814750905435777],['gene630', 1.5461372540650622],['gene631', 1.5429785027913279],['gene632', -0.0],['gene633', 1.5375523574758259],['gene634', 1.577539080924524],['gene635', 0.9993258798455945],['gene636', 1.4759579129535585],['gene637', 0.9531017814939863],['gene638', 0.9835585673909616],['gene639', 1.5728353840156013],['gene640', 1.5841226933196162],['gene641', 1.5720223523497694],['gene642', 0.9930856921454585],['gene643', 1.5723687119068783],['gene644', 1.5620562820988024],['gene645', 1.5791270805920856],['gene646', 1.5194459987954332],['gene647', 1.5661016450414018],['gene648', 1.5132024522984289],['gene649', 1.5740873534579423],['gene650', 1.5816635064801363],['gene651', 1.5196139383394924],['gene652', 1.5842970094782791],['gene653', 1.5834517155037993],['gene654', 1.556481380811837],['gene655', 1.5621374628571534],['gene656', 1.5706009252763737],['gene657', 1.540713918553239],['gene658', 1.5791255217884699],['gene659', 1.5625557319952388],['gene660', 1.529815054553795],['gene661', 1.4281567613079487],['gene662', 1.5814394682871213],['gene663', 1.522067326479596],['gene664', 0.9659746344389254],['gene665', 1.5554438119923455],['gene666', 1.5556966149289866],['gene667', 1.5513216819042002],['gene668', 1.5606180945328947],['gene669', 1.5723562217128642],['gene670', 1.574062103689865],['gene671', 1.5136119089903823],['gene672', 1.5757037425183418],['gene673', 1.394136127794511],['gene674', 0.9078619154263696],['gene675', 1.4177980341657899],['gene676', 1.5574337207406446],['gene677', 0.9355315642388212],['gene678', 1.5606122218991447],['gene679', 1.5786433861452824],['gene680', 1.4598392991417966],['gene681', 1.579263861473426],['gene682', 1.570280424094306],['gene683', 0.991379793490894],['gene684', 1.5168828641385148],['gene685', 1.5665617505494707],['gene686', 1.5641302697802293],['gene687', 1.527380099785808],['gene688', 1.580209977552752],['gene689', 0.879697578277517],['gene690', 1.5140577110941],['gene691', 1.573757454017684],['gene692', 1.56979919351223],['gene693', 1.5832542391269357],['gene694', 1.5209341473079694],['gene695', 1.5118931568469693],['gene696', 0.9997779672118907],['gene697', 1.5756518741950698],['gene698', 1.5822605663166862],['gene699', 1.5728185622774187],['gene700', 1.5483710321777053],['gene701', 0.9473454907209533],['gene702', 1.5394023935888455],['gene703', 1.5533941337092427],['gene704', 1.5374952943777587],['gene705', 1.5546956991368943],['gene706', 1.5492887279500873],['gene707', 1.5655121083765633],['gene708', 1.51918559883127],['gene709', 1.4884339416274845],['gene710', 1.5596298956635115],['gene711', 1.5795622934752687],['gene712', 1.541198829121697],['gene713', 1.47283015230032],['gene714', 1.584837391668155],['gene715', 1.5738635672549184],['gene716', 1.3633220055122126],['gene717', 0.9825364890582817],['gene718', 1.548252383100508],['gene719', 1.5843703221163352],['gene720', 1.5663834920595068],['gene721', 1.5726438258651967],['gene722', 0.9943689519506742],['gene723', 1.5819597509803427],['gene724', 1.547246583781015],['gene725', 0.9669852958320848],['gene726', 1.568383909035039],['gene727', 1.5473762132074298],['gene728', 1.5673104790594374],['gene729', 1.5124096640146627],['gene730', 1.5102029921018358],['gene731', 1.516147658077609],['gene732', 1.5336900194128846],['gene733', 0.9937489109291138],['gene734', 1.5245639278972118],['gene735', 1.5685347823091318],['gene736', 1.5091792016658452],['gene737', 1.5731331446906944],['gene738', 1.564900668108327],['gene739', 1.5060346238191071],['gene740', 1.5523492814731226],['gene741', 0.9998238825988729],['gene742', 0.9844961311800011],['gene743', -0.0],['gene744', 1.4715592458770717],['gene745', 1.575850326529749],['gene746', 1.5840055561709248],['gene747', 0.9722080563599758],['gene748', 1.4786913558813193],['gene749', 1.5628319026484343],['gene750', 1.5794340029249652],['gene751', 1.5723682907883647],['gene752', 1.5807342826962247],['gene753', 0.8807954403389464],['gene754', 1.4851441041765818],['gene755', 1.5673288929642895],['gene756', 1.3407740373577672],['gene757', 0.9948785639166802],['gene758', 1.5485149341742313],['gene759', 0.9868192251398271],['gene760', 1.5281776618429932],['gene761', 0.95656434436864],['gene762', 0.9640787648082292],['gene763', 1.5711413092705464],['gene764', 1.576564400423669],['gene765', 1.4345438676727689],['gene766', 1.577000239039408],['gene767', 1.561907891453957],['gene768', 1.551662058134666],['gene769', 1.558073713522827],['gene770', 1.5785381761858885],['gene771', 1.567385397893652],['gene772', -0.0],['gene773', 1.5625518345087968],['gene774', 1.5347857573854626],['gene775', 1.533376382047534],['gene776', 1.514754829520204],['gene777', 1.5730612700986095],['gene778', 0.9830338463870911],['gene779', 1.5583657619670177],['gene780', 1.488991659264823],['gene781', 1.5804347518394473],['gene782', 1.5511020318365791],['gene783', 0.9846661111143196],['gene784', 1.3457602681342726],['gene785', 1.5836979321574294],['gene786', 0.9975551526153486],['gene787', 1.5836031490800326],['gene788', 0.9855369129605245],['gene789', 0.9740936361786638],['gene790', 1.5720488804661308],['gene791', 0.9885488356869161],['gene792', 1.5828309518254822],['gene793', 1.435209854420561],['gene794', 0.9994800708509495],['gene795', 1.319784492172556],['gene796', 1.5715380301817106],['gene797', 1.5581295721800594],['gene798', 1.5268696148078722],['gene799', 1.5835457601642629],['gene800', 1.5567682683960826],['gene801', 1.5711660232778009],['gene802', 0.9848163724578239],['gene803', 1.4782798775239512],['gene804', 1.582284669977565],['gene805', 1.544911709936153],['gene806', 1.5805963338344355],['gene807', 1.515370899093985],['gene808', 1.5774618261149782],['gene809', 1.531254540437771],['gene810', 0.9898436360444154],['gene811', 1.5787933810336003],['gene812', 0.9992492479956565],['gene813', 1.5774047484368081],['gene814', 1.503922631713722],['gene815', 1.5454564585471586],['gene816', 1.5741051677239353],['gene817', 1.5775625803733737],['gene818', 1.5831908189898405],['gene819', 1.5677668716714521],['gene820', 1.574505288303485],['gene821', 1.5614761620820126],['gene822', 0.9905117071473118],['gene823', 1.5658494058344643],['gene824', 0.9998675520897977],['gene825', 1.5674614831041649],['gene826', 1.5811358906605255],['gene827', 1.5276576282741492],['gene828', 1.5673002374208003],['gene829', 1.5796593641938916],['gene830', 0.9984492478692006],['gene831', 1.5642112105994883],['gene832', 1.528861332646076],['gene833', 1.5417892788491638],['gene834', 1.3829839249845157],['gene835', 1.5377347380123947],['gene836', 0.9580090892874662],['gene837', 1.5656531116458186],['gene838', 1.4094544755772227],['gene839', 0.9745996624501091],['gene840', 1.5784374726611459],['gene841', 1.572017560448509],['gene842', 1.5685778999920514],['gene843', 1.58188394172188],['gene844', 1.5683994447876777],['gene845', 1.5721244750722998],['gene846', 1.5660014586359488],['gene847', 1.5650295685642828],['gene848', 1.571563413975658],['gene849', 1.5819820527181978],['gene850', 0.9984308211272699],['gene851', 1.567304509500648],['gene852', 1.5736117375967225],['gene853', 0.9709505944546686],['gene854', 1.577271241322204],['gene855', 1.5755692874466345],['gene856', 0.9865446300055645],['gene857', 1.5008373534383632],['gene858', 1.583345692952947],['gene859', 1.5672986149851293],['gene860', 1.5847914222282975],['gene861', 0.9947935604558664],['gene862', 1.55294361454437],['gene863', 0.9589271298658751],['gene864', 0.9933570282728468],['gene865', 0.999591034189098],['gene866', 0.9998646331239298],['gene867', 1.5688187540887126],['gene868', 1.5705270417449788],['gene869', 0.9860029065354764],['gene870', 1.5774380361029356],['gene871', 1.5842747533189097],['gene872', 1.5178643583750555],['gene873', -0.0],['gene874', 1.5667115489030783],['gene875', 1.574681289515961],['gene876', 1.5742848431393361],['gene877', 1.545499770406284],['gene878', 0.83724442918985],['gene879', 1.5160977904820272],['gene880', 1.449100428380663],['gene881', 1.5181147673371487],['gene882', 1.5781140389481862],['gene883', 0.9873592312769093],['gene884', 1.5833608011116185],['gene885', 1.561013127906874],['gene886', 1.5790841147228645],['gene887', 1.468560299412661],['gene888', 1.535945031535455],['gene889', 1.560710524171282],['gene890', 1.5794877344578313],['gene891', 1.5751544895879017],['gene892', 1.4965717664351421],['gene893', 1.5560788401370929],['gene894', 1.562075593795282],['gene895', 0.9486131982385807],['gene896', 0.9987149021522345],['gene897', 0.950732532285253],['gene898', 0.9575534837147482],['gene899', 1.5242468886664127],['gene900', 1.555336988024975],['gene901', 1.364148701103159],['gene902', 1.5515562176235551],['gene903', 1.3822853847267642],['gene904', 1.584859417139699],['gene905', 1.4777468341000444],['gene906', 1.5818732018563157],['gene907', 1.572586575998813],['gene908', 1.5528267681903678],['gene909', 1.5604869943468191],['gene910', 0.9925500318334033],['gene911', 0.9951480956540031],['gene912', 0.9932338197397066],['gene913', 1.5829908074644101],['gene914', 0.9965322634876734],['gene915', 0.8488687562058559],['gene916', 0.9855313856728494],['gene917', 1.5750503092263952],['gene918', 0.9721142616258887],['gene919', 1.3600638903724738],['gene920', 1.5681270327607892],['gene921', 1.5780896818962424],['gene922', 1.5677317608690193],['gene923', 1.5433167043578533],['gene924', 1.5652215172734787],['gene925', 1.494925175213784],['gene926', 1.5739282349552624],['gene927', 1.4315241073186131],['gene928', 1.578196563180684],['gene929', 1.554997830327757],['gene930', -0.0],['gene931', 1.5754816325996561],['gene932', 1.5820140962491105],['gene933', 0.9647589493966973],['gene934', 0.9833761901392237],['gene935', 1.560621831728311],['gene936', 1.5751813204635352],['gene937', 1.566490412628799],['gene938', 1.3218847866691474],['gene939', 1.5758572741543753],['gene940', 1.5825036395048664],['gene941', 1.5743757263769749],['gene942', 1.5218628161908643],['gene943', 1.580950696372327],['gene944', 1.5807904162471438],['gene945', 1.572916408318426],['gene946', 1.551312445865834],['gene947', 1.5699470441978716],['gene948', 0.8412367762002599],['gene949', 1.5152154859650309],['gene950', 1.461720593819944],['gene951', 1.5713839358207058],['gene952', 1.5536678779447948],['gene953', 1.5476081354518465],['gene954', 1.5501196158625556],['gene955', 1.569869713420784],['gene956', 1.4406454496153465],['gene957', 1.5798443097602648],['gene958', 1.5539612574475767],['gene959', 1.5778540017516782],['gene960', -0.0],['gene961', 1.583351443542507],['gene962', 1.5455962067539744],['gene963', 1.5714653879564033],['gene964', 1.57277739672369],['gene965', 1.5505841241385974],['gene966', 1.5701496841899365],['gene967', 1.5709861198957982],['gene968', 0.9976161146077624],['gene969', 1.581707165501673],['gene970', 1.5397941203358907],['gene971', 1.5744553103230103],['gene972', 0.9536001820691948],['gene973', 1.536981774853285],['gene974', 1.5633738386891847],['gene975', 1.5558581872758421],['gene976', 1.580364867015184],['gene977', 0.9908375918145715],['gene978', 0.9922490910914588],['gene979', 1.524067074121648],['gene980', 1.5681481990484678],['gene981', 1.583976403584983],['gene982', 1.5453364367618863],['gene983', 1.5151013118043628],['gene984', 1.5730311503454608],['gene985', 0.9402859586706309],['gene986', 1.5609473621898655],['gene987', 0.9964447362420608],['gene988', 1.5827069603812356],['gene989', 1.5830175105308546],['gene990', 1.554697508762069],['gene991', 0.8944518845341284],['gene992', 1.5733679341825284],['gene993', 0.9804679314541814],['gene994', 0.9379626436434423],['gene995', 1.5827660320846084],['gene996', 1.5060338205527692],['gene997', 0.998896568675277],['gene998', 1.5212620518112652],['gene999', 1.5734311332088082],]);
+
+        var options = {
+          title: 'Entropy Values by Gene',
+          legend: { position: 'none' },
+          colors: ['red'],
+        };
+
+        var chart = new google.visualization.Histogram(document.getElementById('chart_div4'));
+        chart.draw(data, options);
+      }
+    </script>
+<div id="chart_div4" style="width: 900px; height: 500px;" ></div>
+</p>
+</html>

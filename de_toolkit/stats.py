@@ -10,6 +10,7 @@ import pandas
 from docopt import docopt
 from common import * 
 import os.path
+from string import Template
 
 '''
 Usage:
@@ -320,6 +321,75 @@ def format_json(filename, method, output, funcs, counts_obj, funcs_present):
 		json_fn.write(json.dumps(item) + '\n')
 	json_fn.close()
 
+def format_html(filename, json_fn, funcs_present):
+	html_temp = open('de_toolkit/html_template.html')
+	s = Template(html_temp.read())
+	if 'base' in funcs_present:
+		base_hide=''
+		with open(json_fn) as file:
+			for line in file:
+				if 'base' in line:
+					base_output = json.loads(line.strip('\n'))
+		num_cols = base_output['stats']['num_cols']
+		num_rows = base_output['stats']['num_rows']
+	else:
+		base_hide='hidden'
+		num_cols=''
+		num_rows=''
+	if 'colzero' in funcs_present:
+		colzero_hide=''
+		with open(json_fn) as file:
+			for line in file:
+				if 'colzero' in line:
+					colzero_output = json.loads(line)
+		zeros_list = colzero_output['stats']['zeros']
+		colzero = "['Sample', 'Zero_Frac'],"
+		for item in zeros_list:
+			colzero+="['" + item['name'] + "', " + str(item['zero_frac']) + "],"
+	else:
+		colzero_hide='hidden'
+		colzero=''
+
+	if 'rowzero' in funcs_present:
+		rowzero_hide=''
+		with open (json_fn) as file:
+			for line in file:
+				if 'rowzero' in line:
+					rowzero_output = json.loads(line)
+		zeros_list = rowzero_output['stats']['zeros']
+		rowzero_scatter = "['Zero_frac', 'Nonzero_mean'],"
+		rowzero_hist = "['Gene', 'Zero_frac'],"
+		for item in zeros_list:
+			rowzero_scatter+="[" + str(item['zero_frac']) + ", " + str(item['nonzero_mean']) + "],"
+			rowzero_hist+="['" + item['name'] + "', " + str(item['zero_frac']) + "],"
+
+	else:
+		rowzero_hide='hidden'
+		rowzero_scatter=''
+		rowzero_hist=''
+
+	if 'entropy' in funcs_present:
+		entropy_hide=''
+		with open(json_fn) as file:
+			for line in file:
+				if 'entropy' in line:
+					entropy_output = json.loads(line)
+		entropies = entropy_output['stats']['entropies']
+		entropy = "['Gene', 'Entropy'],"
+		for item in entropies:
+			entropy+="['" + item['name'] + "', " + str(item['entropy']) + "],"
+	else:
+		entropy_hide='hidden'
+		entropy=''
+
+	html_output = s.safe_substitute(base_hide=base_hide, num_cols=num_cols, num_rows=num_rows,
+                                        colzero_hide=colzero_hide, colzero=colzero,
+                                        rowzero_hide=rowzero_hide, rowzero_scatter=rowzero_scatter, rowzero_hist=rowzero_hist,
+                                        entropy_hide=entropy_hide, entropy=entropy)
+	html_fn = open(filename, 'w')
+	html_fn.write(html_output)
+	html_fn.close()
+
 def main():
 	
 	#Create commandline arguments to pass in data files and selected method
@@ -349,7 +419,7 @@ def main():
 	index = args.file.rfind('.')
 	file_str = args.file[:index]
 
-	#Check if JSON file already exists
+	#Check if JSON file option was specified
 	if args.json:
 		filename=args.json
 	else:
@@ -358,5 +428,14 @@ def main():
 	#Format JSON output file
 	format_json(filename, args.method, output, funcs, counts_obj, funcs_present)
 	
+	#Check if HTML file option was specified
+	if args.html:
+		html_fn = args.html
+	else:
+		html_fn = file_str + '.html'
+	
+	#Format HTML output file
+	format_html(html_fn, filename, funcs_present)
+
 if __name__ == '__main__':
 	main()

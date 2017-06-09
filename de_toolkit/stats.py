@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import pandas
 from docopt import docopt
 from common import * 
+import os.path
 
 '''
 Usage:
@@ -274,15 +275,62 @@ def entropy(count_mat) :
 	#Return output
 	return output
 
+def format_json(filename, method, output, funcs, counts_obj, funcs_present):
+	final_output = []
+
+	if os.path.isfile(filename):
+		#If file does exist and stats for given method is already in it, rewrite stats
+		if method in open(filename).read() and method != 'summary':
+			print('Warning: ' + method + ' stats was already found in the output file and has been rewritten')
+			final_output.append(output)
+			
+			for key in funcs:
+				if key in open(filename).read() and key != method:
+					chosen_func = funcs[key]
+					existing_output = chosen_func(counts_obj)
+					final_output.append(existing_output)
+					funcs_present.append(key)
+					print('Warning: ' + key + ' stats was already found in the output file and has been rewritten')
+
+		#If file does exist but stats for the given method are not in it, add to that file
+		elif method not in open(filename).read() and method != 'summary':
+			json_fn = open(filename, 'a')
+			json_fn.write(json.dumps(output) + '\n')
+			json_fn.close()
+
+			for key in funcs:
+				if key in open(filename).read() and key != method:
+					funcs_present.append(key)
+			return
+
+		#If summary method is specified, rewrite all stats
+		else:
+			for key in funcs:
+				if key in open(filename).read():
+					print('Warning: ' + key + ' stats was already found in the output file and has been rewritten')
+				funcs_present.append(key)
+			final_output = output
+
+	#If output file is not present, create it and add the appropriate output
+	else:
+		final_output.append(output)
+
+	json_fn = open(filename, 'w')
+	for item in final_output:
+		json_fn.write(json.dumps(item) + '\n')
+	json_fn.close()
+
 def main():
 	
 	#Create commandline arguments to pass in data files and selected method
 	parser = argparse.ArgumentParser()
-	parser.add_argument("cfile", help="Name of input column data file")
-	parser.add_argument("file", help="Name of input data file")
 	parser.add_argument("method", 
 		choices=['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy', 'summary'],
 		help="Choose one of the specified functions to be run")
+	parser.add_argument("cfile", help="Name of input column data file")
+	parser.add_argument("file", help="Name of input data file")
+	parser.add_argument("--json", help="Name of JSON output file")
+	parser.add_argument("--html", help="Name of HTML output file")
 	args = parser.parse_args()
 
 	#Create CountMatrix object from given data
@@ -297,6 +345,18 @@ def main():
 	output = chosen_func(counts_obj)
 	funcs_present = [args.method]
 
+	#Obtain string used to name output files, unless filename is specified
+	index = args.file.rfind('.')
+	file_str = args.file[:index]
+
+	#Check if JSON file already exists
+	if args.json:
+		filename=args.json
+	else:
+		filename=file_str+ '.json'
+
+	#Format JSON output file
+	format_json(filename, args.method, output, funcs, counts_obj, funcs_present)
 	
 if __name__ == '__main__':
 	main()

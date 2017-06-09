@@ -1,0 +1,1 @@
+{"name": "colzero", "stats": {"zeros": [{"name": "a", "zero_count": 121, "zero_frac": 0.121, "mean": 87.477, "nonzero_mean": 99.51877133105802}, {"name": "b", "zero_count": 108, "zero_frac": 0.108, "mean": 88.609, "nonzero_mean": 99.33744394618834}, {"name": "c", "zero_count": 3, "zero_frac": 0.003, "mean": 102.369, "nonzero_mean": 102.67703109327984}]}}

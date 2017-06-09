@@ -321,7 +321,7 @@ def format_json(filename, method, output, funcs, counts_obj, funcs_present):
 		json_fn.write(json.dumps(item) + '\n')
 	json_fn.close()
 
-def format_html(filename, json_fn, funcs_present):
+def format_html(filename, json_fn, funcs_present, counts_obj):
 	html_temp = open('de_toolkit/html_template.html')
 	s = Template(html_temp.read())
 	if 'base' in funcs_present:
@@ -382,10 +382,34 @@ def format_html(filename, json_fn, funcs_present):
 		entropy_hide='hidden'
 		entropy=''
 
+	if 'coldist' in funcs_present:
+		coldist_hide=''
+		cnts = counts_obj.counts.as_matrix()
+		with open(json_fn) as file:
+			for line in file:
+				if 'coldist' in line:
+					coldist_output = json.loads(line)
+		coldist_data=''
+		dists = coldist_output['stats']['dists']
+		for i in range(0, len(dists)):
+			coldist_data+="['" + dists[i]['name'] + "', "
+			for j in range(0, len(cnts)):
+				coldist_data+= str(cnts[j][i]) + ","
+			coldist_data+="],"
+		coldist_cols=''
+		for i in range(0, len(cnts)):
+			coldist_cols+= "data.addColumn('number', 'series" + str(i) + "');" + "\n"
+
+	else:
+		coldist_hide = 'hidden'
+		coldist_data = ''
+		coldist_cols = ''
+
 	html_output = s.safe_substitute(base_hide=base_hide, num_cols=num_cols, num_rows=num_rows,
                                         colzero_hide=colzero_hide, colzero=colzero,
                                         rowzero_hide=rowzero_hide, rowzero_scatter=rowzero_scatter, rowzero_hist=rowzero_hist,
-                                        entropy_hide=entropy_hide, entropy=entropy)
+                                        entropy_hide=entropy_hide, entropy=entropy,
+					coldist_hide=coldist_hide, coldist_data=coldist_data, coldist_cols=coldist_cols)
 	html_fn = open(filename, 'w')
 	html_fn.write(html_output)
 	html_fn.close()
@@ -435,7 +459,7 @@ def main():
 		html_fn = file_str + '.html'
 	
 	#Format HTML output file
-	format_html(html_fn, filename, funcs_present)
+	format_html(html_fn, filename, funcs_present, counts_obj)
 
 if __name__ == '__main__':
 	main()

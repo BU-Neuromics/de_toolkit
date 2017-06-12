@@ -14,8 +14,8 @@ from string import Template
 
 '''
 Usage:
-	detk-stats summary [options] [--json=<json_fn>] [--html=<html_fn>] <counts_fn>
-	detk-stats base <counts_fn>
+	detk-stats summary [options] <counts_fn>
+	detk-stats base [options] <counts_fn>
 	detk-stats coldist [options] [--bins=<bins>] [--log] [--density] <counts_fn>
 	detk-stats rowdist [options] [--bins=<bins>] [--log] [--density] <counts_fn>
 	detk-stats [options] colzero <counts fn>
@@ -24,11 +24,39 @@ Usage:
 
 Options:
 	-o FILE --output=FILE    Destination of primary output [default: stdout]
+ 	--json=<json_fn>	 Name of JSON output file 
+	--html=<html_fn> 	 Name of HTML output file
+
+Description:
+	Easy access to informative count matrix statistics. Each of these functions produces two outputs:
+
+		a json formatted file containing relevant statistics in a machine-parsable format
+		a human-friendly HTML page displaying the results
+	
+	All of the commands accept a single counts file as input with optional arguments as indicated in the 
+	documentation. By default, the JSON and HTML output files have the same basename without extension as 
+	the counts file but including .json or .html as appropriate. E.g., counts.csv will produce counts.json 
+	and counts.html in the current directory. These default filenames can be changed using optional command
+	line arguments --json=<json fn> and --html=<html fn> as appropriate for all commands. If <json fn>, 
+	either default or specified, already exists, it is read in, parsed, and added to. The HTML report is 
+	overwritten on every invocation using the contents of the JSON file.
 
 '''
 
 def summary(count_mat) :
-	'''Compute summary statistics on a counts matrix file'''
+	'''
+		Compute summary statistics on a counts matrix file
+			detk-stats [--json=<json_fn>] [--html=<html_fn>] summary <counts file>
+
+		This command is equivalent to running each of the following stats commands:
+			base
+			coldist
+			rowdist
+			colzero
+			rowzero
+			entropy
+		concatenating the results.
+	'''
 
 	total_output = []
 	total_output.append(base(count_mat))
@@ -41,7 +69,16 @@ def summary(count_mat) :
 	return total_output
 
 def base(count_mat) :
-	'''Basic statistics of the counts file'''
+	'''
+		Basic statistics of the counts file
+
+		Usage: detk-stats base <counts file>
+		
+
+		The most basic statistics of the counts file, including:
+			number of samples
+			number of rows
+	'''
 
 	#Get counts, number of columns, and number of rows
 	cnts = count_mat.counts.as_matrix()
@@ -56,7 +93,47 @@ def base(count_mat) :
 	return output
 
 def coldist(count_mat) :
-	'''Column-wise distribution of counts'''
+	'''
+		Column-wise distribution of counts
+
+		Usage: detk-stats [options] coldist [--bins=<bins>] [--log] [--density] <counts file>
+
+		Options:
+  			--bins=<bins>   The number of bins to use when computing the counts
+                   			distribution
+  			--log           Perform a log10 transform on the counts before calculating
+                   			the distribution. Zeros are omitted prior to histogram
+                   			calculation.
+  			--density       Return a density distribution instead of counts, such that
+                   			the sum of values in *dist* for each column approximately
+                   			sum to 1.
+		
+		Compute the distribution of counts column-wise. Each column is subject to binning by percentile, 
+		with output identical to that produced by numpy.histogram.
+
+		In the stats object, the fields are defined as follows:
+			pct
+				The percentiles of the distributions in the range 0 < pct < 100, by default in 
+				increments of 5. This defines the length of the dist and bins arrays in each of 
+				the objects for each sample.
+			dists
+				Array of objects containing one object for each column, described below.
+			Each item of dists is an object with the following keys:
+				name
+					Column name from original file
+				dist
+					Array of raw or normalized counts in each bin according to the 
+					percentiles from pct
+				bins
+					Array of the bin boundary values for the distribution. Should 
+					be of length len(counts)+1. These are what would be the x-axis 
+					labels if this was plotted as a histogram.
+				extrema
+					Object with two keys, min and max, that contain the literal 
+					count values for counts that have a value larger or smaller than 
+					1.5*(inner quartile length) of the distribution. These could be 
+					marked as outliers in a boxplot, for example.
+	'''
 	output = {}
 	output['name'] = 'coldist'
 	output['stats'] = {}
@@ -82,7 +159,14 @@ def coldist(count_mat) :
 
 
 def rowdist(count_mat) :
-	'''Row-wise distribution of counts'''
+	'''
+		Row-wise distribution of counts
+		
+		Usage: detk-stats [options] rowdist [--bins=<bins>] [--log] [--density] <counts file>
+
+		Identical to coldist except calculated across rows. The name key is rowdist, and the 
+		name key of the items in dists is the row name from the counts file.
+	'''
 	output = {}
 	output['name'] = 'rowdist'
 	output['stats'] = {}
@@ -109,7 +193,25 @@ def rowdist(count_mat) :
 
 
 def colzero(count_mat) :
-	'''Column-wise distribution of zero counts'''
+	'''
+		Column-wise distribution of zero counts
+	
+		Usage: detk-stats [options] colzero <counts fn>
+
+		Compute the number and fraction of exact zero counts for each column.
+
+		The stats value is an array containing one object per column as follows:
+			name
+				column name
+			zero_count
+				absolute count of rows with exactly zero counts
+			zero_frac
+				zero_count divided by the number of rows
+			col_mean
+				the mean of counts in the column
+			nonzero_col_mean
+				the mean of only the non-zero counts in the column
+	'''
 
 	#Get counts, number of columns, number of rows, and sample names
 	cnts = count_mat.counts.as_matrix()
@@ -171,7 +273,15 @@ def colzero(count_mat) :
 	return output
 
 def rowzero(count_mat) :
-	'''Row-wise distribution of zero counts'''
+	'''
+		Row-wise distribution of zero counts
+	
+		Usage: detk-stats [options] rowzero <counts fn>
+
+		Identical to colzero, only computed across rows instead of columns. The name 
+		key is rowzero, and the name key of the items in dists is the row name from 
+		the counts file.
+	'''
 
 	#Get counts, number of columns, number of rows, and gene names
 	cnts = count_mat.counts.as_matrix()
@@ -233,7 +343,31 @@ def rowzero(count_mat) :
 	return output
 
 def entropy(count_mat) :
-	'''Row-wise sample entropy calculation'''
+	'''
+		Row-wise sample entropy calculation
+	
+		Usage: detk-stats [options] entropy <counts fn>
+
+		Sample entropy is a metric that can be used to identify outlier samples by locating 
+		rows which are overly influenced by a single count value. This metric can be 
+		calculated for a single row as follows:
+			pi = ci/sumj(cj)
+			sum(pi) = 1
+			H = -sumi(pi*log2(pi))
+		Here, ci is the number of counts in sample i, pi is the fraction of reads contributed 
+		by sample i to the overall counts of the row, and H is the Shannon entropy of the row 
+		when using log2. The maximum value possible for H is 2 when using Shannon entropy.
+
+		Rows with a very low H indicate a row has most of its count mass contained in a small 
+		number of columns. These are rows that are likely to drive outliers in downstream 
+		analysis, e.g. differential expression.
+
+		The key entropies is an array containing one object per row with the following keys:
+			name
+				row name from counts file
+			entropy
+				the value of H calculated as above for that row
+	'''
 
 	#Get counts, number of columns, number of rows, and gene names
 	cnts = count_mat.counts.as_matrix()

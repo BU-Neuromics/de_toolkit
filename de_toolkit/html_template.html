@@ -215,13 +215,14 @@ function getBoxPlotValues(array) {
           title: 'Zero Fractions by Gene',
           legend: { position: 'none' },
           colors: ['green'],
-        };
+	  histogram: { bucketSize: 0.1, minValue: 0.0, maxValue: 1.0}
+	};
 
         var chart = new google.visualization.Histogram(document.getElementById('chart_div3'));
         chart.draw(data, options);
       }
     </script>
-<div id="chart_div3" style="width: 900px; height: 500px;" $rowzero_hide></div>
+<div id="chart_div3" style="width: 1500px; height: 500px;" $rowzero_hide></div>
 </p>
 <p $entropy_hide>Entropy:
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -235,6 +236,7 @@ function getBoxPlotValues(array) {
           title: 'Entropy Values by Gene',
           legend: { position: 'none' },
           colors: ['red'],
+	  histogram: { bucketSize: 0.20}
         };
 
         var chart = new google.visualization.Histogram(document.getElementById('chart_div4'));

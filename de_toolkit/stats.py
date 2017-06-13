@@ -555,14 +555,13 @@ def main():
 	parser.add_argument("method", 
 		choices=['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy', 'summary'],
 		help="Choose one of the specified functions to be run")
-	parser.add_argument("cfile", help="Name of input column data file")
 	parser.add_argument("file", help="Name of input data file")
 	parser.add_argument("--json", help="Name of JSON output file")
 	parser.add_argument("--html", help="Name of HTML output file")
 	args = parser.parse_args()
 
 	#Create CountMatrix object from given data
-	counts_obj = CountMatrixFile(args.file, args.cfile, '~ category')
+	counts_obj = CountMatrixFile(args.file)
 	
 	#Dictionary containing the methods that can be called 
 	funcs = {'base': base, 'coldist': coldist, 'rowdist': rowdist, 'colzero': colzero,

@@ -278,6 +278,54 @@ def test_stats_base_JSON():
 	
 	assert name=='base' and cols==3 and rows==5
 
+#test that JSON output for coldist function is correct
+def test_stats_coldist_JSON():
+	test = open('tests/stats/fake_counts_coldist.json', 'r')
+	for line in test:
+		json_output = json.loads(line)
+	
+	name = json_output.get('name')
+	pct = json_output.get('stats', {}).get('pct')
+	dists = json_output.get('stats', {}).get('dists')	
+
+	true_pct = [x for x in range(5, 100, 5)]
+
+	true_col_names = ['a', 'b', 'c']
+	col_names = []
+	for i in range(0, len(dists)):
+		dist = dists[i]
+		col_name = dist['name']
+		col_names.append(col_name)
+
+	col_dist_func = [d['dist'] for d in dists]
+	col_dist_true = [[3.0 for i in range(20)] for j in range(3)]
+
+	assert name=='coldist' and pct==true_pct and true_col_names==col_names and col_dist_func==col_dist_true
+
+#test that JSON output for rowdist function is correct
+def test_stats_rowdist_JSON():
+	test = open('tests/stats/fake_counts_rowdist.json', 'r')
+	for line in test:
+		json_output = json.loads(line)
+	
+	name = json_output.get('name')
+	pct = json_output.get('stats', {}).get('pct')
+	dists = json_output.get('stats', {}).get('dists')	
+
+	true_pct = [x for x in range(5, 100, 5)]
+
+	true_row_names = ['gene1', 'gene2', 'gene3']
+	row_names = []
+	for i in range(0, len(dists)):
+		dist = dists[i]
+		row_name = dist['name']
+		row_names.append(row_name)
+
+	row_dist_func = [d['dist'] for d in dists]
+	row_dist_true = [[1.0 for i in range(20)] for j in range(3)]
+
+	assert name=='rowdist' and pct==true_pct and true_row_names==row_names and row_dist_func==row_dist_true
+
 #test that JSON output for colzero function is correct
 def test_stats_colzero_JSON():
 	test = open('tests/stats/fake_counts_colzero.json', 'r')

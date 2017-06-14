@@ -8,7 +8,6 @@ import json
 import math
 from de_toolkit.common import *
 from de_toolkit.stats import *
-from de_toolkit.stats import main as stats_main
 
 #test for base function
 def test_stats_base(fake_counts_obj):
@@ -329,3 +328,78 @@ def test_stats_colzero_JSON():
 		nonzero_col_means.append(nonzero_col_mean)
 
 	assert name=='colzero' and true_col_names==col_names and true_zero_counts==zero_counts and true_zero_fracs == zero_fracs and true_col_means==col_means and true_nonzero_col_means==nonzero_col_means
+
+#test that JSON output for rowzero function is correct
+def test_stats_rowzero_JSON():
+	test = open('tests/stats/fake_counts_rowzero.json', 'r')
+	for line in test:
+		json_output = json.loads(line)
+	
+	name = json_output.get('name')
+	zeros = json_output.get('stats', {}).get('zeros')
+
+	true_row_names = ['gene1', 'gene2', 'gene3', 'gene4', 'gene5']
+
+	row_names = []
+	for i in range(0, len(zeros)):
+		row = zeros[i]
+		row_name = row.get('name')
+		row_names.append(row_name)
+	
+	true_zero_counts = [1, 2, 2, 1, 0]
+
+	zero_counts = []
+	for i in range(0, len(zeros)):
+		row = zeros[i]
+		zero_count = row.get('zero_count')
+		zero_counts.append(zero_count)
+	
+	true_zero_fracs = [1/3, 2/3, 2/3, 1/3, 0]
+
+	zero_fracs = []
+	for i in range(0, len(zeros)):
+		row = zeros[i]
+		zero_frac = row.get('zero_frac')
+		zero_fracs.append(zero_frac)
+
+	true_row_means = [(2+4)/3, 9/3, 4/3, (5+125)/3, (6+36+216)/3]
+	
+	row_means = []
+	for i in range(0, len(zeros)):
+		row = zeros[i]
+		row_mean = row.get('mean')
+		row_means.append(row_mean)
+
+	true_nonzero_row_means = [(2+4)/2, 9, 4, (5+125)/2, (6+36+216)/3]
+
+	nonzero_row_means = []
+	for i in range(0, len(zeros)):
+		row = zeros[i]
+		nonzero_row_mean = row.get('nonzero_mean')
+		nonzero_row_means.append(nonzero_row_mean)
+
+	assert name=='rowzero' and true_row_names==row_names and true_zero_counts==zero_counts and true_zero_fracs == zero_fracs and true_row_means==row_means and true_nonzero_row_means==nonzero_row_means
+
+#test that JSON output for entropy function is correct
+def test_stats_entropy_JSON():
+	test = open('tests/stats/fake_counts_entropy.json', 'r')
+	for line in test:
+		json_output = json.loads(line)
+	
+	name = json_output.get('name')
+	entropies = json_output.get('stats', {}).get('entropies')
+
+	H1 = -((2/14)*math.log(2/14,2) + (4/14)*math.log(4/14,2) + (8/14)*math.log(8/14,2))
+	H2 = -((3/39)*math.log(3/39,2) + (9/39)*math.log(9/39,2) + (27/39)*math.log(27/39,2))
+	H3 = -((4/84)*math.log(4/84,2) + (16/84)*math.log(16/84,2) + (64/84)*math.log(64/84,2))
+	H4 = -((5/155)*math.log(5/155,2) + (25/155)*math.log(25/155,2) + (125/155)*math.log(125/155,2))
+	H5 = -((6/258)*math.log(6/258,2) + (36/258)*math.log(36/258,2) + (216/258)*math.log(216/258,2))
+	true_entropies = [H1, H2, H3, H4, H5]
+
+	row_entropies = []
+	for i in range(0, len(entropies)):
+		row = entropies[i]
+		row_entropy = row.get('entropy')
+		row_entropies.append(row_entropy)
+
+	assert name=='entropy' and true_entropies==row_entropies

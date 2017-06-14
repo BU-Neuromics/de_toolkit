@@ -444,7 +444,8 @@ def format_json(filename, method, output, funcs, counts_obj, funcs_present):
 				if key in open(filename).read():
 					print('Warning: ' + key + ' stats was already found in the output file and has been rewritten')
 				funcs_present.append(key)
-			final_output = output
+			for item in output:
+				final_output.append(item)
 
 	#If output file is not present, create it and add the appropriate output
 	else:

@@ -451,3 +451,20 @@ def test_stats_entropy_JSON():
 		row_entropies.append(row_entropy)
 
 	assert name=='entropy' and true_entropies==row_entropies
+
+#test that all functions were written to JSON output when summary is called
+def test_stats_summary_JSON():
+	test = open('tests/stats/fake_counts_summary.json', 'r')
+	
+	true_funcs = ['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy']
+
+	funcs = []
+	for line in test:
+		funcs.append(json.loads(line))
+
+	names = []
+	for func in funcs:
+		name = func['name']
+		names.append(name)
+
+	assert true_funcs==names

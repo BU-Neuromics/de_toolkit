@@ -8,6 +8,7 @@ import json
 import math
 from de_toolkit.common import *
 from de_toolkit.stats import *
+from de_toolkit.stats import main as stats_main
 
 #test for base function
 def test_stats_base(fake_counts_obj):
@@ -265,3 +266,66 @@ def test_stats_entropies(fake_counts_obj_with_zeros):
 
 
 	assert true_entropies == row_entropies
+
+#test that JSON output for base function is correct
+def test_stats_base_JSON():
+	test = open('tests/stats/fake_counts_base.json', 'r')
+	for line in test:
+		json_output = json.loads(line)
+	
+	name = json_output.get('name')
+	cols = json_output.get('stats', {}).get('num_cols')
+	rows = json_output.get('stats', {}).get('num_rows')
+	
+	assert name=='base' and cols==3 and rows==5
+
+#test that JSON output for colzero function is correct
+def test_stats_colzero_JSON():
+	test = open('tests/stats/fake_counts_colzero.json', 'r')
+	for line in test:
+		json_output = json.loads(line)
+	
+	name = json_output.get('name')
+	zeros = json_output.get('stats', {}).get('zeros')
+
+	true_col_names = ['a', 'b', 'c']
+
+	col_names = []
+	for i in range(0, len(zeros)):
+		col = zeros[i]
+		col_name = col.get('name')
+		col_names.append(col_name)
+	
+	true_zero_counts = [1, 2, 3]
+
+	zero_counts = []
+	for i in range(0, len(zeros)):
+		col = zeros[i]
+		zero_count = col.get('zero_count')
+		zero_counts.append(zero_count)
+	
+	true_zero_fracs = [1/5, 2/5, 3/5]
+
+	zero_fracs = []
+	for i in range(0, len(zeros)):
+		col = zeros[i]
+		zero_frac = col.get('zero_frac')
+		zero_fracs.append(zero_frac)
+
+	true_col_means = [(2+4+5+6)/5, (4+9+36)/5, (125+216)/5]
+
+	col_means = []
+	for i in range(0, len(zeros)):
+		col = zeros[i]
+		col_mean = col.get('mean')
+		col_means.append(col_mean)
+
+	true_nonzero_col_means = [(2+4+5+6)/4, (4+9+36)/3, (125+216)/2]
+
+	nonzero_col_means = []
+	for i in range(0, len(zeros)):
+		col = zeros[i]
+		nonzero_col_mean = col.get('nonzero_mean')
+		nonzero_col_means.append(nonzero_col_mean)
+
+	assert name=='colzero' and true_col_names==col_names and true_zero_counts==zero_counts and true_zero_fracs == zero_fracs and true_col_means==col_means and true_nonzero_col_means==nonzero_col_means

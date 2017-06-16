@@ -86,8 +86,11 @@ def base(count_mat) :
 	num_rows=len(cnts)
 
 	#Format output
-	base_output = OrderedDict([['num_cols', num_cols], ['num_rows', num_rows]])
-	output = OrderedDict([['name', 'base'], ['stats', base_output]])
+	output = {}
+	output['name'] = 'coldist'
+	output['stats'] = {}
+	output['stats']['num_cols'] = num_cols
+	output['stats']['num_rows'] = num_rows
 
 	#Return output
 	return output
@@ -241,54 +244,34 @@ def colzero(count_mat) :
 	num_rows=len(cnts)
 	col_names=count_mat.sample_names
 
-	#Calculate zero counts for each column
-	zero_counts =[]
-	for i in range(0, num_cols):
-		zero_count = 0
-		for j in range(0, num_rows):
-			if cnts[j][i]==0:
-				zero_count+=1
-		zero_counts.append(zero_count)
-
-	#Calculate zero fractions for each column
+	#Calculate zero counts and zero fractions for each column
+	zero_counts = []
 	zero_fracs = []
-	for i in range(0, num_cols):
-		zero_frac=zero_counts[i]/num_rows
-		zero_fracs.append(zero_frac)
-
-	#Calculate means for each column
 	col_means = []
-	for i in range(0, num_cols):
-		mean = 0.0
-		for j in range(0, num_rows):
-			mean+=cnts[j][i]
-		mean=mean/num_rows
-		col_means.append(mean)
-
-	#Calculate the means of only the nonzero counts in each column
 	nonzero_col_means = []
-	for i in range(0, num_cols):
-		mean=0.0
-		num=0
-		for j in range(0, num_rows):
-			if cnts[j][i] != 0:
-				mean+=cnts[j][i]
-				num+=1
-		if num != 0:
-			mean=mean/num
-		nonzero_col_means.append(mean)
-
+	for s in col_names:
+		data = getattr(count_mat.counts,s).tolist()
+		zero_counts.append(data.count(0.0))
+		zero_fracs.append(data.count(0.0)/len(data))
+		col_means.append(sum(data)/len(data))
+		if len(data) != data.count(0.0):
+			nonzero_col_means.append(sum(data)/((len(data)-data.count(0.0))))
+		else:
+			nonzero_col_means.append(0.0)
+	
 	#Format output
-	output = OrderedDict([['name', 'colzero'], ['stats', {}]])
+	output = {}
+	output['name'] = 'colzero'
+	output['stats'] = {}
 	output['stats']['zeros'] = []
 
 	for i in range(0, num_cols):
-		col = OrderedDict([['name', col_names[i]],
-		['zero_count', zero_counts[i]],
-		['zero_frac', zero_fracs[i]],
-		['mean', col_means[i]],
-		['nonzero_mean', nonzero_col_means[i]]])
-
+		col = {}
+		col['name'] = col_names[i]
+		col['zero_count'] = zero_counts[i]
+		col['zero_frac'] = zero_fracs[i]
+		col['mean'] = col_means[i]
+		col['nonzero_mean'] = nonzero_col_means[i]
 		output['stats']['zeros'].append(col)
 
 	#Return output

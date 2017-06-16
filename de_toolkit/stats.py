@@ -1,6 +1,5 @@
 import json
 import math
-from collections import OrderedDict
 import argparse
 import numpy as np
 import matplotlib
@@ -357,16 +356,13 @@ def entropy(count_mat) :
 	num_rows=len(cnts)
 	row_names = count_mat.count_names
 
-	#Calculate probabilities for each count by row
 	probs = []
-	for i in range(0, num_rows):
-		row_probs = []
-		sum = 0.0
-		for j in range(0, num_cols):
-			sum+=cnts[i][j]
-		for j in range(0, num_cols):
-			row_probs.append(cnts[i][j]/sum)
-		probs.append(row_probs)
+	for i in range(len(row_names)):
+		data = count_mat.counts.iloc[i].tolist()
+		row_prob = []
+		for item in data:
+			row_prob.append(item/sum(data))
+		probs.append(row_prob)
 
 	#Calculate entropies
 	entropies = []
@@ -380,13 +376,15 @@ def entropy(count_mat) :
 		entropies.append(H)
 
 	#Format output
-	output = OrderedDict([['name', 'entropy'], ['stats', {}]])
+	output = {}
+	output['name'] = 'entropy'
+	output['stats'] = {}
 	output['stats']['entropies'] = []
 
 	for i in range(0, num_rows):
-		row = OrderedDict([['name', row_names[i]],
-		['entropy', entropies[i]]])
-
+		row = {}
+		row['name'] = row_names[i]
+		row['entropy'] = entropies[i]
 		output['stats']['entropies'].append(row)
 
 	#Return output

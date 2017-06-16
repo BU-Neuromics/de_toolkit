@@ -43,7 +43,7 @@ Description:
 
 '''
 
-def summary(count_mat) :
+def summary(count_mat, bins, log) :
 	'''
 		Compute summary statistics on a counts matrix file
 			detk-stats [--json=<json_fn>] [--html=<html_fn>] summary <counts file>
@@ -60,8 +60,8 @@ def summary(count_mat) :
 
 	total_output = []
 	total_output.append(base(count_mat))
-	total_output.append(coldist(count_mat))
-	total_output.append(rowdist(count_mat))
+	total_output.append(coldist(count_mat, bins, log))
+	total_output.append(rowdist(count_mat, bins, log))
 	total_output.append(colzero(count_mat))
 	total_output.append(rowzero(count_mat))
 	total_output.append(entropy(count_mat))
@@ -92,7 +92,7 @@ def base(count_mat) :
 	#Return output
 	return output
 
-def coldist(count_mat, b) :
+def coldist(count_mat, b, log) :
 	'''
 		Column-wise distribution of counts
 
@@ -143,6 +143,9 @@ def coldist(count_mat, b) :
 	for s in count_mat.sample_names:
         #to access the data in each column
 		data = getattr(count_mat.counts,s).tolist()
+		if log == 1:
+			data=list(filter(lambda a: a != 0.0, data))
+			data=np.log10(data)
 
         #for the upper and lower outliers
 		Q1 = np.percentile(data, 25)
@@ -158,7 +161,7 @@ def coldist(count_mat, b) :
 	return output
 
 
-def rowdist(count_mat, b) :
+def rowdist(count_mat, b, log) :
 	'''
 		Row-wise distribution of counts
 		
@@ -176,7 +179,10 @@ def rowdist(count_mat, b) :
 	for i in range(len(count_mat.count_names)):
         #to access the data in each row
 		data = count_mat.counts.iloc[i].tolist()
-
+		if log==1: 
+			data=list(filter(lambda a: a != 0.0, data))
+			data=np.log10(data)
+	
         #for the upper and lower outliers
 		Q1 = np.percentile(data, 25)
 		Q3 = np.percentile(data, 75)
@@ -410,7 +416,7 @@ def entropy(count_mat) :
 	#Return output
 	return output
 
-def format_json(filename, method, output, funcs, counts_obj, funcs_present):
+def format_json(filename, method, output, funcs, counts_obj, funcs_present, log):
 	final_output = []
 
 	if os.path.isfile(filename):
@@ -431,7 +437,7 @@ def format_json(filename, method, output, funcs, counts_obj, funcs_present):
 								dist = dists[0]
 								bins = dist['bins']
 								b = len(bins)
-						existing_output=chosen_func(counts_obj, b)
+						existing_output=chosen_func(counts_obj, b, log)
 					else:
 						existing_output = chosen_func(counts_obj)
 					final_output.append(existing_output)
@@ -467,7 +473,7 @@ def format_json(filename, method, output, funcs, counts_obj, funcs_present):
 		json_fn.write(json.dumps(item) + '\n')
 	json_fn.close()
 
-def format_html(filename, json_fn, funcs_present, counts_obj):
+def format_html(filename, json_fn, funcs_present, counts_obj, log):
 	html_temp = open('de_toolkit/html_template.html')
 	s = Template(html_temp.read())
 	if 'base' in funcs_present:
@@ -540,7 +546,11 @@ def format_html(filename, json_fn, funcs_present, counts_obj):
 		for i in range(0, len(dists)):
 			coldist_data+="['" + dists[i]['name'] + "', "
 			for j in range(0, len(cnts)):
-				coldist_data+= str(cnts[j][i]) + ","
+				if log==1:
+					if cnts[j][i]!=0.0:
+						coldist_data+= str(math.log10(cnts[j][i])) + ","				
+				else:
+					coldist_data+= str(cnts[j][i]) + ","
 			coldist_data+="],"
 		coldist_cols=''
 		for i in range(0, len(cnts)):
@@ -569,7 +579,7 @@ def main():
 		help="Choose one of the specified functions to be run")
 	parser.add_argument("file", help="Name of input data file")
 	parser.add_argument("--bins", help="The number of bins to use when computing the counts distribution for coldist or rowdist") 
-	parser.add_argument("--log", help="Perform a log10 transform on the counts before calculating the distribution for colzero or rowzero. Zeros are omitted prior to histogram calculation")
+	parser.add_argument("--log", help="Perform a log10 transform on the counts before calculating the distribution for colzero or rowzero. Zeros are omitted prior to histogram calculation", action='store_const', const=1)
 	parser.add_argument("--density", help="Return a density distribution instead of counts for coldist or rowdist")
 	parser.add_argument("--json", help="Name of JSON output file")
 	parser.add_argument("--html", help="Name of HTML output file")
@@ -591,8 +601,13 @@ def main():
 	else:
 		b = 20
 
-	if args.method == 'coldist' or args.method=='rowdist':
-		output = chosen_func(counts_obj, b)
+	if args.log:
+		log = 1
+	else:
+		log = -1
+
+	if args.method == 'coldist' or args.method=='rowdist' or args.method=='summary':
+		output = chosen_func(counts_obj, b, log)
 	else:
 		output = chosen_func(counts_obj)
 
@@ -607,7 +622,7 @@ def main():
 		filename=file_str+ '.json'
 
 	#Format JSON output file
-	format_json(filename, args.method, output, funcs, counts_obj, funcs_present)
+	format_json(filename, args.method, output, funcs, counts_obj, funcs_present, log)
 	
 	#Check if HTML file option was specified
 	if args.html:
@@ -616,7 +631,7 @@ def main():
 		html_fn = file_str + '.html'
 	
 	#Format HTML output file
-	format_html(html_fn, filename, funcs_present, counts_obj)
+	format_html(html_fn, filename, funcs_present, counts_obj, log)
 
 if __name__ == '__main__':
 	main()

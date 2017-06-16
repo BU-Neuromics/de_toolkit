@@ -92,7 +92,7 @@ def base(count_mat) :
 	#Return output
 	return output
 
-def coldist(count_mat) :
+def coldist(count_mat, b) :
 	'''
 		Column-wise distribution of counts
 
@@ -150,7 +150,7 @@ def coldist(count_mat) :
 		IQR =  np.percentile(data, 75) - np.percentile(data, 25)
 
         #for the histogram bin edges and count numbers
-		(n, bins, patches) = plt.hist(data, bins=20, label='hst')
+		(n, bins, patches) = plt.hist(data, bins=b, label='hst')
 
         #make the dict for each sample
 		output['stats']['dists'].append({'name':s, 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
@@ -158,7 +158,7 @@ def coldist(count_mat) :
 	return output
 
 
-def rowdist(count_mat) :
+def rowdist(count_mat, b) :
 	'''
 		Row-wise distribution of counts
 		
@@ -183,7 +183,7 @@ def rowdist(count_mat) :
 		IQR =  np.percentile(data, 75) - np.percentile(data, 25)
 
         #for the histogram bin edges and count numbers
-		(n, bins, patches) = plt.hist(data, bins=20, label='hst')
+		(n, bins, patches) = plt.hist(data, bins=b, label='hst')
 
         #make the dict for each row
 		output['stats']['dists'].append({'name':count_mat.count_names[i], 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
@@ -422,7 +422,18 @@ def format_json(filename, method, output, funcs, counts_obj, funcs_present):
 			for key in funcs:
 				if key in open(filename).read() and key != method:
 					chosen_func = funcs[key]
-					existing_output = chosen_func(counts_obj)
+					if key == 'coldist' or key == 'rowdist':
+						f = open(filename, 'r')
+						for line in f:
+							if key in line:
+								json_output = json.loads(line)
+								dists = json_output['stats']['dists']
+								dist = dists[0]
+								bins = dist['bins']
+								b = len(bins)
+						existing_output=chosen_func(counts_obj, b)
+					else:
+						existing_output = chosen_func(counts_obj)
 					final_output.append(existing_output)
 					funcs_present.append(key)
 					print('Warning: ' + key + ' stats was already found in the output file and has been rewritten')
@@ -557,6 +568,9 @@ def main():
 		choices=['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy', 'summary'],
 		help="Choose one of the specified functions to be run")
 	parser.add_argument("file", help="Name of input data file")
+	parser.add_argument("--bins", help="The number of bins to use when computing the counts distribution for coldist or rowdist") 
+	parser.add_argument("--log", help="Perform a log10 transform on the counts before calculating the distribution for colzero or rowzero. Zeros are omitted prior to histogram calculation")
+	parser.add_argument("--density", help="Return a density distribution instead of counts for coldist or rowdist")
 	parser.add_argument("--json", help="Name of JSON output file")
 	parser.add_argument("--html", help="Name of HTML output file")
 	args = parser.parse_args()
@@ -570,8 +584,17 @@ def main():
 
 	#Run specified method
 	chosen_func = funcs[args.method]
-	output = chosen_func(counts_obj)
 	funcs_present = [args.method]
+
+	if args.bins:
+		b = int(args.bins)
+	else:
+		b = 20
+
+	if args.method == 'coldist' or args.method=='rowdist':
+		output = chosen_func(counts_obj, b)
+	else:
+		output = chosen_func(counts_obj)
 
 	#Obtain string used to name output files, unless filename is specified
 	index = args.file.rfind('.')

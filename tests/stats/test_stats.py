@@ -20,7 +20,7 @@ def test_stats_base(fake_counts_obj):
 
 #test that coldist function gets correct column names
 def test_stats_coldist_names(fake_count_coldist_obj):
-	output = coldist(fake_count_coldist_obj, 20, -1)
+	output = coldist(fake_count_coldist_obj, 20, -1, -1)
 	col_dists = output.get('stats').get('dists')
 	col_name_func = [d['name'] for d in col_dists]
 	print(col_name_func)
@@ -30,7 +30,7 @@ def test_stats_coldist_names(fake_count_coldist_obj):
 
 #test that coldist function gets correct column dist
 def test_stats_coldist_dist(fake_count_coldist_obj):
-	output = coldist(fake_count_coldist_obj, 20, -1)
+	output = coldist(fake_count_coldist_obj, 20, -1, -1)
 	col_dists = output.get('stats').get('dists')
 	col_dist_func = [d['dist'] for d in col_dists]
 
@@ -39,7 +39,7 @@ def test_stats_coldist_dist(fake_count_coldist_obj):
 
 #test that rowdist function gets correct row names
 def test_stats_rowdist_names(fake_count_rowdist_obj):
-	output = rowdist(fake_count_rowdist_obj, 20, -1)
+	output = rowdist(fake_count_rowdist_obj, 20, -1, -1)
 	row_dists = output.get('stats').get('dists')
 	row_name_func = [d['name'] for d in row_dists]
 
@@ -48,7 +48,7 @@ def test_stats_rowdist_names(fake_count_rowdist_obj):
 
 #test that rowdist function gets correct row dists
 def test_stats_rowdist_dist(fake_count_rowdist_obj):
-	output = rowdist(fake_count_rowdist_obj, 20, -1)
+	output = rowdist(fake_count_rowdist_obj, 20, -1, -1)
 	row_dists = output.get('stats').get('dists')
 	row_dist_func = [d['dist'] for d in row_dists]
 	print(row_dist_func)

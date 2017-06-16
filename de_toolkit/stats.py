@@ -134,18 +134,24 @@ def coldist(count_mat, b, log, density) :
 					1.5*(inner quartile length) of the distribution. These could be 
 					marked as outliers in a boxplot, for example.
 	'''
+	#Format output
 	output = {}
 	output['name'] = 'coldist'
 	output['stats'] = {}
 	output['stats']['pct'] = list(range(5, 100, 5))
 
 	output['stats']['dists'] = []
+
 	for s in count_mat.sample_names:
         #to access the data in each column
 		data = getattr(count_mat.counts,s).tolist()
+		
+		#Take the log10 of each count if log option is specified
 		if log == 1:
 			data=list(filter(lambda a: a != 0.0, data))
 			data=np.log10(data)
+		
+		#Compute densities if density option is specified
 		if density==1:
 			data=[x/sum(data) for x in data]
        
@@ -172,18 +178,24 @@ def rowdist(count_mat, b, log, density) :
 		Identical to coldist except calculated across rows. The name key is rowdist, and the 
 		name key of the items in dists is the row name from the counts file.
 	'''
+	#Format output
 	output = {}
 	output['name'] = 'rowdist'
 	output['stats'] = {}
 	output['stats']['pct'] = list(range(5, 100, 5))
 
 	output['stats']['dists'] = []
+	
 	for i in range(len(count_mat.count_names)):
         #to access the data in each row
 		data = count_mat.counts.iloc[i].tolist()
+
+		#Compute log10 of each count if log option is specified
 		if log==1: 
 			data=list(filter(lambda a: a != 0.0, data))
 			data=np.log10(data)
+		
+		#Compute densities if density option is specified
 		if density==1:
 			data=[x/sum(data) for x in data]
 	
@@ -429,9 +441,12 @@ def format_json(filename, method, output, funcs, counts_obj, funcs_present, log,
 			print('Warning: ' + method + ' stats was already found in the output file and has been rewritten')
 			final_output.append(output)
 			
+			#Rewrite other stats already present in the file as well
 			for key in funcs:
 				if key in open(filename).read() and key != method:
 					chosen_func = funcs[key]
+
+					#If coldist or rowdist are present, get number of bins
 					if key == 'coldist' or key == 'rowdist':
 						f = open(filename, 'r')
 						for line in f:
@@ -472,14 +487,18 @@ def format_json(filename, method, output, funcs, counts_obj, funcs_present, log,
 	else:
 		final_output.append(output)
 
+	#Write appropriate outputs to the JSON file
 	json_fn = open(filename, 'w')
 	for item in final_output:
 		json_fn.write(json.dumps(item) + '\n')
 	json_fn.close()
 
 def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
+	#HTML template that will be filled in using the available JSON data
 	html_temp = open('de_toolkit/html_template.html')
 	s = Template(html_temp.read())
+
+	#Format base HTML output (table)
 	if 'base' in funcs_present:
 		base_hide=''
 		with open(json_fn) as file:
@@ -492,6 +511,8 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 		base_hide='hidden'
 		num_cols=''
 		num_rows=''
+
+	#Format colzero HTML output (bar chart of samples and zero fractions)
 	if 'colzero' in funcs_present:
 		colzero_hide=''
 		with open(json_fn) as file:
@@ -506,6 +527,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 		colzero_hide='hidden'
 		colzero=''
 
+	#Format rowzero HTML output (scatterplot of zero fraction vs. nonzero mean and histogram of zero fracs)
 	if 'rowzero' in funcs_present:
 		rowzero_hide=''
 		with open (json_fn) as file:
@@ -524,6 +546,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 		rowzero_scatter=''
 		rowzero_hist=''
 
+	#Format entropy HTML output (histogram)
 	if 'entropy' in funcs_present:
 		entropy_hide=''
 		with open(json_fn) as file:
@@ -538,6 +561,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 		entropy_hide='hidden'
 		entropy=''
 
+	#Format coldist HTML output (box plots for each column)
 	if 'coldist' in funcs_present:
 		coldist_hide=''
 		cnts = counts_obj.counts.as_matrix()
@@ -554,11 +578,11 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 		for i in range(0, len(dists)):
 			coldist_data+="['" + dists[i]['name'] + "', "
 			for j in range(0, len(cnts)):
-				if log==1:
-					if cnts[j][i]!=0.0:
-						coldist_data+= str(math.log10(cnts[j][i])) + ","	
-				elif density==1:
+				if density==1:
 					coldist_data+= str(cnts[j][i]/col_sums[i]) + ","
+				elif log==1:
+					if cnts[j][i]!=0.0:
+						coldist_data+= str(math.log10(cnts[j][i])) + ","
 				else:
 					coldist_data+= str(cnts[j][i]) + ","
 			coldist_data+="],"
@@ -571,6 +595,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 		coldist_data = ''
 		coldist_cols = ''
 
+	#Write all outputs to HTML file
 	html_output = s.safe_substitute(base_hide=base_hide, num_cols=num_cols, num_rows=num_rows,
                                         colzero_hide=colzero_hide, colzero=colzero,
                                         rowzero_hide=rowzero_hide, rowzero_scatter=rowzero_scatter, rowzero_hist=rowzero_hist,
@@ -606,23 +631,29 @@ def main():
 	chosen_func = funcs[args.method]
 	funcs_present = [args.method]
 
+	#If bin option is specified, set to given number (otherwise, default=20)
 	if args.bins:
 		b = int(args.bins)
 	else:
 		b = 20
 
+	#Set log option
 	if args.log:
 		log = 1
 	else:
 		log = -1
 
+	#Set density option
 	if args.density:
 		density=1
 	else:
 		density=-1
 
+	#If method is coldist, rowdist, or summary, run with base, log and density settings
 	if args.method == 'coldist' or args.method=='rowdist' or args.method=='summary':
 		output = chosen_func(counts_obj, b, log, density)
+	
+	#Otherwise, run method with just the counts object
 	else:
 		output = chosen_func(counts_obj)
 

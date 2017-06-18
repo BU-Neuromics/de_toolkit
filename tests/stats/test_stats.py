@@ -48,6 +48,17 @@ def test_stats_coldist_density(fake_count_coldist_obj):
 
 	assert np.allclose(col_dist_sums,col_dist_true)
 
+#test that coldist function get correct number of bins
+def test_stats_coldist_bins(fake_count_coldist_obj):
+	output = coldist(fake_count_coldist_obj, 5, -1, -1)
+	col_dists = output.get('stats').get('dists')
+	col_dist_bins = [d['bins'] for d in col_dists]
+	num_bins = [len(b) for b in col_dist_bins]
+	true_bins = [5, 5, 5]
+
+	assert num_bins == true_bins
+	
+
 #test that rowdist function gets correct row names
 def test_stats_rowdist_names(fake_count_rowdist_obj):
 	output = rowdist(fake_count_rowdist_obj, 20, -1, -1)
@@ -77,6 +88,17 @@ def test_stats_coldist_density(fake_count_rowdist_obj):
 	row_dist_true = [1.0 for i in range(3)]
 
 	assert np.allclose(row_dist_sums,row_dist_true)
+
+#test that rowdist function get correct number of bins
+def test_stats_rowdist_bins(fake_count_rowdist_obj):
+	output = rowdist(fake_count_rowdist_obj, 5, -1, -1)
+	row_dists = output.get('stats').get('dists')
+	row_dist_bins = [d['bins'] for d in row_dists]
+	num_bins = [len(b) for b in row_dist_bins]
+	true_bins = [5, 5, 5]
+
+	assert num_bins == true_bins
+	
 
 #test that colzero function gets correct column names
 def test_stats_colzero_names(fake_counts_obj_with_zeros):

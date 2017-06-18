@@ -37,6 +37,17 @@ def test_stats_coldist_dist(fake_count_coldist_obj):
 	col_dist_true = [[3.0 for i in range(20)] for j in range(3)]
 	assert col_dist_func == col_dist_true
 
+#test that coldist function with density option gets correct dists
+def test_stats_coldist_density(fake_count_coldist_obj):
+	output = coldist(fake_count_coldist_obj, 20, -1, 1)
+	col_dists = output.get('stats').get('dists')
+	col_dist_func = [d['dist'] for d in col_dists]
+	col_dist_sums = [sum(x) for x in col_dist_func]
+	
+	col_dist_true = [1.0 for i in range(3)]
+
+	assert np.allclose(col_dist_sums,col_dist_true)
+
 #test that rowdist function gets correct row names
 def test_stats_rowdist_names(fake_count_rowdist_obj):
 	output = rowdist(fake_count_rowdist_obj, 20, -1, -1)
@@ -51,11 +62,21 @@ def test_stats_rowdist_dist(fake_count_rowdist_obj):
 	output = rowdist(fake_count_rowdist_obj, 20, -1, -1)
 	row_dists = output.get('stats').get('dists')
 	row_dist_func = [d['dist'] for d in row_dists]
-	print(row_dist_func)
 
 	row_dist_true = [[1.0 for i in range(20)] for j in range(3)]
 	assert row_dist_func == row_dist_true
 
+
+#test that rowdist function with density option gets correct dists
+def test_stats_coldist_density(fake_count_rowdist_obj):
+	output = rowdist(fake_count_rowdist_obj, 20, -1, 1)
+	row_dists = output.get('stats').get('dists')
+	row_dist_func = [d['dist'] for d in row_dists]
+	row_dist_sums = [sum(x) for x in row_dist_func]
+	
+	row_dist_true = [1.0 for i in range(3)]
+
+	assert np.allclose(row_dist_sums,row_dist_true)
 
 #test that colzero function gets correct column names
 def test_stats_colzero_names(fake_counts_obj_with_zeros):

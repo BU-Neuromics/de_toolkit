@@ -152,18 +152,19 @@ def coldist(count_mat, b, log, density) :
 		if log == 1:
 			data=list(filter(lambda a: a != 0.0, data))
 			data=np.log10(data)
-		
-		#Compute densities if density option is specified
-		if density==1:
-			data=[x/sum(data) for x in data]
-       
+		      
 	 #for the upper and lower outliers
 		Q1 = np.percentile(data, 25)
 		Q3 = np.percentile(data, 75)
 		IQR =  np.percentile(data, 75) - np.percentile(data, 25)
 
         #for the histogram bin edges and count numbers
-		(n, bins, patches) = plt.hist(data, bins=b, label='hst')
+		if density == 1:
+			(n, bins, patches) = plt.hist(data, bins=b, label='hst', weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size)
+			print(n)
+		else:
+			(n, bins, patches) = plt.hist(data, bins=b, label='hst')
+			print(n)
 
         #make the dict for each sample
 		output['stats']['dists'].append({'name':s, 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
@@ -197,17 +198,16 @@ def rowdist(count_mat, b, log, density) :
 			data=list(filter(lambda a: a != 0.0, data))
 			data=np.log10(data)
 		
-		#Compute densities if density option is specified
-		if density==1:
-			data=[x/sum(data) for x in data]
-	
         #for the upper and lower outliers
 		Q1 = np.percentile(data, 25)
 		Q3 = np.percentile(data, 75)
 		IQR =  np.percentile(data, 75) - np.percentile(data, 25)
 
         #for the histogram bin edges and count numbers
-		(n, bins, patches) = plt.hist(data, bins=b, label='hst')
+		if density == 1:
+			(n, bins, patches) = plt.hist(data, bins=b, label='hist',  weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size)
+		else:
+			(n, bins, patches) = plt.hist(data, bins=b, label='hst')
 
         #make the dict for each row
 		output['stats']['dists'].append({'name':count_mat.count_names[i], 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})

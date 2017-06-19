@@ -58,6 +58,17 @@ def test_stats_coldist_bins(fake_count_coldist_obj):
 
 	assert num_bins == true_bins
 	
+#test log option for coldist function
+def test_stats_coldist_bins():
+	f = open('tests/stats/test_coldist.csv', 'r')
+	count_obj = CountMatrixFile(f)
+	output = coldist(count_obj, 2, 1, -1)
+	col_dists = output.get('stats').get('dists')
+	col_dist_bins = [d['bins'] for d in col_dists]	
+	col_dist_func = [d['dist'] for d in col_dists]
+	true_bins = [[1.5, 2.0],[3.5, 4.0], [5.5, 6.0]]
+	true_dists = [[2,2],[2,2],[2,2]]
+	assert col_dist_bins==true_bins and col_dist_func==true_dists
 
 #test that rowdist function gets correct row names
 def test_stats_rowdist_names(fake_count_rowdist_obj):
@@ -99,6 +110,17 @@ def test_stats_rowdist_bins(fake_count_rowdist_obj):
 
 	assert num_bins == true_bins
 	
+#test log option for rowdist function
+def test_stats_rowdist_bins():
+	f = open('tests/stats/test_rowdist.csv', 'r')
+	count_obj = CountMatrixFile(f)
+	output = rowdist(count_obj, 2, 1, -1)
+	row_dists = output.get('stats').get('dists')
+	row_dist_bins = [d['bins'] for d in row_dists]	
+	row_dist_func = [d['dist'] for d in row_dists]
+	true_bins = [[1.5, 2.0],[3.5, 4.0], [5.5, 6.0]]
+	true_dists = [[2,2],[2,2],[2,2]]
+	assert row_dist_bins==true_bins and row_dist_func==true_dists
 
 #test that colzero function gets correct column names
 def test_stats_colzero_names(fake_counts_obj_with_zeros):

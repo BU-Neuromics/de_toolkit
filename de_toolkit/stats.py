@@ -161,10 +161,8 @@ def coldist(count_mat, b, log, density) :
         #for the histogram bin edges and count numbers
 		if density == 1:
 			(n, bins, patches) = plt.hist(data, bins=b, label='hst', weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size)
-			print(n)
 		else:
 			(n, bins, patches) = plt.hist(data, bins=b, label='hst')
-			print(n)
 
         #make the dict for each sample
 		output['stats']['dists'].append({'name':s, 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})

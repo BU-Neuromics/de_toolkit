@@ -4,6 +4,7 @@ import os
 import pandas
 import pytest
 import tempfile
+import warnings
 
 def test_norm_cli():
   from de_toolkit.norm import main
@@ -58,8 +59,11 @@ def test_estimateSizeFactors_allzero(fake_counts_numpy_matrix) :
   cnts = fake_counts_numpy_matrix.copy()
   cnts[:,0] = 0
 
-  with pytest.raises(NormalizationException) :
-    estimateSizeFactors(cnts)
+  # this will raise warnings that we can safely ignore (I think)
+  with warnings.catch_warnings():
+      warnings.simplefilter("ignore")
+      with pytest.raises(NormalizationException) :
+        estimateSizeFactors(cnts)
 
 def test_estimateSizeFactors_somezero(fake_counts_numpy_matrix) :
 
@@ -75,9 +79,13 @@ def test_estimateSizeFactors_somezero(fake_counts_numpy_matrix) :
 
   geom_mean = cnts[2,:].prod()**(1/cnts.shape[1])
 
-  true_size_factors = cnts[2,:]/geom_mean
-  deseq2_size_factors = estimateSizeFactors_rpy(cnts)
-  size_factors = estimateSizeFactors(cnts)
+  # this will raise warnings that we can safely ignore (I think)
+  with warnings.catch_warnings():
+      warnings.simplefilter("ignore")
+
+      true_size_factors = cnts[2,:]/geom_mean
+      deseq2_size_factors = estimateSizeFactors_rpy(cnts)
+      size_factors = estimateSizeFactors(cnts)
 
   assert np.allclose(size_factors, true_size_factors)
   assert np.allclose(size_factors, deseq2_size_factors)
@@ -101,7 +109,11 @@ def test_deseq2_py_vs_rpy(fake_counts_obj) :
 
   from de_toolkit.norm import deseq2, deseq2_rpy
 
-  rpy_norm_counts = deseq2_rpy(fake_counts_obj)
+  # this raises R warnings about converting floats to integers that we can
+  # ignore
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    rpy_norm_counts = deseq2_rpy(fake_counts_obj)
   py_norm_counts = deseq2(fake_counts_obj)
 
   assert np.allclose(rpy_norm_counts,py_norm_counts)
@@ -110,13 +122,17 @@ def test_deseq2_py_vs_rpy_somezero(fake_counts_obj) :
 
   from de_toolkit.norm import deseq2, deseq2_rpy
 
-  print(fake_counts_obj.counts)
   fake_counts_obj.counts.ix[0,2] = 0
   fake_counts_obj.counts.ix[4,2] = 0
-  print(fake_counts_obj.counts)
 
-  rpy_norm_counts = deseq2_rpy(fake_counts_obj)
-  py_norm_counts = deseq2(fake_counts_obj)
+  # this raises R warnings about converting floats to integers that we can
+  # ignore
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    rpy_norm_counts = deseq2_rpy(fake_counts_obj)
+
+    # suppress divide by zero warnings
+    py_norm_counts = deseq2(fake_counts_obj)
 
   assert np.allclose(rpy_norm_counts,py_norm_counts)
 

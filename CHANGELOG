@@ -1,8 +1,10 @@
 # Changelog
 
 ## unreleased
+
+## [ 0.2.4 ]
 ### Added
-- patsy dependency and model specification support
+- stats module implementation and docs
 
 ## [ 0.2.3 ]
 ### Changed

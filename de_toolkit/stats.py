@@ -86,7 +86,7 @@ def base(count_mat) :
 
 	#Format output
 	output = {}
-	output['name'] = 'coldist'
+	output['name'] = 'base'
 	output['stats'] = {}
 	output['stats']['num_cols'] = num_cols
 	output['stats']['num_rows'] = num_rows

@@ -1,6 +1,6 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="filter - Filtering Count Matrices" href="filter.html" />
@@ -35,7 +35,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head>
-  <body role="document">
+  <body>
   
 
     <div class="document">
@@ -329,6 +329,69 @@ following keys:</p>
 <dd>the value of <span class="math">\(H\)</span> calculated as above for that row</dd>
 </dl>
 </div>
+<div class="section" id="pca-principal-component-analysis">
+<span id="pca"></span><h2><code class="docutils literal"><span class="pre">pca</span></code> - Principal Component Analysis<a class="headerlink" href="#pca-principal-component-analysis" title="Permalink to this headline">¶</a></h2>
+<p>This module performs Principal Component Analysis (PCA) on a <span class="math">\(n \times m\)</span>
+counts matrix, where <span class="math">\(n\)</span> is the number of rows (genes) and <span class="math">\(m\)</span> is
+the number of columns (samples).  Briefly, PCA identifies the directions (e.g.
+genes and their magnitudes) that represent directions of maximal variance in a
+dataset.  The output of PCA is a set of principal components, where each
+principal component consists of an <span class="math">\(m\)</span>-length vector of <em>weights</em> or
+<em>loadings</em> and a <span class="math">\(n\)</span>-length vector of <em>scores</em>. Each principal component
+describes a precentage of the overall variance of the dataset. There are exactly
+<span class="math">\(m\)</span> principal components identified by a PCA, but typically only a small
+subset of these components explains a large amount of the variance in a real
+dataset.</p>
+<p>This module performs PCA on a provided counts matrix and returns the principal
+component weights, scores, and variances. In addition, the weights and scores
+for each individual component can be combined to define the <em>projection</em> of
+each sample along that component. Commonly, projections of each sample against
+each principal component can be used to identify outlier samples, batch effects,
+sample group, etc by describing how each sample contributes to the variance in
+each component. Therefore, the projections for each sample for each component
+are also included in the output.</p>
+<p><em>Experimental:</em> The PCA module can also accept a metadata file that contains
+information about the samples in each column. The user can specify some of these
+columns to include as variables for plotting purposes. The idea is that columns
+labeled with the same class will be colored according to their class, such that
+separations in the data can be more easily observed when projections are
+plotted.</p>
+<p>Example JSON output:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span>
+  <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;pca&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;stats&#39;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s1">&#39;column_names&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;sample1&#39;</span><span class="p">,</span><span class="s1">&#39;sample2&#39;</span><span class="p">,</span><span class="o">...</span><span class="p">],</span>
+    <span class="s1">&#39;column_variables&#39;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s1">&#39;sample_type&#39;</span><span class="p">:[</span><span class="s1">&#39;HD&#39;</span><span class="p">,</span><span class="s1">&#39;HD&#39;</span><span class="p">,</span><span class="s1">&#39;C&#39;</span><span class="p">,</span><span class="o">...</span><span class="p">],</span>
+      <span class="s1">&#39;sample_batch&#39;</span><span class="p">:[</span><span class="s1">&#39;Batch1&#39;</span><span class="p">,</span><span class="s1">&#39;Batch2&#39;</span><span class="p">,</span><span class="s1">&#39;Batch2&#39;</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;components&#39;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="p">{</span>
+        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;PC1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;weights&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.013</span><span class="p">,</span><span class="mf">0.352</span><span class="p">,</span><span class="o">...</span><span class="p">],</span> <span class="c1"># length m</span>
+        <span class="s1">&#39;scores&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.126</span><span class="p">,</span><span class="mf">0.975</span><span class="p">,</span><span class="o">...</span><span class="p">],</span> <span class="c1"># length n</span>
+        <span class="s1">&#39;projections&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">8.01</span><span class="p">,</span><span class="mf">5.93</span><span class="p">,</span><span class="o">...</span><span class="p">],</span> <span class="c1"># length m, ordered by &#39;column_names&#39;</span>
+        <span class="s1">&#39;perc_variance&#39;</span><span class="p">:</span> <span class="mf">0.75</span>
+      <span class="p">},</span>
+      <span class="p">{</span>
+        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;PC2&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;weights&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.013</span><span class="p">,</span><span class="mf">0.352</span><span class="p">,</span><span class="o">...</span><span class="p">],</span> <span class="c1"># length m</span>
+        <span class="s1">&#39;scores&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="mf">0.126</span><span class="p">,</span><span class="mf">0.975</span><span class="p">,</span><span class="o">...</span><span class="p">],</span> <span class="c1"># length n</span>
+        <span class="s1">&#39;projections&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">5.93</span><span class="p">,</span><span class="o">-</span><span class="mf">5.11</span><span class="p">,</span><span class="o">...</span><span class="p">],</span> <span class="c1"># length m</span>
+        <span class="s1">&#39;perc_variance&#39;</span><span class="p">:</span> <span class="mf">0.22</span>
+      <span class="p">}</span>
+    <span class="p">]</span>
+  <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>The html output for this module contains three plots: a <a class="reference external" href="http://www.improvedoutcomes.com/docs/WebSiteDocs/PCA/Creating_a_Scree_Plot.htm">scree plot</a>, a set
+of line plots containing the sample projections, and an interactive scatter
+plot where the user can choose which principal component projections to plot on
+the X and Y axis. The two types of projection plots also have interactivity
+allowing the user to select which column variable to use for coloring the
+plotted projection points.</p>
+</div>
 </div>
 
 
@@ -348,6 +411,7 @@ following keys:</p>
 <li><a class="reference internal" href="#colzero-column-wise-distribution-of-zero-counts"><code class="docutils literal"><span class="pre">colzero</span></code> - Column-wise distribution of zero counts</a></li>
 <li><a class="reference internal" href="#rowzero-row-wise-distribution-of-zero-counts"><code class="docutils literal"><span class="pre">rowzero</span></code> - Row-wise distribution of zero counts</a></li>
 <li><a class="reference internal" href="#entropy-row-wise-sample-entropy-calculation"><code class="docutils literal"><span class="pre">entropy</span></code> - Row-wise sample entropy calculation</a></li>
+<li><a class="reference internal" href="#pca-principal-component-analysis"><code class="docutils literal"><span class="pre">pca</span></code> - Principal Component Analysis</a></li>
 </ul>
 </li>
 </ul>
@@ -384,7 +448,7 @@ following keys:</p>
       &copy;2017, Adam Labadorf.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |

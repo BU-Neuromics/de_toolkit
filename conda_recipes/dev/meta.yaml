@@ -45,4 +45,4 @@ about:
   license_file: LICENSE
 
 build:
-  script: "git lfs install && python setup.py install"
+  script: "python setup.py install"

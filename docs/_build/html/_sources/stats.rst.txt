@@ -327,6 +327,11 @@ entropy
 ``pca`` - Principal Component Analysis
 --------------------------------------
 
+Usage::
+
+  detk-stats [options] pca [-m <column data fn> -f <column_variable> [-f <column_variable>]] <counts fn>
+
+
 This module performs Principal Component Analysis (PCA) on a :math:`n \times m`
 counts matrix, where :math:`n` is the number of rows (genes) and :math:`m` is
 the number of columns (samples).  Briefly, PCA identifies the directions (e.g.

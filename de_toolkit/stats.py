@@ -7,7 +7,7 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import pandas
 from docopt import docopt
-from common import * 
+from .common import * 
 import os.path
 from string import Template
 

@@ -373,14 +373,12 @@ Example JSON output::
       'components': [
         {
           'name': 'PC1',
-          'weights': [1.013,0.352,...], # length m
           'scores': [0.126,0.975,...], # length n
           'projections': [-8.01,5.93,...], # length m, ordered by 'column_names'
           'perc_variance': 0.75
         },
         {
           'name': 'PC2',
-          'weights': [1.013,0.352,...], # length m
           'scores' : [0.126,0.975,...], # length n
           'projections': [5.93,-5.11,...], # length m
           'perc_variance': 0.22

@@ -10,6 +10,8 @@ from docopt import docopt
 from .common import * 
 import os.path
 from string import Template
+from sklearn.decomposition import PCA
+from sklearn import preprocessing
 
 '''
 Usage:
@@ -397,14 +399,15 @@ def count_PCA(count_mat):
     cols = list(X)
     cols = cols[1:]
     X = X[cols]
-
+    
     # Calculate row mean and std to scale PCA to origin at 0
     X_row_mean = X.mean(axis=1)
     X_row_std = X.std(axis=1)
     X_scaled = (X.sub(X_row_mean,axis=0)).div(X_row_std,axis=0)
     assert np.allclose(X_scaled.mean(axis=1),0)
     assert np.allclose(X_scaled.std(axis=1),1)
-
+#    print('X scaled shape: %s' % str(X_scaled.shape))
+    
     # Perform PCA
     n_samples = len(X.index)
     n_features = len(X.columns)
@@ -418,7 +421,7 @@ def count_PCA(count_mat):
     output['stats']['column_names'] = cols
 #    output['stats']['column_variables'] = {}
 #    output['stats']['column_variables']['sample_type'] = []
-#    output['stats']['column_variables']['sample_batch'] = [] 
+#    output['stats']['column_variables']['sample_batch'] = []
     output['components'] = []
     for i in range(len(cols)):
         comp = {}
@@ -428,6 +431,12 @@ def count_PCA(count_mat):
 #        comp['perc_variance'] =  "variance"
         output['components'].append(comp)
     return output
+
+    # The amount of variance explained by each of the selected components
+#    print('Variance: %s' % str(pca.explained_variance_))
+    
+    # Percentage of variance explained by each of the selected components
+#    print('Variance ratio: %s' % str(pca.explained_variance_ratio_))
 
 def format_json(filename, method, output, funcs, counts_obj, funcs_present, log, density):
 	final_output = []

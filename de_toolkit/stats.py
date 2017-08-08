@@ -162,7 +162,7 @@ def coldist(count_mat, b, log, density) :
 		if density == 1:
 			(n, bins, patches) = plt.hist(data, bins=b, label='hst', weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size)
 		else:
-			(n, bins, patches) = plt.hist(data.dropna(), bins=b, label='hst')
+			(n, bins, patches) = plt.hist(data, bins=b, label='hst')
 
         #make the dict for each sample
 		output['stats']['dists'].append({'name':s, 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
@@ -205,7 +205,7 @@ def rowdist(count_mat, b, log, density) :
 		if density == 1:
 			(n, bins, patches) = plt.hist(data, bins=b, label='hist',  weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size)
 		else:
-			(n, bins, patches) = plt.hist(data.dropna(), bins=b, label='hst')
+			(n, bins, patches) = plt.hist(data, bins=b, label='hst')
 
         #make the dict for each row
 		output['stats']['dists'].append({'name':count_mat.count_names[i], 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})

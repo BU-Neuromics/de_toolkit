@@ -7,7 +7,7 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import pandas
 from docopt import docopt
-from common import * 
+from .common import * 
 import os.path
 from string import Template
 
@@ -387,6 +387,47 @@ def entropy(count_mat) :
 
 	#Return output
 	return output
+
+def count_PCA(count_mat):
+    '''
+    Principal common analysis of the counts matrix. 
+    Usage: detk-stats [options] PCA <counts fn>
+    '''
+    # To drop gene id which is usually in column[0]
+    cols = list(X)
+    cols = cols[1:]
+    X = X[cols]
+
+    # Calculate row mean and std to scale PCA to origin at 0
+    X_row_mean = X.mean(axis=1)
+    X_row_std = X.std(axis=1)
+    X_scaled = (X.sub(X_row_mean,axis=0)).div(X_row_std,axis=0)
+    assert np.allclose(X_scaled.mean(axis=1),0)
+    assert np.allclose(X_scaled.std(axis=1),1)
+
+    # Perform PCA
+    n_samples = len(X.index)
+    n_features = len(X.columns)
+    n_components = min(n_samples, n_features)
+    pca = PCA(n_components)
+    transformed = pca.fit_transform(X_scaled.T)
+    
+    output = {}
+    output['name'] = 'pca'
+    output['stats'] = {}
+    output['stats']['column_names'] = cols
+#    output['stats']['column_variables'] = {}
+#    output['stats']['column_variables']['sample_type'] = []
+#    output['stats']['column_variables']['sample_batch'] = [] 
+    output['components'] = []
+    for i in range(len(cols)):
+        comp = {}
+        comp['name'] = 'PC' + str(i+1)
+#        comp['scores'] = transformed (per gene)
+#        comp['projections'] = transformed[:,i+1]
+#        comp['perc_variance'] =  "variance"
+        output['components'].append(comp)
+    return output
 
 def format_json(filename, method, output, funcs, counts_obj, funcs_present, log, density):
 	final_output = []

@@ -2,6 +2,10 @@
 
 ## unreleased
 
+## [ 0.2.5 ]
+### Changed
+- fixed import bug in stats.py
+
 ## [ 0.2.4 ]
 ### Added
 - stats module implementation and docs

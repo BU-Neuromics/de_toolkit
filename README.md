@@ -31,6 +31,12 @@ are:
     - dist
     - PCA
 
+# Documentation
+
+There is work-in-progress documentation at (readthedocs.org):
+
+- [de_toolkit](http://de-toolkit.readthedocs.io/en/latest/)
+
 # Installing
 
 ## conda package

@@ -701,10 +701,18 @@ def test_stats_summary_JSON():
 
 	assert true_funcs==names
 
-def test_stats_countPCA(fake_counts_obj):
+def test_stats_PCA_name(fake_counts_obj):
     output = count_PCA(fake_counts_obj)
     name = output.get('name')
-    components = len(output.get('components'))
-    col_names = output.get('stats', {}).get('column_names')
-    assert name == 'pca' and components == 3 and col_names == ['a','b','c']
+    assert name == 'pca'
 
+def test_stats_PCA_col_names(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    col_names = output.get('stats', {}).get('column_names')
+    true_col_names = ['a', 'b', 'c']
+    assert col_names == true_col_names
+
+def test_stats_PCA_num_components(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    num_components = len(output.get('components'))
+    assert num_components == 3

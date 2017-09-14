@@ -7,9 +7,10 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import pandas
 from docopt import docopt
-from .common import * 
+from .common import *
 import os.path
 from string import Template
+from sklearn.decomposition import PCA
 
 '''
 Usage:
@@ -23,7 +24,7 @@ Usage:
 
 Options:
 	-o FILE --output=FILE    Destination of primary output [default: stdout]
- 	--json=<json_fn>	 Name of JSON output file 
+ 	--json=<json_fn>	 Name of JSON output file
 	--html=<html_fn> 	 Name of HTML output file
 
 Description:
@@ -32,12 +33,12 @@ Description:
 		a json formatted file containing relevant statistics in a machine-parsable format
 		a human-friendly HTML page displaying the results
 	
-	All of the commands accept a single counts file as input with optional arguments as indicated in the 
-	documentation. By default, the JSON and HTML output files have the same basename without extension as 
-	the counts file but including .json or .html as appropriate. E.g., counts.csv will produce counts.json 
+	All of the commands accept a single counts file as input with optional arguments as indicated in the
+	documentation. By default, the JSON and HTML output files have the same basename without extension as
+	the counts file but including .json or .html as appropriate. E.g., counts.csv will produce counts.json
 	and counts.html in the current directory. These default filenames can be changed using optional command
-	line arguments --json=<json fn> and --html=<html fn> as appropriate for all commands. If <json fn>, 
-	either default or specified, already exists, it is read in, parsed, and added to. The HTML report is 
+	line arguments --json=<json fn> and --html=<html fn> as appropriate for all commands. If <json fn>,
+	either default or specified, already exists, it is read in, parsed, and added to. The HTML report is
 	overwritten on every invocation using the contents of the JSON file.
 
 '''
@@ -110,13 +111,13 @@ def coldist(count_mat, b, log, density) :
                    			the sum of values in *dist* for each column approximately
                    			sum to 1.
 		
-		Compute the distribution of counts column-wise. Each column is subject to binning by percentile, 
+		Compute the distribution of counts column-wise. Each column is subject to binning by percentile,
 		with output identical to that produced by numpy.histogram.
 
 		In the stats object, the fields are defined as follows:
 			pct
-				The percentiles of the distributions in the range 0 < pct < 100, by default in 
-				increments of 5. This defines the length of the dist and bins arrays in each of 
+				The percentiles of the distributions in the range 0 < pct < 100, by default in
+				increments of 5. This defines the length of the dist and bins arrays in each of
 				the objects for each sample.
 			dists
 				Array of objects containing one object for each column, described below.
@@ -124,16 +125,16 @@ def coldist(count_mat, b, log, density) :
 				name
 					Column name from original file
 				dist
-					Array of raw or normalized counts in each bin according to the 
+					Array of raw or normalized counts in each bin according to the
 					percentiles from pct
 				bins
-					Array of the bin boundary values for the distribution. Should 
-					be of length len(counts)+1. These are what would be the x-axis 
+					Array of the bin boundary values for the distribution. Should
+					be of length len(counts)+1. These are what would be the x-axis
 					labels if this was plotted as a histogram.
 				extrema
-					Object with two keys, min and max, that contain the literal 
-					count values for counts that have a value larger or smaller than 
-					1.5*(inner quartile length) of the distribution. These could be 
+					Object with two keys, min and max, that contain the literal
+					count values for counts that have a value larger or smaller than
+					1.5*(inner quartile length) of the distribution. These could be
 					marked as outliers in a boxplot, for example.
 	'''
 	#Format output
@@ -152,7 +153,7 @@ def coldist(count_mat, b, log, density) :
 		if log == 1:
 			data=list(filter(lambda a: a != 0.0, data))
 			data=np.log10(data)
-		      
+		
 	 #for the upper and lower outliers
 		Q1 = np.percentile(data, 25)
 		Q3 = np.percentile(data, 75)
@@ -192,7 +193,7 @@ def rowdist(count_mat, b, log, density) :
 		data = count_mat.counts.iloc[i].tolist()
 
 		#Compute log10 of each count if log option is specified
-		if log==1: 
+		if log==1:
 			data=list(filter(lambda a: a != 0.0, data))
 			data=np.log10(data)
 		
@@ -327,18 +328,18 @@ def entropy(count_mat) :
 	
 		Usage: detk-stats [options] entropy <counts fn>
 
-		Sample entropy is a metric that can be used to identify outlier samples by locating 
-		rows which are overly influenced by a single count value. This metric can be 
+		Sample entropy is a metric that can be used to identify outlier samples by locating
+		rows which are overly influenced by a single count value. This metric can be
 		calculated for a single row as follows:
 			pi = ci/sumj(cj)
 			sum(pi) = 1
 			H = -sumi(pi*log2(pi))
-		Here, ci is the number of counts in sample i, pi is the fraction of reads contributed 
-		by sample i to the overall counts of the row, and H is the Shannon entropy of the row 
+		Here, ci is the number of counts in sample i, pi is the fraction of reads contributed
+		by sample i to the overall counts of the row, and H is the Shannon entropy of the row
 		when using log2. The maximum value possible for H is 2 when using Shannon entropy.
 
-		Rows with a very low H indicate a row has most of its count mass contained in a small 
-		number of columns. These are rows that are likely to drive outliers in downstream 
+		Rows with a very low H indicate a row has most of its count mass contained in a small
+		number of columns. These are rows that are likely to drive outliers in downstream
 		analysis, e.g. differential expression.
 
 		The key entropies is an array containing one object per row with the following keys:
@@ -390,10 +391,12 @@ def entropy(count_mat) :
 
 def count_PCA(count_mat):
     '''
-    Principal common analysis of the counts matrix. 
+    Principal common analysis of the counts matrix.
     Usage: detk-stats [options] PCA <counts fn>
     '''
     # To drop gene id which is usually in column[0]
+    cnts = count_mat.counts.as_matrix()
+    X = pandas.DataFrame(cnts)
     cols = list(X)
     cols = cols[1:]
     X = X[cols]
@@ -411,14 +414,14 @@ def count_PCA(count_mat):
     n_components = min(n_samples, n_features)
     pca = PCA(n_components)
     transformed = pca.fit_transform(X_scaled.T)
-    
+
     output = {}
     output['name'] = 'pca'
     output['stats'] = {}
-    output['stats']['column_names'] = cols
+    output['stats']['column_names'] = list(count_mat.sample_names)
 #    output['stats']['column_variables'] = {}
 #    output['stats']['column_variables']['sample_type'] = []
-#    output['stats']['column_variables']['sample_batch'] = [] 
+#    output['stats']['column_variables']['sample_batch'] = []
     output['components'] = []
     for i in range(len(cols)):
         comp = {}
@@ -606,11 +609,11 @@ def main():
 	
 	#Create commandline arguments to pass in data files and selected method
 	parser = argparse.ArgumentParser()
-	parser.add_argument("method", 
+	parser.add_argument("method",
 		choices=['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy', 'summary'],
 		help="Choose one of the specified functions to be run")
 	parser.add_argument("file", help="Name of input data file")
-	parser.add_argument("--bins", help="The number of bins to use when computing the counts distribution for coldist or rowdist") 
+	parser.add_argument("--bins", help="The number of bins to use when computing the counts distribution for coldist or rowdist")
 	parser.add_argument("--log", help="Perform a log10 transform on the counts before calculating the distribution for colzero or rowzero. Zeros are omitted prior to histogram calculation", action='store_const', const=1)
 	parser.add_argument("--density", help="Return a density distribution instead of counts for coldist or rowdist", action='store_const', const=1)
 	parser.add_argument("--json", help="Name of JSON output file")
@@ -620,7 +623,7 @@ def main():
 	#Create CountMatrix object from given data
 	counts_obj = CountMatrixFile(args.file)
 	
-	#Dictionary containing the methods that can be called 
+	#Dictionary containing the methods that can be called
 	funcs = {'base': base, 'coldist': coldist, 'rowdist': rowdist, 'colzero': colzero,
                 'rowzero': rowzero, 'entropy':entropy, 'summary': summary}
 

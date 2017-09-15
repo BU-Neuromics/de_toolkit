@@ -716,3 +716,12 @@ def test_stats_PCA_num_components(fake_counts_obj):
     output = count_PCA(fake_counts_obj)
     num_components = len(output.get('components'))
     assert num_components == 3
+
+def test_stats_PCA_component_names(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    true_comp_names = ['PC1', 'PC2', 'PC3']
+    comp_names = []
+    components = output.get('components')
+    for item in components:
+      comp_names.append(item.get('name'))
+    assert true_comp_names == comp_names

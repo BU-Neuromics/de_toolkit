@@ -424,16 +424,16 @@ def count_PCA(count_mat):
     output['name'] = 'pca'
     output['stats'] = {}
     output['stats']['column_names'] = list(count_mat.sample_names)
-#    output['stats']['column_variables'] = {}
-#    output['stats']['column_variables']['sample_type'] = []
-#    output['stats']['column_variables']['sample_batch'] = []
+    output['stats']['column_variables'] = {}
+    output['stats']['column_variables']['sample_type'] = []
+    output['stats']['column_variables']['sample_batch'] = []
     output['components'] = []
     for i in range(0, pca.n_components_):
         comp = {}
         comp['name'] = 'PC' + str(i+1)
-#        comp['scores'] = transformed (per gene)
+        comp['scores'] = [row[i] for row in X]
 #        comp['projections'] = transformed[:,i+1]
-#        comp['perc_variance'] =  "variance"
+        comp['perc_variance'] =  pca.explained_variance_ratio_[i]
         output['components'].append(comp)
     return output
 

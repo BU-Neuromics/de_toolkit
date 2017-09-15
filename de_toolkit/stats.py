@@ -396,6 +396,7 @@ def count_PCA(count_mat):
     '''
     # To drop gene id which is usually in column[0]
     cnts = count_mat.counts.as_matrix()
+    '''
     X = pandas.DataFrame(cnts)
     cols = list(X)
     cols = cols[1:]
@@ -414,6 +415,10 @@ def count_PCA(count_mat):
     n_components = min(n_samples, n_features)
     pca = PCA(n_components)
     transformed = pca.fit_transform(X_scaled.T)
+   '''
+    pca = PCA()
+    pca.fit(cnts)
+    X = pca.transform(cnts)
 
     output = {}
     output['name'] = 'pca'
@@ -423,7 +428,7 @@ def count_PCA(count_mat):
 #    output['stats']['column_variables']['sample_type'] = []
 #    output['stats']['column_variables']['sample_batch'] = []
     output['components'] = []
-    for i in range(len(cols)):
+    for i in range(0, pca.n_components_):
         comp = {}
         comp['name'] = 'PC' + str(i+1)
 #        comp['scores'] = transformed (per gene)

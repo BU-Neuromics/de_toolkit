@@ -725,3 +725,21 @@ def test_stats_PCA_component_names(fake_counts_obj):
     for item in components:
       comp_names.append(item.get('name'))
     assert true_comp_names == comp_names
+
+def test_stats_PCA_num_scores(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    true_num_scores = [5, 5, 5]
+    num_scores = []
+    components = output.get('components')
+    for item in components:
+      num_scores.append(len(item.get('scores')))
+    assert true_num_scores == num_scores
+
+def test_stats_PCA_num_projections(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    true_num_projections = [3, 3, 3]
+    num_projections = []
+    components = output.get('components')
+    for item in components:
+      num_projections.append(len(item.get('projections')))
+    assert true_num_projections == num_projections

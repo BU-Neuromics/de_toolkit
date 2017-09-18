@@ -11,6 +11,7 @@ from .common import *
 import os.path
 from string import Template
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import scale
 
 '''
 Usage:
@@ -416,6 +417,7 @@ def count_PCA(count_mat):
     pca = PCA(n_components)
     transformed = pca.fit_transform(X_scaled.T)
    '''
+    cnts = scale(cnts)
     pca = PCA()
     pca.fit(cnts)
     X = pca.transform(cnts)
@@ -432,7 +434,7 @@ def count_PCA(count_mat):
         comp = {}
         comp['name'] = 'PC' + str(i+1)
         comp['scores'] = [row[i] for row in X]
-#        comp['projections'] = transformed[:,i+1]
+        comp['projections'] = list(pca.components_[i])
         comp['perc_variance'] =  pca.explained_variance_ratio_[i]
         output['components'].append(comp)
     return output

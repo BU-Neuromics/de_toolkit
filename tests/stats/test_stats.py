@@ -743,3 +743,12 @@ def test_stats_PCA_num_projections(fake_counts_obj):
     for item in components:
       num_projections.append(len(item.get('projections')))
     assert true_num_projections == num_projections
+
+def test_stats_PCA_perc_variance(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    true_perc_variance = [0.9878246911444414, 0.01214185070132599, 3.34581542e-05]
+    perc_variance = []
+    components = output.get('components')
+    for item in components:
+      perc_variance.append(item.get('perc_variance'))
+    assert np.allclose(true_perc_variance, perc_variance)

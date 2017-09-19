@@ -1,0 +1,1 @@
+{"name": "entropy", "stats": {"entropies": [{"name": "gene1", "entropy": 1.3787834934861756}, {"name": "gene2", "entropy": 1.1401156785146092}, {"name": "gene3", "entropy": 0.9637459942073316}, {"name": "gene4", "entropy": 0.8346464646189744}, {"name": "gene5", "entropy": 0.7372630092079077}]}}

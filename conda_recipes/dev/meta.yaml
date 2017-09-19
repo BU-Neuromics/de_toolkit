@@ -1,13 +1,17 @@
 package:
   name: de_toolkit
   version: "dev"
+  #version: "0.2.3"
 
 source:
   path: ../../
+  #git_url: https://bitbucket.org/bubioinformaticshub/de_toolkit
+  #git_rev: "0.2.3"
 
 requirements:
   build:
     - python
+    - biopython
     - docopt
     - pandas
     - numpy
@@ -21,6 +25,7 @@ requirements:
     - git-lfs
   run:
     - python
+    - biopython
     - docopt
     - pandas
     - numpy
@@ -40,4 +45,4 @@ about:
   license_file: LICENSE
 
 build:
-  script: "git lfs install && python setup.py install"
+  script: "python setup.py install"

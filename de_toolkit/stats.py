@@ -598,7 +598,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 		plt.ylabel('Count')
 		plt.xlabel('Sample Name')
 		coldist_boxplot = mpld3.fig_to_html(fig)
-
+		plt.clf()
 	else:
 		coldist_hide = 'hidden'
 		coldist_boxplot = ''
@@ -637,16 +637,16 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 		fig2 = plt.figure(2)	
 		d = []
 		for name, projection, variance in zip(names, projections, perc_variance):
-			#if variance >= 0.05:
-			for item in projection:
-				xlabel = name + ': ' + '{0:.3f}'.format(variance*100.0) + '%'
-				d.append([xlabel, item])
+			if variance >= 0.05:
+				for item in projection:
+					xlabel = name + ': ' + '{0:.3f}'.format(variance*100.0) + '%'
+					d.append([xlabel, item])
 		df = pandas.DataFrame(d, columns=['Principle Components', 'Projection'])
 		sns.set_style('whitegrid')
 		ax = sns.swarmplot(x='Principle Components', y='Projection', data=df)
 		plt.title('PCA Swarmplot')
 		pca_swarm=mpld3.fig_to_html(fig2)
-
+		plt.clf()
 	else:
 		pca_hide = 'hidden'
 		pca_scree = ''

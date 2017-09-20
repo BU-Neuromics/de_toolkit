@@ -591,35 +591,17 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 	if 'coldist' in funcs_present:
 		coldist_hide=''
 		cnts = counts_obj.counts.as_matrix()
-		with open(json_fn) as file:
-			for line in file:
-				if 'coldist' in line:
-					coldist_output = json.loads(line)
-		coldist_data=''
-		dists = coldist_output['stats']['dists']
-		col_sums = []
-		for x in counts_obj.sample_names:
-			data = getattr(counts_obj.counts,x).tolist()
-			col_sums.append(sum(data))
-		for i in range(0, len(dists)):
-			coldist_data+="['" + dists[i]['name'] + "', "
-			for j in range(0, len(cnts)):
-				if density==1:
-					coldist_data+= str(cnts[j][i]/col_sums[i]) + ","
-				elif log==1:
-					if cnts[j][i]!=0.0:
-						coldist_data+= str(math.log10(cnts[j][i])) + ","
-				else:
-					coldist_data+= str(cnts[j][i]) + ","
-			coldist_data+="],"
-		coldist_cols=''
-		for i in range(0, len(cnts)):
-			coldist_cols+= "data.addColumn('number', 'series" + str(i) + "');" + "\n"
+		names = counts_obj.sample_names
+		fig = plt.figure()
+		plt.boxplot(cnts, labels=names)
+		plt.title('Coldist Boxplot')
+		plt.ylabel('Count')
+		plt.xlabel('Sample Name')
+		coldist_boxplot = mpld3.fig_to_html(fig)
 
 	else:
 		coldist_hide = 'hidden'
-		coldist_data = ''
-		coldist_cols = ''
+		coldist_boxplot = ''
 
 	if 'pca' in funcs_present:
 		pca_hide = ''
@@ -675,7 +657,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
                                         colzero_hide=colzero_hide, colzero=colzero,
                                         rowzero_hide=rowzero_hide, rowzero_scatter=rowzero_scatter, rowzero_hist=rowzero_hist,
                                         entropy_hide=entropy_hide, entropy=entropy,
-					coldist_hide=coldist_hide, coldist_data=coldist_data, coldist_cols=coldist_cols,
+					coldist_hide=coldist_hide, coldist_boxplot=coldist_boxplot,
 					pca_hide=pca_hide, pca_scree=pca_scree, pca_swarm=pca_swarm)
 	html_fn = open(filename, 'w')
 	html_fn.write(html_output)

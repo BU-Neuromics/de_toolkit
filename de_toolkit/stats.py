@@ -14,6 +14,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 import mpld3
 import seaborn as sns
+import csv
 
 '''
 Usage:
@@ -46,7 +47,7 @@ Description:
 
 '''
 
-def summary(count_mat, bins, log, density) :
+def summary(count_mat, bins, log, density, metadata) :
 	'''
 		Compute summary statistics on a counts matrix file
 			detk-stats [--json=<json_fn>] [--html=<html_fn>] summary <counts file>
@@ -68,6 +69,7 @@ def summary(count_mat, bins, log, density) :
 	total_output.append(colzero(count_mat))
 	total_output.append(rowzero(count_mat))
 	total_output.append(entropy(count_mat))
+	total_output.append(count_PCA(count_mat, metadata))
 
 	return total_output
 
@@ -392,7 +394,7 @@ def entropy(count_mat) :
 	#Return output
 	return output
 
-def count_PCA(count_mat):
+def count_PCA(count_mat, metadata=''):
     '''
     Principal common analysis of the counts matrix.
     Usage: detk-stats [options] PCA <counts fn>
@@ -424,13 +426,28 @@ def count_PCA(count_mat):
     pca.fit(cnts)
     X = pca.transform(cnts)
 
+    sample_names = list(count_mat.sample_names)
+    sample_type = []
+    sample_batch = []
+
+    if metadata != '':
+      m = open(metadata, 'r')
+      s = csv.Sniffer()
+      delim = s.sniff(m.read()).delimiter
+      m.seek(0)
+      df = pandas.read_csv(m, sep=delim)
+      for name in sample_names:
+        row = df[df['sample'] == name]
+        sample_type.append(row.iloc[0]['sample_type'])
+        sample_batch.append(row.iloc[0]['sample_batch'])
+
     output = {}
     output['name'] = 'pca'
     output['stats'] = {}
-    output['stats']['column_names'] = list(count_mat.sample_names)
+    output['stats']['column_names'] = sample_names
     output['stats']['column_variables'] = {}
-    output['stats']['column_variables']['sample_type'] = []
-    output['stats']['column_variables']['sample_batch'] = []
+    output['stats']['column_variables']['sample_type'] = sample_type
+    output['stats']['column_variables']['sample_batch'] = sample_batch
     output['components'] = []
     for i in range(0, pca.n_components_):
         comp = {}
@@ -640,7 +657,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 		for name, projection, variance in zip(names, projections, perc_variance):
 			#if variance >= 0.05:
 			for item in projection:
-				xlabel = name + ': ' + '{0:.3f}'.format(variance) + '%'
+				xlabel = name + ': ' + '{0:.3f}'.format(variance*100.0) + '%'
 				d.append([xlabel, item])
 		df = pandas.DataFrame(d, columns=['Principle Components', 'Projection'])
 		sns.set_style('whitegrid')
@@ -675,6 +692,7 @@ def main():
 	parser.add_argument("--bins", help="The number of bins to use when computing the counts distribution for coldist or rowdist")
 	parser.add_argument("--log", help="Perform a log10 transform on the counts before calculating the distribution for colzero or rowzero. Zeros are omitted prior to histogram calculation", action='store_const', const=1)
 	parser.add_argument("--density", help="Return a density distribution instead of counts for coldist or rowdist", action='store_const', const=1)
+	parser.add_argument("--m", help="Metadata file for PCA column data")
 	parser.add_argument("--json", help="Name of JSON output file")
 	parser.add_argument("--html", help="Name of HTML output file")
 	args = parser.parse_args()
@@ -708,10 +726,21 @@ def main():
 	else:
 		density=-1
 
+	if args.m:
+		m = args.m
+	else:
+		m = ''
+
+	if args.method == 'pca':
+		output = chosen_func(counts_obj, metadata=m)
+
 	#If method is coldist, rowdist, or summary, run with base, log and density settings
-	if args.method == 'coldist' or args.method=='rowdist' or args.method=='summary':
+	elif args.method == 'coldist' or args.method=='rowdist':
 		output = chosen_func(counts_obj, b, log, density)
-	
+
+	elif args.method == 'summary':
+		output = chosen_func(counts_obj, b, log, density, metadata=m)
+
 	#Otherwise, run method with just the counts object
 	else:
 		output = chosen_func(counts_obj)

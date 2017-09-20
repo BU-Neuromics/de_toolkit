@@ -13,6 +13,7 @@ from string import Template
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 import mpld3
+import seaborn as sns
 
 '''
 Usage:
@@ -435,7 +436,7 @@ def count_PCA(count_mat):
         comp = {}
         comp['name'] = 'PC' + str(i+1)
         comp['scores'] = [row[i] for row in X]
-        comp['projections'] = list(pca.components_[i])
+        comp['projections'] = [row[i] for row in pca.components_]
         comp['perc_variance'] =  pca.explained_variance_ratio_[i]
         output['components'].append(comp)
     return output
@@ -611,10 +612,12 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 					pca_output = json.loads(line.strip('\n'))
 		perc_variance = []
 		names = []
+		projections = []
 		components = pca_output.get('components')
 		for item in components:
 			perc_variance.append(item.get('perc_variance'))
 			names.append(item.get('name'))		
+			projections.append(item.get('projections'))
 
 		cumulative_variance = []
 		cumulative_variance.append(perc_variance[0])
@@ -622,7 +625,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 			cumulative_variance.append(cumulative_variance[i-1]+perc_variance[i])
 
 		x = [i for i in range(0, len(perc_variance))]
-		fig = plt.figure()
+		fig = plt.figure(1)
 		var, = plt.plot(x, perc_variance, label='Variance')
 		cumulative, = plt.plot(x, cumulative_variance, label='Cumulative Variance')
 		plt.xticks(x, names, rotation='vertical')
@@ -630,11 +633,25 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 		plt.ylabel('Proportion of Variance')
 		plt.xlabel('Principle Components')
 		plt.legend(handles=[var,cumulative])
-		pca=mpld3.fig_to_html(fig)		
+		pca_scree=mpld3.fig_to_html(fig)	
+
+		fig2 = plt.figure(2)	
+		d = []
+		for name, projection, variance in zip(names, projections, perc_variance):
+			#if variance >= 0.05:
+			for item in projection:
+				xlabel = name + ': ' + '{0:.3f}'.format(variance) + '%'
+				d.append([xlabel, item])
+		df = pandas.DataFrame(d, columns=['Principle Components', 'Projection'])
+		sns.set_style('whitegrid')
+		ax = sns.swarmplot(x='Principle Components', y='Projection', data=df)
+		plt.title('PCA Swarmplot')
+		pca_swarm=mpld3.fig_to_html(fig2)
 
 	else:
 		pca_hide = 'hidden'
-		pca = ''
+		pca_scree = ''
+		pca_swarm = ''
 
 	#Write all outputs to HTML file
 	html_output = s.substitute(base_hide=base_hide, num_cols=num_cols, num_rows=num_rows,
@@ -642,7 +659,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
                                         rowzero_hide=rowzero_hide, rowzero_scatter=rowzero_scatter, rowzero_hist=rowzero_hist,
                                         entropy_hide=entropy_hide, entropy=entropy,
 					coldist_hide=coldist_hide, coldist_data=coldist_data, coldist_cols=coldist_cols,
-					pca_hide=pca_hide, pca=pca)
+					pca_hide=pca_hide, pca_scree=pca_scree, pca_swarm=pca_swarm)
 	html_fn = open(filename, 'w')
 	html_fn.write(html_output)
 	html_fn.close()

@@ -766,9 +766,9 @@ def test_stats_PCA_scores(fake_counts_obj):
 
 def test_stats_PCA_projections(fake_counts_obj):
     output = count_PCA(fake_counts_obj)
-    true_projections = [[0.57528892, 0.58086251, 0.57588315],
-                        [-0.72606076, 0.03842312, 0.68655622],
-                        [0.37666754, -0.81309434, 0.44384587]]
+    true_projections = [[0.57528892, -0.72606076, 0.37666754],
+		        [0.58086251, 0.03842312, -0.81309434],
+			[0.57588315, 0.68655622, 0.44384587]]
     projections = []
     components = output.get('components')
     for item in components:

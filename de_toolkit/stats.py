@@ -183,7 +183,7 @@ def rowdist(count_mat, b, log, density) :
 		
 		Usage: detk-stats [options] rowdist [--bins=<bins>] [--log] [--density] <counts file>
 
-		Identical to coldist except calculated across rows. The name key is rowdist, and the 
+		Identical to coldist except calculated across rows. The name key is rowdist, and the
 		name key of the items in dists is the row name from the counts file.
 	'''
 	#Format output
@@ -437,19 +437,26 @@ def count_PCA(count_mat, metadata=''):
       delim = s.sniff(m.read()).delimiter
       m.seek(0)
       df = pandas.read_csv(m, sep=delim)
+
+      column_names = list(df)
+      column_variables = [[] for i in range(0, len(column_names)-1)]
+
       for name in sample_names:
-        row = df[df['sample'] == name]
-        sample_type.append(row.iloc[0]['sample_type'])
-        sample_batch.append(row.iloc[0]['sample_batch'])
+        row = df[df[column_names[0]] == name]
+        for i in range(1, len(column_names)):
+          column_variables[i-1].append(row.iloc[0][column_names[i]])
+    else:
+      column_names = []
+      column_variables = []
 
     output = {}
     output['name'] = 'pca'
     output['stats'] = {}
     output['stats']['column_names'] = sample_names
     output['stats']['column_variables'] = {}
-    output['stats']['column_variables']['sample_type'] = sample_type
-    output['stats']['column_variables']['sample_batch'] = sample_batch
     output['components'] = []
+    for i in range(1, len(column_names)):
+      output['stats']['column_variables'][column_names[i]] = column_variables[i-1]
     for i in range(0, pca.n_components_):
         comp = {}
         comp['name'] = 'PC' + str(i+1)
@@ -520,7 +527,7 @@ def format_json(filename, method, output, funcs, counts_obj, funcs_present, log,
 		json_fn.write(json.dumps(item) + '\n')
 	json_fn.close()
 
-def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
+def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag):
 	#HTML template that will be filled in using the available JSON data
 	html_temp = open('de_toolkit/html_template.html')
 	s = Template(html_temp.read())
@@ -608,8 +615,9 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 		pca_hide = ''
 		with open(json_fn) as file:
 			for line in file:
-				if 'pca' in line:
-					pca_output = json.loads(line.strip('\n'))
+				output = json.loads(line.strip('\n'))
+				if output['name'] == 'pca':
+					pca_output = output
 		perc_variance = []
 		names = []
 		projections = []
@@ -637,7 +645,10 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 
 		stats = pca_output.get('stats')
 		column_variables = stats.get('column_variables')
-		sample_type = column_variables.get('sample_type')
+		if flag != '':
+			sample_type = column_variables.get(flag)
+		else:
+			sample_type = list(column_variables)[0]
 
 		fig2 = plt.figure(2)	
 		d = []
@@ -646,17 +657,17 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 				for i in range(0, len(projection)):
 					xlabel = name + ': ' + '{0:.3f}'.format(variance*100.0) + '%'
 					d.append([xlabel, projection[i], sample_type[i]])
-		df = pandas.DataFrame(d, columns=['Principle Components', 'Projection', 'Sample Type'])
+		df = pandas.DataFrame(d, columns=['Principle Components', 'Projection', flag])
 		sns.set_style('whitegrid')
 		palette_colors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'black']
-		ax = sns.swarmplot(x='Principle Components', y='Projection', data=df, hue='Sample Type', palette=sns.color_palette(palette_colors))
+		ax = sns.swarmplot(x='Principle Components', y='Projection', data=df, hue=flag, palette=sns.color_palette(palette_colors))
 		labels = []
 		for item in sample_type:
 			if item not in labels:
 				labels.append(item)
 		colors = sns.color_palette(palette_colors).as_hex()[:len(labels)]
 		handles = [patches.Patch(color=col, label=lab) for col, lab in zip(colors, labels)]
-		plt.legend(handles=handles, title='Sample Type')
+		plt.legend(handles=handles, title=flag)
 		plt.title('PCA Swarmplot')
 		pca_swarm=mpld3.fig_to_html(fig2)
 		plt.clf()
@@ -688,6 +699,7 @@ def main():
 	parser.add_argument("--log", help="Perform a log10 transform on the counts before calculating the distribution for colzero or rowzero. Zeros are omitted prior to histogram calculation", action='store_const', const=1)
 	parser.add_argument("--density", help="Return a density distribution instead of counts for coldist or rowdist", action='store_const', const=1)
 	parser.add_argument("--m", help="Metadata file for PCA column data")
+	parser.add_argument("--f", help="Column variable to color PCA projection plots by")
 	parser.add_argument("--json", help="Name of JSON output file")
 	parser.add_argument("--html", help="Name of HTML output file")
 	args = parser.parse_args()
@@ -722,23 +734,19 @@ def main():
 		density=-1
 
 	if args.m:
-		m = args.m
+		if args.method == 'pca':
+			output = chosen_func(counts_obj, metadata=args.m)
+		elif args.method == 'summary':
+			output = chosen_func(counts_obj, b, log, density, metadata=args.m)
 	else:
-		m = ''
-
-	if args.method == 'pca':
-		output = chosen_func(counts_obj, metadata=m)
-
-	#If method is coldist, rowdist, or summary, run with base, log and density settings
-	elif args.method == 'coldist' or args.method=='rowdist':
-		output = chosen_func(counts_obj, b, log, density)
-
-	elif args.method == 'summary':
-		output = chosen_func(counts_obj, b, log, density, metadata=m)
-
-	#Otherwise, run method with just the counts object
-	else:
-		output = chosen_func(counts_obj)
+		#If method is coldist, rowdist, or summary, run with base, log and density settings
+		if args.method == 'coldist' or args.method=='rowdist':
+			output = chosen_func(counts_obj, b, log, density)
+		elif args.method == 'summary':
+			output = chosen_func(counts_obj, b, log, density)
+		#Otherwise, run method with just the counts object
+		else:
+			output = chosen_func(counts_obj)
 
 	#Obtain string used to name output files, unless filename is specified
 	index = args.file.rfind('.')
@@ -753,6 +761,11 @@ def main():
 	#Format JSON output file
 	format_json(filename, args.method, output, funcs, counts_obj, funcs_present, log, density)
 	
+	if args.f:
+		flag=args.f
+	else:
+		flag=''
+
 	#Check if HTML file option was specified
 	if args.html:
 		html_fn = args.html
@@ -760,7 +773,7 @@ def main():
 		html_fn = file_str + '.html'
 	
 	#Format HTML output file
-	format_html(html_fn, filename, funcs_present, counts_obj, log, density)
+	format_html(html_fn, filename, funcs_present, counts_obj, log, density, flag)
 
 if __name__ == '__main__':
 	main()

@@ -15,6 +15,7 @@ from sklearn.preprocessing import scale
 import mpld3
 import seaborn as sns
 import csv
+import matplotlib.patches as patches
 
 '''
 Usage:
@@ -634,16 +635,28 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density):
 		plt.legend(handles=[var,cumulative])
 		pca_scree=mpld3.fig_to_html(fig)	
 
+		stats = pca_output.get('stats')
+		column_variables = stats.get('column_variables')
+		sample_type = column_variables.get('sample_type')
+
 		fig2 = plt.figure(2)	
 		d = []
 		for name, projection, variance in zip(names, projections, perc_variance):
 			if variance >= 0.05:
-				for item in projection:
+				for i in range(0, len(projection)):
 					xlabel = name + ': ' + '{0:.3f}'.format(variance*100.0) + '%'
-					d.append([xlabel, item])
-		df = pandas.DataFrame(d, columns=['Principle Components', 'Projection'])
+					d.append([xlabel, projection[i], sample_type[i]])
+		df = pandas.DataFrame(d, columns=['Principle Components', 'Projection', 'Sample Type'])
 		sns.set_style('whitegrid')
-		ax = sns.swarmplot(x='Principle Components', y='Projection', data=df)
+		palette_colors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'black']
+		ax = sns.swarmplot(x='Principle Components', y='Projection', data=df, hue='Sample Type', palette=sns.color_palette(palette_colors))
+		labels = []
+		for item in sample_type:
+			if item not in labels:
+				labels.append(item)
+		colors = sns.color_palette(palette_colors).as_hex()[:len(labels)]
+		handles = [patches.Patch(color=col, label=lab) for col, lab in zip(colors, labels)]
+		plt.legend(handles=handles, title='Sample Type')
 		plt.title('PCA Swarmplot')
 		pca_swarm=mpld3.fig_to_html(fig2)
 		plt.clf()

@@ -645,10 +645,9 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 
 		stats = pca_output.get('stats')
 		column_variables = stats.get('column_variables')
-		if flag != '':
-			sample_type = column_variables.get(flag)
-		else:
-			sample_type = list(column_variables)[0]
+		if flag == '':
+			flag = list(column_variables)[0]
+		sample_type = column_variables.get(flag)
 
 		fig2 = plt.figure(2)	
 		d = []
@@ -737,7 +736,7 @@ def main():
 		if args.method == 'pca':
 			output = chosen_func(counts_obj, metadata=args.m)
 		elif args.method == 'summary':
-			output = chosen_func(counts_obj, b, log, density, metadata=args.m)
+			output = summary(counts_obj, b, log, density, metadata=args.m)
 	else:
 		#If method is coldist, rowdist, or summary, run with base, log and density settings
 		if args.method == 'coldist' or args.method=='rowdist':

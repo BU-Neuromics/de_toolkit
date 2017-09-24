@@ -25,13 +25,13 @@ RUN \
 
 # install R
 RUN \
-  apt-get update && \ 
-  apt-get install r-base r-base-dev
+  apt-get -y update && \ 
+  apt-get -y install r-base r-base-dev
 
 # Add files.
-ADD root/.bashrc /root/.bashrc
-ADD root/.gitconfig /root/.gitconfig
-ADD root/.scripts /root/.scripts
+#ADD root/.bashrc /root/.bashrc
+#ADD root/.gitconfig /root/.gitconfig
+#ADD root/.scripts /root/.scripts
 
 # Set environment variables.
 ENV HOME /root

@@ -1,0 +1,38 @@
+#
+# Ubuntu Dockerfile
+#
+# https://github.com/dockerfile/ubuntu
+#
+
+# Pull base image.
+FROM ubuntu:16.04
+
+# Install.
+RUN \
+  sed -i 's/# \(.*multiverse$\)/\1/g' /etc/apt/sources.list && \
+  apt-get update && \
+  apt-get -y upgrade && \
+  apt-get install -y build-essential && \
+  apt-get install -y software-properties-common && \
+  apt-get install -y byobu curl git htop man unzip vim wget && \
+  rm -rf /var/lib/apt/lists/* && \
+  echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | tee -a /etc/apt/sources.list && \
+  gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9 && \
+  gpg -a --export E084DAB9 | apt-key add - && \
+  apt-get update && \ 
+  apt-get install r-base r-base-dev
+
+
+# Add files.
+ADD root/.bashrc /root/.bashrc
+ADD root/.gitconfig /root/.gitconfig
+ADD root/.scripts /root/.scripts
+
+# Set environment variables.
+ENV HOME /root
+
+# Define working directory.
+WORKDIR /root
+
+# Define default command.
+CMD ["bash"]

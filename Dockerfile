@@ -28,8 +28,9 @@ RUN \
   apt-get -y update && \ 
   apt-get -y install r-base r-base-dev
 
+# install python 3 things
 RUN \
-  apt-get -y install python3 python-pip python-dev && \
+  apt-get -y install python3 python3-pip python3-dev && \
   pip install --upgrade pip
 
 # Add files.

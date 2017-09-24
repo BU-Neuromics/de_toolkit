@@ -31,7 +31,9 @@ RUN \
 # install python 3 things
 RUN \
   apt-get -y install python3 python3-pip python3-dev && \
-  pip install --upgrade pip
+  pip3 install --upgrade pip && \
+  rm $(which pip) && \
+  ln -s $(which pip3) /usr/bin/pip
 
 # Add files.
 #ADD root/.bashrc /root/.bashrc

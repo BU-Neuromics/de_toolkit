@@ -15,13 +15,18 @@ RUN \
   apt-get install -y build-essential && \
   apt-get install -y software-properties-common && \
   apt-get install -y byobu curl git htop man unzip vim wget && \
-  rm -rf /var/lib/apt/lists/* && \
+  rm -rf /var/lib/apt/lists/*
+
+# install R repo
+RUN \
   echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | tee -a /etc/apt/sources.list && \
   gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9 && \
-  gpg -a --export E084DAB9 | apt-key add - && \
+  gpg -a --export E084DAB9 | apt-key add -
+
+# install R
+RUN \
   apt-get update && \ 
   apt-get install r-base r-base-dev
-
 
 # Add files.
 ADD root/.bashrc /root/.bashrc

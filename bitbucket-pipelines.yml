@@ -11,11 +11,11 @@ pipelines:
         caches:
           - pip
         script: # Modify the commands below to build your repository.
-          - python3 -m pip install -r requirements.txt
+          - pip install -r requirements.txt
   branches:
     patsy:
       - step:
           script:
             - Rscript install_r_packages.R
-            - python3 -m pip install -r requirements.txt
+            - pip install -r requirements.txt
             - python3 setup.py test

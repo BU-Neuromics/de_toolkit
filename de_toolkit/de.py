@@ -21,7 +21,6 @@ from .util import (
   column_data_rtype_dict
   ,column_data_to_r_dataframe
   ,count_obj_to_r_matrix
-  ,load_count_mat_file
   ,require_rpy2
   ,require_deseq2
   ,stub
@@ -184,7 +183,6 @@ def main(argv=None) :
 
   args = docopt(__doc__,argv=argv)
 
-  #count_obj = load_count_mat_file(args['<count_fn>'])
   count_obj = CountMatrixFile(
     args['<count_fn>']
     ,args['<cov_fn>']

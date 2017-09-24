@@ -6,9 +6,9 @@ Usage:
   detk-transform shrink <counts_fn>
 '''
 from docopt import docopt
+from .common import CountMatrixFile
 from .util import (
   count_obj_to_DESeq2
-  ,load_count_mat_file
   ,require_rpy2
   ,require_deseq2
   ,rpy2_console_wrapper
@@ -86,7 +86,7 @@ def main(argv=None) :
 
   args = docopt(__doc__,argv=argv)
 
-  count_obj = load_count_mat_file(args['<counts_fn>'])
+  count_obj = CountMatrixFile(args['<counts_fn>'])
 
   if args['<cov_fn>'] is not None :
     count_obj.add_column_data(args['<cov_fn>'])

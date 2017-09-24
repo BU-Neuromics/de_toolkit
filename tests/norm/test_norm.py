@@ -113,7 +113,14 @@ def test_deseq2_py_vs_rpy(fake_counts_obj) :
   # ignore
   with warnings.catch_warnings():
     warnings.simplefilter("ignore")
+
+    # the design associated with fake_counts_obj is category ~ counts
+    # which is intended for testing Firth
+    # change it to something DESeq2 expects
+    fake_counts_obj.design = '~ cont_cov + category'
+
     rpy_norm_counts = deseq2_rpy(fake_counts_obj)
+
   py_norm_counts = deseq2(fake_counts_obj)
 
   assert np.allclose(rpy_norm_counts,py_norm_counts)
@@ -129,6 +136,12 @@ def test_deseq2_py_vs_rpy_somezero(fake_counts_obj) :
   # ignore
   with warnings.catch_warnings():
     warnings.simplefilter("ignore")
+
+    # the design associated with fake_counts_obj is category ~ counts
+    # which is intended for testing Firth
+    # change it to something DESeq2 expects
+    fake_counts_obj.design = '~ cont_cov + category'
+
     rpy_norm_counts = deseq2_rpy(fake_counts_obj)
 
     # suppress divide by zero warnings

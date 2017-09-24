@@ -28,6 +28,10 @@ RUN \
   apt-get -y update && \ 
   apt-get -y install r-base r-base-dev
 
+RUN \
+  apt-get -y install python3 python-pip python-dev && \
+  pip install --upgrade pip
+
 # Add files.
 #ADD root/.bashrc /root/.bashrc
 #ADD root/.gitconfig /root/.gitconfig

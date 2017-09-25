@@ -164,6 +164,9 @@ def firth_logistic_regression(count_obj,rda=None) :
   if rda is not None :
     robjects.r['saveRDS'](fits,rda)
 
+  # cast all columns to numeric if possible
+  firth_props = firth_props.apply(pandas.to_numeric,errors='ignore')
+
   return firth_props
 
 @stub

@@ -100,7 +100,8 @@ class DesignMatrix(object) :
     # when including, e.g. continuous variables
     # we remove the Intercept term from the lhs before returning
     # the design matrix
-    formula = '1 + {}'.format(formula)
+    if not formula.strip().startswith('~') :
+      formula = '1 + {}'.format(formula)
 
     model = patsy_lite_to_patsy(formula)
     try :

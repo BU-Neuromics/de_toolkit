@@ -1,4 +1,5 @@
 from .common import CountMatrixFile
+from .patsy_lite import ModelError
 from contextlib import contextmanager
 
 ################################################################################
@@ -135,23 +136,32 @@ def count_obj_to_DESeq2(count_obj) :
 
   countData = pandas_dataframe_to_r_matrix(count_obj.counts)
 
+  # if count_obj has no column data, make some up so DESeq2
+  # doesn't whine
   if count_obj.column_data is None :
-    raise Exception('DESeq2 requires colData, add column dataframe to count object')
+    colData = pandas.DataFrame([
+      pandas.Series([1]*count_obj.counts.shape[1]
+              ,name='dummy')]
+      ,index=count_obj.columns
+    )
+  else :
+    colData = count_obj.column_data
 
-  colData = pandas_dataframe_to_r_dataframe(count_obj.column_data)
-
-  # by default, the design is assumed the be in the first non-sample name column
-  # of column_data
-  design = '~ {}'.format(count_obj.column_data.columns[0])
-  if count_obj.design is not None :
+  # if the count_obj doesn't have a model, provide the trivial
+  # model
+  if count_obj.design is None :
+    design = '~ 1'
+  else :
+    # remove intercept
+    count_obj.design_matrix.drop_from_rhs('Intercept',quiet=True)
     design = count_obj.design
-  design = robjects.Formula(design)
+    colData = count_obj.design_matrix.full_matrix
 
   # create the dataset object
   dds = deseq.DESeqDataSetFromMatrix(
     countData=countData
-    ,colData=colData
-    ,design=design
+    ,colData=pandas_dataframe_to_r_dataframe(colData)
+    ,design=robjects.Formula(design)
   )
 
   return dds

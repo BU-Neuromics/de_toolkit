@@ -120,8 +120,8 @@ def firth_logistic_regression(count_obj,rda=None) :
 
   colnames = ['{}__{}'.format(_i,_j) for _i in var_names for _j in fields]
 
-  firth_props = pandas.DataFrame([]
-   ,index=count_obj.counts.index.tolist()
+  firth_props = pandas.DataFrame(
+   index=count_obj.counts.index.tolist()
    ,columns=colnames+['status']
   )
 

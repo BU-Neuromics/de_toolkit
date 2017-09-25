@@ -114,32 +114,19 @@ class DesignMatrix(object) :
       raise PatsyLiteParseError('Misspecified column in design, check term '
         'names. {}'.format(e.args))
 
-    #TODO remove log printing code when stable
-    def log(*args) :
-      if False :
-        pprint(args)
-
-    log(model.name_map)
-
     # the patsy formula names are ugly and not very machine (or human)
     # readable
     # replace the patsy names with the patsy lite names
     def rename_model_cols(c) :
-      log('considering',c)
-      log(model.name_map)
       for k,v in model.name_map.items() :
-        log('searching for',k,'in',c)
         if k in c :
-          log('before:',c)
           c = c.replace(k,v)
-          log('field replace:',c)
       # categorical variables sometimes look like
       # C(term, Treatment('cont'))[T.cont]
       # replace [T.cont] -> __cont
       cat_match = r'\[(?:T\.)?(\w*)\]'
       if re.search(cat_match,c) :
         c = re.sub(cat_match,r'__\1',c)
-        log('bracket replace:',c)
       return c
 
     self.lhs.rename(columns=rename_model_cols,inplace=True)

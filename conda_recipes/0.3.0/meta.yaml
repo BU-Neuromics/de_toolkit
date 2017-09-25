@@ -18,6 +18,7 @@ requirements:
     - scikit-learn
     - statsmodels
     - patsy
+    - ply
     - r-docopt
     - rpy2
     - pytest-runner
@@ -35,6 +36,7 @@ requirements:
     - scikit-learn
     - statsmodels
     - patsy
+    - ply
     - r-docopt
     - rpy2
     - pytest-runner
@@ -52,6 +54,7 @@ requirements:
     - scikit-learn
     - statsmodels
     - patsy
+    - ply
     - r-docopt
     - rpy2
     - pytest-runner
@@ -77,4 +80,4 @@ about:
 # for installing packages
 build:
   script: "CONDA_BUILD= && python setup.py install"
-  number: 3
+  number: 4

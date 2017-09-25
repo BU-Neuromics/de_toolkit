@@ -20,6 +20,7 @@ requirements:
     - scikit-learn
     - statsmodels
     - patsy
+    - ply
     - r-docopt
     - rpy2
     - pytest-runner
@@ -37,6 +38,7 @@ requirements:
     - scikit-learn
     - statsmodels
     - patsy
+    - ply
     - py
     - numpy
     - r-docopt
@@ -55,6 +57,7 @@ requirements:
     - scikit-learn
     - statsmodels
     - patsy
+    - ply
     - py
     - numpy
     - r-docopt

@@ -92,6 +92,10 @@ def test_CountMatrix(
   )
   assert sorted(mat.sample_names) == sorted(fake_column_data_pandas_dataframe.index)
 
+  # bad cov
+  with pytest.raises(InvalidDesignException) :
+    mat.design = 'category ~ cont_covx + counts'
+
 def test_CountMatrixFile(
   fake_counts_csv
   ,fake_column_data_csv

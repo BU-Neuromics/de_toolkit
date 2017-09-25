@@ -26,15 +26,11 @@ class CountMatrix(object) :
       ,strict=False
      ) :
 
-    # set the things
-    self.counts = counts
-    self.column_data = column_data
-
     if column_data is not None :
       # line up the sample names from the column_data and counts matrices
       if strict and (
         len(column_data.index) != len(counts.columns) or
-        not all(self.column_data.index == self.counts.columns)
+        not all(column_data.index == counts.columns)
       ) :
         raise SampleMismatchException('When *strict* is supplied, the columns '
           'of the counts file must correspond exactly to the row names in the '
@@ -51,15 +47,11 @@ class CountMatrix(object) :
             'and the first row of the counts matrix contain at least 2 values '
             'in common')
 
-        self.counts = self.counts[common_names]
-        self.column_data = self.column_data.loc[common_names]
-
-    # set the design no matta wat
-    self.design_matrix = None
-    self.design = design
+        counts = counts[common_names]
+        column_data = column_data.loc[common_names]
 
     # if the design is provided, it must have a 'counts' term somewhere
-    if self.design is not None and 'counts' not in self.design :
+    if design is not None and 'counts' not in design :
       raise InvalidDesignException('The term "counts" must exist on at least one '
         'side of the CountsMatrix design')
 
@@ -67,6 +59,14 @@ class CountMatrix(object) :
     # so things work
     if column_data is not None and 'counts' not in column_data :
       column_data['counts'] = 0
+
+    # set the things
+    self.counts = counts
+    self.column_data = column_data
+
+    # set the design no matta wat
+    self.design_matrix = None
+    self.design = design
 
     #TODO this is not yet implemented or thought out
     # members to keep track of count mutations

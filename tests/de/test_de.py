@@ -26,6 +26,7 @@ def test_firth_w_cov(fake_counts_obj) :
 
   firth_out = firth_logistic_regression(fake_counts_obj)
 
+@pytest.mark.skip(reason='test takes a long time, only turn on periodically')
 def test_firth_w_big_data_cov(fake_big_counts_obj) :
   from de_toolkit.de import firth_logistic_regression
 
@@ -33,10 +34,10 @@ def test_firth_w_big_data_cov(fake_big_counts_obj) :
 
   firth_out = firth_logistic_regression(fake_big_counts_obj)
 
-# this test takes a long time, only do it if necessary
-#def test_firth_w_huge_data_cov(fake_huge_counts_obj) :
-#  from de_toolkit.de import firth_logistic_regression
-#
-#  fake_huge_counts_obj.add_design('category ~ cont_cov')
-#
-#  firth_out = firth_logistic_regression(fake_huge_counts_obj)
+@pytest.mark.skip(reason='test takes a long time, only turn on periodically')
+def test_firth_w_huge_data_cov(fake_huge_counts_obj) :
+  from de_toolkit.de import firth_logistic_regression
+
+  fake_huge_counts_obj.add_design('category ~ cont_cov')
+
+  firth_out = firth_logistic_regression(fake_huge_counts_obj)

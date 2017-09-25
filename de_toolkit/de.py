@@ -45,6 +45,9 @@ def firth_logistic_regression(count_obj,rda=None) :
     raise InvalidDesignException('The term "counts" must exist on the right hand'
       'side of the model in Firth logistic regression')
 
+  # make sure the rhs of the design matrix doesn't have an intercept
+  count_obj.design_matrix.drop_from_rhs('Intercept',quiet=True)
+
   from rpy2 import robjects
   import rpy2.rlike.container as rlc
   from rpy2.robjects.packages import importr

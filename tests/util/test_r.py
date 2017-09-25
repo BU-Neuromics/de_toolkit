@@ -18,6 +18,8 @@ def test_require_deseq2(monkeypatch) :
     require_deseq2(lambda x: x)
 
 def check_pandas_robj_dimnames_equal(robj, df) :
+  print(robj.colnames)
+  print(df.columns)
   assert all([_[0]==_[1] for _ in zip(robj.colnames,df.columns)])
   assert all([_[0]==_[1] for _ in zip(robj.rownames,df.index)])
 
@@ -83,7 +85,7 @@ def test_count_obj_to_DESeq2(fake_counts_obj) :
   # which is intended for testing Firth
   # change it to something DESeq2 expects
 
-  fake_counts_obj.design = '~ cont_cov + category'
+  fake_counts_obj.design = 'counts ~ cont_cov + category'
 
   # this raises R warnings about converting floats to integers that we can
   # ignore
@@ -95,7 +97,7 @@ def test_count_obj_to_DESeq2(fake_counts_obj) :
   check_numpy_r_matrix_equal(r_counts,fake_counts_obj.counts.as_matrix())
 
   robj = r['as.data.frame'](dds.slots['colData'])
-  check_pandas_r_dataframes_equal(robj,fake_counts_obj.column_data)
+  check_pandas_r_dataframes_equal(robj,fake_counts_obj.design_matrix.full_matrix)
 
   # just make sure the normalization we get back is correct
   #from de_toolkit.norm import deseq2 as deseq2_norm

@@ -10,6 +10,7 @@ Usage:
 Options:
 
 '''
+from copy import deepcopy
 from docopt import docopt
 import pandas
 import re
@@ -55,18 +56,13 @@ class CountMatrix(object) :
       raise InvalidDesignException('The term "counts" must exist on at least one '
         'side of the CountsMatrix design')
 
-    # if column_data does not have a counts column, add one with trivial values
-    # so things work
-    if column_data is not None and 'counts' not in column_data :
-      column_data['counts'] = 0
-
     # set the things
     self.counts = counts
     self.column_data = column_data
 
     # set the design no matta wat
-    self.design_matrix = None
-    self.design = design
+    self._design_matrix = None
+    self.design = self._original_design = design
 
     #TODO this is not yet implemented or thought out
     # members to keep track of count mutations
@@ -74,20 +70,49 @@ class CountMatrix(object) :
     self.normalized = {}
 
   @property
+  def column_data(self) :
+    return self._column_data
+
+  @column_data.setter
+  def column_data(self,column_data) :
+    # if column_data does not have a counts column, add one with trivial values
+    # so things work
+    if column_data is not None and 'counts' not in column_data :
+      column_data['counts'] = 0
+
+    self._column_data = column_data
+
+    # update the design matrix by setting the design to itself
+    self.design = self.design
+
+  @property
   def design(self) :
-    if self.design_matrix is not None :
+    if hasattr(self,'design_matrix') and self.design_matrix is not None :
       return self.design_matrix.design
-    return self._design
+    if hasattr(self,'_design') :
+      return self._design
+    return None
 
   @design.setter
   def design(self,design) :
     self._design = design
     if design is not None and self.column_data is not None :
       try :
-        self.design_matrix = DesignMatrix(self._design,self.column_data)
+        self.design_matrix = DesignMatrix(design,self.column_data)
       except PatsyLiteParseError as e :
         raise InvalidDesignException('Invalid design, patsy lite could not parse '
           '{}'.format(e.args))
+    elif design is not None and self.column_data is None :
+      raise InvalidDesignException('There must be column data associated with a '
+      'CountMatrix object before specifying a design')
+
+  @property
+  def design_matrix(self) :
+    return self._design_matrix
+
+  @design_matrix.setter
+  def design_matrix(self,design_matrix) :
+    self._design_matrix = design_matrix
 
   @property
   def sample_names(self) :
@@ -112,6 +137,9 @@ class CountMatrix(object) :
     except Exception as e :
       raise Exception('Feaure names provided that are not contained in the '
         'counts matrix')
+
+  def copy(self) :
+    return deepcopy(self)
 
   def transform(self,transf) :
     self.transformed[transf.__name__] = transf(self)

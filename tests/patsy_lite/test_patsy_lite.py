@@ -1,7 +1,21 @@
+import numpy
+import pandas
 import pytest
-from de_toolkit.patsy_lite import patsy_lite_to_patsy, PatsyLiteParseError, build_design_matrix
 
-def test_patsy_lite_to_patsy() :
+@pytest.fixture
+def model_data() :
+  N = 100
+  df = pandas.DataFrame({
+    'cont': numpy.random.random(size=N),
+    'binary_str': numpy.random.choice(['A','B'],size=N),
+    'binary_int': numpy.random.choice([0,1],size=N),
+    'cat_str': numpy.random.choice(list('ABCD'),size=N),
+    'cat_int': numpy.random.choice([1,2,3,4],size=N)
+  })
+  return df
+
+def test_patsy_lite_to_patsy(model_data) :
+  from de_toolkit.patsy_lite import patsy_lite_to_patsy, PatsyLiteParseError
   pltp = patsy_lite_to_patsy
   assert pltp('A ~ B').describe() == 'A ~ B'
   assert pltp('A~B').describe() == 'A ~ B'
@@ -30,10 +44,62 @@ def test_patsy_lite_to_patsy() :
   assert (pltp('np.log(x) ~ -1 + category[cont]').describe() == 
     "np.log(x) ~ 0 + C(category, Treatment('cont'))")
 
-def test_build_design_matrix(fake_column_data_pandas_dataframe) :
-  dm = build_design_matrix('category[cont] ~ cont_cov',fake_column_data_pandas_dataframe)
-  print('\n\n\n----------------------------------------\n\n\n')
-  dm = build_design_matrix('cont_cov ~ category[cont] + category:cont_cov',fake_column_data_pandas_dataframe)
-  print('\n\n\n----------------------------------------\n\n\n')
-  dm = build_design_matrix('cont_cov ~ category[cont] + category:category',fake_column_data_pandas_dataframe)
-  assert False
+def test_DesignMatrix(model_data) :
+
+  from de_toolkit.patsy_lite import DesignMatrix, ModelError
+
+  dm = DesignMatrix('cont ~ binary_str[B] + binary_int + cat_int',model_data)
+  assert dm.design == 'cont ~ Intercept + binary_str__A + binary_int + cat_int'
+  assert dm.full_matrix.shape == (100,5)
+  assert (dm.full_matrix['cont'] == model_data['cont']).all()
+  assert (dm.full_matrix['binary_int'] == model_data['binary_int']).all()
+  assert (dm.full_matrix['cat_int'] == model_data['cat_int']).all()
+
+  with pytest.raises(ModelError) :
+    dm.drop_from_lhs('oogabooga')
+
+  with pytest.raises(ModelError) :
+    dm.drop_from_rhs('oogabooga')
+
+  # binary_str[A] is excluded on left
+  dm = DesignMatrix('binary_str[B] ~ cont',model_data)
+  assert dm.design == 'binary_str__A ~ Intercept + cont'
+
+  # binary_str[A] is excluded on left, binary_int stays as is (not categorical)
+  dm = DesignMatrix('binary_str[B] ~ cont + binary_int',model_data)
+  assert dm.design == 'binary_str__A ~ Intercept + cont + binary_int'
+  assert 'binary_int' in dm.rhs
+
+  # cat_str[A] is missing from right
+  dm = DesignMatrix('binary_str[B] ~ cont + cat_str[A]',model_data)
+  assert dm.design == 'binary_str__A ~ Intercept + cat_str__B + cat_str__C + cat_str__D + cont'
+  assert 'cat_str__A' not in dm.rhs
+
+  # cat_str[B] is missing from right
+  dm = DesignMatrix('binary_str[B] ~ cont + cat_str[B,C,D,A]',model_data)
+  assert dm.design == 'binary_str__A ~ Intercept + cat_str__C + cat_str__D + cat_str__A + cont'
+  assert 'cat_str__B' not in dm.rhs
+
+  # cat_str[A] is missing from right
+  dm = DesignMatrix('binary_str[A] ~ cont + cat_str[B,C,D,A]',model_data)
+  assert dm.design == 'binary_str__B ~ Intercept + cat_str__C + cat_str__D + cat_str__A + cont'
+  assert 'cat_str__A' not in dm.lhs
+
+  # cat_str[A] is missing from right implicitly (no ref group set)
+  dm = DesignMatrix('binary_str ~ cont + cat_str',model_data)
+  assert dm.design == 'binary_str__B ~ Intercept + cat_str__B + cat_str__C + cat_str__D + cont'
+  assert 'cat_str__A' not in dm.lhs
+
+  # binary_str[A] and cat_str[A] missing from right implicitly
+  dm = DesignMatrix('cont ~ binary_str + cat_str',model_data)
+  assert dm.design == 'cont ~ Intercept + binary_str__B + cat_str__B + cat_str__C + cat_str__D'
+  assert 'binary_str__A' not in dm.rhs
+  assert 'cat_str__A' not in dm.rhs
+
+  # whatever, people can do this at their own risk
+  dm = DesignMatrix('cont ~ binary_str:cat_str',model_data)
+  assert dm.design == ('cont ~ Intercept + cat_str__B + cat_str__C + cat_str__D + '
+                       'binary_str__B:cat_str__A + binary_str__B:cat_str__B + '
+                       'binary_str__B:cat_str__C + binary_str__B:cat_str__D')
+
+

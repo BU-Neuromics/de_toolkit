@@ -15,7 +15,7 @@ import sys
 import numpy as np
 import pandas
 from .common import CountMatrixFile
-from .util import stub, require_deseq2, pandas_to_rmatrix, pandas_to_rdataframe
+from .util import stub, require_deseq2, pandas_dataframe_to_r_matrix, pandas_dataframe_to_r_dataframe
 
 class NormalizationException(Exception) : pass
 
@@ -124,9 +124,14 @@ def deseq2_rpy(count_obj) :
 
   deseq2 = importr('DESeq2')
 
-  cnts = pandas_to_rmatrix(count_obj.counts)
+  cnts = pandas_dataframe_to_r_matrix(count_obj.counts)
 
-  colData = pandas_to_rdataframe(count_obj.column_data)
+  # we need to get rid of the counts from the left hand side and the Intercept
+  # from the right, otherwise the model matrix is not full rank and DESeq2 whines
+  count_obj.design_matrix.drop_from_lhs('counts')
+  count_obj.design_matrix.drop_from_rhs('Intercept')
+
+  colData = pandas_dataframe_to_r_dataframe(count_obj.design_matrix.full_matrix)
 
   dds = deseq2.DESeqDataSetFromMatrix(
     countData = cnts

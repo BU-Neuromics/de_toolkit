@@ -10,7 +10,7 @@ from de_toolkit.common import *
 from de_toolkit.stats import *
 
 ################################################################################
-@pytest.fixture()
+@pytest.fixture
 def fake_column_data(request) :
   covs = [
     ['sample','category','cont_cov']
@@ -39,7 +39,7 @@ def fake_column_data(request) :
 
 
 # fake count data to test the coldist
-@pytest.fixture()
+@pytest.fixture
 def fake_count_list_data_coldist() :
   data = [
   ['gene','a','b','c'],
@@ -108,23 +108,26 @@ def fake_count_list_data_coldist() :
 
 
 #convert to csv from 2-D list
-@pytest.fixture()
+@pytest.fixture
 def fake_count_coldist_csv(request,fake_count_list_data_coldist) :
   with pytest.temp_csv_wrap(fake_count_list_data_coldist,',') as f :
     yield f.name
 
 #convert to pandas data frame from csv
-@pytest.fixture()
+@pytest.fixture
 def fake_count_dist_pandas_dataframe(fake_count_coldist_csv) :
   return pandas.read_csv(fake_count_coldist_csv
     ,index_col=0
   )
 
 #convert to matrix from pandas data frame
-@pytest.fixture()
+@pytest.fixture
 def fake_count_dist_matrix(fake_count_dist_pandas_dataframe) :
   return fake_count_dist_pandas_dataframe.as_matrix()
 
+@pytest.fixture
+def fake_design() :
+  pass
 
 @pytest.fixture
 def fake_count_coldist_obj(
@@ -142,7 +145,7 @@ def fake_count_coldist_obj(
 
 ################################################################################
 # fake count data to test the rowdist
-@pytest.fixture()
+@pytest.fixture
 def fake_count_list_data_rowdist() :
   data = [
   [ 'gene', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'],
@@ -154,7 +157,7 @@ def fake_count_list_data_rowdist() :
 
 
 #convert to csv from 2-D list
-@pytest.fixture()
+@pytest.fixture
 def fake_count_rowdist_csv(request,fake_count_list_data_rowdist) :
   with pytest.temp_csv_wrap(fake_count_list_data_rowdist,',') as f :
     yield f.name
@@ -701,6 +704,7 @@ def test_stats_summary_JSON():
 
 	assert true_funcs==names
 
+@pytest.mark.skip(reason='will integrate PCA tests after merge')
 def test_stats_countPCA(fake_counts_obj):
     output = count_PCA(fake_counts_obj)
     name = output.get('name')

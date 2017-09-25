@@ -10,8 +10,11 @@ Usage:
 Options:
 
 '''
+from copy import deepcopy
 from docopt import docopt
 import pandas
+import re
+from .patsy_lite import DesignMatrix, PatsyLiteParseError
 
 class InvalidDesignException(Exception): pass
 class SampleMismatchException(Exception): pass
@@ -19,35 +22,22 @@ class SampleMismatchException(Exception): pass
 class CountMatrix(object) :
   def __init__(self
       ,counts
-      ,count_names=None
-      ,sample_names=None
       ,column_data=None
       ,design=None
       ,strict=False
      ) :
-    self.column_data = column_data
-    self.design = design
 
-    self.counts = counts
-    if count_names is not None :
-      self.counts.index = count_names
-    if sample_names is not None :
-      self.counts.columns = sample_names
-
-    self.sample_names = self.counts.columns
-    self.count_names = self.counts.index
-
-    if self.column_data is not None :
+    if column_data is not None :
       # line up the sample names from the column_data and counts matrices
       if strict and (
-        len(self.column_data.index) != len(self.counts.columns) or
-        not all(self.column_data.index == self.counts.columns)
+        len(column_data.index) != len(counts.columns) or
+        not all(column_data.index == counts.columns)
       ) :
         raise SampleMismatchException('When *strict* is supplied, the columns '
           'of the counts file must correspond exactly to the row names in the '
           'column_data matrix')
       else :
-        common_names = self.sample_names.intersection(self.column_data.index)
+        common_names = counts.columns.intersection(column_data.index)
 
         # fix to "no memory available" bitbucket issue #4 when matrices are
         # empty
@@ -55,54 +45,107 @@ class CountMatrix(object) :
           raise SampleMismatchException('No sample names were found to be in '
             'common between the counts and column data or specified sample '
             'names. Check that the first column of the column_data matrix '
-            'contains at least 2 values in common')
+            'and the first row of the counts matrix contain at least 2 values '
+            'in common')
 
-        self.sample_names = common_names
-        self.counts = self.counts[common_names]
-        self.column_data = self.column_data.loc[common_names]
+        counts = counts[common_names]
+        column_data = column_data.loc[common_names]
 
+    # if the design is provided, it must have a 'counts' term somewhere
+    if design is not None and 'counts' not in design :
+      raise InvalidDesignException('The term "counts" must exist on at least one '
+        'side of the CountsMatrix design')
+
+    # set the things
+    self.counts = counts
+    self.column_data = column_data
+
+    # set the design no matta wat
+    self._design_matrix = None
+    self.design = self._original_design = design
+
+    #TODO this is not yet implemented or thought out
     # members to keep track of count mutations
     self.transformed = {}
     self.normalized = {}
 
-  def add_column_data(self,cov_f) :
-    self.column_data = pandas.read_csv(
-      cov_f
-      ,sep=None
-      ,engine='python'
-      ,index_col=0
-    )
+  @property
+  def column_data(self) :
+    return self._column_data
 
-  def add_design(self,design) :
-    self.design = design
+  @column_data.setter
+  def column_data(self,column_data) :
+    # if column_data does not have a counts column, add one with trivial values
+    # so things work
+    if column_data is not None and 'counts' not in column_data :
+      column_data['counts'] = 0
+
+    self._column_data = column_data
+
+    # update the design matrix by setting the design to itself
+    self.design = self.design
+
+  @property
+  def design(self) :
+    if hasattr(self,'design_matrix') and self.design_matrix is not None :
+      return self.design_matrix.design
+    if hasattr(self,'_design') :
+      return self._design
+    return None
+
+  @design.setter
+  def design(self,design) :
+    self._design = design
+    if design is not None and self.column_data is not None :
+      try :
+        self.design_matrix = DesignMatrix(design,self.column_data)
+      except PatsyLiteParseError as e :
+        raise InvalidDesignException('Invalid design, patsy lite could not parse '
+          '{}'.format(e.args))
+    elif design is not None and self.column_data is None :
+      raise InvalidDesignException('There must be column data associated with a '
+      'CountMatrix object before specifying a design')
+
+  @property
+  def design_matrix(self) :
+    return self._design_matrix
+
+  @design_matrix.setter
+  def design_matrix(self,design_matrix) :
+    self._design_matrix = design_matrix
+
+  @property
+  def sample_names(self) :
+    return self.counts.columns
+
+  @sample_names.setter
+  def sample_names(self,value):
+    try :
+      self.counts = self.counts[value]
+    except Exception as e :
+      raise Exception('Sample names provided that are not contained in the '
+        'counts matrix')
+
+  @property
+  def feature_names(self) :
+    return self.counts.index
+
+  @feature_names.setter
+  def feature_names(self,value):
+    try :
+      self.counts = self.counts.loc[value]
+    except Exception as e :
+      raise Exception('Feaure names provided that are not contained in the '
+        'counts matrix')
+
+  def copy(self) :
+    return deepcopy(self)
 
   def transform(self,transf) :
     self.transformed[transf.__name__] = transf(self)
 
   def add_normalized(self,method='deseq2') :
     pass
-
-  def check_model(self) :
-    '''Make sure the design variables match the column data.
-    Raise InvalidDesignException if variables specified in the design
-    do not appear in the column data.
-    '''
-
-    if self.design is not None :
-      if self.column_data is None :
-        raise InvalidDesignException(
-          'Design specified but no column data provided. Both must be '
-          'added to CountMatrix object to use a design.'
-        )
-      vars = self.design.split(' ')
-      vars = [_.strip() for _ in vars if _.strip() not in ('~','')]
-
-      for var in vars :
-        if var not in self.column_data.columns :
-          raise InvalidDesignException((
-            'Variable {} not found in column data columns {}. Check formula '
-            'and/or column data columns.').format(var,self.column_data.columns)
-          )
 
 class CountMatrixFile(CountMatrix) :
 

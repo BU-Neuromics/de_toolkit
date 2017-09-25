@@ -63,7 +63,7 @@ def check_exit_status() :
 #   -> fake_huge_counts_csv
 #   -> fake_huge_counts_obj
 
-# fake_design
+# fake_logistic_design
 
 ################################################################################
 
@@ -122,11 +122,12 @@ def fake_huge_column_data(request) :
   import string
   names = string.ascii_lowercase
   covs = [
-    ['sample','category','cont_cov']
+    ['sample','category','cont_cov','const_cov']
   ]+list(zip(
     names
     ,['case']*math.floor(len(names)/2)+['cont']*math.ceil(len(names)/2)
     ,[10*random.random() for _ in names]
+    ,[1 for _ in names]
   ))
   return covs
 
@@ -183,12 +184,12 @@ def fake_counts_tsv(request,fake_counts_text_data) :
 def fake_counts_obj(
   fake_counts_csv
   ,fake_column_data_csv
-  ,fake_design) :
+  ,fake_logistic_design) :
 
   return make_counts_obj(
     fake_counts_csv
     ,fake_column_data_csv
-    ,fake_design
+    ,fake_logistic_design
   )
 
 
@@ -288,12 +289,12 @@ def fake_big_counts_matrix(fake_big_counts_pandas_dataframe) :
 def fake_big_counts_obj(
   fake_big_counts_csv
   ,fake_column_data_csv
-  ,fake_design) :
+  ,fake_logistic_design) :
 
   return make_counts_obj(
     fake_big_counts_csv
     ,fake_column_data_csv
-    ,fake_design
+    ,fake_logistic_design
   )
 
 print(fake_big_counts_obj)
@@ -326,12 +327,12 @@ def fake_huge_counts_csv(request,fake_huge_counts_data) :
 def fake_huge_counts_obj(
   fake_huge_counts_csv
   ,fake_column_data_csv
-  ,fake_design) :
+  ,fake_logistic_design) :
 
   return make_counts_obj(
     fake_huge_counts_csv
     ,fake_column_data_csv
-    ,fake_design
+    ,fake_logistic_design
   )
 
 ################################################################################
@@ -362,13 +363,17 @@ def fake_gtf(request,fake_counts_text_data) :
   os.remove(f.name)
 
 @pytest.fixture()
-def fake_design(request) :
-  return '~ category'
+def fake_logistic_design(request) :
+  return 'category ~ counts'
+
+@pytest.fixture()
+def fake_nb_design(request) :
+  return 'counts ~ category'
 
 def make_counts_obj(
   counts_csv
   ,column_data_csv
-  ,design) :
+  ,design=None) :
   from de_toolkit import CountMatrixFile
 
   counts_obj = CountMatrixFile(

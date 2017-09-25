@@ -137,24 +137,30 @@ class DesignMatrix(object) :
 
   @property
   def design(self) :
+    lhs = ' + '.join(self.lhs.columns)
+    rhs = ' + '.join(self.rhs.columns)
+    # it is sometimes useful to have a trivial model, e.g. counts ~ 1
+    if len(rhs) == 0 :
+      rhs = '1'
     return ' '.join([
-      ' + '.join(self.lhs.columns),
-      '~',
-      ' + '.join(self.rhs.columns)
+      lhs
+      ,'~'
+      ,rhs
     ])
 
-  def add_to_lhs(self,column,data,inplace=False) :
-    return 
+  def drop_from_lhs(self,column,quiet=False) :
+    try :
+      self.lhs.drop(column,axis=1,inplace=True)
+    except ValueError as e :
+      if not quiet :
+        raise ModelError('Cannot drop {} from lhs, does not exist'.format(column))
 
-  def drop_from_lhs(self,column) :
-    if column not in self.lhs :
-      raise ModelError('Cannot drop {} from lhs, does not exist'.format(column))
-    self.lhs.drop(column,axis=1,inplace=True)
-
-  def drop_from_rhs(self,column) :
-    if column not in self.rhs :
-      raise ModelError('Cannot drop {} from rhs, does not exist'.format(column))
-    self.rhs.drop(column,axis=1,inplace=True)
+  def drop_from_rhs(self,column,quiet=False) :
+    try :
+      self.rhs.drop(column,axis=1,inplace=True)
+    except ValueError as e :
+      if not quiet :
+        raise ModelError('Cannot drop {} from rhs, does not exist'.format(column))
 
   def head(self) :
     return self.full_matrix.head()

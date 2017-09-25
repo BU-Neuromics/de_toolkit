@@ -1,6 +1,6 @@
 import numpy
 import pandas
-from patsy import EvalFactor, ModelDesc, design_matrix_builders, dmatrices
+from patsy import EvalFactor, ModelDesc, design_matrix_builders, dmatrices, PatsyError
 from ply import lex
 from pprint import pprint
 import re
@@ -103,11 +103,15 @@ class DesignMatrix(object) :
     formula = '1 + {}'.format(formula)
 
     model = patsy_lite_to_patsy(formula)
-    self.lhs, self.rhs = dmatrices(
-      model.describe()
-      ,model_data
-      ,return_type='dataframe'
-    )
+    try :
+      self.lhs, self.rhs = dmatrices(
+        model.describe()
+        ,model_data
+        ,return_type='dataframe'
+      )
+    except PatsyError as e :
+      raise PatsyLiteParseError('Misspecified column in design, check term '
+        'names. {}'.format(e.args))
 
     #TODO remove log printing code when stable
     def log(*args) :

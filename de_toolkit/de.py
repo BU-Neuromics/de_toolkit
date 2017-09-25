@@ -16,11 +16,10 @@ Options:
 from docopt import docopt
 import pandas
 import sys
-from .common import CountMatrixFile
+from .common import CountMatrixFile, InvalidDesignException
 from .util import (
-  column_data_rtype_dict
-  ,column_data_to_r_dataframe
-  ,count_obj_to_r_matrix
+  pandas_dataframe_to_r_dataframe
+  ,pandas_dataframe_to_r_matrix
   ,require_rpy2
   ,require_deseq2
   ,stub
@@ -34,7 +33,14 @@ def deseq2(count_obj) :
 @require_rpy2
 def firth_logistic_regression(count_obj,rda=None) :
 
-  count_obj.check_model() # make sure the model is valid
+  # validate the design matrix
+  if count_obj.design is None or count_obj.design_matrix is None :
+    raise InvalidDesignException('count_obj must have a design matrix in Firth'
+      ' logistic regression')
+
+  if 'counts' not in count_obj.design_matrix.rhs :
+    raise InvalidDesignException('The term "counts" must exist on the right hand'
+      'side of the model in Firth logistic regression')
 
   from rpy2 import robjects
   import rpy2.rlike.container as rlc
@@ -48,31 +54,7 @@ def firth_logistic_regression(count_obj,rda=None) :
   except RRuntimeError as e :
     raise Exception('logistf must be installed to use this function')
 
-  # create a dataframe of the column_data, if there are any
-  if count_obj.column_data is None :
-    raise Exception('Firth requires colData, add column '
-      'dataframe to count object'
-    )
-
-  colData_rtype_dict = column_data_rtype_dict(count_obj)
-
-  # by default, the design is assumed the be in the first non-sample name column
-  # of column_data
-  design = '{} ~'.format(count_obj.column_data.columns[0])
-  if count_obj.design is not None :
-    design = count_obj.design
-  if not design.strip().endswith('~') :
-    design += ' + '
-  design += ' counts'
-
-  # logistf can hang when the dependent variable isn't an integer vector
-  endog = design.split('~')[0].strip()
-  endog_levels = sorted(list(set(colData_rtype_dict[endog])))
-  endog_vals = []
-  for level in colData_rtype_dict[endog] :
-    endog_vals.append(endog_levels.index(level))
-  colData_rtype_dict[endog] = robjects.IntVector(endog_vals)
-  design_formula = robjects.Formula(design)
+  design_formula = robjects.Formula(count_obj.design)
 
   # fits stores a list of tuples of the form (rfit,'status')
   # the status records info from firth about the specific gene
@@ -81,10 +63,13 @@ def firth_logistic_regression(count_obj,rda=None) :
   fits = []
   for i in range(count_obj.counts.shape[0]) :
     gene_counts = count_obj.counts.ix[i]
-    colData_rtype_dict['counts'] = robjects.FloatVector(gene_counts)
 
-    od = rlc.OrdDict(list(colData_rtype_dict.items()))
-    data = robjects.DataFrame(od)
+    count_obj.design_matrix.update_design('counts',gene_counts)
+
+    # the R object we will pass to 
+    full_matrix_robj = pandas_dataframe_to_r_dataframe(
+      count_obj.design_matrix.full_matrix
+    )
 
     # issue #3 is caused by the Firth profile likelihood based confidence
     # interval method producing incoherent results on certain data (can't
@@ -93,14 +78,14 @@ def firth_logistic_regression(count_obj,rda=None) :
     # it crashes fall back on the Wald method and move on
     try :
       fit = (
-        logistf.logistf(design_formula,data=data,pl=True)
+        logistf.logistf(design_formula,data=full_matrix_robj,pl=True)
         ,'PL'
       )
     except RRuntimeError as exc :
       # capture this exact error, otherwise raise
       if 'NA/NaN/Inf in foreign function call (arg 10)' in str(exc) :
         fit = (
-          logistf.logistf(design_formula,data=data,pl=False)
+          logistf.logistf(design_formula,data=full_matrix_robj,pl=False)
           ,'Wald'
         )
       else :
@@ -191,10 +176,8 @@ def main(argv=None) :
   )
 
   if args['deseq2'] :
-    count_obj.add_design(args['<design>'])
     deseq2(count_obj)
   elif args['firth'] :
-    count_obj.add_design(args['<design>'])
     firth_out = firth_logistic_regression(count_obj,rda=args['--rda'])
 
     if args['--output'] == 'stdout' :

@@ -22,7 +22,6 @@ requirements:
     - pytest
     - future
     - git
-    - git-lfs
   run:
     - python
     - biopython

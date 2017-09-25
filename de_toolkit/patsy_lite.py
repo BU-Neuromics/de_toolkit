@@ -87,6 +87,9 @@ class DesignMatrix(object) :
 
   def __init__(self,formula,model_data) :
 
+    self._formula = formula
+    self._model_data = model_data
+
     # when there is a categorical veriable on the lhs, the vector
     # space of all levels is included where, for example, we're only
     # interested in the vector space of the reference level for
@@ -148,6 +151,9 @@ class DesignMatrix(object) :
       ' + '.join(self.rhs.columns)
     ])
 
+  def add_to_lhs(self,column,data,inplace=False) :
+    return 
+
   def drop_from_lhs(self,column) :
     if column not in self.lhs :
       raise ModelError('Cannot drop {} from lhs, does not exist'.format(column))
@@ -164,3 +170,41 @@ class DesignMatrix(object) :
   @property
   def full_matrix(self) :
     return pandas.concat([self.lhs,self.rhs],axis=1)
+
+  def augment(self,df,side) :
+    '''Return a new DesignMatrix with the columns (or keys) of *df* appended to
+    the left or right hand side
+
+    '''
+    if side == 'lhs' :
+      new_design = '{} + {}'.format('+'.join(df.columns),self._formula)
+    else :
+      new_design = '{} + {}'.format(self._formula,'+'.join(df.columns))
+    model_data = pandas.concat([self._model_data,df],axis=1)
+    return DesignMatrix(new_design,model_data)
+
+  def augment_lhs(self,df) :
+    '''Return a new DesignMatrix with the columns (or keys) of *df* appended to
+    the left hand side
+
+    '''
+    return self.augment(df,'lhs')
+
+  def augment_rhs(self,df) :
+    '''Return a new DesignMatrix with the columns (or keys) of *df* appended to
+    the right hand side
+
+    '''
+    return self.augment(df,'rhs')
+
+  def update_design(self,column,values) :
+    '''Update the DesignMatrix *column* with *values*
+
+    '''
+    if column in self.lhs :
+      self.lhs[column] = values
+    elif column in self.rhs :
+      self.rhs[column] = values
+    else :
+      raise ModelError(('Cannot replace values for column {}, '
+        'column does not exist').format(column))

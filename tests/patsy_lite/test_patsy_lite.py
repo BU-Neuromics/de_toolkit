@@ -55,6 +55,21 @@ def test_DesignMatrix(model_data) :
   assert (dm.full_matrix['binary_int'] == model_data['binary_int']).all()
   assert (dm.full_matrix['cat_int'] == model_data['cat_int']).all()
 
+  # augmented designs are good for adding counts to things
+  counts = pandas.DataFrame({'counts':model_data['cont']})
+  aug_dm = dm.augment_rhs(counts)
+  assert all(aug_dm.full_matrix['counts'] == counts['counts'])
+
+  counts = pandas.DataFrame({'other_counts':model_data['cont']})
+  aug_dm = aug_dm.augment_lhs(counts)
+  assert all(aug_dm.full_matrix['other_counts'] == counts['other_counts'])
+
+  aug_dm.update_design('counts', 1)
+  assert all(aug_dm.full_matrix['counts'] == 1)
+
+  with pytest.raises(ModelError) :
+    aug_dm.update_design('oogabooga',1)
+
   with pytest.raises(ModelError) :
     dm.drop_from_lhs('oogabooga')
 

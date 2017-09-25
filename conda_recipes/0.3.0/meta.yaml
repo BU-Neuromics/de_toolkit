@@ -1,12 +1,10 @@
 package:
   name: de_toolkit
-  version: "dev"
-  #version: "0.2.3"
+  version: "0.3.0"
 
 source:
-  path: ../../
-  #git_url: https://bitbucket.org/bubioinformaticshub/de_toolkit
-  #git_rev: "0.2.3"
+  git_url: https://bitbucket.org/bubioinformaticshub/de_toolkit
+  git_rev: "0.3.0"
 
 requirements:
   build:
@@ -24,7 +22,6 @@ requirements:
     - rpy2
     - pytest-runner
     - pytest
-    - py
     - future
     - git
   run:
@@ -33,41 +30,51 @@ requirements:
     - biopython
     - docopt
     - pandas
+    - numpy
     - matplotlib
     - scikit-learn
     - statsmodels
     - patsy
-    - py
-    - numpy
     - r-docopt
     - rpy2
-    - future
-  test:
-    - certifi
     - pytest-runner
     - pytest
     - future
+    - git
+  test:
+    - certifi
     - python
     - biopython
     - docopt
     - pandas
+    - numpy
     - matplotlib
     - scikit-learn
     - statsmodels
     - patsy
-    - py
-    - numpy
     - r-docopt
     - rpy2
+    - pytest-runner
     - pytest
     - future
+    - git
 
+test:
+  requires:
+    - certifi
+    - pytest
+    - pytest-runner
+    - future
 
 about:
   home: https://bitbucket.org/bubioinformaticshub/de_toolkit
   license: MIT
   license_file: LICENSE
 
+# I can't figure out what setuptools is trying to install, it says
+# certifi but it still complains when I include it as a package above
+# setting CONDA_BUILD= before the setup.py install disables the check
+# for installing packages
 build:
-  #script: "CONDA_BUILD= && python setup.py install"
-  script: "python setup.py install"
+  script: "CONDA_BUILD= && python setup.py install"
+  number: 3

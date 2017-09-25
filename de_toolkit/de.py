@@ -33,6 +33,9 @@ def deseq2(count_obj) :
 @require_rpy2
 def firth_logistic_regression(count_obj,rda=None) :
 
+  # make a copy of count_obj, since we mutate it
+  count_obj = count_obj.copy()
+
   # validate the design matrix
   if count_obj.design is None or count_obj.design_matrix is None :
     raise InvalidDesignException('count_obj must have a design matrix in Firth'

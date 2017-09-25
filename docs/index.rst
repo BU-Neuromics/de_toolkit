@@ -40,6 +40,7 @@ Module Documentation
 
    norm
    de
+   patsy_lite
    outlier
    transform
    filter

@@ -117,7 +117,7 @@ def test_deseq2_py_vs_rpy(fake_counts_obj) :
     # the design associated with fake_counts_obj is category ~ counts
     # which is intended for testing Firth
     # change it to something DESeq2 expects
-    fake_counts_obj.design = '~ cont_cov + category'
+    fake_counts_obj.design = 'counts ~ cont_cov + category'
 
     rpy_norm_counts = deseq2_rpy(fake_counts_obj)
 
@@ -140,7 +140,7 @@ def test_deseq2_py_vs_rpy_somezero(fake_counts_obj) :
     # the design associated with fake_counts_obj is category ~ counts
     # which is intended for testing Firth
     # change it to something DESeq2 expects
-    fake_counts_obj.design = '~ cont_cov + category'
+    fake_counts_obj.design = 'counts ~ cont_cov + category'
 
     rpy_norm_counts = deseq2_rpy(fake_counts_obj)
 

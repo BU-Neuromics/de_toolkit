@@ -126,7 +126,12 @@ def deseq2_rpy(count_obj) :
 
   cnts = pandas_dataframe_to_r_matrix(count_obj.counts)
 
-  colData = pandas_dataframe_to_r_dataframe(count_obj.column_data)
+  # we need to get rid of the counts from the left hand side and the Intercept
+  # from the right, otherwise the model matrix is not full rank and DESeq2 whines
+  count_obj.design_matrix.drop_from_lhs('counts')
+  count_obj.design_matrix.drop_from_rhs('Intercept')
+
+  colData = pandas_dataframe_to_r_dataframe(count_obj.design_matrix.full_matrix)
 
   dds = deseq2.DESeqDataSetFromMatrix(
     countData = cnts

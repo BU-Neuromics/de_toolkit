@@ -9,6 +9,7 @@ import pandas
 from docopt import docopt
 from .common import * 
 import os.path
+from sklearn.decomposition import PCA
 from string import Template
 
 '''
@@ -187,7 +188,7 @@ def rowdist(count_mat, b, log, density) :
 
 	output['stats']['dists'] = []
 	
-	for i in range(len(count_mat.count_names)):
+	for i in range(len(count_mat.feature_names)):
         #to access the data in each row
 		data = count_mat.counts.iloc[i].tolist()
 
@@ -208,7 +209,7 @@ def rowdist(count_mat, b, log, density) :
 			(n, bins, patches) = plt.hist(data, bins=b, label='hst')
 
         #make the dict for each row
-		output['stats']['dists'].append({'name':count_mat.count_names[i], 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
+		output['stats']['dists'].append({'name':count_mat.feature_names[i], 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
 
 	return output
 
@@ -289,7 +290,7 @@ def rowzero(count_mat) :
 	cnts = count_mat.counts.as_matrix()
 	num_cols=len(cnts[0])
 	num_rows=len(cnts)
-	row_names = count_mat.count_names
+	row_names = count_mat.feature_names
 
 	#Calculate zero counts, zero fractions, means, and nonzero means for each row
 	zero_counts = []
@@ -352,7 +353,7 @@ def entropy(count_mat) :
 	cnts = count_mat.counts.as_matrix()
 	num_cols=len(cnts[0])
 	num_rows=len(cnts)
-	row_names = count_mat.count_names
+	row_names = count_mat.feature_names
 
 	probs = []
 	for i in range(len(row_names)):
@@ -393,6 +394,9 @@ def count_PCA(count_mat):
     Principal common analysis of the counts matrix. 
     Usage: detk-stats [options] PCA <counts fn>
     '''
+
+    X = count_mat.counts
+
     # To drop gene id which is usually in column[0]
     cols = list(X)
     cols = cols[1:]

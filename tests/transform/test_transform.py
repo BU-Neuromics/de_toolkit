@@ -1,17 +1,26 @@
 import docopt
 import pytest
 from de_toolkit.transform import main
+import warnings
 
 def test_transform_cli(fake_counts_csv) :
   with pytest.raises(docopt.DocoptExit) :
     main(argv=None)
 
 def test_transform_vst_cli(fake_big_counts_csv,fake_column_data_csv):
-  main(['vst',fake_big_counts_csv,fake_column_data_csv])
+
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    main(['vst',fake_big_counts_csv,fake_column_data_csv])
+
 def test_transform_vst(fake_big_counts_obj):
   from de_toolkit.transform import vst
 
-  vst(fake_big_counts_obj)
+  fake_big_counts_obj.design = 'counts ~ category[cont]'
+
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    vst(fake_big_counts_obj)
 
 """
 def test_transform_ruvseq_cli(fake_counts_csv):

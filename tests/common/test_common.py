@@ -1,6 +1,6 @@
 import docopt
 import pytest
-from de_toolkit.common import main
+from de_toolkit.common import main, InvalidDesignException
 
 def test_cli() :
   with pytest.raises(docopt.DocoptExit) :
@@ -19,23 +19,43 @@ def test_CountMatrix(
     fake_counts_pandas_dataframe
   )
 
-  # with explicit sample and count names
-  mat = CountMatrix(
-    fake_counts_pandas_dataframe
-    ,sample_names=fake_counts_pandas_dataframe.columns
-    ,count_names=fake_counts_pandas_dataframe.index
-  )
-  assert all(mat.sample_names == fake_counts_pandas_dataframe.columns)
-  assert all(mat.count_names == fake_counts_pandas_dataframe.index)
-
-  # with no explicit index or names
+  # with column data
   mat = CountMatrix(
     fake_counts_pandas_dataframe
     ,column_data=fake_column_data_pandas_dataframe
   )
   assert all(mat.sample_names == fake_column_data_pandas_dataframe.index)
-  assert all(mat.count_names == fake_counts_pandas_dataframe.index)
+  assert all(mat.feature_names == fake_counts_pandas_dataframe.index)
 
+  # with column data and design
+  mat = CountMatrix(
+    fake_counts_pandas_dataframe
+    ,column_data=fake_column_data_pandas_dataframe
+    ,design='cont_cov ~ category[case] + counts'
+  )
+  print(mat.column_data.columns)
+  assert all(mat.sample_names == fake_column_data_pandas_dataframe.index)
+  assert all(mat.feature_names == fake_counts_pandas_dataframe.index)
+  assert mat.design == 'cont_cov ~ Intercept + category__cont + counts'
+
+  # missing a counts column
+  with pytest.raises(InvalidDesignException) :
+    mat = CountMatrix(
+      fake_counts_pandas_dataframe
+      ,column_data=fake_column_data_pandas_dataframe
+      ,design='cont_cov ~ category[case]'
+    )
+  
+
+  # set invalid design
+  with pytest.raises(InvalidDesignException) :
+    mat = CountMatrix(
+      fake_counts_pandas_dataframe
+      ,column_data=fake_column_data_pandas_dataframe
+      ,design='cont_cov ~ category[case] + counts'
+    )
+    mat.design = 'oogabooga'
+   
   # with strict
   mat = CountMatrix(
     fake_counts_pandas_dataframe
@@ -43,7 +63,7 @@ def test_CountMatrix(
     ,strict=True
   )
   assert all(mat.sample_names == fake_column_data_pandas_dataframe.index)
-  assert all(mat.count_names == fake_counts_pandas_dataframe.index)
+  assert all(mat.feature_names == fake_counts_pandas_dataframe.index)
 
   # with violations of strict
   # change the order of count columns wrt column data
@@ -71,6 +91,10 @@ def test_CountMatrix(
     ,strict=False
   )
   assert sorted(mat.sample_names) == sorted(fake_column_data_pandas_dataframe.index)
+
+  # bad cov
+  with pytest.raises(InvalidDesignException) :
+    mat.design = 'category ~ cont_covx + counts'
 
 def test_CountMatrixFile(
   fake_counts_csv

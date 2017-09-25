@@ -1,4 +1,5 @@
-conda install -c conda-forge -c bioconda -c r python=3.5 docopt pandas pytest \
-  "rpy2>=2.7.3" bioconductor-deseq2 future sphinx sphinx-autobuild patsy \
-  pyparsing matplotlib setuptools scipy scikit-learn
+conda install -c conda-forge -c bioconda python=3.5 docopt pandas pytest \
+  future sphinx sphinx-autobuild patsy ipython statsmodels \
+  ply matplotlib setuptools scipy scikit-learn "rpy2>=2.7.3"
+conda install -c bioconda bioconductor-deseq2
 conda list --export > conda_packages.txt

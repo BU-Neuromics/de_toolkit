@@ -14,4 +14,4 @@ lapply(
 
 # bioconductor packages here
 source('http://bioconductor.org/biocLite.R')
-biocLite('DESEq2')
+biocLite('DESeq2')

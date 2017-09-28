@@ -48,7 +48,7 @@ Description:
 
 '''
 
-def summary(count_mat, bins, log, density, metadata) :
+def summary(count_mat, bins, log, density, metadata='') :
 	'''
 		Compute summary statistics on a counts matrix file
 			detk-stats [--json=<json_fn>] [--html=<html_fn>] summary <counts file>
@@ -468,7 +468,40 @@ def count_PCA(count_mat, metadata=''):
 
 def format_json(filename, method, output, funcs, counts_obj, funcs_present, log, density):
 	final_output = []
+	
+	if method == 'summary':
+		for key in funcs:
+			funcs_present.append(key)
+		for item in output:
+			final_output.append(item)
 
+	elif os.path.isfile(filename):
+		f = open(filename, 'r')
+		methods_found = []
+		for line in f:
+			line_output = json.loads(line.strip('\n'))
+			if line_output['name'] == method:
+				print('Warning: ' + method + ' stats was already found in the output file and has been rewritten')
+				final_output.append(output)
+				methods_found.append(line_output['name'])
+			else:
+				final_output.append(line_output)
+				methods_found.append(line_output['name'])
+				funcs_present.append(line_output['name'])
+		if method not in methods_found:
+			final_output.append(output)
+	
+	#If output file is not present, create it and add the appropriate output
+	else:
+		final_output.append(output)
+
+	#Write appropriate outputs to the JSON file
+	json_fn = open(filename, 'w')
+	for item in final_output:
+		json_fn.write(json.dumps(item) + '\n')
+	json_fn.close()
+
+	'''
 	if os.path.isfile(filename):
 		#If file does exist and stats for given method is already in it, rewrite stats
 		if method in open(filename).read() and method != 'summary':
@@ -516,16 +549,8 @@ def format_json(filename, method, output, funcs, counts_obj, funcs_present, log,
 				funcs_present.append(key)
 			for item in output:
 				final_output.append(item)
+	'''
 
-	#If output file is not present, create it and add the appropriate output
-	else:
-		final_output.append(output)
-
-	#Write appropriate outputs to the JSON file
-	json_fn = open(filename, 'w')
-	for item in final_output:
-		json_fn.write(json.dumps(item) + '\n')
-	json_fn.close()
 
 def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag):
 	#HTML template that will be filled in using the available JSON data
@@ -634,6 +659,8 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 
 		x = [i for i in range(0, len(perc_variance))]
 		fig = plt.figure(1)
+		fig.clf()
+		plt.plot(x, perc_variance, label='Variance')
 		var, = plt.plot(x, perc_variance, label='Variance')
 		cumulative, = plt.plot(x, cumulative_variance, label='Cumulative Variance')
 		plt.xticks(x, names, rotation='vertical')

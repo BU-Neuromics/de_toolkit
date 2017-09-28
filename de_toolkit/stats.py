@@ -562,8 +562,9 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 		base_hide=''
 		with open(json_fn) as file:
 			for line in file:
-				if 'base' in line:
-					base_output = json.loads(line.strip('\n'))
+				output = json.loads(line.strip('\n'))
+				if output['name'] == 'base':
+					base_output = output
 		num_cols = base_output['stats']['num_cols']
 		num_rows = base_output['stats']['num_rows']
 	else:
@@ -576,8 +577,9 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 		colzero_hide=''
 		with open(json_fn) as file:
 			for line in file:
-				if 'colzero' in line:
-					colzero_output = json.loads(line)
+				output = json.loads(line.strip('\n'))
+				if output['name'] == 'colzero':
+					colzero_output = output
 		zeros_list = colzero_output['stats']['zeros']
 		colzero = "['Sample', 'Zero_Frac'],"
 		for item in zeros_list:
@@ -591,8 +593,9 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 		rowzero_hide=''
 		with open (json_fn) as file:
 			for line in file:
-				if 'rowzero' in line:
-					rowzero_output = json.loads(line)
+				output = json.loads(line.strip('\n'))
+				if output['name'] == 'rowzero':
+					rowzero_output = output
 		zeros_list = rowzero_output['stats']['zeros']
 		rowzero_scatter = "['Zero_frac', 'Nonzero_mean'],"
 		rowzero_hist = "['Gene', 'Zero_frac'],"
@@ -610,8 +613,9 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 		entropy_hide=''
 		with open(json_fn) as file:
 			for line in file:
-				if 'entropy' in line:
-					entropy_output = json.loads(line)
+				output = json.loads(line.strip('\n'))
+				if output['name'] == 'entropy':
+					entropy_output = output
 		entropies = entropy_output['stats']['entropies']
 		entropy = "['Gene', 'Entropy'],"
 		for item in entropies:

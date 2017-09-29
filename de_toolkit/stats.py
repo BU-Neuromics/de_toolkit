@@ -26,6 +26,7 @@ Usage:
 	detk-stats [options] colzero <counts fn>
 	detk-stats [options] rowzero <counts fn>
 	detk-stats [options] entropy <counts fn>
+	detk-stats [options] pca [--m <column data fn>] [--f <column_variable>] <counts_fn>
 
 Options:
 	-o FILE --output=FILE    Destination of primary output [default: stdout]
@@ -60,7 +61,8 @@ def summary(count_mat, bins, log, density, metadata='') :
 			colzero
 			rowzero
 			entropy
-		concatenating the results.
+			pca
+		and concatenating the results.
 	'''
 
 	total_output = []
@@ -398,39 +400,33 @@ def entropy(count_mat) :
 def count_PCA(count_mat, metadata=''):
     '''
     Principal common analysis of the counts matrix.
-    Usage: detk-stats [options] PCA <counts fn>
+
+    Usage: detk-stats [options] pca [--m <column data fn>] [--f <column_variable>] <counts fn>
+
+    This module performs PCA on a provided counts matrix and returns the principal component 
+    weights, scores, and variances. In addition, the weights and scores for each individual 
+    component can be combined to define the projection of each sample along that component.
+
+    The PCA module can also accept a metadata file that contains information about the 
+    samples in each column. The user can specify some of these columns to include as 
+    variables for plotting purposes. The idea is that columns labeled with the same class 
+    will be colored according to their class, such that separations in the data can be 
+    more easily observed when projections are plotted.
     '''
-    # To drop gene id which is usually in column[0]
+    
+    #Get counts from file and scale counts
     cnts = count_mat.counts.as_matrix()
-    '''
-    X = pandas.DataFrame(cnts)
-    cols = list(X)
-    cols = cols[1:]
-    X = X[cols]
-
-    # Calculate row mean and std to scale PCA to origin at 0
-    X_row_mean = X.mean(axis=1)
-    X_row_std = X.std(axis=1)
-    X_scaled = (X.sub(X_row_mean,axis=0)).div(X_row_std,axis=0)
-    assert np.allclose(X_scaled.mean(axis=1),0)
-    assert np.allclose(X_scaled.std(axis=1),1)
-
-    # Perform PCA
-    n_samples = len(X.index)
-    n_features = len(X.columns)
-    n_components = min(n_samples, n_features)
-    pca = PCA(n_components)
-    transformed = pca.fit_transform(X_scaled.T)
-   '''
     cnts = scale(cnts)
+
+    #Perform PCA and fit to the data
     pca = PCA()
     pca.fit(cnts)
     X = pca.transform(cnts)
 
+    #Get sample names
     sample_names = list(count_mat.sample_names)
-    sample_type = []
-    sample_batch = []
 
+    #If metadata option is given, get column variables
     if metadata != '':
       m = open(metadata, 'r')
       s = csv.Sniffer()
@@ -445,10 +441,13 @@ def count_PCA(count_mat, metadata=''):
         row = df[df[column_names[0]] == name]
         for i in range(1, len(column_names)):
           column_variables[i-1].append(row.iloc[0][column_names[i]])
+    
+    #If metadata option is not given, column variables are empty lists
     else:
       column_names = []
       column_variables = []
 
+    #Format output
     output = {}
     output['name'] = 'pca'
     output['stats'] = {}

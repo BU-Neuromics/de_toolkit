@@ -468,15 +468,19 @@ def count_PCA(count_mat, metadata=''):
 def format_json(filename, method, output, funcs, counts_obj, funcs_present, log, density):
 	final_output = []
 	
+	#If summary method is chosen, write all stats to file
 	if method == 'summary':
 		for key in funcs:
 			funcs_present.append(key)
 		for item in output:
 			final_output.append(item)
 
+	#Check if file already exists
 	elif os.path.isfile(filename):
 		f = open(filename, 'r')
 		methods_found = []
+
+		#See which methods are already in file, rewrite chosen method if found
 		for line in f:
 			line_output = json.loads(line.strip('\n'))
 			if line_output['name'] == method:
@@ -487,6 +491,8 @@ def format_json(filename, method, output, funcs, counts_obj, funcs_present, log,
 				final_output.append(line_output)
 				methods_found.append(line_output['name'])
 				funcs_present.append(line_output['name'])
+
+		#If chosen method is not found, add it to the file
 		if method not in methods_found:
 			final_output.append(output)
 	
@@ -498,57 +504,8 @@ def format_json(filename, method, output, funcs, counts_obj, funcs_present, log,
 	json_fn = open(filename, 'w')
 	for item in final_output:
 		json_fn.write(json.dumps(item) + '\n')
+
 	json_fn.close()
-
-	'''
-	if os.path.isfile(filename):
-		#If file does exist and stats for given method is already in it, rewrite stats
-		if method in open(filename).read() and method != 'summary':
-			print('Warning: ' + method + ' stats was already found in the output file and has been rewritten')
-			final_output.append(output)
-			
-			#Rewrite other stats already present in the file as well
-			for key in funcs:
-				if key in open(filename).read() and key != method:
-					chosen_func = funcs[key]
-
-					#If coldist or rowdist are present, get number of bins
-					if key == 'coldist' or key == 'rowdist':
-						f = open(filename, 'r')
-						for line in f:
-							if key in line:
-								json_output = json.loads(line)
-								dists = json_output['stats']['dists']
-								dist = dists[0]
-								bins = dist['bins']
-								b = len(bins)
-						existing_output=chosen_func(counts_obj, b, log, density)
-					else:
-						existing_output = chosen_func(counts_obj)
-					final_output.append(existing_output)
-					funcs_present.append(key)
-					print('Warning: ' + key + ' stats was already found in the output file and has been rewritten')
-
-		#If file does exist but stats for the given method are not in it, add to that file
-		elif method not in open(filename).read() and method != 'summary':
-			json_fn = open(filename, 'a')
-			json_fn.write(json.dumps(output) + '\n')
-			json_fn.close()
-
-			for key in funcs:
-				if key in open(filename).read() and key != method:
-					funcs_present.append(key)
-			return
-
-		#If summary method is specified, rewrite all stats
-		else:
-			for key in funcs:
-				if key in open(filename).read():
-					print('Warning: ' + key + ' stats was already found in the output file and has been rewritten')
-				funcs_present.append(key)
-			for item in output:
-				final_output.append(item)
-	'''
 
 
 def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag):
@@ -639,6 +596,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 		coldist_hide = 'hidden'
 		coldist_boxplot = ''
 
+	#Format PCA HTML output (Scree plot and swarm plots for projections)
 	if 'pca' in funcs_present:
 		pca_hide = ''
 		with open(json_fn) as file:

@@ -16,6 +16,7 @@ import mpld3
 import seaborn as sns
 import csv
 import matplotlib.patches as patches
+import pkg_resources
 
 '''
 Usage:
@@ -510,8 +511,9 @@ def format_json(filename, method, output, funcs, counts_obj, funcs_present, log,
 
 def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag):
 	#HTML template that will be filled in using the available JSON data
-	html_temp = open('de_toolkit/html_template.html')
-	s = Template(html_temp.read())
+	resource = pkg_resources.resource_string(__name__, 'html_template.html')
+	resource = resource.decode('utf-8')
+	s = Template(resource)
 
 	#Format base HTML output (table)
 	if 'base' in funcs_present:

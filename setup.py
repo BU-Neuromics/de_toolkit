@@ -14,7 +14,7 @@ setup(name='de_toolkit',
         ,'future'
       ]
       ,packages=find_packages()
-      ,package_data={'de_toolkit':['de_toolkit/html_template.html']}
+      ,package_data={'de_toolkit':['html_template.html']}
       ,entry_points={
         'console_scripts': [
           'detk=de_toolkit.common:main'

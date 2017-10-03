@@ -689,6 +689,7 @@ def main():
 	parser.add_argument("--f", help="Column variable to color PCA projection plots by")
 	parser.add_argument("--json", help="Name of JSON output file")
 	parser.add_argument("--html", help="Name of HTML output file")
+	parser.add_argument("--json_only", help="Create only the JSON output file", action='store_const', const=1)
 	args = parser.parse_args()
 
 	#Create CountMatrix object from given data
@@ -759,8 +760,9 @@ def main():
 	else:
 		html_fn = file_str + '.html'
 	
-	#Format HTML output file
-	format_html(html_fn, filename, funcs_present, counts_obj, log, density, flag)
+	if not args.json_only:
+		#Format HTML output file
+		format_html(html_fn, filename, funcs_present, counts_obj, log, density, flag)
 
 if __name__ == '__main__':
 	main()

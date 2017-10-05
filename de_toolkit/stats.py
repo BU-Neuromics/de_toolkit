@@ -587,11 +587,28 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 		coldist_hide=''
 		cnts = counts_obj.counts.as_matrix()
 		names = counts_obj.sample_names
+		#row_names = counts_obj.feature_names
 		fig = plt.figure()
-		plt.boxplot(cnts, labels=names)
-		plt.title('Coldist Boxplot')
-		plt.ylabel('Count')
-		plt.xlabel('Sample Name')
+		box = plt.boxplot(cnts, labels=names)
+		
+		'''
+		outliers = []
+		for item in box['fliers']:
+			outliers.append(list(item.get_data()[1]))
+
+		i=0
+		for points, name in zip(outliers, names):
+			gene_name = []
+			for point in points:
+				ind = cnts[i].index(point)
+				gene_name.append(row_names[ind])
+			tooltip = mpld3.plugins.PointHTMLTooltip(box['fliers'][i], gene_name, hoffset=10)
+			mpld3.plugins.connect(fig, tooltip)
+			i+=1
+		'''
+		plt.title('Coldist Boxplot', fontsize=20)
+		plt.ylabel('Count', fontsize=15)
+		plt.xlabel('Sample Name', fontsize=15)
 		coldist_boxplot = mpld3.fig_to_html(fig)
 		plt.clf()
 	else:

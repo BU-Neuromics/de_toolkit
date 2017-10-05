@@ -2,18 +2,40 @@
 <title>Stats Module Output</title>
 <head>
 <style>
-table, th, td{
-        border: 1px solid black;
+table{
+	color: #333;
         border-collapse: collapse;
+	border-spacing: 0;
+	width: 430px;
 }
 th, td{
+	border: 1px solid #CCC;
         padding: 5px;
         text-align: center;
+	height: 30px;
+	transition: all 0.3s;
+}
+th{
+	background: #F3F3F3;
+	font-weight: bold;
+}
+td{
+	background: #FAFAFA;
+}
+tr td:hover {background: #666; color: #FFF:}
+h1{
+	font-family: Impact, Charcoal, sans-serif;
+	font-size: 50px;
+	text-decoration: underline;
+}
+p{
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 30px;
+	line-height: 200%;
 }
 </style>
 </head>
-<p><center>Stats Module Output</center></p>
-</br>
+<h1><center>Stats Module Output</center></h1>
 <p $base_hide>Base:
 </br>
 <table>

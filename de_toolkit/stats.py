@@ -587,11 +587,10 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 		coldist_hide=''
 		cnts = counts_obj.counts.as_matrix()
 		names = counts_obj.sample_names
-		#row_names = counts_obj.feature_names
+		row_names = counts_obj.count_names
 		fig = plt.figure()
 		box = plt.boxplot(cnts, labels=names)
 		
-		'''
 		outliers = []
 		for item in box['fliers']:
 			outliers.append(list(item.get_data()[1]))
@@ -600,12 +599,27 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 		for points, name in zip(outliers, names):
 			gene_name = []
 			for point in points:
-				ind = cnts[i].index(point)
+				ind = list(cnts[:,i]).index(point)
 				gene_name.append(row_names[ind])
 			tooltip = mpld3.plugins.PointHTMLTooltip(box['fliers'][i], gene_name, hoffset=10)
 			mpld3.plugins.connect(fig, tooltip)
 			i+=1
-		'''
+		
+		for item in box['medians']:
+			median = ['Median = {}'.format(item.get_data()[1][0])]
+			tooltip = mpld3.plugins.LineLabelTooltip(item, median, hoffset=10)
+			mpld3.plugins.connect(fig, tooltip)
+
+		for item in box['boxes']:
+			Q = ['Q1 = {}, Q3 = {}'.format(item.get_data()[1][0], item.get_data()[1][2])]
+			tooltip = mpld3.plugins.LineLabelTooltip(item, Q, hoffset=10)
+			mpld3.plugins.connect(fig, tooltip)
+		
+		for item in box['caps']:
+			cap = ['Cap = {}'.format(item.get_data()[1][0])]
+			tooltip = mpld3.plugins.LineLabelTooltip(item, cap, hoffset=10)
+			mpld3.plugins.connect(fig, tooltip)		
+
 		plt.title('Coldist Boxplot', fontsize=20)
 		plt.ylabel('Count', fontsize=15)
 		plt.xlabel('Sample Name', fontsize=15)

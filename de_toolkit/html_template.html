@@ -56,28 +56,12 @@ matrix. Hover over an outlier point to see which row it came from,or hover over 
 boxplot to see the first and third quartile values, the median, and the cap values.</span>
 $coldist_boxplot
 </p>
-<p $colzero_hide>Colzero:
- <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <script type="text/javascript">
-    google.charts.load("current", {packages:['corechart']});
-    google.charts.setOnLoadCallback(drawChart);
-    function drawChart() {
-      var data = google.visualization.arrayToDataTable([$colzero]);
-
-      var options = {
-        title: "Proportion of 0 Counts Per Sample",
-        width: 600,
-        height: 400,
-        bar: {groupWidth: "95%"},
-        legend: { position: "none" },
-        vAxis: {title:"Proportion of 0 Counts"}
-      };
-      var chart = new google.visualization.ColumnChart(document.getElementById("chart1"));
-      chart.draw(data,options);
-  }
-</script>
-<div id="chart1" style="width: 900px; height: 400px;" $colzero_hide></div>
-</br>
+<p $colzero_hide>Colzero:</br>
+<span style="padding-left:20px; display:block; font-size:15px; font-style:normal; line-height:100%">
+The colzero output is a bar chart depicting the zero fractions for each sample. Hover<br>
+over each bar to see the value of the zero fraction for that sample.
+</span>
+$colzero
 </p>
 <p $rowzero_hide>Rowzero:</br>
 <span style="padding-left:20px; display:block; font-size:15px; font-style:normal; line-height:100%">

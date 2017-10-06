@@ -538,10 +538,30 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 				output = json.loads(line.strip('\n'))
 				if output['name'] == 'colzero':
 					colzero_output = output
+		
 		zeros_list = colzero_output['stats']['zeros']
-		colzero = "['Sample', 'Zero_Frac'],"
+		zero_fracs = []
+		column_names = []
+		bar_names = []
 		for item in zeros_list:
-			colzero+="['" + item['name'] + "', " + str(item['zero_frac']) + "],"
+			zero_fracs.append(item['zero_frac'])
+			column_names.append(item['name'])
+			bar_names.append('Zero Fraction = {0:.3f}'.format(item['zero_frac']))
+
+		x = [i for i in range(1, len(zeros_list)+1)]
+		
+		fig = plt.figure()
+		bars=plt.bar(x, zero_fracs, tick_label=column_names, color='red')
+		plt.title('Zero Fractions Bar Chart', fontsize=20)
+		plt.xlabel('Sample', fontsize=15)
+		plt.ylabel('Zero Fraction', fontsize=15)
+
+		for i, bar in enumerate(bars.get_children()):
+			tooltip = mpld3.plugins.LineLabelTooltip(bar, bar_names[i], hoffset=10)
+			mpld3.plugins.connect(fig, tooltip)
+
+		colzero = mpld3.fig_to_html(fig)
+		plt.clf()
 	else:
 		colzero_hide='hidden'
 		colzero=''

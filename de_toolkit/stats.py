@@ -554,12 +554,34 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 				output = json.loads(line.strip('\n'))
 				if output['name'] == 'rowzero':
 					rowzero_output = output
+		
 		zeros_list = rowzero_output['stats']['zeros']
-		rowzero_scatter = "['Zero_frac', 'Nonzero_mean'],"
-		rowzero_hist = "['Gene', 'Zero_frac'],"
+		zero_fracs = []
+		nonzero_means = []
+		row_names = []
 		for item in zeros_list:
-			rowzero_scatter+="[" + str(item['zero_frac']) + ", " + str(item['nonzero_mean']) + "],"
-			rowzero_hist+="['" + item['name'] + "', " + str(item['zero_frac']) + "],"
+			zero_fracs.append(item['zero_frac'])
+			nonzero_means.append(item['nonzero_mean'])
+			row_names.append('{0}: {1:.2f}, {2:.2f}'.format(item['name'], item['zero_frac'], item['nonzero_mean']))
+
+		fig1 = plt.figure(1)
+		points = plt.scatter(zero_fracs, nonzero_means)
+		plt.title('Zero Fractions vs. Nonzero Means', fontsize=20)
+		plt.xlabel('Zero Fraction', fontsize=15)
+		plt.ylabel('Nonzero Mean', fontsize=15)
+		tooltip = mpld3.plugins.PointHTMLTooltip(points, row_names, hoffset=10)
+		mpld3.plugins.connect(fig1, tooltip)
+
+		fig2 = plt.figure(2)
+		plt.hist(zero_fracs, bins=10, range=(0.0, 1.0), color='green')
+		plt.title('Zero Fractions Histogram', fontsize=20)
+		plt.xlabel('Zero Fraction', fontsize=15)
+		plt.ylabel('Frequency', fontsize=15)
+
+		rowzero_scatter = mpld3.fig_to_html(fig1)
+		rowzero_hist = mpld3.fig_to_html(fig2)
+		
+		plt.clf()
 
 	else:
 		rowzero_hide='hidden'

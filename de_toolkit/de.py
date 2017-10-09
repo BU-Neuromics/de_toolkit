@@ -81,7 +81,7 @@ def firth_logistic_regression(count_obj,rda=None) :
   # method was used to calculate confidence intervals
   fits = []
   for i in range(count_obj.counts.shape[0]) :
-    gene_counts = count_obj.counts.ix[i]
+    gene_counts = count_obj.counts.iloc[i]
     colData_rtype_dict['counts'] = robjects.FloatVector(gene_counts)
 
     od = rlc.OrdDict(list(colData_rtype_dict.items()))

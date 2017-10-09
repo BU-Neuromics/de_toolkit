@@ -80,4 +80,4 @@ about:
 # for installing packages
 build:
   script: "CONDA_BUILD= && python setup.py install"
-  number: 4
+  number: 5

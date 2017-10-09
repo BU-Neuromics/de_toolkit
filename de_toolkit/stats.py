@@ -484,18 +484,18 @@ def format_json(filename, output):
           output_dict[d['name']] = d
 
     # go through the given output and update output_dict appropriately
-    for out in output :
-      if 'name' not in out :
-          raise Exception('Malformed detk-stats JSON record in output '
-            'file, no name key:',str(d))
-      output_dict[out['name']] = out
+    if 'name' not in output :
+      raise Exception('Malformed detk-stats JSON record in output '
+        'file, no name key:',str(output['name']))
+
+    output_dict[output['name']] = output
 
     # write out values in output_dict
     with open(filename,'w') as f :
-      json.dump(output_dict.values(),f)
+      json.dumps(output_dict.items(),f)
 
 def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag):
-<<<<<<< HEAD
+    '''
 	#HTML template that will be filled in using the available JSON data
 	resource = pkg_resources.resource_string(__name__, 'html_template.html')
 	resource = resource.decode('utf-8')
@@ -768,7 +768,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 
 	#Write all outputs to HTML file
 	html_output = s.substitute(base_hide=base_hide, num_cols=num_cols, num_rows=num_rows,
-=======
+    '''
     #HTML template that will be filled in using the available JSON data
     resource = pkg_resources.resource_string(__name__, 'html_template.html')
     resource = resource.decode('utf-8')
@@ -810,6 +810,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
         x = [i for i in range(1, len(zeros_list)+1)]
         
         fig = plt.figure()
+        fig.clf()
         bars=plt.bar(x, zero_fracs, tick_label=column_names, color='red')
         plt.title('Zero Fractions Bar Chart', fontsize=20)
         plt.xlabel('Sample', fontsize=15)
@@ -820,7 +821,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
             mpld3.plugins.connect(fig, tooltip)
 
         colzero = mpld3.fig_to_html(fig)
-        plt.clf()
+
     else:
         colzero_hide='hidden'
         colzero=''
@@ -833,40 +834,61 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
                 output = json.loads(line.strip('\n'))
                 if output['name'] == 'rowzero':
                     rowzero_output = output
-        
+		
         zeros_list = rowzero_output['stats']['zeros']
         zero_fracs = []
         nonzero_means = []
+        means = []
         row_names = []
+        row_names2 = []
         for item in zeros_list:
             zero_fracs.append(item['zero_frac'])
             nonzero_means.append(item['nonzero_mean'])
             row_names.append('{0}: {1:.2f}, {2:.2f}'.format(item['name'], item['zero_frac'], item['nonzero_mean']))
+            means.append(item['mean'])
+            row_names2.append('{0}: {1:.2f}, {2:.2f}'.format(item['name'], item['zero_frac'], item['mean']))
 
         fig1 = plt.figure(1)
+        fig1.clf()
         points = plt.scatter(zero_fracs, nonzero_means)
         plt.title('Zero Fractions vs. Nonzero Means', fontsize=20)
         plt.xlabel('Zero Fraction', fontsize=15)
         plt.ylabel('Nonzero Mean', fontsize=15)
-        tooltip = mpld3.plugins.PointHTMLTooltip(points, row_names, hoffset=10)
-        mpld3.plugins.connect(fig1, tooltip)
+        tooltip1 = mpld3.plugins.PointHTMLTooltip(points, row_names, hoffset=10)
+        mpld3.plugins.connect(fig1, tooltip1)
 
         fig2 = plt.figure(2)
-        plt.hist(zero_fracs, bins=10, range=(0.0, 1.0), color='green')
+        fig2.clf()
+        mean_points = plt.scatter(zero_fracs, means)
+        plt.title('Zero Fractions vs. Means', fontsize=20)
+        plt.xlabel('Zero Fraction', fontsize=15)
+        plt.ylabel('Mean', fontsize=15)
+        tooltip2 = mpld3.plugins.PointHTMLTooltip(mean_points, row_names2, hoffset=10)
+        mpld3.plugins.connect(fig2, tooltip2)
+
+        fig3 = plt.figure(3)
+        fig3.clf()
+        n, bins, patches = plt.hist(zero_fracs, bins=10, range=(0.0, 1.0), color='green')
         plt.title('Zero Fractions Histogram', fontsize=20)
         plt.xlabel('Zero Fraction', fontsize=15)
         plt.ylabel('Frequency', fontsize=15)
+        ticks = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        plt.xticks(ticks)
+        bar_names = ['{}'.format(i) for i in n]
+
+        for i, patch in enumerate(patches):
+            tooltip3 = mpld3.plugins.LineLabelTooltip(patch, bar_names[i], hoffset=10)
+            mpld3.plugins.connect(fig3, tooltip3)
 
         rowzero_scatter = mpld3.fig_to_html(fig1)
-        rowzero_hist = mpld3.fig_to_html(fig2)
-        
-        plt.clf()
+        rowzero_scatter2 = mpld3.fig_to_html(fig2)
+        rowzero_hist = mpld3.fig_to_html(fig3)
 
     else:
         rowzero_hide='hidden'
         rowzero_scatter=''
+        rowzero_scatter2=''
         rowzero_hist=''
-
     #Format entropy HTML output (histogram)
     if 'entropy' in funcs_present:
         entropy_hide=''
@@ -890,6 +912,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
         names = counts_obj.sample_names
         row_names = counts_obj.count_names
         fig = plt.figure()
+        fig.clf()
         box = plt.boxplot(cnts, labels=names)
         
         outliers = []
@@ -972,6 +995,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
         sample_type = column_variables.get(flag)
 
         fig2 = plt.figure(2)    
+        fig2.clf()
         d = []
         for name, projection, variance in zip(names, projections, perc_variance):
             if variance >= 0.05:
@@ -991,7 +1015,7 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
         plt.legend(handles=handles, title=flag)
         plt.title('PCA Swarmplot')
         pca_swarm=mpld3.fig_to_html(fig2)
-        plt.clf()
+
     else:
         pca_hide = 'hidden'
         pca_scree = ''
@@ -999,12 +1023,12 @@ def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag
 
     #Write all outputs to HTML file
     html_output = s.substitute(base_hide=base_hide, num_cols=num_cols, num_rows=num_rows,
->>>>>>> 80f55f8785cbe202106d6019428a44a7e135b6f7
-                                        colzero_hide=colzero_hide, colzero=colzero,
-                                        rowzero_hide=rowzero_hide, rowzero_scatter=rowzero_scatter, rowzero_hist=rowzero_hist, rowzero_scatter2=rowzero_scatter2,
-                                        entropy_hide=entropy_hide, entropy=entropy,
-                    coldist_hide=coldist_hide, coldist_boxplot=coldist_boxplot,
-                    pca_hide=pca_hide, pca_scree=pca_scree, pca_swarm=pca_swarm)
+                               colzero_hide=colzero_hide, colzero=colzero,
+                               rowzero_hide=rowzero_hide, rowzero_scatter=rowzero_scatter, 
+			       rowzero_hist=rowzero_hist, rowzero_scatter2=rowzero_scatter2,
+                               entropy_hide=entropy_hide, entropy=entropy,
+                               coldist_hide=coldist_hide, coldist_boxplot=coldist_boxplot,
+                               pca_hide=pca_hide, pca_scree=pca_scree, pca_swarm=pca_swarm)
     html_fn = open(filename, 'w')
     html_fn.write(html_output)
     html_fn.close()
@@ -1015,15 +1039,16 @@ def main(argv=None):
     args = docopt(__doc__,argv=argv)
 
     #Create CountMatrix object from given data
-    counts_obj = CountMatrixFile(args.file)
+    args['<counts_fn>'] = args.get('<counts_fn>')
+    counts_obj = CountMatrixFile(args['<counts_fn>'])
 
     #If bin option is specified, set to given number (otherwise, default=20)
-    args['--bins'] = int(args.get('--bins',20))
+    args['--bins'] = args.get('--bins',20)
 
     #Set log option
     args['--log'] = args.get('--log',False)
-
-    #Set density option
+ 
+   #Set density option
     args['--density'] = args.get('--density',False)
 
     if args['pca'] :
@@ -1053,12 +1078,16 @@ def main(argv=None):
       output = rowzero(counts_obj)
     elif args['entropy'] :
       output = entropy(counts_obj)
+    elif args['base']:
+      output = base(counts_obj)
 
     #Obtain string used to name output files, unless filename is specified
-    filename_prefix = os.path.splitext(args['<count_fn>'])
+    filename_prefix = os.path.splitext(args['<counts_fn>'])
 
     #Check if JSON file option was specified
-    json_fn = args.get('--json',filename_prefix+'.json')
+    json_fn = args.get('--json',filename_prefix[0]+'.json')
+    if json_fn is None:
+        json_fn = filename_prefix[0]+'.json'    
 
     #Format JSON output file
     format_json(json_fn ,output)

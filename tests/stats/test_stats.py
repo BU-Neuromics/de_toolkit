@@ -175,6 +175,11 @@ def fake_count_rowdist_obj(
 
 ################################################################################
 
+def test_stats_cli() :
+  from de_toolkit.stats import main
+  from docopt import DocoptExit
+  with pytest.raises(DocoptExit) :
+    main(['detk-stats','summary','counts_fn'])
 
 #test for base function
 def test_stats_base(fake_counts_obj):

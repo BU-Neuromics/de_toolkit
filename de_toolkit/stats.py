@@ -4,9 +4,9 @@ Usage:
     detk-stats [options] base <counts_fn>
     detk-stats [options] coldist [--bins=<bins>] [--log] [--density] <counts_fn>
     detk-stats [options] rowdist [--bins=<bins>] [--log] [--density] <counts_fn>
-    detk-stats [options] colzero <counts fn>
-    detk-stats [options] rowzero <counts fn>
-    detk-stats [options] entropy <counts fn>
+    detk-stats [options] colzero <counts_fn>
+    detk-stats [options] rowzero <counts_fn>
+    detk-stats [options] entropy <counts_fn>
     detk-stats [options] pca [--column-data=<column data fn>] [--color-col=<column_variable>] <counts_fn>
 
 Options:
@@ -708,9 +708,12 @@ def format_html(html_fn, json_fn, counts_obj, log, density, flag):
 
         stats = pca_output.get('stats')
         column_variables = stats.get('column_variables')
-        if flag == '':
+        if flag == '' and len(column_variables)!=0: 
             flag = list(column_variables)[0]
+       
         sample_type = column_variables.get(flag)
+        if sample_type is None:
+            sample_type = ['data' for i in range(len(projections))]
 
         fig2 = plt.figure(2)    
         fig2.clf()
@@ -755,28 +758,40 @@ def main(argv=None):
 
     #Create commandline arguments to pass in data files and selected method
     args = docopt(__doc__,argv=argv)
-
+    
     #Create CountMatrix object from given data
     args['<counts_fn>'] = args.get('<counts_fn>')
     counts_obj = CountMatrixFile(args['<counts_fn>'])
-
-    #If bin option is specified, set to given number (otherwise, default=20)
-    args['--bins'] = args.get('--bins',20)
+ 
+   #If bin option is specified, set to given number (otherwise, default=20)
+    args['--bins'] = args.get('--bins')
+    if args['--bins'] is None:
+        args['--bins'] = 20
 
     #Set log option
-    args['--log'] = args.get('--log',False)
+    args['--log'] = args.get('--log')
  
    #Set density option
-    args['--density'] = args.get('--density',False)
+    args['--density'] = args.get('--density')
+
+   #Get metadata if provided
+    args['--column-data'] = args.get('--column-data')
+    if args['--column-data'] is None:
+        args['--column-data'] = ''
+
+   #Get column variable to color pca plots by if provided
+    args['--color-col'] = args.get('--color-col')
+    if args['--color-col'] is None:
+        args['--color-col'] = ''
 
     if args['pca'] :
-        output = count_PCA(counts_obj, metadata=args.get('--column-data',''))
+        output = count_PCA(counts_obj, metadata=args['--column-data'])
     elif args['summary'] :
         output = summary(counts_obj
           ,args['--bins']
           ,args['--log']
           ,args['--density']
-          ,metadata=args.get('--column-data','')
+          ,metadata=args['--column-data']
         )
     elif args['coldist'] :
         output = coldist(counts_obj
@@ -809,7 +824,7 @@ def main(argv=None):
 
     #Format JSON output file
     format_json(json_fn ,output)
-    
+
     # determine the html filename
     html_fn = args.get('--html')
     if html_fn is None:

@@ -1,6 +1,6 @@
 '''
 Usage:
-    detk-stats [options] summary <counts_fn>
+    detk-stats [options] summary [--bins=<bins>] [--log] [--density][--column-data=<column data fn>] [--color-col=<column_variable>] <counts_fn>
     detk-stats [options] base <counts_fn>
     detk-stats [options] coldist [--bins=<bins>] [--log] [--density] <counts_fn>
     detk-stats [options] rowdist [--bins=<bins>] [--log] [--density] <counts_fn>
@@ -620,9 +620,22 @@ def format_html(html_fn, json_fn, counts_obj, log, density, flag):
         entropy_hide=''
         entropy_output = output_dict['entropy']
         entropies = entropy_output['stats']['entropies']
-        entropy = "['Gene', 'Entropy'],"
+        entropy_list = []
         for item in entropies:
-            entropy+="['" + item['name'] + "', " + str(item['entropy']) + "],"
+            entropy_list.append(item['entropy'])
+        fig = plt.figure()
+        fig.clf()
+        n, bins, patches = plt.hist(entropy_list, color='purple')
+        plt.title('Entropy Histogram', fontsize=20)
+        plt.xlabel('Entropy', fontsize=15)
+        plt.ylabel('Frequency', fontsize=15)
+        
+        bar_names = ['{}'.format(i) for i in n]
+        for i, patch in enumerate(patches):
+            tooltip = mpld3.plugins.LineLabelTooltip(patch, bar_names[i], hoffset=10)
+            mpld3.plugins.connect(fig, tooltip)
+
+        entropy = mpld3.fig_to_html(fig)
     else:
         entropy_hide='hidden'
         entropy=''
@@ -823,7 +836,13 @@ def main(argv=None):
         json_fn = filename_prefix[0]+'.json'    
 
     #Format JSON output file
-    format_json(json_fn ,output)
+    if args['summary']:
+        with open(json_fn,'w') as f:
+            for item in output:
+                json.dump(item,f)
+                f.write('\n')
+    else:
+        format_json(json_fn ,output)
 
     # determine the html filename
     html_fn = args.get('--html')

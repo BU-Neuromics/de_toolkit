@@ -498,7 +498,7 @@ def format_json(filename, output):
         json.dump(value,f)
         f.write('\n')
 
-def format_html(html_fn, json_fn, counts_obj, log, density):
+def format_html(html_fn, json_fn, counts_obj, log, density, flag):
 
     #HTML template that will be filled in using the available JSON data
     resource = pkg_resources.resource_string(__name__, 'html_template.html')
@@ -516,11 +516,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density):
     #Format base HTML output (table)
     if 'base' in output_dict:
         base_hide=''
-        with open(json_fn) as file:
-            for line in file:
-                output = json.loads(line.strip('\n'))
-                if output['name'] == 'base':
-                    base_output = output
+        base_output = output_dict['base']
         num_cols = base_output['stats']['num_cols']
         num_rows = base_output['stats']['num_rows']
     else:
@@ -531,12 +527,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density):
     #Format colzero HTML output (bar chart of samples and zero fractions)
     if 'colzero' in output_dict:
         colzero_hide=''
-        with open(json_fn) as file:
-            for line in file:
-                output = json.loads(line.strip('\n'))
-                if output['name'] == 'colzero':
-                    colzero_output = output
-        
+        colzero_output = output_dict['colzero']
         zeros_list = colzero_output['stats']['zeros']
         zero_fracs = []
         column_names = []
@@ -568,12 +559,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density):
     #Format rowzero HTML output (scatterplot of zero fraction vs. nonzero mean and histogram of zero fracs)
     if 'rowzero' in output_dict:
         rowzero_hide=''
-        with open (json_fn) as file:
-            for line in file:
-                output = json.loads(line.strip('\n'))
-                if output['name'] == 'rowzero':
-                    rowzero_output = output
-		
+        rowzero_output = output_dict['rowzero']
         zeros_list = rowzero_output['stats']['zeros']
         zero_fracs = []
         nonzero_means = []
@@ -632,11 +618,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density):
     #Format entropy HTML output (histogram)
     if 'entropy' in output_dict:
         entropy_hide=''
-        with open(json_fn) as file:
-            for line in file:
-                output = json.loads(line.strip('\n'))
-                if output['name'] == 'entropy':
-                    entropy_output = output
+        entropy_output = output_dict['entropy']
         entropies = entropy_output['stats']['entropies']
         entropy = "['Gene', 'Entropy'],"
         for item in entropies:
@@ -696,11 +678,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density):
     #Format PCA HTML output (Scree plot and swarm plots for projections)
     if 'pca' in output_dict:
         pca_hide = ''
-        with open(json_fn) as file:
-            for line in file:
-                output = json.loads(line.strip('\n'))
-                if output['name'] == 'pca':
-                    pca_output = output
+        pca_output = output_dict['pca']
         perc_variance = []
         names = []
         projections = []
@@ -751,7 +729,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density):
             if item not in labels:
                 labels.append(item)
         colors = sns.color_palette(palette_colors).as_hex()[:len(labels)]
-        handles = [patches.Patch(color=col, label=lab) for col, lab in zip(colors, labels)]
+        handles = [ptches.Patch(color=col, label=lab) for col, lab in zip(colors, labels)]
         plt.legend(handles=handles, title=flag)
         plt.title('PCA Swarmplot')
         pca_swarm=mpld3.fig_to_html(fig2)
@@ -825,7 +803,7 @@ def main(argv=None):
     filename_prefix = os.path.splitext(args['<counts_fn>'])
 
     #Check if JSON file option was specified
-    json_fn = args.get('--json',filename_prefix[0]+'.json')
+    json_fn = args.get('--json')
     if json_fn is None:
         json_fn = filename_prefix[0]+'.json'    
 
@@ -841,7 +819,7 @@ def main(argv=None):
     # writing out an html file
     
     if html_fn != 'None' :
-        format_html(html_fn, json_fn, counts_obj, args['--log'], args['--density'])
+        format_html(html_fn, json_fn, counts_obj, args['--log'], args['--density'], args['--color-col'])
     
 
 if __name__ == '__main__':

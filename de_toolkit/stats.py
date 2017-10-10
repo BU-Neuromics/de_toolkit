@@ -475,24 +475,28 @@ def format_json(filename, output):
     # see if filename already exists
     if os.path.isfile(filename) :
       # read in the existing file
+      previous_output = []
       with open(filename) as f :
-        previous_output = json.read(f)
-        for d in previous_output :
-          if 'name' not in d :
-            raise Exception('Malformed detk-stats JSON record in pre-existing '
+        for line in f:
+          previous_output.append(json.loads(line))
+          for d in previous_output :
+            if 'name' not in d :
+              raise Exception('Malformed detk-stats JSON record in pre-existing '
               'file, no name key:',str(d))
-          output_dict[d['name']] = d
+            output_dict[d['name']] = d
 
     # go through the given output and update output_dict appropriately
     if 'name' not in output :
       raise Exception('Malformed detk-stats JSON record in output '
-        'file, no name key:',str(output['name']))
+        'file, no name key:',str(output))
 
     output_dict[output['name']] = output
 
     # write out values in output_dict
     with open(filename,'w') as f :
-      json.dumps(output_dict.items(),f)
+      for value in output_dict.values():
+        json.dump(value,f)
+        f.write('\n')
 
 def format_html(filename, json_fn, funcs_present, counts_obj, log, density, flag):
     '''
@@ -1097,10 +1101,12 @@ def main(argv=None):
 
     # if user specified no html fn, or html_fn != 'None', then we are
     # writing out an html file
+    '''
     if html_fn != 'None' :
         if html_fn is not None :
           html_fn = filename_prefix+'.html'
         format_html(html_fn, filename, funcs_present, counts_obj, log, density, flag)
+    '''
 
 if __name__ == '__main__':
     main()

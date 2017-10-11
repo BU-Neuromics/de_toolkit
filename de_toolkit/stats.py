@@ -498,7 +498,7 @@ def format_json(filename, output):
         json.dump(value,f)
         f.write('\n')
 
-def format_html(html_fn, json_fn, counts_obj, log, density, flag):
+def format_html(html_fn, json_fn, counts_obj, color_col):
 
     #HTML template that will be filled in using the available JSON data
     resource = pkg_resources.resource_string(__name__, 'html_template.html')
@@ -728,10 +728,10 @@ def format_html(html_fn, json_fn, counts_obj, log, density, flag):
 
         stats = pca_output.get('stats')
         column_variables = stats.get('column_variables')
-        if flag == '' and len(column_variables)!=0: 
-            flag = list(column_variables)[0]
+        if color_col == '' and len(column_variables)!=0: 
+            color_col = list(column_variables)[0]
        
-        sample_type = column_variables.get(flag)
+        sample_type = column_variables.get(color_col)
         if sample_type is None:
             sample_type = ['data' for i in range(len(projections))]
 
@@ -744,17 +744,17 @@ def format_html(html_fn, json_fn, counts_obj, log, density, flag):
                 for i in range(0, len(projection)):
                     xlabel = name + ': ' + '{0:.3f}'.format(variance*100.0) + '%'
                     d.append([xlabel, projection[i], sample_type[i]])
-        df = pandas.DataFrame(d, columns=['Principle Components', 'Projection', flag])
+        df = pandas.DataFrame(d, columns=['Principle Components', 'Projection', color_col])
         sns.set_style('whitegrid')
         palette_colors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'black']
-        ax = sns.swarmplot(x='Principle Components', y='Projection', data=df, hue=flag, palette=sns.color_palette(palette_colors))
+        ax = sns.swarmplot(x='Principle Components', y='Projection', data=df, hue=color_col, palette=sns.color_palette(palette_colors))
         labels = []
         for item in sample_type:
             if item not in labels:
                 labels.append(item)
         colors = sns.color_palette(palette_colors).as_hex()[:len(labels)]
         handles = [ptches.Patch(color=col, label=lab) for col, lab in zip(colors, labels)]
-        plt.legend(handles=handles, title=flag)
+        plt.legend(handles=handles, title=color_col)
         plt.title('PCA Swarmplot')
         pca_swarm=mpld3.fig_to_html(fig2)
 
@@ -861,7 +861,7 @@ def main(argv=None):
     # writing out an html file
     
     if html_fn != 'None' :
-        format_html(html_fn, json_fn, counts_obj, args['--log'], args['--density'], args['--color-col'])
+        format_html(html_fn, json_fn, counts_obj, args['--color-col'])
     
 
 if __name__ == '__main__':

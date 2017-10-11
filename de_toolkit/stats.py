@@ -541,6 +541,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density, flag):
         
         fig = plt.figure()
         fig.clf()
+        mpld3.plugins.clear(fig)
         bars=plt.bar(x, zero_fracs, tick_label=column_names, color='red')
         plt.title('Zero Fractions Bar Chart', fontsize=20)
         plt.xlabel('Sample', fontsize=15)
@@ -575,6 +576,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density, flag):
 
         fig1 = plt.figure(1)
         fig1.clf()
+        mpld3.plugins.clear(fig1)
         points = plt.scatter(zero_fracs, nonzero_means)
         plt.title('Zero Fractions vs. Nonzero Means', fontsize=20)
         plt.xlabel('Zero Fraction', fontsize=15)
@@ -584,6 +586,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density, flag):
 
         fig2 = plt.figure(2)
         fig2.clf()
+        mpld3.plugins.clear(fig2)
         mean_points = plt.scatter(zero_fracs, means)
         plt.title('Zero Fractions vs. Means', fontsize=20)
         plt.xlabel('Zero Fraction', fontsize=15)
@@ -593,6 +596,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density, flag):
 
         fig3 = plt.figure(3)
         fig3.clf()
+        mpld3.plugins.clear(fig3)
         n, bins, patches = plt.hist(zero_fracs, bins=10, range=(0.0, 1.0), color='green')
         plt.title('Zero Fractions Histogram', fontsize=20)
         plt.xlabel('Zero Fraction', fontsize=15)
@@ -625,6 +629,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density, flag):
             entropy_list.append(item['entropy'])
         fig = plt.figure()
         fig.clf()
+        mpld3.plugins.clear(fig)
         n, bins, patches = plt.hist(entropy_list, color='purple')
         plt.title('Entropy Histogram', fontsize=20)
         plt.xlabel('Entropy', fontsize=15)
@@ -648,6 +653,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density, flag):
         row_names = counts_obj.count_names
         fig = plt.figure()
         fig.clf()
+        mpld3.plugins.clear(fig)
         box = plt.boxplot(cnts, labels=names)
         
         outliers = []
@@ -709,6 +715,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density, flag):
         x = [i for i in range(0, len(perc_variance))]
         fig = plt.figure(1)
         fig.clf()
+        mpld3.plugins.clear(fig)
         plt.plot(x, perc_variance, label='Variance')
         var, = plt.plot(x, perc_variance, label='Variance')
         cumulative, = plt.plot(x, cumulative_variance, label='Cumulative Variance')
@@ -730,6 +737,7 @@ def format_html(html_fn, json_fn, counts_obj, log, density, flag):
 
         fig2 = plt.figure(2)    
         fig2.clf()
+        mpld3.plugins.clear(fig2)
         d = []
         for name, projection, variance in zip(names, projections, perc_variance):
             if variance >= 0.05:

@@ -1,5 +1,12 @@
+'''
+Usage:
+    detk-filter [options] nonzero [--n=<n>] [--groups=<groups>] <counts_fn>
+'''
+
 import numpy as np
 import pandas as pd
+from docopt import docopt
+from .common import *
 
 def filter_nonzero(count_mat,n=0.5,groups=None) :
     '''
@@ -31,3 +38,25 @@ def filter_nonzero(count_mat,n=0.5,groups=None) :
             final_cnts.loc[name] = list(item)
 
     return final_cnts
+
+def main(argv=None):
+
+    args = docopt(__doc__, argv=argv)
+
+    args['<counts_fn>'] = args.get('<counts_fn>')
+    counts_obj = CountMatrixFile(args['<counts_fn>'])
+
+    args['--n'] = args.get('--n')
+    if args['--n'] is None:
+      args['--n'] = 0.5
+    else:
+      args['--n'] = float(args['--n'])
+    
+    args['--groups'] = args.get('--groups')
+
+    if args['nonzero']:
+      output = filter_nonzero(counts_obj, args['--n'], args['--groups'])
+
+
+if __name__ == '__main__':
+    main()

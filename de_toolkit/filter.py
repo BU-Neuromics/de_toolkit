@@ -1,6 +1,9 @@
 '''
 Usage:
     detk-filter [options] nonzero [--n=<n>] [--groups=<groups>] <counts_fn>
+
+Options:
+    --output=<out_fn>    Name of output file
 '''
 
 import numpy as np
@@ -60,8 +63,10 @@ def main(argv=None):
       output = filter_nonzero(counts_obj, args['--n'], args['--groups'])
 
 
-    filename_prefix = os.path.splitext(args['<counts_fn>'])
-    output_fn = filename_prefix[0]+'_filtered'+filename_prefix[1]
+    output_fn = args.get('--output')
+    if output_fn is None:
+      filename_prefix = os.path.splitext(args['<counts_fn>'])
+      output_fn = filename_prefix[0]+'_filtered'+filename_prefix[1]
     
     with open(args['<counts_fn>']) as f:
       dialect = csv.Sniffer().sniff(f.read())

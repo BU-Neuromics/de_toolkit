@@ -788,6 +788,8 @@ def main(argv=None):
     args['--bins'] = args.get('--bins')
     if args['--bins'] is None:
         args['--bins'] = 20
+    else:
+        args['--bins'] = int(args['--bins'])
 
     #Set log option
     args['--log'] = args.get('--log')

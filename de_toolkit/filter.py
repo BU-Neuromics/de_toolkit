@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 from docopt import docopt
 from .common import *
+import os.path
+import csv
 
 def filter_nonzero(count_mat,n=0.5,groups=None) :
     '''
@@ -57,6 +59,20 @@ def main(argv=None):
     if args['nonzero']:
       output = filter_nonzero(counts_obj, args['--n'], args['--groups'])
 
+
+    filename_prefix = os.path.splitext(args['<counts_fn>'])
+    output_fn = filename_prefix[0]+'_filtered'+filename_prefix[1]
+    
+    with open(args['<counts_fn>']) as f:
+      dialect = csv.Sniffer().sniff(f.read())
+      f.seek(0)
+      first_line = f.readline()
+      index = first_line.find(dialect.delimiter)
+      first_val = first_line[0:index]
+
+    with open(output_fn, 'w') as out_f:
+      output.index.names = [first_val]
+      output.to_csv(out_f, sep=dialect.delimiter)
 
 if __name__ == '__main__':
     main()

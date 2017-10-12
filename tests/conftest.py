@@ -235,12 +235,12 @@ def fake_counts_tsv_with_zeros(request,fake_counts_text_data_with_zeros) :
 def fake_counts_obj_with_zeros(
   fake_counts_csv_with_zeros
   ,fake_column_data_csv
-  ,fake_design) :
+  ,fake_logistic_design) :
 
   return make_counts_obj(
     fake_counts_csv_with_zeros
     ,fake_column_data_csv
-    ,fake_design
+    ,fake_logistic_design
   )
 
 ################################################################################

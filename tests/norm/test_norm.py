@@ -129,8 +129,8 @@ def test_deseq2_py_vs_rpy_somezero(fake_counts_obj) :
 
   from de_toolkit.norm import deseq2, deseq2_rpy
 
-  fake_counts_obj.counts.ix[0,2] = 0
-  fake_counts_obj.counts.ix[4,2] = 0
+  fake_counts_obj.counts.iloc[0,2] = 0
+  fake_counts_obj.counts.iloc[4,2] = 0
 
   # this raises R warnings about converting floats to integers that we can
   # ignore

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
+import pkg_resources
 
 setup(name='de_toolkit',
       version=open('VERSION').read().strip()
@@ -13,6 +14,7 @@ setup(name='de_toolkit',
         ,'future'
       ]
       ,packages=find_packages()
+      ,package_data={'de_toolkit':['html_template.html']}
       ,entry_points={
         'console_scripts': [
           'detk=de_toolkit.common:main'

@@ -2,18 +2,40 @@
 <title>Stats Module Output</title>
 <head>
 <style>
-table, th, td{
-        border: 1px solid black;
+table{
+	color: #333;
         border-collapse: collapse;
+	border-spacing: 0;
+	width: 430px;
 }
 th, td{
+	border: 1px solid #CCC;
         padding: 5px;
         text-align: center;
+	height: 30px;
+	transition: all 0.3s;
+}
+th{
+	background: #F3F3F3;
+	font-weight: bold;
+}
+td{
+	background: #FAFAFA;
+}
+tr td:hover {background: #666; color: #FFF:}
+h1{
+	font-family: Impact, Charcoal, sans-serif;
+	font-size: 50px;
+	text-decoration: underline;
+}
+p{
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 30px;
+	line-height: 200%;
 }
 </style>
 </head>
-<p><center>Stats Module Output</center></p>
-</br>
+<h1><center>Stats Module Output</center></h1>
 <p $base_hide>Base:
 </br>
 <table>
@@ -27,222 +49,46 @@ th, td{
   </tr>
 </table>
 </p>
-<p $coldist_hide>Coldist:
-</br>
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-      google.charts.load("current", {packages:["corechart"]});
-      google.charts.setOnLoadCallback(drawChart);
-
-        function drawChart(){
-var array = [$coldist_data];
-
-    var data = new google.visualization.DataTable();
-    data.addColumn('string', 'x');
-    $coldist_cols
-    data.addColumn({ id: 'max', type: 'number', role: 'interval' });
-    data.addColumn({ id: 'min', type: 'number', role: 'interval' });
-    data.addColumn({ id: 'firstQuartile', type: 'number', role: 'interval' });
-    data.addColumn({ id: 'median', type: 'number', role: 'interval' });
-    data.addColumn({ id: 'thirdQuartile', type: 'number', role: 'interval' });
-
-    data.addRows(getBoxPlotValues(array));
-
-    /**
-     * Takes an array of input data and returns an
-     * array of the input data with the box plot
-     * interval data appended to each row.
-     */
-function getBoxPlotValues(array) {
-
-        for (var i = 0; i < array.length; i++) {
-
-            var arr = array[i].slice(1).sort(function (a, b) {
-                return a - b;
-            });
-
-            var max = arr[arr.length - 1];
-            var min = arr[0];
-            var median = getMedian(arr);
-            var num = array[i].length;
-            var index = 0;
-            var length = arr.length;
-
-            if(length%2 == 0){
-                index = length/2-1;
-            }
-            else{
-                index=Math.floor(length/2);
-            }
-
-
-            // First Quartile is the median from lowest to overall median.
-            var firstQuartile = getMedian(arr.slice(0, index));
-
-            // Third Quartile is the median from the overall median to the highest.
-            var thirdQuartile = getMedian(arr.slice(index));
-
-            array[i][num] = max;
-            array[i][num+1] = min
-            array[i][num+2] = firstQuartile;
-            array[i][num+3] = median;
-            array[i][num+4] = thirdQuartile;
-        }
-        return array;
-    }
-/*
-     * Takes an array and returns
-     * the median value.
-     */
-    function getMedian(array) {
-        var length = array.length;
-
-        /* If the array is an even length the
-         * median is the average of the two
-         * middle-most values. Otherwise the
-         * median is the middle-most value.
-         */
-        if (length % 2 === 0) {
-            var midUpper = length / 2;
-            var midLower = midUpper - 1;
-
-            return (array[midUpper] + array[midLower]) / 2;
-        } else {
-            return array[Math.floor(length / 2)];
-        }
-    }
-//series: [{ 'color': '#D3362D' }],
-    var options = {
-        title: 'Count Distribution by Column',
-        height: 500,
-        legend: { position: 'none' },
-        vAxis: {title: 'Count'},
-        hAxis: {
-            gridlines: { color: '#fff' },
-            title: 'Sample'
-        },
-        lineWidth: 0,
-        intervals: {
-            barWidth: 1,
-            boxWidth: 1,
-            lineWidth: 2,
-            style: 'boxes'
-        },
- interval: {
-            max: {
-                style: 'bars',
-                fillOpacity: 1,
-                color: 'blue'
-            },
-            min: {
-                style: 'bars',
-                fillOpacity: 1,
-                color: 'blue'
-            },
-            firstQuartile: {
-                style: 'boxes',
-                fillOpacity: 0.7,
-                color: 'green'
-            },
-            thirdQuartile: {
-                style: 'boxes',
-                fillOpacity: 0.7,
-                color: 'red'
-            }
-        }
-    };
-   var chart = new google.visualization.LineChart(document.getElementById('box_plot'));
-
-    chart.draw(data, options);
-}
-</script>
-<div id="box_plot" style="width: 900px; height: 500px;" $coldist_hide></div>
+<p $coldist_hide>Coldist:</br>
+<span style="padding-left:20px; display:block; font-size:15px; font-style:normal; line-height:100%">
+The coldist boxplot shows the distribution of the counts in each column of the data<br>
+matrix. Hover over an outlier point to see which row it came from,or hover over the<br>
+boxplot to see the first and third quartile values, the median, and the cap values.</span>
+$coldist_boxplot
 </p>
-<p $colzero_hide>Colzero:
- <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <script type="text/javascript">
-    google.charts.load("current", {packages:['corechart']});
-    google.charts.setOnLoadCallback(drawChart);
-    function drawChart() {
-      var data = google.visualization.arrayToDataTable([$colzero]);
-
-      var options = {
-        title: "Proportion of 0 Counts Per Sample",
-        width: 600,
-        height: 400,
-        bar: {groupWidth: "95%"},
-        legend: { position: "none" },
-        vAxis: {title:"Proportion of 0 Counts"}
-      };
-      var chart = new google.visualization.ColumnChart(document.getElementById("chart1"));
-      chart.draw(data,options);
-  }
-</script>
-<div id="chart1" style="width: 900px; height: 400px;" $colzero_hide></div>
-</br>
+<p $colzero_hide>Colzero:</br>
+<span style="padding-left:20px; display:block; font-size:15px; font-style:normal; line-height:100%">
+The colzero output is a bar chart depicting the zero fractions for each sample. Hover<br>
+over each bar to see the value of the zero fraction for that sample.
+</span>
+$colzero
 </p>
-<p $rowzero_hide>Rowzero:
+<p $rowzero_hide>Rowzero:</br>
+<span style="padding-left:20px; display:block; font-size:15px; font-style:normal; line-height:100%">
+The first rowzero plot is a scatterplot of the zero fractions against nonzero means for<br>
+each row. The second rowzero plot is a scatterplot of the zero fractions against the<br>
+overall mean of the row. For each of the scatterplots, hover over each point to see<br> 
+which row the point comes from, as well as the x and y values of the point. The third<br>
+rowzero plot is a histogram of the zero fractions. Hover over the bar to see the<br>
+frequency of the bin.
+</span>
+$rowzero_scatter
 </br>
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-      google.charts.load('current', {'packages':['corechart']});
-      google.charts.setOnLoadCallback(drawChart);
-
-      function drawChart() {
-        var data = google.visualization.arrayToDataTable([$rowzero_scatter]);
-
-        var options = {
-          title: 'Zero Fractions vs. Nonzero Means by Gene',
-          hAxis: {title: 'Zero Fraction', minValue: 0, maxValue: 1},
-          vAxis: {title: 'Nonzero Mean', minValue: 0},
-          legend: 'none'
-        };
-
-        var chart = new google.visualization.ScatterChart(document.getElementById('chart2'));
-
-        chart.draw(data, options);
-      }
-    </script>
-<div id="chart2" style="width: 900px; height: 500px;" $rowzero_hide></div>
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-      google.charts.load("current", {packages:["corechart"]});
-      google.charts.setOnLoadCallback(drawChart);
-      function drawChart() {
-        var data = google.visualization.arrayToDataTable([$rowzero_hist]);
-
-        var options = {
-          title: 'Zero Fractions by Gene',
-          legend: { position: 'none' },
-          colors: ['green'],
-	  histogram: { bucketSize: 0.1, minValue: 0.0, maxValue: 1.0}
-	};
-
-        var chart = new google.visualization.Histogram(document.getElementById('chart_div3'));
-        chart.draw(data, options);
-      }
-    </script>
-<div id="chart_div3" style="width: 1500px; height: 500px;" $rowzero_hide></div>
+$rowzero_scatter2
+</br>
+$rowzero_hist
 </p>
-<p $entropy_hide>Entropy:
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-      google.charts.load("current", {packages:["corechart"]});
-      google.charts.setOnLoadCallback(drawChart);
-      function drawChart() {
-        var data = google.visualization.arrayToDataTable([$entropy]);
-
-        var options = {
-          title: 'Entropy Values by Gene',
-          legend: { position: 'none' },
-          colors: ['red'],
-	  histogram: { bucketSize: 0.10}
-        };
-
-        var chart = new google.visualization.Histogram(document.getElementById('chart_div4'));
-        chart.draw(data, options);
-      }
-    </script>
-<div id="chart_div4" style="width: 900px; height: 500px;" $entropy_hide></div>
+<p $entropy_hide>Entropy:</br>
+<span style="padding-left:20px; display:block; font-size:15px; font-style:normal; line-height:100%">
+The entropy plot is a histogram of the entropies of each row. Hover over the bars to<br>
+see the frequency of the bin.
+</span>
+$entropy
+</p>
+<p $pca_hide>PCA:
+</br>
+$pca_scree
+</br>
+$pca_swarm
 </p>
 </html>

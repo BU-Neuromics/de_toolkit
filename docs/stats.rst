@@ -322,3 +322,78 @@ name
 entropy
   the value of :math:`H` calculated as above for that row
 
+.. _pca:
+
+``pca`` - Principal Component Analysis
+--------------------------------------
+
+Usage::
+
+  detk-stats [options] pca [-m <column data fn> -f <column_variable> [-f <column_variable>]] <counts fn>
+
+
+This module performs Principal Component Analysis (PCA) on a :math:`n \times m`
+counts matrix, where :math:`n` is the number of rows (genes) and :math:`m` is
+the number of columns (samples).  Briefly, PCA identifies the directions (e.g.
+genes and their magnitudes) that represent directions of maximal variance in a
+dataset.  The output of PCA is a set of principal components, where each
+principal component consists of an :math:`m`-length vector of *weights* or
+*loadings* and a :math:`n`-length vector of *scores*. Each principal component
+describes a precentage of the overall variance of the dataset. There are exactly
+:math:`m` principal components identified by a PCA, but typically only a small
+subset of these components explains a large amount of the variance in a real
+dataset.
+
+This module performs PCA on a provided counts matrix and returns the principal
+component weights, scores, and variances. In addition, the weights and scores
+for each individual component can be combined to define the *projection* of
+each sample along that component. Commonly, projections of each sample against
+each principal component can be used to identify outlier samples, batch effects,
+sample group, etc by describing how each sample contributes to the variance in
+each component. Therefore, the projections for each sample for each component
+are also included in the output.
+
+*Experimental:* The PCA module can also accept a metadata file that contains
+information about the samples in each column. The user can specify some of these
+columns to include as variables for plotting purposes. The idea is that columns
+labeled with the same class will be colored according to their class, such that
+separations in the data can be more easily observed when projections are
+plotted.
+
+Example JSON output::
+
+  [
+    'name': 'pca',
+    'stats': {
+      'column_names': ['sample1','sample2',...],
+      'column_variables': {
+        'sample_type':['HD','HD','C',...],
+        'sample_batch':['Batch1','Batch2','Batch2',...]
+      },
+      'components': [
+        {
+          'name': 'PC1',
+          'scores': [0.126,0.975,...], # length n
+          'projections': [-8.01,5.93,...], # length m, ordered by 'column_names'
+          'perc_variance': 0.75
+        },
+        {
+          'name': 'PC2',
+          'scores' : [0.126,0.975,...], # length n
+          'projections': [5.93,-5.11,...], # length m
+          'perc_variance': 0.22
+        }
+      ]
+    }
+  ]
+
+The html output for this module contains three plots: a `scree plot`__, a set
+of line plots containing the sample projections, and an interactive scatter
+plot where the user can choose which principal component projections to plot on
+the X and Y axis. The two types of projection plots also have interactivity
+allowing the user to select which column variable to use for coloring the
+plotted projection points.
+
+.. _scree_plot: http://www.improvedoutcomes.com/docs/WebSiteDocs/PCA/Creating_a_Scree_Plot.htm
+
+__ scree_plot_

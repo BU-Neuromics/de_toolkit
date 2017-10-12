@@ -178,6 +178,11 @@ def fake_count_rowdist_obj(
 
 ################################################################################
 
+def test_stats_cli() :
+  from de_toolkit.stats import main
+  from docopt import DocoptExit
+  with pytest.raises(DocoptExit) :
+    main(['detk-stats','summary','counts_fn'])
 
 #test for base function
 def test_stats_base(fake_counts_obj):
@@ -706,9 +711,76 @@ def test_stats_summary_JSON():
 
 @pytest.mark.skip(reason='will integrate PCA tests after merge')
 def test_stats_countPCA(fake_counts_obj):
+
     output = count_PCA(fake_counts_obj)
     name = output.get('name')
-    components = len(output.get('components'))
-    col_names = output.get('stats', {}).get('column_names')
-    assert name == 'pca' and components == 3 and col_names == ['a','b','c']
+    assert name == 'pca'
 
+def test_stats_PCA_col_names(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    col_names = output.get('stats', {}).get('column_names')
+    true_col_names = ['a', 'b', 'c']
+    assert col_names == true_col_names
+
+def test_stats_PCA_num_components(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    num_components = len(output.get('components'))
+    assert num_components == 3
+
+def test_stats_PCA_component_names(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    true_comp_names = ['PC1', 'PC2', 'PC3']
+    comp_names = []
+    components = output.get('components')
+    for item in components:
+      comp_names.append(item.get('name'))
+    assert true_comp_names == comp_names
+
+def test_stats_PCA_num_scores(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    true_num_scores = [5, 5, 5]
+    num_scores = []
+    components = output.get('components')
+    for item in components:
+      num_scores.append(len(item.get('scores')))
+    assert true_num_scores == num_scores
+
+def test_stats_PCA_num_projections(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    true_num_projections = [3, 3, 3]
+    num_projections = []
+    components = output.get('components')
+    for item in components:
+      num_projections.append(len(item.get('projections')))
+    assert true_num_projections == num_projections
+
+def test_stats_PCA_perc_variance(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    true_perc_variance = [0.9878246911444414, 0.01214185070132599, 3.34581542e-05]
+    perc_variance = []
+    components = output.get('components')
+    for item in components:
+      perc_variance.append(item.get('perc_variance'))
+    assert np.allclose(true_perc_variance, perc_variance)
+
+def test_stats_PCA_scores(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    true_scores = [[-2.13538377e+00, -1.32959347e+00, -2.84804960e-01, 1.04478851e+00, 2.70499369e+00],
+                   [2.51638701e-01, -7.20344487e-02, -2.25158739e-01, -1.53124291e-01, 1.98678777e-01],
+                   [-8.08657117e-03, 1.45810998e-02, 9.72247845e-04, -1.36088520e-02, 6.14207548e-03]]
+    scores = []
+    components = output.get('components')
+    for item in components:
+      scores.append(item.get('scores'))
+    assert np.allclose(true_scores, scores)
+
+def test_stats_PCA_projections(fake_counts_obj):
+    output = count_PCA(fake_counts_obj)
+    true_projections = [[0.57528892, -0.72606076, 0.37666754],
+		        [0.58086251, 0.03842312, -0.81309434],
+			[0.57588315, 0.68655622, 0.44384587]]
+    projections = []
+    components = output.get('components')
+    for item in components:
+      projections.append(item.get('projections'))
+    assert np.allclose(true_projections, projections)

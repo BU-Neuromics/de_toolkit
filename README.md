@@ -39,43 +39,38 @@ There is work-in-progress documentation at (readthedocs.org):
 
 # Installing
 
-## conda package
-
-We suggest installing this package using [anaconda](http://anaconda.org) on the
-bubhub channel:
+## From pypi
 
 ```
-conda install -c bubhub de_toolkit
+pip install de_toolkit
 ```
 
-## Manual installation
+## Installing R and packages
 
-If conda is not available, ensure the following packages are installed and
-available in your environment:
+Certain functions in detk, particularly the `de` module, use rpy2 to interface
+with R and bioconductor packages. You must have a version of R installed and
+the following packages to use the corresponding submodule functions:
 
-  * python packages (python>=3.5):
-    - docopt
-    - pandas
-    - numpy
-  * R packages (R>=3.2):
-    - R>=3.2
-    - docopt
+  - [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
+  - [logistf](https://cran.r-project.org/web/packages/logistf/index.html)
 
-The following packages are only required to use the corresponding submodule
-functions:
+# Development
 
-  * R packages:
-    - DESeq2 (bioconductor)
-    - RUVSeq (bioconductor)
-    - logistf (CRAN)
-
-We suggest using [anaconda](http://anaconda.org) to create an environment that contains the software
-necessary, e.g.:
+First clone or fork and clone this repo:
 
 ```
+git clone https://bitbucket.org/bubioinformaticshub/de_toolkit.git
+```
+
+We suggest using [anaconda](http://anaconda.org) to create an environment that
+contains the software necessary, e.g.:
+
+```
+cd de_toolkit
 conda create -n de_toolkit python=3.5
+source activate de_toolkit
 ./install_conda_packages.sh
-Rscript install_r_packages.R # if you want to use logistf
+Rscript install_r_packages.R
 ```
 
 In development, when you want to run the toolkit, use the `setup.py` script:

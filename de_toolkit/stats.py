@@ -574,7 +574,7 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
             row_names.append('{0}: {1:.2f}, {2:.2f}'.format(item['name'], item['zero_frac'], item['nonzero_mean']))
             means.append(item['mean'])
             row_names2.append('{0}: {1:.2f}, {2:.2f}'.format(item['name'], item['zero_frac'], item['mean']))
-
+        
         fig1 = plt.figure(1)
         fig1.clf()
         mpld3.plugins.clear(fig1)
@@ -609,7 +609,7 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
         for i, patch in enumerate(patches):
             tooltip3 = mpld3.plugins.LineLabelTooltip(patch, bar_names[i], hoffset=10)
             mpld3.plugins.connect(fig3, tooltip3)
-
+        
         rowzero_scatter = mpld3.fig_to_html(fig1)
         rowzero_scatter2 = mpld3.fig_to_html(fig2)
         rowzero_hist = mpld3.fig_to_html(fig3)

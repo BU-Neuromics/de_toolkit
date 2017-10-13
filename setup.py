@@ -8,11 +8,7 @@ setup(name='de_toolkit',
       ,description='Suite of tools for working with count data'
       ,author='Adam Labadorf'
       ,author_email='labadorf@bu.edu'
-      ,install_requires=[
-        'docopt'
-        ,'pytest'
-        ,'future'
-      ]
+      ,install_requires=[_.strip() for _ in open('requirements.txt')]
       ,packages=find_packages()
       ,package_data={'de_toolkit':['html_template.html']}
       ,entry_points={

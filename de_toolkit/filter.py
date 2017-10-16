@@ -1,6 +1,6 @@
 '''
 Usage:
-    detk-filter [options] nonzero [--n=<n>] [--groups=<groups>] <counts_fn>
+    detk-filter [options] <command> <counts_fn>
 
 Options:
     --output=<out_fn>    Name of output file
@@ -12,6 +12,8 @@ from docopt import docopt
 from .common import *
 import os.path
 import csv
+import ply.lex as lex
+import statistics
 
 def filter_nonzero(count_mat,n=0.5,groups=None) :
     '''
@@ -44,6 +46,32 @@ def filter_nonzero(count_mat,n=0.5,groups=None) :
 
     return final_cnts
 
+def filter_median(count_mat, num, relation):
+    
+    cnts = count_mat.counts.as_matrix()
+    column_names = count_mat.sample_names
+    row_names = list(count_mat.feature_names)
+    final_cnts = pd.DataFrame(columns=column_names)
+
+    for item, name in zip(cnts, row_names):
+      if relation == '>':
+        if statistics.median(item) > num:
+          final_cnts.loc[name] = list(item)
+      elif relation == '>=':
+        if statistics.median(item) >= num:
+          final_cnts.loc[name] = list(item)
+      elif relation == '<':
+        if statistics.median(item) < num:
+          final_cnts.loc[name] = list(item)
+      elif relation == '<=':
+        if statistics.median(item) <= num:
+          final_cnts.loc[name] = list(item)
+      elif relation == '==':
+        if statistics.median(item) == num:
+          final_cnts.loc[name] = list(item)
+
+    return final_cnts
+
 def main(argv=None):
 
     args = docopt(__doc__, argv=argv)
@@ -51,17 +79,7 @@ def main(argv=None):
     args['<counts_fn>'] = args.get('<counts_fn>')
     counts_obj = CountMatrixFile(args['<counts_fn>'])
 
-    args['--n'] = args.get('--n')
-    if args['--n'] is None:
-      args['--n'] = 0.5
-    else:
-      args['--n'] = float(args['--n'])
-    
-    args['--groups'] = args.get('--groups')
-
-    if args['nonzero']:
-      output = filter_nonzero(counts_obj, args['--n'], args['--groups'])
-
+    command = args['<command>']
 
     output_fn = args.get('--output')
     if output_fn is None:

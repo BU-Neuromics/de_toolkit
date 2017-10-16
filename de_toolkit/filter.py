@@ -15,6 +15,24 @@ import csv
 import ply.lex as lex
 import statistics
 
+tokens = ('ALL', 'RELATION', 'NUMBER', 'PAREN', 'MEDIAN')
+
+t_ALL = r'(?i)all'
+t_RELATION = r'[<>]=?|='
+t_PAREN = t_PAREN = r'(\(|\))'
+t_MEDIAN = r'(?i)median'
+
+def t_NUMBER(t):
+    r'[-+]?([0-9]*\.[0-9]+|[0-9]+)'
+    t.value = float(t.value)
+    return t
+
+t_ignore = ' \t'
+
+def t_error(t):
+    filter.append('Illegal character {}'.format(t.value[0]))
+    t.lexer.skip(1)
+
 def filter_nonzero(count_mat,n=0.5,groups=None) :
     '''
       Filter rows from *count_mat* based on the number of zero counts.
@@ -80,6 +98,22 @@ def main(argv=None):
     counts_obj = CountMatrixFile(args['<counts_fn>'])
 
     command = args['<command>']
+    lexer = lex.lex()
+    lexer.input(command)
+
+    while True:
+      tok = lexer.token()
+      if not tok:
+        break
+      if tok.type == 'NUMBER':
+        number = tok.value
+      elif tok.type == 'MEDIAN':
+        function = tok.value.lower()
+      elif tok.type == 'RELATION':
+        relation = tok.value
+
+    if function == 'median':
+      output = filter_median(counts_obj, number, relation)
 
     output_fn = args.get('--output')
     if output_fn is None:

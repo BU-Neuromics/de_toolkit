@@ -103,37 +103,37 @@ def filter_zeros(count_mat,n,relation,groups=None) :
       if 0 < n < 1:
         for item, name in zip(cnts, row_names):
           if relation == '>':
-            if 1-np.count_nonzero(item)/len(item) > n:
+            if list(item).count(0)/len(item) > n:
               final_cnts.loc[name] = list(item)
           elif relation == '>=':
-            if 1-np.count_nonzero(item)/len(item) >= n:
+            if list(item).count(0)/len(item) >= n:
               final_cnts.loc[name] = list(item)
           elif relation == '<':
-            if 1-np.count_nonzero(item)/len(item) < n:
+            if list(item).count(0)/len(item) < n:
               final_cnts.loc[name] = list(item)
           elif relation == '<=':
-            if 1-np.count_nonzero(item)/len(item) <= n:
+            if list(item).count(0)/len(item) <= n:
               final_cnts.loc[name] = list(item)
           elif relation == '=' or relation == '==':
-            if 1-np.count_nonzero(item)/len(item) == n:
+            if list(item).count(0)/len(item) == n:
               final_cnts.loc[name] = list(item)     
 
       elif 1 <= n <= len(cnts[0]):
         for item, name in zip(cnts, row_names):
           if relation == '>':
-            if len(item)-np.count_nonzero(item) > n:
+            if list(item).count(0) > n:
               final_cnts.loc[name] = list(item)
           elif relation == '>=':
-            if len(item)-np.count_nonzero(item) >= n:
+            if list(item).count(0) >= n:
               final_cnts.loc[name] = list(item)
           elif relation == '<':
-            if len(item)-np.count_nonzero(item) < n:
+            if list(item).count(0) < n:
               final_cnts.loc[name] = list(item)
           elif relation == '<=':
-            if len(item)-np.count_nonzero(item) <= n:
+            if list(item).count(0) <= n:
               final_cnts.loc[name] = list(item)
           elif relation == '=' or relation == '==':
-            if len(item)-np.count_nonzero(item) == n:
+            if list(item).count(0) == n:
               final_cnts.loc[name] = list(item)     
 
     return final_cnts

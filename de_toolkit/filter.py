@@ -13,14 +13,14 @@ from .common import *
 import os.path
 import csv
 import ply.lex as lex
-import statistics
 
-tokens = ('ALL', 'RELATION', 'NUMBER', 'PAREN', 'MEDIAN')
+tokens = ('ALL', 'RELATION', 'NUMBER', 'PAREN', 'MEDIAN', 'MEAN')
 
 t_ALL = r'(?i)all'
 t_RELATION = r'[<>]=?|='
 t_PAREN = t_PAREN = r'(\(|\))'
 t_MEDIAN = r'(?i)median'
+t_MEAN = r'(?i)mean'
 
 def t_NUMBER(t):
     r'[-+]?([0-9]*\.[0-9]+|[0-9]+)'
@@ -48,7 +48,7 @@ def filter_nonzero(count_mat,n=0.5,groups=None) :
 
     cnts = count_mat.counts.as_matrix()
     column_names = count_mat.sample_names
-    row_names = list(count_mat.feature_names)
+    row_names = count_mat.feature_names
     final_cnts = pd.DataFrame(columns=column_names)
 
     if groups is None:
@@ -68,28 +68,54 @@ def filter_median(count_mat, num, relation):
     
     cnts = count_mat.counts.as_matrix()
     column_names = count_mat.sample_names
-    row_names = list(count_mat.feature_names)
+    row_names = count_mat.feature_names
     final_cnts = pd.DataFrame(columns=column_names)
 
     for item, name in zip(cnts, row_names):
       if relation == '>':
-        if statistics.median(item) > num:
+        if np.median(item) > num:
           final_cnts.loc[name] = list(item)
       elif relation == '>=':
-        if statistics.median(item) >= num:
+        if np.median(item) >= num:
           final_cnts.loc[name] = list(item)
       elif relation == '<':
-        if statistics.median(item) < num:
+        if np.median(item) < num:
           final_cnts.loc[name] = list(item)
       elif relation == '<=':
-        if statistics.median(item) <= num:
+        if np.median(item) <= num:
           final_cnts.loc[name] = list(item)
-      elif relation == '==':
-        if statistics.median(item) == num:
+      elif relation == '=':
+        if np.median(item) == num:
           final_cnts.loc[name] = list(item)
 
     return final_cnts
 
+def filter_mean(count_mat, num, relation):
+
+    cnts = count_mat.counts.as_matrix()
+    column_names = count_mat.sample_names
+    row_names = count_mat.feature_names
+    final_cnts = pd.DataFrame(columns=column_names)
+
+    for item, name in zip(cnts, row_names):
+      if relation == '>':
+        if np.mean(item) > num:
+          final_cnts.loc[name] = list(item)
+      elif relation == '>=':
+        if np.mean(item) >= num:
+          final_cnts.loc[name] = list(item)
+      elif relation == '<':
+        if np.mean(item) < num:
+          final_cnts.loc[name] = list(item)
+      elif relation == '<=':
+        if np.mean(item) <= num:
+          final_cnts.loc[name] = list(item)
+      elif relation == '=':
+        if np.mean(item) == num:
+         final_cnts.loc[name] = list(item)
+
+    return final_cnts
+     
 def main(argv=None):
 
     args = docopt(__doc__, argv=argv)
@@ -107,13 +133,15 @@ def main(argv=None):
         break
       if tok.type == 'NUMBER':
         number = tok.value
-      elif tok.type == 'MEDIAN':
+      elif tok.type in ('MEDIAN', 'MEAN'):
         function = tok.value.lower()
       elif tok.type == 'RELATION':
         relation = tok.value
 
     if function == 'median':
       output = filter_median(counts_obj, number, relation)
+    elif function == 'mean':
+      output = filter_mean(counts_obj, number, relation)
 
     output_fn = args.get('--output')
     if output_fn is None:

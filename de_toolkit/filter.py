@@ -14,13 +14,14 @@ import os.path
 import csv
 import ply.lex as lex
 
-tokens = ('ALL', 'RELATION', 'NUMBER', 'PAREN', 'MEDIAN', 'MEAN')
+tokens = ('ALL', 'RELATION', 'NUMBER', 'PAREN', 'MEDIAN', 'MEAN', 'NONZERO')
 
 t_ALL = r'(?i)all'
 t_RELATION = r'[<>]=?|='
 t_PAREN = t_PAREN = r'(\(|\))'
 t_MEDIAN = r'(?i)median'
 t_MEAN = r'(?i)mean'
+t_NONZERO = r'(?i)nonzero'
 
 def t_NUMBER(t):
     r'[-+]?([0-9]*\.[0-9]+|[0-9]+)'
@@ -33,7 +34,7 @@ def t_error(t):
     filter.append('Illegal character {}'.format(t.value[0]))
     t.lexer.skip(1)
 
-def filter_nonzero(count_mat,n=0.5,groups=None) :
+def filter_nonzero(count_mat,n,relation,groups=None) :
     '''
       Filter rows from *count_mat* based on the number of zero counts.
 
@@ -54,13 +55,39 @@ def filter_nonzero(count_mat,n=0.5,groups=None) :
     if groups is None:
       if 0 < n < 1:
         for item, name in zip(cnts, row_names):
-          if np.count_nonzero(item)/len(item) > n:
-            final_cnts.loc[name] = list(item)
-    
+          if relation == '>':
+            if np.count_nonzero(item)/len(item) > n:
+              final_cnts.loc[name] = list(item)
+          elif relation == '>=':
+            if np.count_nonzero(item)/len(item) >= n:
+              final_cnts.loc[name] = list(item)
+          elif relation == '<':
+            if np.count_nonzero(item)/len(item) < n:
+              final_cnts.loc[name] = list(item)
+          elif relation == '<=':
+            if np.count_nonzero(item)/len(item) <= n:
+              final_cnts.loc[name] = list(item)
+          elif relation == '=' or relation == '==':
+            if np.count_nonzero(item)/len(item) == n:
+              final_cnts.loc[name] = list(item)     
+
       elif 1 <= n <= len(cnts[0]):
         for item, name in zip(cnts, row_names):
-          if np.count_nonzero(item) >= n:
-            final_cnts.loc[name] = list(item)
+          if relation == '>':
+            if np.count_nonzero(item) > n:
+              final_cnts.loc[name] = list(item)
+          elif relation == '>=':
+            if np.count_nonzero(item) >= n:
+              final_cnts.loc[name] = list(item)
+          elif relation == '<':
+            if np.count_nonzero(item) < n:
+              final_cnts.loc[name] = list(item)
+          elif relation == '<=':
+            if np.count_nonzero(item) <= n:
+              final_cnts.loc[name] = list(item)
+          elif relation == '=' or relation == '==':
+            if np.count_nonzero(item) == n:
+              final_cnts.loc[name] = list(item)     
 
     return final_cnts
 
@@ -84,7 +111,7 @@ def filter_median(count_mat, num, relation):
       elif relation == '<=':
         if np.median(item) <= num:
           final_cnts.loc[name] = list(item)
-      elif relation == '=':
+      elif relation == '=' or relation == '==':
         if np.median(item) == num:
           final_cnts.loc[name] = list(item)
 
@@ -110,7 +137,7 @@ def filter_mean(count_mat, num, relation):
       elif relation == '<=':
         if np.mean(item) <= num:
           final_cnts.loc[name] = list(item)
-      elif relation == '=':
+      elif relation == '=' or relation == '==':
         if np.mean(item) == num:
          final_cnts.loc[name] = list(item)
 
@@ -133,7 +160,7 @@ def main(argv=None):
         break
       if tok.type == 'NUMBER':
         number = tok.value
-      elif tok.type in ('MEDIAN', 'MEAN'):
+      elif tok.type in ('MEDIAN', 'MEAN', 'NONZERO'):
         function = tok.value.lower()
       elif tok.type == 'RELATION':
         relation = tok.value
@@ -142,6 +169,8 @@ def main(argv=None):
       output = filter_median(counts_obj, number, relation)
     elif function == 'mean':
       output = filter_mean(counts_obj, number, relation)
+    elif function == 'nonzero':
+      output = filter_nonzero(counts_obj, number, relation)
 
     output_fn = args.get('--output')
     if output_fn is None:

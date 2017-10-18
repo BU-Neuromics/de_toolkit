@@ -56,7 +56,7 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
     final_cnts = pd.DataFrame(columns=column_names)
 
     if groups is None:
-      if 0 < n < 1:
+      if 0 <= n < 1:
         for item, name in zip(cnts, row_names):
           if relation == '>':
             if np.count_nonzero(item)/len(item) > n:
@@ -92,6 +92,49 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
             if np.count_nonzero(item) == n:
               final_cnts.loc[name] = list(item)     
 
+    else:
+
+      row_indices = []
+      for group in groups:
+        group_df = count_mat.counts[group]
+        for row_index, item in enumerate(group_df.as_matrix()):
+          if 0 <= n < 1:
+            if relation == '>':
+              if np.count_nonzero(item)/len(item) > n:
+                row_indices.append(row_index)
+            elif relation == '>=':
+              if np.count_nonzero(item)/len(item) >= n:
+                row_indices.append(row_index)
+            elif relation == '<':
+              if np.count_nonzero(item)/len(item) < n:
+                row_indices.append(row_index)
+            elif relation == '<=':
+              if np.count_nonzero(item)/len(item) <= n:
+                row_indicies.append(row_index)
+            elif relation == '=' or relation == '==':
+              if np.count_nonzero(item)/len(item) == n:
+                row_indices.append(row_index)   
+          elif 1 <= n <= len(cnts[0]):
+            if relation == '>':
+              if np.count_nonzero(item) > n:
+                row_indices.append(row_index)
+            elif relation == '>=':
+              if np.count_nonzero(item) >= n:
+                row_indices.append(row_index)
+            elif relation == '<':
+              if np.count_nonzero(item) < n:
+                row_indices.append(row_index)
+            elif relation == '<=':
+              if np.count_nonzero(item) <= n:
+                row_indicies.append(row_index)
+            elif relation == '=' or relation == '==':
+              if np.count_nonzero(item) == n:
+                row_indices.append(row_index)
+      
+      row_indices = set(row_indices)
+      for index in row_indices:
+        final_cnts = final_cnts.append(count_mat.counts.iloc[[index]])
+
     return final_cnts
 
 def filter_zeros(count_mat,n,relation,groups=None) :
@@ -102,7 +145,7 @@ def filter_zeros(count_mat,n,relation,groups=None) :
     final_cnts = pd.DataFrame(columns=column_names)
 
     if groups is None:
-      if 0 < n < 1:
+      if 0 <= n < 1:
         for item, name in zip(cnts, row_names):
           if relation == '>':
             if list(item).count(0)/len(item) > n:
@@ -232,14 +275,11 @@ def main(argv=None):
       for i in range(0, len(vals)):
         col_case = col_data.loc[col_data.iloc[:,1] == vals[i]]
         groups[i] = col_case.iloc[:,0].tolist()
-      groups=None
     else:
       col_data = pd.read_csv(args['--column-data'], sep=None, engine='python')
       groups = []
       col_case = col_data.loc[col_data.iloc[:,1] == condition]
       groups.append(col_case.iloc[:,0].tolist())
-      print(groups)
-      groups=None
 
     if function == 'median':
       output = filter_median(counts_obj, number, relation, groups)

@@ -288,23 +288,49 @@ def filter_mean(count_mat, num, relation, groups=None):
     row_names = count_mat.feature_names
     final_cnts = pd.DataFrame(columns=column_names)
 
-    for item, name in zip(cnts, row_names):
-      if relation == '>':
-        if np.mean(item) > num:
-          final_cnts.loc[name] = list(item)
-      elif relation == '>=':
-        if np.mean(item) >= num:
-          final_cnts.loc[name] = list(item)
-      elif relation == '<':
-        if np.mean(item) < num:
-          final_cnts.loc[name] = list(item)
-      elif relation == '<=':
-        if np.mean(item) <= num:
-          final_cnts.loc[name] = list(item)
-      elif relation == '=' or relation == '==':
-        if np.mean(item) == num:
-         final_cnts.loc[name] = list(item)
+    if groups is None:
+      for item, name in zip(cnts, row_names):
+        if relation == '>':
+          if np.mean(item) > num:
+            final_cnts.loc[name] = list(item)
+        elif relation == '>=':
+          if np.mean(item) >= num:
+            final_cnts.loc[name] = list(item)
+        elif relation == '<':
+          if np.mean(item) < num:
+            final_cnts.loc[name] = list(item)
+        elif relation == '<=':
+          if np.mean(item) <= num:
+            final_cnts.loc[name] = list(item)
+        elif relation == '=' or relation == '==':
+          if np.mean(item) == num:
+           final_cnts.loc[name] = list(item)
 
+    else:
+      row_indices = []
+      for group in groups:
+        group_df = count_mat.counts[group]
+        for row_index, item in enumerate(group_df.as_matrix()):
+          if relation == '>':
+            if np.mean(item) > num:
+              row_indices.append(row_index)
+          elif relation == '>=':
+            if np.mean(item) >= num:
+              row_indices.append(row_index)
+          elif relation == '<':
+            if np.mean(item) < num:
+              row_indices.append(row_index)
+          elif relation == '<=':
+            if np.mean(item) <= num:
+              row_indices.append(row_index)
+          elif relation == '=' or relation == '==':
+            if np.mean(item) == num:
+              row_indices.append(row_index)
+      row_indices = set(row_indices)
+      row_indices = sorted(row_indices)
+      for index in row_indices:
+        final_cnts = final_cnts.append(count_mat.counts.iloc[[index]])
+   
     return final_cnts
      
 def main(argv=None):

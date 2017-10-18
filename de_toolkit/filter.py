@@ -1,6 +1,6 @@
 '''
 Usage:
-    detk-filter [options] <command> <counts_fn>
+    detk-filter [options] <command> [--column-data=<column data fn>] <counts_fn>
 
 Options:
     --output=<out_fn>    Name of output file
@@ -14,7 +14,8 @@ import os.path
 import csv
 import ply.lex as lex
 
-tokens = ('ALL', 'RELATION', 'NUMBER', 'PAREN', 'MEDIAN', 'MEAN', 'NONZERO', 'ZEROS')
+tokens = ('ALL', 'RELATION', 'NUMBER', 'PAREN', 'MEDIAN', 'MEAN', 
+          'NONZERO', 'ZEROS', 'CONDITION')
 
 t_ALL = r'(?i)all'
 t_RELATION = r'[<>]=?|='
@@ -23,16 +24,17 @@ t_MEDIAN = r'(?i)median'
 t_MEAN = r'(?i)mean'
 t_NONZERO = r'(?i)nonzero'
 t_ZEROS = r'(?i)zeros'
+t_CONDITION = r'(?i)condition\s?(\[[^\)]+\]\s?)?'
 
 def t_NUMBER(t):
     r'[-+]?([0-9]*\.[0-9]+|[0-9]+)'
     t.value = float(t.value)
     return t
 
-t_ignore = ' \t'
+t_ignore = ' \t[]'
 
 def t_error(t):
-    filter.append('Illegal character {}'.format(t.value[0]))
+    print('Illegal character {}'.format(t.value[0]))
     t.lexer.skip(1)
 
 def filter_nonzero(count_mat,n,relation,groups=None) :
@@ -139,7 +141,7 @@ def filter_zeros(count_mat,n,relation,groups=None) :
     return final_cnts
 
 
-def filter_median(count_mat, num, relation):
+def filter_median(count_mat, num, relation, groups=None):
     
     cnts = count_mat.counts.as_matrix()
     column_names = count_mat.sample_names
@@ -165,7 +167,7 @@ def filter_median(count_mat, num, relation):
 
     return final_cnts
 
-def filter_mean(count_mat, num, relation):
+def filter_mean(count_mat, num, relation, groups=None):
 
     cnts = count_mat.counts.as_matrix()
     column_names = count_mat.sample_names
@@ -197,6 +199,10 @@ def main(argv=None):
 
     args['<counts_fn>'] = args.get('<counts_fn>')
     counts_obj = CountMatrixFile(args['<counts_fn>'])
+    
+    args['--column-data'] = args.get('--column-data')
+    if args['--column-data'] is None:
+      args['--column-data'] = ''
 
     command = args['<command>']
     lexer = lex.lex()
@@ -212,15 +218,37 @@ def main(argv=None):
         function = tok.value.lower()
       elif tok.type == 'RELATION':
         relation = tok.value
+      elif tok.type in ('ALL', 'CONDITION'):
+        condition = tok.value.lower()
+        if '[' in condition: 
+          condition = condition[condition.find('[')+1:condition.find(']')]
+
+    if condition == 'all':
+      groups=None
+    elif condition == 'condition':
+      col_data = pd.read_csv(args['--column-data'], sep=None, engine='python')
+      vals = col_data.iloc[:,1].unique()
+      groups = [[] for i in range(len(vals))]
+      for i in range(0, len(vals)):
+        col_case = col_data.loc[col_data.iloc[:,1] == vals[i]]
+        groups[i] = col_case.iloc[:,0].tolist()
+      groups=None
+    else:
+      col_data = pd.read_csv(args['--column-data'], sep=None, engine='python')
+      groups = []
+      col_case = col_data.loc[col_data.iloc[:,1] == condition]
+      groups.append(col_case.iloc[:,0].tolist())
+      print(groups)
+      groups=None
 
     if function == 'median':
-      output = filter_median(counts_obj, number, relation)
+      output = filter_median(counts_obj, number, relation, groups)
     elif function == 'mean':
-      output = filter_mean(counts_obj, number, relation)
+      output = filter_mean(counts_obj, number, relation, groups)
     elif function == 'nonzero':
-      output = filter_nonzero(counts_obj, number, relation)
+      output = filter_nonzero(counts_obj, number, relation, groups)
     elif function == 'zeros':
-      output = filter_zeros(counts_obj, number, relation)
+      output = filter_zeros(counts_obj, number, relation, groups)
 
     output_fn = args.get('--output')
     if output_fn is None:

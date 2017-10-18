@@ -132,6 +132,7 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
                 row_indices.append(row_index)
       
       row_indices = set(row_indices)
+      row_indices = sorted(row_indices)
       for index in row_indices:
         final_cnts = final_cnts.append(count_mat.counts.iloc[[index]])
 
@@ -180,6 +181,49 @@ def filter_zeros(count_mat,n,relation,groups=None) :
           elif relation == '=' or relation == '==':
             if list(item).count(0) == n:
               final_cnts.loc[name] = list(item)     
+    else:
+
+      row_indices = []
+      for group in groups:
+        group_df = count_mat.counts[group]
+        for row_index, item in enumerate(group_df.as_matrix()):
+          if 0 <= n < 1:
+            if relation == '>':
+              if list(item).count(0)/len(item) > n:
+                row_indices.append(row_index)
+            elif relation == '>=':
+              if list(item).count(0)/len(item) >= n:
+                row_indices.append(row_index)
+            elif relation == '<':
+              if list(item).count(0)/len(item) < n:
+                row_indices.append(row_index)
+            elif relation == '<=':
+              if list(item).count(0)/len(item) <= n:
+                row_indicies.append(row_index)
+            elif relation == '=' or relation == '==':
+              if list(item).count(0)/len(item) == n:
+                row_indices.append(row_index)   
+          elif 1 <= n <= len(cnts[0]):
+            if relation == '>':
+              if list(item).count(0) > n:
+                row_indices.append(row_index)
+            elif relation == '>=':
+              if list(item).count(0) >= n:
+                row_indices.append(row_index)
+            elif relation == '<':
+              if list(item).count(0) < n:
+                row_indices.append(row_index)
+            elif relation == '<=':
+              if list(item).count(0) <= n:
+                row_indicies.append(row_index)
+            elif relation == '=' or relation == '==':
+              if list(item).count(0) == n:
+                row_indices.append(row_index)
+      
+      row_indices = set(row_indices)
+      row_indices = sorted(row_indices)
+      for index in row_indices:
+        final_cnts = final_cnts.append(count_mat.counts.iloc[[index]])
 
     return final_cnts
 

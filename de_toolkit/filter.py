@@ -14,9 +14,11 @@ import os.path
 import csv
 import ply.lex as lex
 
+#Available tokens for mini language
 tokens = ('ALL', 'RELATION', 'NUMBER', 'PAREN', 'MEDIAN', 'MEAN', 
           'NONZERO', 'ZEROS', 'CONDITION', 'OR', 'AND')
 
+#Definitions of the mini language tokens
 t_ALL = r'(?i)all'
 t_RELATION = r'[<>]=?|='
 t_PAREN = t_PAREN = r'(\(|\))'
@@ -28,20 +30,23 @@ t_CONDITION = r'(?i)condition\s?(\[[^\)]+\]\s?)?'
 t_OR = r'(?i)or'
 t_AND = r'(?i)and'
 
+#Definition of number token 
 def t_NUMBER(t):
     r'[-+]?([0-9]*\.[0-9]+|[0-9]+)'
     t.value = float(t.value)
     return t
 
+#Mini language ignores spaces, tabs, and brackets
 t_ignore = ' \t[]'
 
+#Prints an error message if there's an invalid token
 def t_error(t):
     print('Illegal character {}'.format(t.value[0]))
     t.lexer.skip(1)
 
 def filter_nonzero(count_mat,n,relation,groups=None) :
     '''
-      Filter rows from *count_mat* based on the number of zero counts.
+      Filter rows from *count_mat* based on the number of nonzero counts.
 
       * if 0 < *n* < 1, then *n* is the fraction of samples that must be non-zero
       * if 1 <= *n* < *count_mat.shape[1]*, then *n* is the number of samples that
@@ -52,12 +57,18 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
         on *n*
      '''
 
+    #Get counts, column names, and row names
     cnts = count_mat.counts.as_matrix()
     column_names = count_mat.sample_names
     row_names = count_mat.feature_names
+
+    #Create dataframe for output
     final_cnts = pd.DataFrame(columns=column_names)
 
+    #Applies filter to all samples
     if groups is None:
+
+      #Filter by the fraction of samples that are nonzero
       if 0 <= n < 1:
         for item, name in zip(cnts, row_names):
           if relation == '>':
@@ -76,6 +87,7 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
             if np.count_nonzero(item)/len(item) == n:
               final_cnts.loc[name] = list(item)     
 
+      #Filter by the number of samples that are nonzero
       elif 1 <= n <= len(cnts[0]):
         for item, name in zip(cnts, row_names):
           if relation == '>':
@@ -94,12 +106,18 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
             if np.count_nonzero(item) == n:
               final_cnts.loc[name] = list(item)     
 
+    #Apply the filter to rows based on condition given
     else:
 
+      #Keep track of rows to keep
       row_indices = []
+
+      #Loop through the groups, apply filter to each separately
       for group in groups:
         group_df = count_mat.counts[group]
         for row_index, item in enumerate(group_df.as_matrix()):
+
+          #Filter by the fraction of samples that are nonzero
           if 0 <= n < 1:
             if relation == '>':
               if np.count_nonzero(item)/len(item) > n:
@@ -116,6 +134,8 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
             elif relation == '=' or relation == '==':
               if np.count_nonzero(item)/len(item) == n:
                 row_indices.append(row_index)   
+
+          #Filter by the number of samples that are nonzero
           elif 1 <= n <= len(cnts[0]):
             if relation == '>':
               if np.count_nonzero(item) > n:
@@ -132,7 +152,8 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
             elif relation == '=' or relation == '==':
               if np.count_nonzero(item) == n:
                 row_indices.append(row_index)
-      
+
+      #Extract rows that should be kept and add to final dataframe      
       row_indices = set(row_indices)
       row_indices = sorted(row_indices)
       for index in row_indices:
@@ -141,13 +162,30 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
     return final_cnts
 
 def filter_zeros(count_mat,n,relation,groups=None) :
+    '''
+      Filter rows from *count_mat* based on the number of zero counts.
 
+      * if 0 < *n* < 1, then *n* is the fraction of samples that must be non-zero
+      * if 1 <= *n* < *count_mat.shape[1]*, then *n* is the number of samples that
+        must be non-zero
+      * if *groups* is not *None*, it must be a list of column indices or names of
+        samples that should be considered a group, and n is applied to each
+        group separately. Rows are filtered if all groups fail the criterion based
+        on *n*
+     '''
+
+    #Get counts, column names, and row names
     cnts = count_mat.counts.as_matrix()
     column_names = count_mat.sample_names
     row_names = count_mat.feature_names
+
+    #Create dataframe for output
     final_cnts = pd.DataFrame(columns=column_names)
 
+    #Applies filter to all samples
     if groups is None:
+
+      #Filter by the fraction of samples that are zero
       if 0 <= n < 1:
         for item, name in zip(cnts, row_names):
           if relation == '>':
@@ -166,6 +204,7 @@ def filter_zeros(count_mat,n,relation,groups=None) :
             if list(item).count(0)/len(item) == n:
               final_cnts.loc[name] = list(item)     
 
+      #Filter by the number of samples that are zero
       elif 1 <= n <= len(cnts[0]):
         for item, name in zip(cnts, row_names):
           if relation == '>':
@@ -183,12 +222,19 @@ def filter_zeros(count_mat,n,relation,groups=None) :
           elif relation == '=' or relation == '==':
             if list(item).count(0) == n:
               final_cnts.loc[name] = list(item)     
+
+    #Apply the filter to rows based on condition given
     else:
 
+      #Keep track of rows to keep
       row_indices = []
+
+      #Loop through the groups, apply filter to each separately
       for group in groups:
         group_df = count_mat.counts[group]
         for row_index, item in enumerate(group_df.as_matrix()):
+
+          #Filter by the fraction of samples that are zero
           if 0 <= n < 1:
             if relation == '>':
               if list(item).count(0)/len(item) > n:
@@ -205,6 +251,8 @@ def filter_zeros(count_mat,n,relation,groups=None) :
             elif relation == '=' or relation == '==':
               if list(item).count(0)/len(item) == n:
                 row_indices.append(row_index)   
+
+          #Filter by the number of samples that are zero
           elif 1 <= n <= len(cnts[0]):
             if relation == '>':
               if list(item).count(0) > n:
@@ -222,6 +270,7 @@ def filter_zeros(count_mat,n,relation,groups=None) :
               if list(item).count(0) == n:
                 row_indices.append(row_index)
       
+      #Extract rows that should be kept and add to final dataframe  
       row_indices = set(row_indices)
       row_indices = sorted(row_indices)
       for index in row_indices:
@@ -231,12 +280,24 @@ def filter_zeros(count_mat,n,relation,groups=None) :
 
 
 def filter_median(count_mat, num, relation, groups=None):
-    
+    '''
+      Filter rows from *count_mat* based on the median.
+
+      * if *groups* is not *None*, it must be a list of column indices or names of
+        samples that should be considered a group, and n is applied to each
+        group separately. Rows are filtered if all groups fail the criterion based
+        on *num*
+    '''
+
+    #Get counts, column names, and row names
     cnts = count_mat.counts.as_matrix()
     column_names = count_mat.sample_names
     row_names = count_mat.feature_names
+
+    #Create dataframe for output
     final_cnts = pd.DataFrame(columns=column_names)
 
+    #Applies filter to all samples
     if groups is None:
       for item, name in zip(cnts, row_names):
         if relation == '>':
@@ -255,8 +316,13 @@ def filter_median(count_mat, num, relation, groups=None):
           if np.median(item) == num:
             final_cnts.loc[name] = list(item)
 
+    #Apply the filter to rows based on condition given
     else:
+
+      #Keep track of rows to keep
       row_indices = []
+
+      #Loop through the groups, apply filter to each separately
       for group in groups:
         group_df = count_mat.counts[group]
         for row_index, item in enumerate(group_df.as_matrix()):
@@ -276,6 +342,7 @@ def filter_median(count_mat, num, relation, groups=None):
             if np.median(item) == num:
               row_indices.append(row_index)
 
+      #Extract rows that should be kept and add to final dataframe  
       row_indices = set(row_indices)
       row_indices = sorted(row_indices)
       for index in row_indices:
@@ -284,12 +351,24 @@ def filter_median(count_mat, num, relation, groups=None):
     return final_cnts
 
 def filter_mean(count_mat, num, relation, groups=None):
+    '''
+      Filter rows from *count_mat* based on the mean.
 
+      * if *groups* is not *None*, it must be a list of column indices or names of
+        samples that should be considered a group, and n is applied to each
+        group separately. Rows are filtered if all groups fail the criterion based
+        on *num*
+    '''
+
+    #Get counts, column names, and row names
     cnts = count_mat.counts.as_matrix()
     column_names = count_mat.sample_names
     row_names = count_mat.feature_names
+
+    #Create dataframe for output
     final_cnts = pd.DataFrame(columns=column_names)
 
+    #Applies filter to all samples
     if groups is None:
       for item, name in zip(cnts, row_names):
         if relation == '>':
@@ -307,9 +386,14 @@ def filter_mean(count_mat, num, relation, groups=None):
         elif relation == '=' or relation == '==':
           if np.mean(item) == num:
            final_cnts.loc[name] = list(item)
-
+ 
+    #Apply the filter to rows based on condition given
     else:
+
+      #Keep track of rows to keep
       row_indices = []
+
+      #Loop through the groups, apply filter to each separately
       for group in groups:
         group_df = count_mat.counts[group]
         for row_index, item in enumerate(group_df.as_matrix()):
@@ -328,6 +412,8 @@ def filter_mean(count_mat, num, relation, groups=None):
           elif relation == '=' or relation == '==':
             if np.mean(item) == num:
               row_indices.append(row_index)
+
+      #Extract rows that should be kept and add to final dataframe  
       row_indices = set(row_indices)
       row_indices = sorted(row_indices)
       for index in row_indices:
@@ -337,19 +423,24 @@ def filter_mean(count_mat, num, relation, groups=None):
      
 def main(argv=None):
 
+    #Create command line arguments to pass in data and filter command
     args = docopt(__doc__, argv=argv)
 
+    #Create CountMatrixFile object from given data
     args['<counts_fn>'] = args.get('<counts_fn>')
     counts_obj = CountMatrixFile(args['<counts_fn>'])
     
+    #Get column data, if provided
     args['--column-data'] = args.get('--column-data')
     if args['--column-data'] is None:
       args['--column-data'] = ''
 
+    #Get filter command and input to lexer
     command = args['<command>']
     lexer = lex.lex()
     lexer.input(command)
 
+    #Parse through tokens of command and keep track of each term
     terms = []
     while True:
       tok = lexer.token()
@@ -371,6 +462,7 @@ def main(argv=None):
         terms.append(term)
     terms.append(term)
 
+    #Find filtered output for each term
     filtered_data = []
     for term in terms:
       if term['condition'] == 'all':
@@ -399,6 +491,7 @@ def main(argv=None):
 
       filtered_data.append(output)
 
+    #Get the final output determined by and or or keywords
     final_data = filtered_data[0]
     i = 1
     for term in terms:
@@ -409,11 +502,13 @@ def main(argv=None):
           final_data = final_data.reset_index().merge(filtered_data[i], how='left').set_index('index')
         i+=1 
 
+    #Obtain string used to name output files, unless filename is specified
     output_fn = args.get('--output')
     if output_fn is None:
       filename_prefix = os.path.splitext(args['<counts_fn>'])
       output_fn = filename_prefix[0]+'_filtered'+filename_prefix[1]
-    
+
+    #Get first column name and delimiter to use in output   
     with open(args['<counts_fn>']) as f:
       dialect = csv.Sniffer().sniff(f.read())
       f.seek(0)
@@ -421,6 +516,7 @@ def main(argv=None):
       index = first_line.find(dialect.delimiter)
       first_val = first_line[0:index]
 
+    #Write final filtered output to the output file
     with open(output_fn, 'w') as out_f:
       final_data.index.names = [first_val]
       final_data.to_csv(out_f, sep=dialect.delimiter)

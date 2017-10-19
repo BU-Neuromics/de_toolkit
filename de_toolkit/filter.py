@@ -126,7 +126,7 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
                 row_indices.append(row_index)
             elif relation == '<=':
               if np.count_nonzero(item) <= n:
-                row_indicies.append(row_index)
+                row_indices.append(row_index)
             elif relation == '=' or relation == '==':
               if np.count_nonzero(item) == n:
                 row_indices.append(row_index)
@@ -199,7 +199,7 @@ def filter_zeros(count_mat,n,relation,groups=None) :
                 row_indices.append(row_index)
             elif relation == '<=':
               if list(item).count(0)/len(item) <= n:
-                row_indicies.append(row_index)
+                row_indices.append(row_index)
             elif relation == '=' or relation == '==':
               if list(item).count(0)/len(item) == n:
                 row_indices.append(row_index)   
@@ -215,7 +215,7 @@ def filter_zeros(count_mat,n,relation,groups=None) :
                 row_indices.append(row_index)
             elif relation == '<=':
               if list(item).count(0) <= n:
-                row_indicies.append(row_index)
+                row_indices.append(row_index)
             elif relation == '=' or relation == '==':
               if list(item).count(0) == n:
                 row_indices.append(row_index)

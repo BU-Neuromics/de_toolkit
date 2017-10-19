@@ -15,7 +15,7 @@ import csv
 import ply.lex as lex
 
 tokens = ('ALL', 'RELATION', 'NUMBER', 'PAREN', 'MEDIAN', 'MEAN', 
-          'NONZERO', 'ZEROS', 'CONDITION')
+          'NONZERO', 'ZEROS', 'CONDITION', 'OR', 'AND')
 
 t_ALL = r'(?i)all'
 t_RELATION = r'[<>]=?|='
@@ -25,6 +25,8 @@ t_MEAN = r'(?i)mean'
 t_NONZERO = r'(?i)nonzero'
 t_ZEROS = r'(?i)zeros'
 t_CONDITION = r'(?i)condition\s?(\[[^\)]+\]\s?)?'
+t_OR = r'(?i)or'
+t_AND = r'(?i)and'
 
 def t_NUMBER(t):
     r'[-+]?([0-9]*\.[0-9]+|[0-9]+)'
@@ -348,44 +350,64 @@ def main(argv=None):
     lexer = lex.lex()
     lexer.input(command)
 
+    terms = []
     while True:
       tok = lexer.token()
       if not tok:
         break
       if tok.type == 'NUMBER':
-        number = tok.value
+        term['number'] = tok.value
       elif tok.type in ('MEDIAN', 'MEAN', 'NONZERO', 'ZEROS'):
-        function = tok.value.lower()
+        term = {}
+        term['function'] = tok.value.lower()
       elif tok.type == 'RELATION':
-        relation = tok.value
+        term['relation'] = tok.value
       elif tok.type in ('ALL', 'CONDITION'):
-        condition = tok.value.lower()
-        if '[' in condition: 
-          condition = condition[condition.find('[')+1:condition.find(']')]
+        term['condition'] = tok.value.lower()
+        if '[' in term['condition']: 
+          term['condition'] = term['condition'][term['condition'].find('[')+1:term['condition'].find(']')]
+      elif tok.type in ('OR', 'AND'):
+        term['next'] = tok.value.lower()
+        terms.append(term)
+    terms.append(term)
 
-    if condition == 'all':
-      groups=None
-    elif condition == 'condition':
-      col_data = pd.read_csv(args['--column-data'], sep=None, engine='python')
-      vals = col_data.iloc[:,1].unique()
-      groups = [[] for i in range(len(vals))]
-      for i in range(0, len(vals)):
-        col_case = col_data.loc[col_data.iloc[:,1] == vals[i]]
-        groups[i] = col_case.iloc[:,0].tolist()
-    else:
-      col_data = pd.read_csv(args['--column-data'], sep=None, engine='python')
-      groups = []
-      col_case = col_data.loc[col_data.iloc[:,1] == condition]
-      groups.append(col_case.iloc[:,0].tolist())
+    filtered_data = []
+    for term in terms:
+      if term['condition'] == 'all':
+        groups=None
+      elif term['condition'] == 'condition':
+        col_data = pd.read_csv(args['--column-data'], sep=None, engine='python')
+        vals = col_data.iloc[:,1].unique()
+        groups = [[] for i in range(len(vals))]
+        for i in range(0, len(vals)):
+          col_case = col_data.loc[col_data.iloc[:,1] == vals[i]]
+          groups[i] = col_case.iloc[:,0].tolist()
+      else:
+        col_data = pd.read_csv(args['--column-data'], sep=None, engine='python')
+        groups = []
+        col_case = col_data.loc[col_data.iloc[:,1] == condition]
+        groups.append(col_case.iloc[:,0].tolist())
 
-    if function == 'median':
-      output = filter_median(counts_obj, number, relation, groups)
-    elif function == 'mean':
-      output = filter_mean(counts_obj, number, relation, groups)
-    elif function == 'nonzero':
-      output = filter_nonzero(counts_obj, number, relation, groups)
-    elif function == 'zeros':
-      output = filter_zeros(counts_obj, number, relation, groups)
+      if term['function'] == 'median':
+        output = filter_median(counts_obj, term['number'], term['relation'], groups)
+      elif term['function'] == 'mean':
+        output = filter_mean(counts_obj, term['number'], term['relation'], groups)
+      elif term['function'] == 'nonzero':
+        output = filter_nonzero(counts_obj, term['number'], term['relation'], groups)
+      elif term['function'] == 'zeros':
+        output = filter_zeros(counts_obj, term['number'], term['relation'], groups)
+
+      filtered_data.append(output)
+
+    final_data = filtered_data[0]
+    i = 1
+    for term in terms:
+      if 'next' in term:
+        if term['next'] == 'or':
+          final_data = pd.concat([final_data, filtered_data[i]])
+        elif term['next'] == 'and':
+          final_data = final_data.reset_index().merge(filtered_data[i], how='left').set_index('index')
+        i+=1 
 
     output_fn = args.get('--output')
     if output_fn is None:
@@ -400,8 +422,8 @@ def main(argv=None):
       first_val = first_line[0:index]
 
     with open(output_fn, 'w') as out_f:
-      output.index.names = [first_val]
-      output.to_csv(out_f, sep=dialect.delimiter)
+      final_data.index.names = [first_val]
+      final_data.to_csv(out_f, sep=dialect.delimiter)
 
 if __name__ == '__main__':
     main()

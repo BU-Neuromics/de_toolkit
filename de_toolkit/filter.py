@@ -110,7 +110,7 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
                 row_indices.append(row_index)
             elif relation == '<=':
               if np.count_nonzero(item)/len(item) <= n:
-                row_indicies.append(row_index)
+                row_indices.append(row_index)
             elif relation == '=' or relation == '==':
               if np.count_nonzero(item)/len(item) == n:
                 row_indices.append(row_index)   

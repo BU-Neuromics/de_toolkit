@@ -15,13 +15,12 @@ import csv
 import ply.lex as lex
 
 #Available tokens for mini language
-tokens = ('ALL', 'RELATION', 'NUMBER', 'PAREN', 'MEDIAN', 'MEAN', 
+tokens = ('ALL', 'RELATION', 'NUMBER', 'MEDIAN', 'MEAN', 
           'NONZERO', 'ZEROS', 'CONDITION', 'OR', 'AND')
 
 #Definitions of the mini language tokens
 t_ALL = r'(?i)all'
 t_RELATION = r'[<>]=?|='
-t_PAREN = t_PAREN = r'(\(|\))'
 t_MEDIAN = r'(?i)median'
 t_MEAN = r'(?i)mean'
 t_NONZERO = r'(?i)nonzero'
@@ -32,12 +31,16 @@ t_AND = r'(?i)and'
 
 #Definition of number token 
 def t_NUMBER(t):
-    r'[-+]?([0-9]*\.[0-9]+|[0-9]+)'
-    t.value = float(t.value)
+    r'(\d+[\/\d. ]*|\d)'
+    if '/' in t.value:
+      num, den = t.value.split('/')
+      t.value = float(num)/float(den)
+    else:
+      t.value = float(t.value)
     return t
 
-#Mini language ignores spaces, tabs, and brackets
-t_ignore = ' \t[]'
+#Mini language ignores spaces, tabs, brackets, and parentheses
+t_ignore = ' \t[]()'
 
 #Prints an error message if there's an invalid token
 def t_error(t):

@@ -48,15 +48,52 @@ Filter functions
 
 There are four different filter functions that are available:
 
-- mean:     Filter data based on the mean value of the row.
-- median:   Filter data based on the median value of the row.
-- zeros:    Filter data based on how many zero counts are in the row. If the 
-            input number is between 0 and 1, (0 <= number < 1), then the 
+- mean:     
+            Filter data based on the mean value of the row.
+- median:   
+            Filter data based on the median value of the row.
+- zeros:    
+            Filter data based on how many zero counts are in the row. If the 
+            input number is between 0 and 1, (0 < number < 1), then the 
             number is the fraction of samples that must be zero. If the number
-            is 1 or greater (1 <= number <= # of samples), then it is the 
-            number of samples that must be zero.
-- nonzero:  Filter data based on how many nonzero counts are in the row. If the
-            input number is between 0 and 1, (0 <= number < 1), then the number
+            is 1 or greater (1 <= number <= # of samples) or the number is equal            to 0, then it is the number of samples that must be zero.
+- nonzero:  
+            Filter data based on how many nonzero counts are in the row. If the
+            input number is between 0 and 1, (0 < number < 1), then the number
             is the fraction of samples that must be nonzero. If the number is 1
-            or greater (1 <= number < # of samples), then it is the number of 
-            samples that must be nonzero.
+            or greater (1 <= number < # of samples) or the number is equal to 0,
+            then it is the number of samples that must be nonzero.
+
+Adding column data to filter
+----------------------------
+
+A column data file can be optionally input to the filter module. The column data
+file should specify subsets of the samples that the filter can then be applied
+to separately. The first column of the file must match the sample names given
+in the counts file. For example, if your counts file contains samples 'A', 'B',
+'C', and 'D', a column data file might look like this::
+
+  sample_name, condition
+  A, test
+  B, test
+  C, test
+  D, control
+
+Using the column data, the filter module can then be run in two different ways.
+The first way is to apply the filter to each group separately. If all groups 
+fail the filter criteria, then that row is filtered out. In order to use this 
+method, the command should be as follows::
+
+  'mean(condition)>10'
+
+The second way that you can specify the filter with column data is to filter 
+rows based on a specific condition. The command would look like this where, 
+'case' is a variable within the column data file (in the above example, this is
+either test or control)::
+
+  'mean(condition[case])>10'
+
+Using the above column data example, to filter based on the 'test' group only,
+the command would be::
+
+  'mean(condition[test])>10

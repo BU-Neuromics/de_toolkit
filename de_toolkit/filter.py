@@ -44,6 +44,21 @@ def t_error(t):
     print('Illegal character {}'.format(t.value[0]))
     t.lexer.skip(1)
 
+#Helper method to evaluate the inequality based on the given relation
+def evaluate_inequality(num1, relation, num2):
+    if relation == '<' and num1 < num2:
+      return True
+    elif relation == '<=' and num1 <= num2:
+      return True
+    elif relation == '>' and num1 > num2:
+      return True
+    elif relation == '>=' and num1 >= num2:
+      return True
+    elif relation in ('=', '==') and num1 == num2:
+      return True
+
+    return False
+
 def filter_nonzero(count_mat,n,relation,groups=None) :
     '''
       Filter rows from *count_mat* based on the number of nonzero counts.
@@ -71,40 +86,14 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
       #Filter by the fraction of samples that are nonzero
       if 0 <= n < 1:
         for item, name in zip(cnts, row_names):
-          if relation == '>':
-            if np.count_nonzero(item)/len(item) > n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '>=':
-            if np.count_nonzero(item)/len(item) >= n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '<':
-            if np.count_nonzero(item)/len(item) < n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '<=':
-            if np.count_nonzero(item)/len(item) <= n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '=' or relation == '==':
-            if np.count_nonzero(item)/len(item) == n:
-              final_cnts.loc[name] = list(item)     
+          if evaluate_inequality(np.count_nonzero(item)/len(item), relation, n) is True:
+            final_cnts.loc[name] = list(item)
 
       #Filter by the number of samples that are nonzero
       elif 1 <= n <= len(cnts[0]):
         for item, name in zip(cnts, row_names):
-          if relation == '>':
-            if np.count_nonzero(item) > n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '>=':
-            if np.count_nonzero(item) >= n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '<':
-            if np.count_nonzero(item) < n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '<=':
-            if np.count_nonzero(item) <= n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '=' or relation == '==':
-            if np.count_nonzero(item) == n:
-              final_cnts.loc[name] = list(item)     
+          if evaluate_inequality(np.count_nonzero(item), relation, n) is True:
+            final_cnts.loc[name] = list(item)
 
     #Apply the filter to rows based on condition given
     else:
@@ -119,39 +108,13 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
 
           #Filter by the fraction of samples that are nonzero
           if 0 <= n < 1:
-            if relation == '>':
-              if np.count_nonzero(item)/len(item) > n:
-                row_indices.append(row_index)
-            elif relation == '>=':
-              if np.count_nonzero(item)/len(item) >= n:
-                row_indices.append(row_index)
-            elif relation == '<':
-              if np.count_nonzero(item)/len(item) < n:
-                row_indices.append(row_index)
-            elif relation == '<=':
-              if np.count_nonzero(item)/len(item) <= n:
-                row_indices.append(row_index)
-            elif relation == '=' or relation == '==':
-              if np.count_nonzero(item)/len(item) == n:
-                row_indices.append(row_index)   
+            if evaluate_inequality(np.count_nonzero(item)/len(item), relation, n) is True:
+              row_indices.append(row_index)
 
           #Filter by the number of samples that are nonzero
           elif 1 <= n <= len(cnts[0]):
-            if relation == '>':
-              if np.count_nonzero(item) > n:
-                row_indices.append(row_index)
-            elif relation == '>=':
-              if np.count_nonzero(item) >= n:
-                row_indices.append(row_index)
-            elif relation == '<':
-              if np.count_nonzero(item) < n:
-                row_indices.append(row_index)
-            elif relation == '<=':
-              if np.count_nonzero(item) <= n:
-                row_indices.append(row_index)
-            elif relation == '=' or relation == '==':
-              if np.count_nonzero(item) == n:
-                row_indices.append(row_index)
+            if evaluate_inequality(np.count_nonzero(item), relation, n) is True:
+              row_indices.append(row_index)
 
       #Extract rows that should be kept and add to final dataframe      
       row_indices = set(row_indices)
@@ -188,40 +151,14 @@ def filter_zeros(count_mat,n,relation,groups=None) :
       #Filter by the fraction of samples that are zero
       if 0 <= n < 1:
         for item, name in zip(cnts, row_names):
-          if relation == '>':
-            if list(item).count(0)/len(item) > n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '>=':
-            if list(item).count(0)/len(item) >= n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '<':
-            if list(item).count(0)/len(item) < n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '<=':
-            if list(item).count(0)/len(item) <= n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '=' or relation == '==':
-            if list(item).count(0)/len(item) == n:
-              final_cnts.loc[name] = list(item)     
+          if evaluate_inequality(list(item).count(0)/len(item), relation, n) is True:
+            final_cnts.loc[name] = list(item)
 
       #Filter by the number of samples that are zero
       elif 1 <= n <= len(cnts[0]):
         for item, name in zip(cnts, row_names):
-          if relation == '>':
-            if list(item).count(0) > n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '>=':
-            if list(item).count(0) >= n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '<':
-            if list(item).count(0) < n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '<=':
-            if list(item).count(0) <= n:
-              final_cnts.loc[name] = list(item)
-          elif relation == '=' or relation == '==':
-            if list(item).count(0) == n:
-              final_cnts.loc[name] = list(item)     
+          if evaluate_inequality(list(item).count(0), relation, n) is True:
+            final_cnts.loc[name] = list(item)
 
     #Apply the filter to rows based on condition given
     else:
@@ -236,39 +173,13 @@ def filter_zeros(count_mat,n,relation,groups=None) :
 
           #Filter by the fraction of samples that are zero
           if 0 <= n < 1:
-            if relation == '>':
-              if list(item).count(0)/len(item) > n:
-                row_indices.append(row_index)
-            elif relation == '>=':
-              if list(item).count(0)/len(item) >= n:
-                row_indices.append(row_index)
-            elif relation == '<':
-              if list(item).count(0)/len(item) < n:
-                row_indices.append(row_index)
-            elif relation == '<=':
-              if list(item).count(0)/len(item) <= n:
-                row_indices.append(row_index)
-            elif relation == '=' or relation == '==':
-              if list(item).count(0)/len(item) == n:
-                row_indices.append(row_index)   
+            if evaluate_inequality(list(item).count(0)/len(item), relation, n) is True:
+              row_indices.append(row_index)
 
           #Filter by the number of samples that are zero
           elif 1 <= n <= len(cnts[0]):
-            if relation == '>':
-              if list(item).count(0) > n:
-                row_indices.append(row_index)
-            elif relation == '>=':
-              if list(item).count(0) >= n:
-                row_indices.append(row_index)
-            elif relation == '<':
-              if list(item).count(0) < n:
-                row_indices.append(row_index)
-            elif relation == '<=':
-              if list(item).count(0) <= n:
-                row_indices.append(row_index)
-            elif relation == '=' or relation == '==':
-              if list(item).count(0) == n:
-                row_indices.append(row_index)
+            if evaluate_inequality(list(item).count(0), relation, n) is True:
+              row_indices.append(row_index)
       
       #Extract rows that should be kept and add to final dataframe  
       row_indices = set(row_indices)
@@ -300,21 +211,8 @@ def filter_median(count_mat, num, relation, groups=None):
     #Applies filter to all samples
     if groups is None:
       for item, name in zip(cnts, row_names):
-        if relation == '>':
-          if np.median(item) > num:
-            final_cnts.loc[name] = list(item)
-        elif relation == '>=':
-          if np.median(item) >= num:
-            final_cnts.loc[name] = list(item)
-        elif relation == '<':
-          if np.median(item) < num:
-            final_cnts.loc[name] = list(item)
-        elif relation == '<=':
-          if np.median(item) <= num:
-            final_cnts.loc[name] = list(item)
-        elif relation == '=' or relation == '==':
-          if np.median(item) == num:
-            final_cnts.loc[name] = list(item)
+        if evaluate_inequality(np.median(item), relation, num) is True:
+          final_cnts.loc[name] = list(item) 
 
     #Apply the filter to rows based on condition given
     else:
@@ -326,21 +224,8 @@ def filter_median(count_mat, num, relation, groups=None):
       for group in groups:
         group_df = count_mat.counts[group]
         for row_index, item in enumerate(group_df.as_matrix()):
-          if relation == '>':
-            if np.median(item) > num:
-              row_indices.append(row_index)
-          elif relation == '>=':
-            if np.median(item) >= num:
-              row_indices.append(row_index)
-          elif relation == '<':
-            if np.median(item) < num:
-              row_indices.append(row_index)
-          elif relation == '<=':
-            if np.median(item) <= num:
-              row_indices.append(row_index)
-          elif relation == '=' or relation == '==':
-            if np.median(item) == num:
-              row_indices.append(row_index)
+          if evaluate_inequality(np.median(item), relation, num) is True:
+            row_indices.append(row_index)
 
       #Extract rows that should be kept and add to final dataframe  
       row_indices = set(row_indices)
@@ -371,21 +256,8 @@ def filter_mean(count_mat, num, relation, groups=None):
     #Applies filter to all samples
     if groups is None:
       for item, name in zip(cnts, row_names):
-        if relation == '>':
-          if np.mean(item) > num:
-            final_cnts.loc[name] = list(item)
-        elif relation == '>=':
-          if np.mean(item) >= num:
-            final_cnts.loc[name] = list(item)
-        elif relation == '<':
-          if np.mean(item) < num:
-            final_cnts.loc[name] = list(item)
-        elif relation == '<=':
-          if np.mean(item) <= num:
-            final_cnts.loc[name] = list(item)
-        elif relation == '=' or relation == '==':
-          if np.mean(item) == num:
-           final_cnts.loc[name] = list(item)
+        if evaluate_inequality(np.mean(item), relation, num) is True:
+          final_cnts.loc[name] = list(item)
  
     #Apply the filter to rows based on condition given
     else:
@@ -397,21 +269,8 @@ def filter_mean(count_mat, num, relation, groups=None):
       for group in groups:
         group_df = count_mat.counts[group]
         for row_index, item in enumerate(group_df.as_matrix()):
-          if relation == '>':
-            if np.mean(item) > num:
-              row_indices.append(row_index)
-          elif relation == '>=':
-            if np.mean(item) >= num:
-              row_indices.append(row_index)
-          elif relation == '<':
-            if np.mean(item) < num:
-              row_indices.append(row_index)
-          elif relation == '<=':
-            if np.mean(item) <= num:
-              row_indices.append(row_index)
-          elif relation == '=' or relation == '==':
-            if np.mean(item) == num:
-              row_indices.append(row_index)
+          if evaluate_inequality(np.mean(item), relation, num) is True:
+            row_indices.append(row_index)
 
       #Extract rows that should be kept and add to final dataframe  
       row_indices = set(row_indices)

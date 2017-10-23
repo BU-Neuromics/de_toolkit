@@ -56,7 +56,8 @@ There are four different filter functions that are available:
             Filter data based on how many zero counts are in the row. If the 
             input number is between 0 and 1, (0 < number < 1), then the 
             number is the fraction of samples that must be zero. If the number
-            is 1 or greater (1 <= number <= # of samples) or the number is equal            to 0, then it is the number of samples that must be zero.
+            is 1 or greater (1 <= number <= # of samples) or the number is equal
+            to 0, then it is the number of samples that must be zero.
 - nonzero:  
             Filter data based on how many nonzero counts are in the row. If the
             input number is between 0 and 1, (0 < number < 1), then the number

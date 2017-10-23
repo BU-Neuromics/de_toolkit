@@ -2,6 +2,10 @@
 
 ## unreleased
 
+## [ 0.3.2 ]
+### Changed
+- fixed bug in stats.rowzero
+
 ## [ 0.3.1 ]
 ### Added
 - PCA to stats model

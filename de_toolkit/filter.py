@@ -339,7 +339,7 @@ def main(argv=None):
       else:
         col_data = pd.read_csv(args['--column-data'], sep=None, engine='python')
         groups = []
-        col_case = col_data.loc[col_data.iloc[:,1] == condition]
+        col_case = col_data.loc[col_data.iloc[:,1] == term['condition']]
         groups.append(col_case.iloc[:,0].tolist())
 
       if term['function'] == 'median':

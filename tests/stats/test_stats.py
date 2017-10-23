@@ -178,6 +178,40 @@ def fake_count_rowdist_obj(
 
 ################################################################################
 
+################################################################################
+# fake count data to test the rowzero
+@pytest.fixture
+def fake_count_list_data_rowzero() :
+  data = [
+  [ 'gene', 'a', 'b', 'c', 'd', 'e'],
+  [ 'gene1', 1, 3, 5, 7, 9],
+  [ 'gene2', 2, 4, 6, 8, 10],
+  [ 'gene3', 0, 0, 0, 0, 0]
+  ]
+  return data
+
+
+#convert to csv from 2-D list
+@pytest.fixture
+def fake_count_rowzero_csv(request,fake_count_list_data_rowzero) :
+  with pytest.temp_csv_wrap(fake_count_list_data_rowzero,',') as f :
+    yield f.name
+
+
+@pytest.fixture
+def fake_count_rowzero_obj(
+  fake_count_rowzero_csv
+  ,fake_column_data_csv
+  ,fake_design) :
+
+  return pytest.make_counts_obj(
+    fake_count_rowzero_csv
+    ,fake_column_data_csv
+    ,fake_design
+  )
+
+################################################################################
+
 def test_stats_cli() :
   from de_toolkit.stats import main
   from docopt import DocoptExit
@@ -448,7 +482,19 @@ def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
 
 	assert true_nonzero_row_means == nonzero_row_means
 
+#test that rowzero gets correct nonzero row means with an all zero row
+def test_stats_rowzero_all_zeros(fake_count_rowzero_obj):
+	output = rowzero(fake_count_rowzero_obj)
+	zeros = output.get('stats', {}).get('zeros')
 
+	true_nonzero_row_means = [5, 6, 0]
+	nonzero_row_means = []
+	for i in range(0, len(zeros)):
+		row = zeros[i]
+		nonzero_row_mean = row.get('nonzero_mean')
+		nonzero_row_means.append(nonzero_row_mean)
+
+	assert true_nonzero_row_means == nonzero_row_means
 
 #test that entropy function gets correct row names
 def test_stats_entropy_names(fake_counts_obj):

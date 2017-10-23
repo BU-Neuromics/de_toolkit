@@ -312,7 +312,10 @@ def rowzero(count_mat) :
         zero_counts.append(data.count(0.0))
         zero_fracs.append(data.count(0.0)/len(data))
         row_means.append(sum(data)/len(data))
-        nonzero_row_means.append(sum(data)/(len(data)-data.count(0.0)))
+        if len(data) != data.count(0.0):
+            nonzero_row_means.append(sum(data)/(len(data)-data.count(0.0)))
+        else:
+            nonzero_row_means.append(0.0)
 
     #Format output
     output = {}

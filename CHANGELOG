@@ -2,6 +2,11 @@
 
 ## unreleased
 
+## [ 0.3.3 ]
+### Added
+- filter module and docs
+- new conda build environment for readthedocs build
+
 ## [ 0.3.2 ]
 ### Changed
 - fixed bug in stats.rowzero

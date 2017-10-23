@@ -6,29 +6,35 @@ are:
 
   * norm - various normalization strategies, including:
     - DESeq2
-    - trimmed mean
-    - reference norm
-    - library size
-    - FPKM
-    - user supplied
+    - trimmed mean (TODO)
+    - reference norm (TODO)
+    - library size (TODO)
+    - FPKM (TODO)
+    - user supplied (TODO)
   * de - compute differential expression, using one of:
-    - DESeq2
+    - DESeq2 (TODO)
     - Firth's Logistic Regression
-    - t-test
+    - t-test (TODO)
   * outlier - operations and statistics concerning potential outliers
-    - entropy
-    - Cook's distance
+    - entropy (TODO)
+    - Cook's distance (TODO)
   * transform - transform counts into other forms
     - DESeq2 Variance Stabilizing Transform
-    - RUVSeq transformation
-    - trim
-    - shrink
+    - RUVSeq transformation (TODO)
+    - trim (TODO)
+    - shrink (TODO)
   * filter - filter genes based on statistics
     - nonzero
     - mean
+    - median
   * stats - numerous statistics on the counts
     - summary
-    - dist
+    - base
+    - rowdist
+    - coldist
+    - rowzeros
+    - colzeros
+    - entropy
     - PCA
 
 # Documentation

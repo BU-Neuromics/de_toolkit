@@ -4,24 +4,1015 @@ import pandas as pd
 from de_toolkit.filter import *
 from de_toolkit.common import *
 
-def test_filter_nonzero_default(fake_counts_obj_with_zeros):
-	output = filter_nonzero(fake_counts_obj_with_zeros)
-	true_df = pd.DataFrame(columns=['a', 'b', 'c'])
-	true_df.loc['gene1'] = [2.0, 4.0, 0.0]
-	true_df.loc['gene4'] = [5.0, 0.0, 125.0]
-	true_df.loc['gene5'] = [6.0, 36.0, 216.0]
-	assert true_df.equals(output)
+def test_filter_nonzero_fraction_lt(fake_counts_obj_with_zeros):
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.5, '<')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
 
-def test_filter_nonzero_fraction(fake_counts_obj_with_zeros):
-	output = filter_nonzero(fake_counts_obj_with_zeros, n=0.7)
-	true_df = pd.DataFrame(columns=['a', 'b', 'c'])
-	true_df.loc['gene5'] = [6.0, 36.0, 216.0]
-	assert true_df.equals(output)
+def test_filter_nonzero_fraction_lte(fake_counts_obj_with_zeros):
+    output = filter_nonzero(fake_counts_obj_with_zeros, 1/3, '<=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
 
-def test_filter_nonzero_number(fake_counts_obj_with_zeros):
-	output = filter_nonzero(fake_counts_obj_with_zeros, n=2)
-	true_df = pd.DataFrame(columns=['a', 'b', 'c'])
-	true_df.loc['gene1'] = [2.0, 4.0, 0.0]
-	true_df.loc['gene4'] = [5.0, 0.0, 125.0]
-	true_df.loc['gene5'] = [6.0, 36.0, 216.0]
-	assert true_df.equals(output)
+def test_filter_nonzero_fraction_gt(fake_counts_obj_with_zeros):
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.5, '>')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_gte(fake_counts_obj_with_zeros):
+    output = filter_nonzero(fake_counts_obj_with_zeros, 2/3, '>=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_e(fake_counts_obj_with_zeros):
+    output = filter_nonzero(fake_counts_obj_with_zeros, 2/3, '=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_lt(fake_counts_obj_with_zeros):
+    output = filter_nonzero(fake_counts_obj_with_zeros, 2, '<')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_lte(fake_counts_obj_with_zeros):
+    output = filter_nonzero(fake_counts_obj_with_zeros, 2, '<=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_gt(fake_counts_obj_with_zeros):
+    output = filter_nonzero(fake_counts_obj_with_zeros, 2, '>')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_gte(fake_counts_obj_with_zeros):
+    output = filter_nonzero(fake_counts_obj_with_zeros, 2, '>=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_e(fake_counts_obj_with_zeros):
+    output = filter_nonzero(fake_counts_obj_with_zeros, 2, '=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_lt(fake_counts_obj_with_zeros):
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.5, '<')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_lte(fake_counts_obj_with_zeros):
+    output = filter_zeros(fake_counts_obj_with_zeros, 1/3, '<=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_gt(fake_counts_obj_with_zeros):
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.5, '>')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_gte(fake_counts_obj_with_zeros):
+    output = filter_zeros(fake_counts_obj_with_zeros, 2/3, '>=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_e(fake_counts_obj_with_zeros):
+    output = filter_zeros(fake_counts_obj_with_zeros, 1/3, '=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_int_lt(fake_counts_obj_with_zeros):
+    output = filter_zeros(fake_counts_obj_with_zeros, 2, '<')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_int_lte(fake_counts_obj_with_zeros):
+    output = filter_zeros(fake_counts_obj_with_zeros, 2, '<=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_int_gt(fake_counts_obj_with_zeros):
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '>')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_int_gte(fake_counts_obj_with_zeros):
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '>=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_int_e(fake_counts_obj_with_zeros):
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_lt(fake_counts_obj_with_zeros):
+    output = filter_mean(fake_counts_obj_with_zeros, 3, '<')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_lte(fake_counts_obj_with_zeros):
+    output = filter_mean(fake_counts_obj_with_zeros, 3, '<=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_gt(fake_counts_obj_with_zeros):
+    output = filter_mean(fake_counts_obj_with_zeros, 3, '>')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_gte(fake_counts_obj_with_zeros):
+    output = filter_mean(fake_counts_obj_with_zeros, 3, '>=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_e(fake_counts_obj_with_zeros):
+    output = filter_mean(fake_counts_obj_with_zeros, 3, '=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_median_lt(fake_counts_obj_with_zeros):
+    output = filter_median(fake_counts_obj_with_zeros, 2, '<')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_median_lte(fake_counts_obj_with_zeros):
+    output = filter_median(fake_counts_obj_with_zeros, 2, '<=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_median_gt(fake_counts_obj_with_zeros):
+    output = filter_median(fake_counts_obj_with_zeros, 2, '>')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_median_gte(fake_counts_obj_with_zeros):
+    output = filter_median(fake_counts_obj_with_zeros, 2, '>=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_median_e(fake_counts_obj_with_zeros):
+    output = filter_median(fake_counts_obj_with_zeros, 2, '=')
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_groups_lt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.5, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_case_lt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.75, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_control_lt(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.75, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_groups_lte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.5, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_case_lte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.5, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_control_lte(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.75, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_groups_gt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.5, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]  
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_case_gt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.5, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]  
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_control_gt(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.5, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]  
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_groups_gte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.5, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]  
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_case_gte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.5, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]  
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_control_gte(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.5, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_groups_e(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.5, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_case_e(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0.5, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_fraction_control_e(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 0, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_groups_lt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 1, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_case_lt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 2, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_control_lt(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 1, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_groups_lte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 1, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_case_lte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 1, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_control_lte(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 1, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_groups_gt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 1, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_case_gt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 1, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_control_gt(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 1, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_groups_gte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 2, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_case_gte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 2, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_control_gte(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 1, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_groups_e(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 1, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_case_e(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 2, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_nonzero_int_control_e(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_nonzero(fake_counts_obj_with_zeros, 1, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_groups_lt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.5, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_case_lt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.5, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_control_lt(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.75, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_groups_lte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.5, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_case_lte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.5, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_control_lte(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.75, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_groups_gt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.5, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_case_gt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.3, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_control_gt(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.75, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_groups_gte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.5, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_case_gte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.5, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_control_gte(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.75, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_groups_e(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.5, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_case_e(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0.5, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_fraction_control_e(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 0, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_int_groups_lt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_int_case_lt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_int_control_lt(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_int_groups_lte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_int_case_lte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_int_control_lte(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0] 
+    assert true_df.equals(output)
+
+def test_filter_zero_int_groups_gt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    assert true_df.equals(output)
+
+def test_filter_zero_int_case_gt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    assert true_df.equals(output)
+
+def test_filter_zero_int_control_gt(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    assert true_df.equals(output)
+
+def test_filter_zero_int_groups_gte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_int_case_gte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_int_control_gte(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_int_groups_e(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_int_case_e(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_zero_int_control_e(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_zeros(fake_counts_obj_with_zeros, 1, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_groups_lt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_mean(fake_counts_obj_with_zeros, 2, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_case_lt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_mean(fake_counts_obj_with_zeros, 3, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_control_lt(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_mean(fake_counts_obj_with_zeros, 125, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_groups_lte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_mean(fake_counts_obj_with_zeros, 2.5, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_case_lte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_mean(fake_counts_obj_with_zeros, 3, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_control_lte(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_mean(fake_counts_obj_with_zeros, 125, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_groups_gt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_mean(fake_counts_obj_with_zeros, 3, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_case_gt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_mean(fake_counts_obj_with_zeros, 3, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_control_gt(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_mean(fake_counts_obj_with_zeros, 125, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_groups_gte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_mean(fake_counts_obj_with_zeros, 3, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_case_gte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_mean(fake_counts_obj_with_zeros, 3, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_control_gte(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_mean(fake_counts_obj_with_zeros, 125, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_groups_e(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_mean(fake_counts_obj_with_zeros, 3, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_case_e(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_mean(fake_counts_obj_with_zeros, 3, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_mean_control_e(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_mean(fake_counts_obj_with_zeros, 125, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_median_groups_lt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_median(fake_counts_obj_with_zeros, 2.5, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_median_case_lt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_median(fake_counts_obj_with_zeros, 2.5, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_median_control_lt(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_median(fake_counts_obj_with_zeros, 125, '<', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_median_groups_lte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_median(fake_counts_obj_with_zeros, 2.5, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_median_case_lte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_median(fake_counts_obj_with_zeros, 2.5, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_median_control_lte(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_median(fake_counts_obj_with_zeros, 125, '<=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene3'] = [4.0, 0.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_median_groups_gt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_median(fake_counts_obj_with_zeros, 3, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_median_case_gt(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_median(fake_counts_obj_with_zeros, 2.5, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_median_control_gt(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_median(fake_counts_obj_with_zeros, 125, '>', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_median_groups_gte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_median(fake_counts_obj_with_zeros, 3, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_median_case_gte(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_median(fake_counts_obj_with_zeros, 2.5, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    true_df.loc['gene2'] = [0.0, 9.0, 0.0]
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_median_control_gte(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_median(fake_counts_obj_with_zeros, 125, '>=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    true_df.loc['gene5'] = [6.0, 36.0, 216.0]
+    assert true_df.equals(output)
+
+def test_filter_median_groups_e(fake_counts_obj_with_zeros):
+    groups = [['a', 'b'], ['c']]
+    output = filter_median(fake_counts_obj_with_zeros, 3, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene1'] = [2.0, 4.0, 0.0]
+    assert true_df.equals(output)
+
+def test_filter_median_case_e(fake_counts_obj_with_zeros):
+    groups = [['a', 'b']]
+    output = filter_median(fake_counts_obj_with_zeros, 2.5, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)
+
+def test_filter_median_control_e(fake_counts_obj_with_zeros):
+    groups = [['c']]
+    output = filter_median(fake_counts_obj_with_zeros, 125, '=', groups)
+    true_df = pd.DataFrame(columns=['a', 'b', 'c'])
+    true_df.loc['gene4'] = [5.0, 0.0, 125.0]
+    assert true_df.equals(output)

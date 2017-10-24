@@ -2,6 +2,10 @@
 
 ## unreleased
 
+## [ 0.3.4 ]
+### Changed
+- fixed critical bug in stats entropy function
+
 ## [ 0.3.3 ]
 ### Added
 - filter module and docs

@@ -373,7 +373,10 @@ def entropy(count_mat) :
         data = count_mat.counts.iloc[i].tolist()
         row_prob = []
         for item in data:
-            row_prob.append(item/sum(data))
+            if sum(data) != 0:
+                row_prob.append(item/sum(data))
+            else:
+                row_prob.append(0.0)
         probs.append(row_prob)
 
     #Calculate entropies

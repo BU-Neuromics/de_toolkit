@@ -552,6 +552,26 @@ def test_stats_entropies(fake_counts_obj_with_zeros):
 
 	assert true_entropies == row_entropies
 
+#test that entropy gets correct values with an all zero row
+def test_stats_entropy_all_zeros(fake_count_rowzero_obj):
+	output = entropy(fake_count_rowzero_obj)
+	entropies = output.get('stats', {}).get('entropies')
+
+	H1 = -((1/25)*math.log(1/25,2) + (3/25)*math.log(3/25,2) + (5/25)*math.log(5/25,2)
+               + (7/25)*math.log(7/25,2) + (9/25)*math.log(9/25,2))
+	H2 = -((2/30)*math.log(2/30,2) + (4/30)*math.log(4/30,2) + (6/30)*math.log(6/30,2)
+               + (8/30)*math.log(8/30,2) + (10/30)*math.log(10/30,2))
+	H3 = 0
+	true_entropies = [H1, H2, H3]
+	
+	row_entropies = []
+	for i in range(0, len(entropies)):
+		row = entropies[i]
+		row_entropy = row.get('entropy')
+		row_entropies.append(row_entropy)
+
+	assert true_entropies == row_entropies
+
 #test that JSON output for base function is correct
 def test_stats_base_JSON():
 	test = open('tests/stats/fake_counts_base.json', 'r')

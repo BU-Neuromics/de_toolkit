@@ -53,6 +53,22 @@ def test_require_r(monkeypatch) :
         wrapr.require_r(lambda x: x)(None)
 
 @r_test
+def test_require_deseq2(monkeypatch) :
+    from de_toolkit import wrapr
+    # when fail
+    def f(*args,**kwargs):
+        return False
+    monkeypatch.setattr(wrapr,'check_deseq2',f)
+    with pytest.raises(wrapr.RPackageMissing) :
+        wrapr.require_deseq2(lambda x: x)(None)
+
+    # when true
+    def f(*args,**kwargs):
+        return True 
+    monkeypatch.setattr(wrapr,'check_deseq2',f)
+    wrapr.require_deseq2(lambda x: x)(None)
+
+@r_test
 def test_WrapR(fake_counts_obj):
     from de_toolkit import wrapr
     from tempfile import NamedTemporaryFile
@@ -104,12 +120,4 @@ def test_wrapr(fake_counts_obj):
     with wrapr.wrapr('write_json(list(y=5),params.out.fn)') as wr :
         assert wr.params_out['y'] == 5
 
-#@r_test
-#def test_require_deseq2(monkeypatch) :
-#    from de_toolkit import wrapr
-#    def f(*args,**kwargs):
-#        raise(RRuntimeError('mock'))
-#    monkeypatch.setattr(,'importr',f)
-#
-#    with pytest.raises(RPackageMissingError) :
-#        require_deseq2(lambda x: x)
+

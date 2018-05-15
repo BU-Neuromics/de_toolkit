@@ -26,13 +26,17 @@ def check_r() :
     return get_r_path() is not None
 
 def check_jsonlite():
-    return subprocess.run([get_r_path(),'-e','"library(jsonlite)"']).returncode == 0
+    return subprocess.run([
+        get_r_path(),
+        '-e',
+        '"library(jsonlite)"'
+        ]).returncode == 0
 
 def require_r(f):
     def _f(*args,**kwargs):
         if not check_r():
-            raise RscriptExecutableNotFound('Rscript executable could not be found '
-                    'on PATH. Rscript is needed for this functionality')
+            raise RscriptExecutableNotFound('Rscript executable could not be '
+                    'found on PATH. Rscript is needed for this functionality')
         elif not check_jsonlite():
             raise RPackageMissing('R package jsonlite is needed for this '
                     'functionality. In R, try installing with:\n\n'
@@ -48,7 +52,7 @@ def check_deseq2():
 @require_r
 def require_deseq2(f):
     def _f(*args,**kwargs):
-        if not check_r():
+        if not check_deseq2():
             raise RPackageMissing('R package DESeq2 is needed for this '
                     'functionality. In R, try installing with:\n\n'
                     'source("http://bioconductor.org/biocLite.R")\n'
@@ -251,7 +255,7 @@ def main(argv=None) :
         with open(args['<params_in>'],'rt') as f :
             params = json.load(f)
 
-    wr = WrapR(
+    with WrapR(
         args['<rscript>'],
         counts_obj.counts,
         counts_obj.column_data,
@@ -260,8 +264,8 @@ def main(argv=None) :
         metadata_out_fn=args['<metadata_out>'],
         params_out_fn=args['<params_out>'],
         rpath=args['--rpath']
-    )
-    wr.execute()
+        ) as wr :
+        wr.execute()
 
 if __name__ == '__main__' :
 

@@ -18,14 +18,19 @@ from .util import which
 
 class RscriptExecutableNotFound(Exception) : pass
 class RPackageMissing(Exception) : pass
+class RExecutionError(Exception) : pass
 
 def get_r_path():
+    'Return the path to Rscript found in the shell environment.'
     return which('Rscript')
 
 def check_r() :
+    'Tests whether the Rscript executable can be found.'
     return get_r_path() is not None
 
 def check_jsonlite():
+    '''Tests whether the R package jsonlite is installed. jsonlite is 
+    required for the wrapr interface.'''
     return subprocess.run([
         get_r_path(),
         '-e',
@@ -33,6 +38,8 @@ def check_jsonlite():
         ]).returncode == 0
 
 def require_r(f):
+    '''Decorator for functions that require using R. Raises exception if
+    either Rscript or jsonlite package cannot be found.'''
     def _f(*args,**kwargs):
         if not check_r():
             raise RscriptExecutableNotFound('Rscript executable could not be '
@@ -46,11 +53,14 @@ def require_r(f):
     return _f
 
 def check_deseq2():
+    'Tests whether the DESeq2 bioconductor package is installed.'
     wr = wrapr('library(DESeq2)')
     return wr.success
 
 @require_r
 def require_deseq2(f):
+    '''Decorator for functions that require using DESeq2. Raises exception if
+    the package cannot be found.'''
     def _f(*args,**kwargs):
         if not check_deseq2():
             raise RPackageMissing('R package DESeq2 is needed for this '
@@ -78,7 +88,7 @@ params <- if(nchar(json) > 0) {{
 '''
 class WrapR(object) :
     '''
-    Wrapper object for calling R code with Rscript. The interface 
+    Wrapper object for calling R code with Rscript.
     '''
     def __init__(self,
             rscript_path,
@@ -88,7 +98,8 @@ class WrapR(object) :
             counts_out_fn=None,
             metadata_out_fn=None,
             params_out_fn=None,
-            rpath=None
+            rpath=None,
+            raise_on_error=True
             ) :
 
         self._files = {}
@@ -152,8 +163,12 @@ class WrapR(object) :
         self.metadata_out = None
         self.params_out = None
 
+        self.raise_on_error = raise_on_error
+
     @require_r
     def execute(self) :
+        '''Execute the R script and load in the resulting output files, if
+        any.'''
 
         # construct Rscript command
         cmd = ('{rpath} --vanilla {rscript} {counts_in} {meta_in} {params_in} '
@@ -167,11 +182,18 @@ class WrapR(object) :
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
         )
+
         self.process = p
         self.stdout = p.stdout.decode()
         self.stderr = p.stderr.decode()
         self.returncode = p.returncode
         self.success = p.returncode == 0
+
+        if self.raise_on_error and not self.success :
+            raise RExecutionError('R encountered an error:\n\n' +
+                    'stdout:\n{}\n\n'.format(self.stdout) +
+                    'stderr:\n{}\n'.format(self.stderr)
+                )
 
         # read in the outputs
         if os.path.exists(self._paths['counts_out']) :
@@ -221,10 +243,11 @@ class WrapR(object) :
             print(f.name)
             os.remove(f.name)
 
-def wrapr(Rcode,counts_obj=None,params=None,rpath=None) :
-    '''Convenience wrapper for WrapR object. Writes *Rcode* to a
-    temporary file and executes it as it would if it were provided.
-    Returns the WrapR object.
+def wrapr(Rcode,counts_obj=None,**kwargs) :
+    '''Convenience wrapper for WrapR object. Writes *Rcode* to a temporary file
+    and executes it as it would if it were provided.
+
+    Returns a WrapR object.
     '''
 
     with NamedTemporaryFile('wt') as f :
@@ -234,8 +257,7 @@ def wrapr(Rcode,counts_obj=None,params=None,rpath=None) :
             f.name,
             counts=counts_obj and counts_obj.counts,
             metadata=counts_obj and counts_obj.column_data,
-            params=params,
-            rpath=rpath
+            **kwargs
         )
         wr.execute()
         return wr

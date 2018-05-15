@@ -120,4 +120,13 @@ def test_wrapr(fake_counts_obj):
     with wrapr.wrapr('write_json(list(y=5),params.out.fn)') as wr :
         assert wr.params_out['y'] == 5
 
+def test_wrapr_fail() :
+    from de_toolkit import wrapr
+
+    with pytest.raises(wrapr.RExecutionError) :
+        with wrapr.wrapr('thisisanerror') as wr :
+            assert wr.success
+
+    with wrapr.wrapr('thisisanerror',raise_on_error=False) as wr :
+        assert not wr.success
 

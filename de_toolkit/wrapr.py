@@ -243,7 +243,7 @@ class WrapR(object) :
             print(f.name)
             os.remove(f.name)
 
-def wrapr(Rcode,counts_obj=None,**kwargs) :
+def wrapr(Rcode,**kwargs) :
     '''Convenience wrapper for WrapR object. Writes *Rcode* to a temporary file
     and executes it as it would if it were provided.
 
@@ -255,8 +255,6 @@ def wrapr(Rcode,counts_obj=None,**kwargs) :
         f.flush()
         wr = WrapR(
             f.name,
-            counts=counts_obj and counts_obj.counts,
-            metadata=counts_obj and counts_obj.column_data,
             **kwargs
         )
         wr.execute()

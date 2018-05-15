@@ -95,7 +95,7 @@ def test_wrapr(fake_counts_obj):
         assert wr.success
 
     script = 'cat(length(args))'
-    with wrapr.wrapr(script,fake_counts_obj) as wr :
+    with wrapr.wrapr(script,counts=fake_counts_obj.counts) as wr :
         assert wr.stdout.strip() == '6'
         assert wr.counts_out is None
         assert wr.metadata_out is None
@@ -105,7 +105,10 @@ def test_wrapr(fake_counts_obj):
     write.csv(read.csv(counts.fn),counts.out.fn,row.names=FALSE)
     write.csv(read.csv(metadata.fn),metadata.out.fn,row.names=FALSE)
     '''
-    with wrapr.wrapr(script,fake_counts_obj) as wr :
+    with wrapr.wrapr(
+            script,
+            counts=fake_counts_obj.counts,
+            metadata=fake_counts_obj.column_data) as wr :
         assert wr.stdout.strip() == ''
         assert wr.counts_out is not None
         assert (wr.counts_out == fake_counts_obj.counts).all().all()

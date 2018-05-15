@@ -19,6 +19,7 @@ setup(name='de_toolkit',
           ,'detk-transform=de_toolkit.transform:main'
           ,'detk-filter=de_toolkit.filter:main'
           ,'detk-stats=de_toolkit.stats:main'
+          ,'detk-outlier=de_toolkit.outlier:main'
         ]
       }
       ,setup_requires=['pytest-runner']

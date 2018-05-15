@@ -240,7 +240,6 @@ class WrapR(object) :
     def __exit__(self,*args)  :
         # clean up the temp files
         for k,f in self._files.items() :
-            print(f.name)
             os.remove(f.name)
 
 def wrapr(Rcode,**kwargs) :

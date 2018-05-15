@@ -1,7 +1,12 @@
 '''
 Usage:
-    detk-entropy [--counts-data] <counts_fn> [--percentile] <perc>
-    [--output] <out_fn>
+    detk-outlier entropy <counts_fn> [options]
+
+Options:
+
+    -p P --percentile=P
+    -o FILE --output=FILE
+    --plot-output=FILE
 
 '''
 
@@ -150,9 +155,9 @@ def main(argv=None):
 
 
     file = str(args['<counts_fn>'])
-    pval = float(args['<perc>'])
-    output = str(args['<out_fn>'])
-    
+    pval = float(args['--percentile'])
+    output = str(args['--output'])
+
 
     # run the test case
     test_pass = test()

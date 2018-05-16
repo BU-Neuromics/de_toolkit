@@ -2,6 +2,7 @@ docopt
 future
 matplotlib
 mpld3
+numpy
 pandas
 patsy
 ply

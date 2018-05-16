@@ -13,4 +13,3 @@ scikit-learn
 sphinx
 sphinx-autobuild
 statsmodels
-rpy2>=2.7.3

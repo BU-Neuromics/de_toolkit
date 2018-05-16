@@ -1,11 +1,13 @@
 
+from de_toolkit.common import CountMatrix
+from de_toolkit.de import main
+
 import docopt
 from itertools import cycle
 import numpy
 import pandas
 import pytest
-from de_toolkit.common import CountMatrix
-from de_toolkit.de import main
+from tempfile import NamedTemporaryFile
 import warnings
 
 def test_de_cli() :
@@ -52,6 +54,9 @@ def logistic_test_counts_obj() :
 
   return CountMatrix(counts,column_data,design)
 
+# this function implements normal logistic regression via statsmodels
+# for comparison with Firth logistic regression
+# maybe move it inot the de.py module?
 def logistic(counts_obj) :
 
   # avoid a statsmodels warning
@@ -97,6 +102,34 @@ def test_firth(logistic_test_counts_obj) :
   rtol=1e-2
   assert numpy.allclose(coeffs['Intercept'],firth_out['int__beta'],rtol=rtol)
   assert numpy.allclose(coeffs['counts'],firth_out['counts__beta'],rtol=rtol)
+
+def test_firth_rda(logistic_test_counts_obj) :
+
+  from de_toolkit.de import firth_logistic_regression
+
+  logistic_test_counts_obj.design = 'category[control] ~ counts'
+
+  # test with rda
+  with NamedTemporaryFile() as f :
+      firth_out = firth_logistic_regression(
+              logistic_test_counts_obj,
+              rda=f.name
+      )
+      f.flush()
+
+      assert len(f.read()) != 0
+
+def test_firth_parallel(logistic_test_counts_obj) :
+
+  from de_toolkit.de import firth_logistic_regression
+
+  logistic_test_counts_obj.design = 'category[control] ~ counts'
+
+  firth_out = firth_logistic_regression(
+          logistic_test_counts_obj,
+          cores=2
+  )
+
 
 def test_firth_w_cov(logistic_test_counts_obj) :
   from de_toolkit.de import firth_logistic_regression

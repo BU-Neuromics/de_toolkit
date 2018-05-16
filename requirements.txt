@@ -13,4 +13,4 @@ scipy
 scikit-learn
 sphinx
 sphinx-autobuild
-statsmodels
+statsmodels>=0.8.0

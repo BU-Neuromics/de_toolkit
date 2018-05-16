@@ -18,6 +18,7 @@ import scipy.stats as sc
 import matplotlib as plt
 import matplotlib.pyplot as plt
 from .common import CountMatrixFile
+import sys
 
 
 def entropy_calc(file, pval, obj=None):
@@ -49,7 +50,7 @@ def entropy_calc(file, pval, obj=None):
     dropped_features = set(all_features) - set(nonzero_features)
 
     # create a null results df for all of the dropped features
-    dropped_df = pd.DataFrame(columns=['entropy', 'p0_{}'.format(trshld_name)], index=dropped_features)
+    dropped_df = pd.DataFrame(columns=['entropy', 'entropy_p0_{}'.format(trshld_name)], index=dropped_features)
     dropped_df.replace(dropped_df, 'Null')
 
     # calculate the entropy over all of the features
@@ -62,9 +63,10 @@ def entropy_calc(file, pval, obj=None):
     # column 1 is the entropy value
     # column 2 is a boolean indication whether the value is under the user described threshold
     results_df = pd.DataFrame(entropy, columns=['entropy'])
-    results_df['p0_{}'.format(trshld_name)] = entropy < entropy_threshold
+    results_df['entropy_p0_{}'.format(trshld_name)] = entropy < entropy_threshold
     frames = [results_df, dropped_df]
     results_df = pd.concat(frames)
+    results_df = results_df.reindex(index = counts_transpose.columns.tolist())
 
     return(results_df)
 
@@ -158,10 +160,10 @@ def main(argv=None):
     elif output == None and plot != None:
         plot_entropy(file, pval, name=plot, obj='terminal')
         return('Done')
-    # return results
+    # return results to stdout
     elif output == None and plot == None:
-        return(results)
-
+        f = sys.stdout
+        results.to_csv(f, sep='\t')
 
 
 

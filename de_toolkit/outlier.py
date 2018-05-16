@@ -66,7 +66,8 @@ def entropy_calc(file, pval, obj=None):
     results_df['entropy_p0_{}'.format(trshld_name)] = entropy < entropy_threshold
     frames = [results_df, dropped_df]
     results_df = pd.concat(frames)
-    results_df = results_df.reindex(index = counts_transpose.columns.tolist())
+    # set the results index to be in the same order as the counts index
+    results_df.index = counts.index
 
     return(results_df)
 

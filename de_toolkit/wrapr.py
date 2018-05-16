@@ -28,29 +28,62 @@ def check_r() :
     'Tests whether the Rscript executable can be found.'
     return get_r_path() is not None
 
-def check_jsonlite():
-    '''Tests whether the R package jsonlite is installed. jsonlite is 
-    required for the wrapr interface.'''
+def check_r_package(pkg) :
+    'Tests whether the R package *pkg* is installed.'
     return subprocess.run([
         get_r_path(),
         '-e',
-        '"library(jsonlite)"'
+        '"library({})"'.format(pkg)
         ]).returncode == 0
 
-def require_r(f):
+def require_r_package(pkg) :
+    'Check whether pkg is installed in R, and raise if not.'
+    if not check_r_package(pkg) :
+        raise RPackageMissing(('R package {pkg} is needed for this '
+                'functionality. In R, try installing with:\n\n'
+                'install.packages("{pkg}")').format(pkg=pkg))
+
+def require_r(*pkgs):
     '''Decorator for functions that require using R. Raises exception if
-    either Rscript or jsonlite package cannot be found.'''
-    def _f(*args,**kwargs):
-        if not check_r():
-            raise RscriptExecutableNotFound('Rscript executable could not be '
-                    'found on PATH. Rscript is needed for this functionality')
-        elif not check_jsonlite():
-            raise RPackageMissing('R package jsonlite is needed for this '
-                    'functionality. In R, try installing with:\n\n'
-                    'install.packages("jsonlite")')
-        else :
+    either Rscript or jsonlite or other packages provided cannot be found.
+    Can be called with or without arguments. When arguments are supplied,
+    the arguments should be strings of names of R packages required by the
+    decorated function.
+
+    Examples
+    --------
+
+    @require_r
+    def call_requiring_only_Rscript_and_jsonlite() :
+        ...
+
+    @require_r('logistf',...)
+    def call_requiring_Rscript_jsonlite_and_logistf_and_others() :
+        ...
+    '''
+    # when decorated without arguments
+    if callable(pkgs[0]) :
+        f = pkgs[0]
+        def decorator(*args,**kwargs):
+            if not check_r():
+                raise RscriptExecutableNotFound('Rscript executable could not be '
+                        'found on PATH. Rscript is needed for this functionality')
+            require_r_package('jsonlite')
             return f(*args,**kwargs)
-    return _f
+    # when decorated with arguments
+    else :
+        def decorator(f) :
+            def wrapped(*args,**kwargs):
+                if not check_r():
+                    raise RscriptExecutableNotFound('Rscript executable could not be '
+                            'found on PATH. Rscript is needed for this functionality')
+                else :
+                    require_r_package('jsonlite')
+                    for pkg in pkgs :
+                        require_r_package(pkg)
+                return f(*args,**kwargs)
+            return wrapped
+    return decorator
 
 def check_deseq2():
     'Tests whether the DESeq2 bioconductor package is installed.'

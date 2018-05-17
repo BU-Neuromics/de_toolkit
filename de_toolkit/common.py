@@ -6,6 +6,7 @@ Usage:
   detk filter [<args>...]
   detk stats [<args>...]
   detk help [<args>...]
+  detk outlier [<args>...]
 
 Options:
 
@@ -180,7 +181,7 @@ class CountMatrixFile(CountMatrix) :
     )
 
 def main(argv=None) :
-  
+
   args = docopt(__doc__)
 
   if args['norm'] :
@@ -198,8 +199,12 @@ def main(argv=None) :
   elif args['stats'] :
     from .stats import main
     main()
+  elif args['outlier'] :
+    from .outlier import main
+    main()
   elif args['help'] :
     docopt(__doc__,['-h'])
+
 
 if __name__ == '__main__' :
   main()

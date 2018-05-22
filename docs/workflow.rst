@@ -21,7 +21,7 @@ The structure of the filter command is as follows
 
   <function>(all or condition) <inequality> <number>
 
-More detailed information on filtering can be found filtering.rst_
+More detailed information on filtering can be found :ref:`filter.rst`.
 
 
 There are a variety of functions and tools located in detk for differential expression analysis. This

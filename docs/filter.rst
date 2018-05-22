@@ -1,5 +1,3 @@
-.. _filter.rst:
-
 ``filter`` - Filtering Count Matrices
 =====================================
 

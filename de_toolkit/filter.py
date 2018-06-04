@@ -3,7 +3,7 @@ Usage:
     detk-filter [options] <command> [--column-data=<column data fn>] <counts_fn>
 
 Options:
-    --output=<out_fn>    Name of output file
+    -o <out_fn> --output=<out_fn>    Name of output file
 '''
 
 import numpy as np

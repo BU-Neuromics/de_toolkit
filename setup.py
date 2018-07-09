@@ -2,6 +2,16 @@
 
 from setuptools import setup, find_packages
 import pkg_resources
+import sys
+
+try :
+  import numpy, scipy
+except ImportError :
+  print('Software is irritating sometimes.\n\n'
+        'Because of annoying but I suppose good reasons, numpy and scipy \n'
+        'both have to be installed prior to installing this package. Please \n'
+        'install them first and then try again.')
+  sys.exit(1)
 
 setup(name='de_toolkit',
       version=open('VERSION').read().strip()
@@ -22,7 +32,9 @@ setup(name='de_toolkit',
           ,'detk-outlier=de_toolkit.outlier:main'
         ]
       }
-      ,setup_requires=['pytest-runner']
+      ,setup_requires=[
+        'pytest-runner'
+       ]
       ,tests_require=['pytest']
       ,url='https://bitbucket.org/bubioinformaticshub/de_toolkit'
       ,license='MIT'

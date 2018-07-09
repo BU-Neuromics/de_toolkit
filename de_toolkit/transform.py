@@ -7,13 +7,11 @@ Usage:
 '''
 from docopt import docopt
 from .common import CountMatrixFile
-from .util import (
-  count_obj_to_DESeq2
-  ,require_rpy2
-  ,require_deseq2
-  ,rpy2_console_wrapper
-  ,stub
-)
+from .wrapr import (
+        require_r, require_deseq2, wrapr, RExecutionError, RPackageMissing,
+        require_r_package
+    )
+from .util import stub
 
 def pmf_transform(x,shrink_factor=0.25,max_p=None,iters=1000) :
 

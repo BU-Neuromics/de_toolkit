@@ -1,6 +1,7 @@
 
 from de_toolkit.common import CountMatrix
 from de_toolkit.de import main
+from de_toolkit.wrapr import check_r, require_r, check_r_package
 
 import docopt
 from itertools import cycle
@@ -10,13 +11,20 @@ import pytest
 from tempfile import NamedTemporaryFile
 import warnings
 
+r_test = pytest.mark.skipif(not check_r(),reason='r is not installed, skipping test')
+logistf_test = pytest.mark.skipif(not check_r_package('logistf'), reason='logistf package not installed, skipping test')
+
 def test_de_cli() :
   with pytest.raises(docopt.DocoptExit) :
     main(argv=None)
 
+@r_test
+@logistf_test
 def test_firth_cli(fake_counts_csv,fake_column_data_csv) :
   main(['firth','category ~ counts',fake_counts_csv,fake_column_data_csv])
 
+@r_test
+@logistf_test
 def test_firth_cli_w_cov(fake_counts_csv,fake_column_data_csv) :
   main(['firth','category ~ cont_cov + counts',fake_counts_csv,fake_column_data_csv])
 

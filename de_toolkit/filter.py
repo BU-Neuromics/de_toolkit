@@ -76,7 +76,7 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
      '''
 
     #Get counts, column names, and row names
-    cnts = count_mat.counts.as_matrix()
+    cnts = count_mat.counts.values
     column_names = count_mat.sample_names
     row_names = count_mat.feature_names
 
@@ -107,7 +107,7 @@ def filter_nonzero(count_mat,n,relation,groups=None) :
       #Loop through the groups, apply filter to each separately
       for group in groups:
         group_df = count_mat.counts[group]
-        for row_index, item in enumerate(group_df.as_matrix()):
+        for row_index, item in enumerate(group_df.values):
 
           #Filter by the fraction of samples that are nonzero
           if 0 <= n < 1:
@@ -141,7 +141,7 @@ def filter_zeros(count_mat,n,relation,groups=None) :
      '''
 
     #Get counts, column names, and row names
-    cnts = count_mat.counts.as_matrix()
+    cnts = count_mat.counts.values
     column_names = count_mat.sample_names
     row_names = count_mat.feature_names
 
@@ -172,7 +172,7 @@ def filter_zeros(count_mat,n,relation,groups=None) :
       #Loop through the groups, apply filter to each separately
       for group in groups:
         group_df = count_mat.counts[group]
-        for row_index, item in enumerate(group_df.as_matrix()):
+        for row_index, item in enumerate(group_df.values):
 
           #Filter by the fraction of samples that are zero
           if 0 <= n < 1:
@@ -204,7 +204,7 @@ def filter_median(count_mat, num, relation, groups=None):
     '''
 
     #Get counts, column names, and row names
-    cnts = count_mat.counts.as_matrix()
+    cnts = count_mat.counts.values
     column_names = count_mat.sample_names
     row_names = count_mat.feature_names
 
@@ -226,7 +226,7 @@ def filter_median(count_mat, num, relation, groups=None):
       #Loop through the groups, apply filter to each separately
       for group in groups:
         group_df = count_mat.counts[group]
-        for row_index, item in enumerate(group_df.as_matrix()):
+        for row_index, item in enumerate(group_df.values):
           if evaluate_inequality(np.median(item), relation, num) is True:
             row_indices.append(row_index)
 
@@ -249,7 +249,7 @@ def filter_mean(count_mat, num, relation, groups=None):
     '''
 
     #Get counts, column names, and row names
-    cnts = count_mat.counts.as_matrix()
+    cnts = count_mat.counts.values
     column_names = count_mat.sample_names
     row_names = count_mat.feature_names
 
@@ -271,7 +271,7 @@ def filter_mean(count_mat, num, relation, groups=None):
       #Loop through the groups, apply filter to each separately
       for group in groups:
         group_df = count_mat.counts[group]
-        for row_index, item in enumerate(group_df.as_matrix()):
+        for row_index, item in enumerate(group_df.values):
           if evaluate_inequality(np.mean(item), relation, num) is True:
             row_indices.append(row_index)
 

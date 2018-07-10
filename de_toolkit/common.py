@@ -184,29 +184,32 @@ class CountMatrixFile(CountMatrix) :
 
 def main(argv=None) :
 
+
     args = docopt(__doc__)
+
+    cli_args = sys.argv[2:]
 
     if args['norm'] :
         from .norm import main
-        main()
+        main(cli_args)
     elif args['de'] :
         from .de import main
-        main()
+        main(cli_args)
     elif args['transform'] :
         from .transform import main
-        main()
+        main(cli_args)
     elif args['filter'] :
         from .filter import main
-        main()
+        main(cli_args)
     elif args['stats'] :
         from .stats import main
-        main()
+        main(cli_args)
     elif args['outlier'] :
         from .outlier import main
-        main()
+        main(cli_args)
     elif args['wrapr'] :
         from .wrapr import main
-        main(sys.argv[2:])
+        main(cli_args)
     elif args['help'] :
         docopt(__doc__,['-h'])
 

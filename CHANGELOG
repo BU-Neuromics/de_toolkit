@@ -2,6 +2,16 @@
 
 ## unreleased
 
+## [ 0.4.0 ]
+### Added
+- new wrapr interface to replace rpy2
+- wrapr tests and docs
+- entropy outlier filtering
+- t-test differential expression
+- preliminary workflow doc
+### Changed
+- removed all trace of rpy2 hooray
+
 ## [ 0.3.4 ]
 ### Changed
 - fixed critical bug in stats entropy function

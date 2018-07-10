@@ -16,7 +16,7 @@ import numpy as np
 import pandas
 from .common import CountMatrixFile
 from .util import stub
-from .wrapr import require_deseq2
+from .wrapr import require_r, wrapr
 
 class NormalizationException(Exception) : pass
 
@@ -74,33 +74,31 @@ def estimateSizeFactors(cnts) :
 
     return sizeFactors
 
-@require_deseq2
-def estimateSizeFactors_rpy(cnts) :
+@require_r('DESeq2')
+def estimateSizeFactors_wrapr(cnts) :
 
-    from rpy2 import robjects
-    import rpy2.rlike.container as rlc
-    from rpy2.robjects.packages import importr
-    from rpy2.rinterface import RRuntimeError
+    script = '''\
+    library(DESeq2)
 
-    base = importr('base')
+    cnts <- as.matrix(read.csv(counts.fn,row.names=1))
+    colData <- data.frame(name=seq(ncol(cnts)))
+    dds <- DESeqDataSetFromMatrix(countData = cnts,
+        colData = colData,
+        design = ~ 1)
+    dds <- estimateSizeFactors(dds)
+    write.csv(sizeFactors(dds),out.fn)
+    '''
 
-    deseq2 = importr('DESeq2')
-
-    m = robjects.r.matrix(
-        robjects.FloatVector(
-            cnts.ravel()
-        )
-        ,nrow=cnts.shape[0]
-        ,byrow=True
-    )
-
-    deseq2_size_factors = deseq2.estimateSizeFactorsForMatrix(m)
+    with wrapr(script,
+            counts=pandas.DataFrame(cnts),
+            raise_on_error=False) as r :
+        deseq2_size_factors = r.output['x'].values
 
     return list(deseq2_size_factors)
 
 def deseq2(count_obj) :
 
-    count_mat = count_obj.counts.as_matrix()
+    count_mat = count_obj.counts.values
 
     sizeFactors = estimateSizeFactors(count_mat)
     norm_cnts = count_mat/sizeFactors
@@ -115,33 +113,33 @@ def deseq2(count_obj) :
     )
     return normalized
 
-@require_deseq2
-def deseq2_rpy(count_obj) :
+@require_r('DESeq2')
+def deseq2_wrapr(count_obj) :
 
-    from rpy2 import robjects
-    import rpy2.rlike.container as rlc
-    from rpy2.robjects.packages import importr
-    from rpy2.rinterface import RRuntimeError
+    script = '''\
+    library(DESeq2)
 
-    deseq2 = importr('DESeq2')
-
-    cnts = pandas_dataframe_to_r_matrix(count_obj.counts)
+    cnts <- as.matrix(read.csv(counts.fn,row.names=1))
+    colData <- read.csv(metadata.fn,row.names=1)
+    str(params$design)
+    dds <- DESeqDataSetFromMatrix(countData = cnts,
+        colData = colData,
+        design = formula(params$design))
+    dds <- estimateSizeFactors(dds)
+    write.csv(counts(dds,normalized=TRUE),out.fn,row.names=TRUE)
+    '''
 
     # we need to get rid of the counts from the left hand side and the Intercept
     # from the right, otherwise the model matrix is not full rank and DESeq2 whines
     count_obj.design_matrix.drop_from_lhs('counts')
     count_obj.design_matrix.drop_from_rhs('Intercept')
 
-    colData = pandas_dataframe_to_r_dataframe(count_obj.design_matrix.full_matrix)
-
-    dds = deseq2.DESeqDataSetFromMatrix(
-        countData = cnts
-        ,colData = colData
-        ,design = robjects.Formula(count_obj.design if count_obj.design else '~')
-    )
-    dds = deseq2.estimateSizeFactors_DESeqDataSet(dds)
-
-    norm_counts = deseq2.counts_DESeqDataSet(dds,normalized=True)
+    with wrapr(script,
+            counts=count_obj.counts,
+            metadata=count_obj.design_matrix.full_matrix,
+            params={'design':count_obj.design},
+            raise_on_error=True) as r :
+        norm_counts = r.output.values
 
     return norm_counts
 

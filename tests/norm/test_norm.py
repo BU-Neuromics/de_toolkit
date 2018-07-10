@@ -37,7 +37,7 @@ def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
 
 def test_estimateSizeFactors(fake_counts_numpy_matrix) :
 
-  from de_toolkit.norm import estimateSizeFactors, estimateSizeFactors_rpy
+  from de_toolkit.norm import estimateSizeFactors, estimateSizeFactors_wrapr
 
   # the matrix is constructed such that the size factors are
   # 1/4, 1, 4
@@ -45,7 +45,7 @@ def test_estimateSizeFactors(fake_counts_numpy_matrix) :
   cnts = fake_counts_numpy_matrix
 
   true_size_factors = cnts[2,:]/cnts[2,1]
-  deseq2_size_factors = estimateSizeFactors_rpy(cnts)
+  deseq2_size_factors = estimateSizeFactors_wrapr(cnts)
   size_factors = estimateSizeFactors(cnts)
 
   assert np.allclose(size_factors, true_size_factors)
@@ -67,7 +67,7 @@ def test_estimateSizeFactors_allzero(fake_counts_numpy_matrix) :
 
 def test_estimateSizeFactors_somezero(fake_counts_numpy_matrix) :
 
-  from de_toolkit.norm import estimateSizeFactors, estimateSizeFactors_rpy
+  from de_toolkit.norm import estimateSizeFactors, estimateSizeFactors_wrapr
 
   # the matrix is constructed such that the size factors are
   # 1/4, 1, 4
@@ -84,7 +84,7 @@ def test_estimateSizeFactors_somezero(fake_counts_numpy_matrix) :
       warnings.simplefilter("ignore")
 
       true_size_factors = cnts[2,:]/geom_mean
-      deseq2_size_factors = estimateSizeFactors_rpy(cnts)
+      deseq2_size_factors = estimateSizeFactors_wrapr(cnts)
       size_factors = estimateSizeFactors(cnts)
 
   assert np.allclose(size_factors, true_size_factors)
@@ -94,7 +94,7 @@ def test_deseq2(fake_counts_obj) :
 
   from de_toolkit.norm import deseq2
 
-  cnts = fake_counts_obj.counts.as_matrix()
+  cnts = fake_counts_obj.counts.values
 
   true_size_factors = cnts[2,:]/cnts[2,1]
 
@@ -105,29 +105,29 @@ def test_deseq2(fake_counts_obj) :
   assert np.allclose(norm_cnts, true_norm_cnts)
 
 
-def test_deseq2_py_vs_rpy(fake_counts_obj) :
+def test_deseq2_py_vs_wrapr(fake_counts_obj) :
 
-  from de_toolkit.norm import deseq2, deseq2_rpy
+  from de_toolkit.norm import deseq2, deseq2_wrapr
 
   # this raises R warnings about converting floats to integers that we can
   # ignore
   with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
+    warnings.simplefilter('ignore')
 
     # the design associated with fake_counts_obj is category ~ counts
     # which is intended for testing Firth
     # change it to something DESeq2 expects
     fake_counts_obj.design = 'counts ~ cont_cov + category'
 
-    rpy_norm_counts = deseq2_rpy(fake_counts_obj)
+    rpy_norm_counts = deseq2_wrapr(fake_counts_obj)
 
   py_norm_counts = deseq2(fake_counts_obj)
 
   assert np.allclose(rpy_norm_counts,py_norm_counts)
 
-def test_deseq2_py_vs_rpy_somezero(fake_counts_obj) :
+def test_deseq2_py_vs_wrapr_somezero(fake_counts_obj) :
 
-  from de_toolkit.norm import deseq2, deseq2_rpy
+  from de_toolkit.norm import deseq2, deseq2_wrapr
 
   fake_counts_obj.counts.iloc[0,2] = 0
   fake_counts_obj.counts.iloc[4,2] = 0
@@ -142,7 +142,7 @@ def test_deseq2_py_vs_rpy_somezero(fake_counts_obj) :
     # change it to something DESeq2 expects
     fake_counts_obj.design = 'counts ~ cont_cov + category'
 
-    rpy_norm_counts = deseq2_rpy(fake_counts_obj)
+    rpy_norm_counts = deseq2_wrapr(fake_counts_obj)
 
     # suppress divide by zero warnings
     py_norm_counts = deseq2(fake_counts_obj)

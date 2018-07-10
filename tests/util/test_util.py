@@ -10,5 +10,5 @@ def is_windows() :
 
 @pytest.mark.skipif(is_windows(), reason='not sure how to test which() on Windows')
 def test_which() :
-    from .util import which
+    from de_toolkit.util import which
     assert which('sh') == '/bin/sh'

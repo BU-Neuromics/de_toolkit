@@ -1,13 +1,21 @@
 '''
 Usage:
-    detk-wrapr run [options] <rscript> <counts_in> <counts_out>
-        [--meta-in=<metadata_in>]  [--meta-out=<metadata_out>]
-        [--params-in=<params_in>] [--params-out=<params_out>]
     detk-wrapr check
+    detk-wrapr run [options] <rscript> <counts_in> <counts_out>
 
 Options:
-    --rpath=PATH     Path to Rscript executable, inferred from the environment
-                     by default
+    --rpath=PATH       Path to Rscript executable, inferred from the environment
+                       by default
+    --meta-in=PATH     Path to metadata file corresponding to columns in counts,
+                       same as is passed to other detk functions
+    --meta-out=PATH    Path to metadata file corresponding to columns in counts,
+                       same as is passed to other detk functions
+    --params-in=PATH   Path to JSON formatted file containing parameters needed
+                       by R script
+    --params-out=PATH  Path to JSON formatted file to be created with output
+                       from the R script
+    --strict           Ensure counts column names and the first row of the
+                       metadata file provided (if any) match, otherwise fail
 '''
 from collections import defaultdict
 from docopt import docopt
@@ -124,9 +132,7 @@ params <- if(nchar(json) > 0) {{
 {script}
 '''
 class WrapR(object) :
-    '''
-    Wrapper object for calling R code with Rscript.
-    '''
+    'Wrapper object for calling R code with Rscript.'
     def __init__(self,
             rscript_path,
             counts=None,
@@ -304,13 +310,13 @@ def main(argv=None) :
 
         counts_obj = CountMatrixFile(
               args['<counts_in>'],
-              args['<metadata_in>'],
+              args['--meta-in'],
               strict=args.get('--strict',False)
         )
 
         params = None
-        if os.path.exists(args['<params_in>']) :
-            with open(args['<params_in>'],'rt') as f :
+        if os.path.exists(args['--params-in']) :
+            with open(args['--params-in'],'rt') as f :
                 params = json.load(f)
 
         with WrapR(
@@ -319,8 +325,8 @@ def main(argv=None) :
             counts_obj.column_data,
             params=params,
             counts_out_fn=args['<counts_out>'],
-            metadata_out_fn=args['<metadata_out>'],
-            params_out_fn=args['<params_out>'],
+            metadata_out_fn=args['--meta-out'],
+            params_out_fn=args['--params-out'],
             rpath=args['--rpath']
             ) as wr :
             wr.execute()

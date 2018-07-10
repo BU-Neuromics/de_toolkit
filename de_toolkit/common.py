@@ -5,8 +5,9 @@ Usage:
   detk transform [<args>...]
   detk filter [<args>...]
   detk stats [<args>...]
-  detk help [<args>...]
   detk outlier [<args>...]
+  detk wrapr [<args>...]
+  detk help
 
 Options:
 
@@ -15,6 +16,7 @@ from copy import deepcopy
 from docopt import docopt
 import pandas
 import re
+import sys
 from .patsy_lite import DesignMatrix, PatsyLiteParseError
 
 class InvalidDesignException(Exception): pass
@@ -202,6 +204,9 @@ def main(argv=None) :
   elif args['outlier'] :
     from .outlier import main
     main()
+  elif args['wrapr'] :
+    from .wrapr import main
+    main(sys.argv[2:])
   elif args['help'] :
     docopt(__doc__,['-h'])
 

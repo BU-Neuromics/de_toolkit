@@ -30,6 +30,7 @@ setup(name='de_toolkit',
           ,'detk-filter=de_toolkit.filter:main'
           ,'detk-stats=de_toolkit.stats:main'
           ,'detk-outlier=de_toolkit.outlier:main'
+          ,'detk-wrapr=de_toolkit.wrapr:main'
         ]
       }
       ,setup_requires=[

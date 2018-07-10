@@ -91,7 +91,7 @@ def base(count_mat) :
     '''
 
     #Get counts, number of columns, and number of rows
-    cnts = count_mat.counts.as_matrix()
+    cnts = count_mat.counts.values
     num_cols=len(cnts[0])
     num_rows=len(cnts)
 
@@ -247,7 +247,7 @@ def colzero(count_mat) :
     '''
 
     #Get counts, number of columns, number of rows, and sample names
-    cnts = count_mat.counts.as_matrix()
+    cnts = count_mat.counts.values
     num_cols=len(cnts[0])
     num_rows=len(cnts)
     col_names=count_mat.sample_names
@@ -297,7 +297,7 @@ def rowzero(count_mat) :
     '''
 
     #Get counts, number of columns, number of rows, and gene names
-    cnts = count_mat.counts.as_matrix()
+    cnts = count_mat.counts.values
     num_cols=len(cnts[0])
     num_rows=len(cnts)
     row_names = count_mat.feature_names
@@ -363,7 +363,7 @@ def entropy(count_mat) :
     '''
 
     #Get counts, number of columns, number of rows, and gene names
-    cnts = count_mat.counts.as_matrix()
+    cnts = count_mat.counts.values
     num_cols=len(cnts[0])
     num_rows=len(cnts)
     row_names = count_mat.feature_names
@@ -423,7 +423,7 @@ def count_PCA(count_mat, metadata=''):
     '''
     
     #Get counts from file and scale counts
-    cnts = count_mat.counts.as_matrix()
+    cnts = count_mat.counts.values
 
     cnts = scale(cnts)
 
@@ -655,7 +655,7 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
     #Format coldist HTML output (box plots for each column)
     if 'coldist' in output_dict:
         coldist_hide=''
-        cnts = counts_obj.counts.as_matrix()
+        cnts = counts_obj.counts.values
         names = counts_obj.sample_names
         row_names = counts_obj.feature_names
         fig = plt.figure()

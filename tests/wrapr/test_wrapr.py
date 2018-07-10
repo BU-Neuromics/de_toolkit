@@ -4,12 +4,26 @@ from de_toolkit import wrapr
 # decorator for skipping if Rscript is not installed
 r_test = pytest.mark.skipif(not wrapr.check_r(),reason='Rscript executable not found, skipping test')
 
+def test_wrapr_cli_check(monkeypatch) :
+
+    from de_toolkit import wrapr
+
+    monkeypatch.setattr(wrapr,'check_r',lambda: False)
+    monkeypatch.setattr(wrapr,'check_r_package',lambda x: True)
+    with pytest.raises(wrapr.RscriptExecutableNotFound) :
+        wrapr.main(['check'])
+
+    monkeypatch.setattr(wrapr,'check_r',lambda: True)
+    monkeypatch.setattr(wrapr,'check_r_package',lambda x: False)
+    with pytest.raises(wrapr.RPackageMissing) :
+        wrapr.main(['check'])
+
 def test_get_r_path(monkeypatch) :
-    from de_toolkit import util, wrapr
+    from de_toolkit import wrapr
     # when false
     def f(*args,**kwargs):
         return '/usr/bin/Rscript'
-    monkeypatch.setattr(util,'which',f)
+    monkeypatch.setattr(wrapr,'which',f)
     assert wrapr.get_r_path() == '/usr/bin/Rscript'
 
 @r_test
@@ -32,6 +46,16 @@ def test_check_r(monkeypatch) :
 def test_require_r(monkeypatch) :
     from de_toolkit import wrapr
 
+    # these tests only run if R is already installed
+    # when true
+    wrapr.require_r(lambda x: x)(None)
+
+    def f2(*args,**kwargs):
+        return False
+    monkeypatch.setattr(wrapr,'check_r_package',f2)
+    with pytest.raises(wrapr.RPackageMissing) :
+        wrapr.require_r(lambda x: x)(None)
+
     # when fail
     def f(*args,**kwargs):
         return None
@@ -39,18 +63,6 @@ def test_require_r(monkeypatch) :
     with pytest.raises(wrapr.RscriptExecutableNotFound) :
         wrapr.require_r(lambda x: x)(None)
 
-    # when true
-    def f(*args,**kwargs):
-        return '/usr/bin/Rscript'
-    monkeypatch.setattr(wrapr,'get_r_path',f)
-    wrapr.require_r(lambda x: x)(None)
-
-    def f2(*args,**kwargs):
-        return False
-    monkeypatch.setattr(wrapr,'get_r_path',f)
-    monkeypatch.setattr(wrapr,'check_jsonlite',f2)
-    with pytest.raises(wrapr.RPackageMissing) :
-        wrapr.require_r(lambda x: x)(None)
 
 @r_test
 def test_require_deseq2(monkeypatch) :

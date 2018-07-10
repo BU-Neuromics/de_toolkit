@@ -1,17 +1,21 @@
 '''
-Usage: detk-wrapr [options] <rscript> <counts_in> <counts_out>
-       [--meta-in=<metadata_in>]  [--meta-out=<metadata_out>]
-       [--params-in=<params_in>] [--params-out=<params_out>]
+Usage:
+    detk-wrapr run [options] <rscript> <counts_in> <counts_out>
+        [--meta-in=<metadata_in>]  [--meta-out=<metadata_out>]
+        [--params-in=<params_in>] [--params-out=<params_out>]
+    detk-wrapr check
 
 Options:
     --rpath=PATH     Path to Rscript executable, inferred from the environment
                      by default
 '''
 from collections import defaultdict
+from docopt import docopt
 import json
 import os
 import pandas as pd
 import subprocess
+import sys
 from tempfile import NamedTemporaryFile
 from .common import CountMatrixFile
 from .util import which
@@ -296,28 +300,52 @@ def main(argv=None) :
 
     args = docopt(__doc__,argv=argv)
 
-    counts_obj = CountMatrixFile(
-          args['<counts_in>'],
-          args['<metadata_in>'],
-          strict=args.get('--strict',False)
-    )
+    if args['run'] :
 
-    params = None
-    if os.path.exists(args['<params_in>']) :
-        with open(args['<params_in>'],'rt') as f :
-            params = json.load(f)
+        counts_obj = CountMatrixFile(
+              args['<counts_in>'],
+              args['<metadata_in>'],
+              strict=args.get('--strict',False)
+        )
 
-    with WrapR(
-        args['<rscript>'],
-        counts_obj.counts,
-        counts_obj.column_data,
-        params=params,
-        counts_out_fn=args['<counts_out>'],
-        metadata_out_fn=args['<metadata_out>'],
-        params_out_fn=args['<params_out>'],
-        rpath=args['--rpath']
-        ) as wr :
-        wr.execute()
+        params = None
+        if os.path.exists(args['<params_in>']) :
+            with open(args['<params_in>'],'rt') as f :
+                params = json.load(f)
+
+        with WrapR(
+            args['<rscript>'],
+            counts_obj.counts,
+            counts_obj.column_data,
+            params=params,
+            counts_out_fn=args['<counts_out>'],
+            metadata_out_fn=args['<metadata_out>'],
+            params_out_fn=args['<params_out>'],
+            rpath=args['--rpath']
+            ) as wr :
+            wr.execute()
+
+    elif args['check'] :
+
+        r = check_r()
+        print('R found:',r,file=sys.stderr)
+
+        if not r :
+            raise RscriptExecutableNotFound(
+                    'Rscript executable not found, wrapr interface and '
+                    'functions will not work'
+            )
+
+        print('R path: {}'.format(get_r_path()),file=sys.stderr)
+
+        jsonlite = check_r_package('jsonlite')
+        print('jsonlite found:',jsonlite,file=sys.stderr)
+
+        if not jsonlite :
+            raise RPackageMissing('ERROR: R package jsonlite must be installed, '
+                  'wrapr interface and functions will not work'
+            )
+
 
 if __name__ == '__main__' :
 

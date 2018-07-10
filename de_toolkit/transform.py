@@ -51,29 +51,6 @@ def trim_outliers(count_obj) :
 
 @require_r('DESeq2','SummarizedExperiment')
 def vst(count_obj) :
-    '''
-    import pandas
-    from rpy2 import robjects
-    from rpy2.rinterface import RRuntimeError
-    import rpy2.rlike.container as rlc
-    from rpy2.robjects.packages import importr
-    import warnings
-
-    base = importr('base')
-
-    deseq = importr('DESeq2')
-    sumexp = importr('SummarizedExperiment')
-
-    dds = count_obj_to_DESeq2(count_obj)
-
-    with rpy2_console_wrapper() as rpy2_f :
-        try :
-            vsd = deseq.varianceStabilizingTransformation(dds)
-            vsd_values = sumexp.assay(vsd)
-        except RRuntimeError as e :
-            print(e)
-            raise
-    '''
 
     script = '''\
     library(DESeq2)

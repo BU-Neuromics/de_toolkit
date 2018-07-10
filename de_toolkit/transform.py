@@ -49,8 +49,9 @@ def shrink_outliers(count_obj) :
 def trim_outliers(count_obj) :
     pass
 
-@require_deseq2
+@require_r('DESeq2','SummarizedExperiment')
 def vst(count_obj) :
+    '''
     import pandas
     from rpy2 import robjects
     from rpy2.rinterface import RRuntimeError
@@ -72,6 +73,25 @@ def vst(count_obj) :
         except RRuntimeError as e :
             print(e)
             raise
+    '''
+
+    script = '''\
+    library(DESeq2)
+    library(SummarizedExperiment)
+
+    cnts <- as.matrix(read.csv(counts.fn,row.names=1))
+    colData <- data.frame(name=seq(ncol(cnts)))
+    dds <- DESeqDataSetFromMatrix(countData = cnts,
+        colData = colData,
+        design = ~ 1)
+    dds <- varianceStabilizingTransformation(dds)
+    write.csv(assay(dds),out.fn)
+    '''
+
+    with wrapr(script,
+            counts=count_obj.counts,
+            raise_on_error=True) as r :
+        vsd_values = r.output.values
 
     return vsd_values
 

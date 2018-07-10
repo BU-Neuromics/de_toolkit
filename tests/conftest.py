@@ -168,7 +168,7 @@ def fake_counts_pandas_dataframe(fake_counts_csv) :
 
 @pytest.fixture()
 def fake_counts_numpy_matrix(fake_counts_pandas_dataframe) :
-  return fake_counts_pandas_dataframe.as_matrix()
+  return fake_counts_pandas_dataframe.values
 
 @pytest.fixture()
 def fake_counts_csv(request,fake_counts_text_data) :
@@ -219,7 +219,7 @@ def fake_counts_pandas_dataframe_with_zeros(fake_counts_csv_with_zeros) :
 
 @pytest.fixture()
 def fake_counts_numpy_matrix_with_zeros(fake_counts_pandas_dataframe_with_zeros) :
-  return fake_counts_pandas_dataframe_with_zeros.as_matrix()
+  return fake_counts_pandas_dataframe_with_zeros.values
 
 @pytest.fixture()
 def fake_counts_csv_with_zeros(request,fake_counts_text_data_with_zeros) :
@@ -282,7 +282,7 @@ def fake_big_counts_pandas_dataframe(fake_big_counts_csv) :
 #convert to matrix from pandas data frame
 @pytest.fixture()
 def fake_big_counts_matrix(fake_big_counts_pandas_dataframe) :
-  return fake_big_counts_pandas_dataframe.as_matrix()
+  return fake_big_counts_pandas_dataframe.values
 
 
 @pytest.fixture

@@ -5,7 +5,7 @@
 #
 
 # Pull base image.
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 # Install.
 RUN \
@@ -31,7 +31,7 @@ RUN \
 # install python 3 things
 RUN \
   apt-get -y install python3 python3-pip python3-dev && \
-  pip3 install --upgrade pip && \
+  pip3 install --upgrade pip setuptools && \
   rm $(which pip) && \
   ln -s $(which pip3) /usr/bin/pip
 

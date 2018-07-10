@@ -46,7 +46,9 @@ def check_r_package(pkg) :
         get_r_path(),
         '-e',
         '"library({})"'.format(pkg)
-        ]).returncode == 0
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE).returncode == 0
 
 def require_r_package(pkg) :
     'Check whether pkg is installed in R, and raise if not.'

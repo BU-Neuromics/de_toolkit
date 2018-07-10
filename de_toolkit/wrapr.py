@@ -1,7 +1,7 @@
 '''
 Usage:
     detk-wrapr check
-    detk-wrapr run [options] <rscript> <counts_in> <counts_out>
+    detk-wrapr run [options] <rscript> <counts_in> <out>
 
 Options:
     --rpath=PATH       Path to Rscript executable, inferred from the environment
@@ -140,7 +140,7 @@ class WrapR(object) :
             counts=None,
             metadata=None,
             params=None,
-            counts_out_fn=None,
+            output_fn=None,
             metadata_out_fn=None,
             params_out_fn=None,
             rpath=None,
@@ -171,10 +171,10 @@ class WrapR(object) :
                 f.flush()
 
         # set counts output file if provided, otherwise create temp file
-        self._paths['counts_out'] = counts_out_fn
-        if counts_out_fn is None :
-            self._files['counts_out'] = NamedTemporaryFile('wt',delete=False)
-            self._paths['counts_out'] = self._files['counts_out'].name
+        self._paths['output'] = output_fn
+        if output_fn is None :
+            self._files['output'] = NamedTemporaryFile('wt',delete=False)
+            self._paths['output'] = self._files['output'].name
 
         # write metadata to tempfile if provided
         with NamedTemporaryFile('wt',delete=False) as f :
@@ -204,7 +204,7 @@ class WrapR(object) :
             self._paths['params_out'] = self._files['params_out'].name
 
         # initialize output members
-        self.counts_out = None
+        self.output = None
         self.metadata_out = None
         self.params_out = None
 
@@ -217,7 +217,7 @@ class WrapR(object) :
 
         # construct Rscript command
         cmd = ('{rpath} --vanilla {rscript} {counts_in} {meta_in} {params_in} '
-               '{counts_out} {meta_out} {params_out}').format(
+               '{output} {meta_out} {params_out}').format(
                     **self._paths
                ).split(' ')
 
@@ -241,10 +241,10 @@ class WrapR(object) :
                 )
 
         # read in the outputs
-        if os.path.exists(self._paths['counts_out']) :
+        if os.path.exists(self._paths['output']) :
             try :
-                self.counts_out = pd.read_csv(
-                    self._paths['counts_out'],
+                self.output = pd.read_csv(
+                    self._paths['output'],
                     index_col=0
                 )
             except pd.errors.EmptyDataError :
@@ -326,7 +326,7 @@ def main(argv=None) :
             counts_obj.counts,
             counts_obj.column_data,
             params=params,
-            counts_out_fn=args['<counts_out>'],
+            output_fn=args['<out>'],
             metadata_out_fn=args['--meta-out'],
             params_out_fn=args['--params-out'],
             rpath=args['--rpath']

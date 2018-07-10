@@ -94,7 +94,7 @@ def test_WrapR(fake_counts_obj):
                         ) as wr :
             wr.execute()
             assert wr.stdout.strip() == '6'
-            assert wr.counts_out is None
+            assert wr.output is None
             assert wr.metadata_out is None
             assert wr.params_out is None
 
@@ -109,7 +109,7 @@ def test_wrapr(fake_counts_obj):
     script = 'cat(length(args))'
     with wrapr.wrapr(script,counts=fake_counts_obj.counts) as wr :
         assert wr.stdout.strip() == '6'
-        assert wr.counts_out is None
+        assert wr.output is None
         assert wr.metadata_out is None
         assert wr.params_out is None
 
@@ -122,8 +122,8 @@ def test_wrapr(fake_counts_obj):
             counts=fake_counts_obj.counts,
             metadata=fake_counts_obj.column_data) as wr :
         assert wr.stdout.strip() == ''
-        assert wr.counts_out is not None
-        assert (wr.counts_out == fake_counts_obj.counts).all().all()
+        assert wr.output is not None
+        assert (wr.output == fake_counts_obj.counts).all().all()
         assert (wr.metadata_out == fake_counts_obj.column_data).all().all()
 
     with wrapr.wrapr('cat(params$x+3)',params={'x':3}) as wr :

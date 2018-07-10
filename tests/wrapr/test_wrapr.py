@@ -114,7 +114,7 @@ def test_wrapr(fake_counts_obj):
         assert wr.params_out is None
 
     script = '''
-    write.csv(read.csv(counts.fn),counts.out.fn,row.names=FALSE)
+    write.csv(read.csv(counts.fn),out.fn,row.names=FALSE)
     write.csv(read.csv(metadata.fn),metadata.out.fn,row.names=FALSE)
     '''
     with wrapr.wrapr(

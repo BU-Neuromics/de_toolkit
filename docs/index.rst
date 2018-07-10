@@ -38,6 +38,7 @@ Module Documentation
 .. toctree::
    :maxdepth: 2
 
+   workflow
    norm
    de
    patsy_lite
@@ -45,6 +46,7 @@ Module Documentation
    transform
    filter
    stats
+   wrapr
 
 The following functionality is (or will be) implemented by the package (items
 in italics are not yet implemented):

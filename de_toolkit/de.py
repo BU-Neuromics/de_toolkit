@@ -127,14 +127,14 @@ def firth_logistic_regression(
             res.df[paste0(c,'adj')] <- p.adjust(res.df[[c]],"fdr")
         }
 
-        write.csv(res.df,counts.out.fn,row.names=F)
+        write.csv(res.df,out.fn,row.names=F)
     '''
 
     with wrapr(script,
             counts=count_obj.counts,
             metadata=count_obj.design_matrix.full_matrix,
             params=params) as wr :
-        return wr.counts_out
+        return wr.output
 
 @stub
 def t_test(count_obj) :

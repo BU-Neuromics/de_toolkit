@@ -64,8 +64,7 @@ def require_r(*pkgs):
     the arguments should be strings of names of R packages required by the
     decorated function.
 
-    Examples
-    --------
+    **Examples**
 
     @require_r
     def call_requiring_only_Rscript_and_jsonlite() :
@@ -122,7 +121,7 @@ def require_deseq2(f):
 _script_tmpl = '''\
 args <- commandArgs(trailingOnly=TRUE)
 counts.fn <- args[1]; metadata.fn <- args[2]; params.fn <- args[3];
-counts.out.fn <- args[4]; metadata.out.fn <- args[5]; params.out.fn <- args[6];
+out.fn <- args[4]; metadata.out.fn <- args[5]; params.out.fn <- args[6];
 library(jsonlite)
 json <- readChar(params.fn, file.info(params.fn)$size)
 params <- if(nchar(json) > 0) {{
@@ -134,7 +133,124 @@ params <- if(nchar(json) > 0) {{
 {script}
 '''
 class WrapR(object) :
-    'Wrapper object for calling R code with Rscript.'
+    '''
+    Wrapper object for calling R code with Rscript.
+
+    .. note::
+        The attributes are only populated after the execute() method has
+        been run
+
+    Parameters
+    ----------
+
+    rscript_path : str
+        path to the R script to run
+
+    counts : pandas.DataFrame, optional
+        dataframe containing counts to be passed to R
+
+    metadata : pandas.DataFrame, optional
+        dataframe containing metadata to be passed to R
+
+    params : dict, optional
+        dict of parameters to be passed to R
+
+    output_fn : str, optional
+        path to file where R should write output, if not provided the output
+        is written to a temporary file and deleted upon WrapR object deletion
+
+    metadata_out_fn : str, optional
+        path to file where R should write metadata output
+
+    rpath : str
+        path to the Rscript executable, taken from the PATH environment
+        variable if None
+
+    raise_on_error : bool
+        raise an exception if R encounters an error, other wise fail silently
+        and deadly
+
+    Attributes
+    ----------
+
+    output : pandas.DataFrame
+        dataframe of the tabular output created by R script
+
+    metadata_out : pandas.DataFrame
+        dataframe of the tabular metadata output created by R script
+
+    params_out : dict
+        dict of the output parameters list created by R script
+
+    stdout : str
+        string capturing the standard output of the R script
+
+    stderr : str
+        string capturing the standard error of the R script
+
+    retcode : int
+        return code of the R process
+
+    success : bool
+        True if retcode == 0
+
+    Raises
+    ------
+
+    de_toolkit.wrapr.RExecutionError
+        when *raise_on_error* is True, raise whenever R encounters an error
+
+    Examples
+    --------
+
+    Basic usage accepts a path to an R script and loads the content of
+    the file pointed to by *out.fn* in the R script into the *output*
+    attribute:
+
+    >>> with open('script.R','wt') as f :
+            # note reference to implicitly defined *out.fn*
+            # R variable
+            f.write('write.csv(c(1,2,3,4),out.fn)')
+    >>> r = WrapR('script.R',output_fn='test.csv')
+    >>> r.execute()
+    >>> r.output
+       x
+    1  1
+    2  2
+    3  3
+    4  4
+    >>> pandas.read_csv('test.csv',index_col=0)
+       x
+    1  1
+    2  2
+    3  3
+    4  4
+
+    Can also use a context manager when the output doesn't need to be
+    written to a named file:
+
+    >>> with WrapR('script.R') as r :
+            r.execute()
+            print(r.output)
+       x
+    1  1
+    2  2
+    3  3
+    4  4
+
+    The standard output of the R script can be accessed with the *stdout*
+    attribute:
+
+        >>> with open('euler.R','wt') as f :
+                f.write('exp(complex(real=0,imag=pi))+1')
+        >>> with WrapR('euler.R','wt') as r :
+                r.execute()
+                print(r.stdout)
+        [1] 0+1.224647e-16i
+
+
+    '''
+
     def __init__(self,
             rscript_path,
             counts=None,
@@ -212,8 +328,9 @@ class WrapR(object) :
 
     @require_r
     def execute(self) :
-        '''Execute the R script and load in the resulting output files, if
-        any.'''
+        '''
+        Execute the R script and load in the resulting output files, if any.
+        '''
 
         # construct Rscript command
         cmd = ('{rpath} --vanilla {rscript} {counts_in} {meta_in} {params_in} '
@@ -291,7 +408,29 @@ def wrapr(Rcode,**kwargs) :
     '''Convenience wrapper for WrapR object. Writes *Rcode* to a temporary file
     and executes it as it would if it were provided.
 
-    Returns a WrapR object.
+    Parameters
+    ----------
+
+    Rcode : str
+        string containing valid R code to be executed
+
+    Returns
+    -------
+
+    obj
+        A WrapR object executed with the code in input string
+
+    Examples
+    --------
+
+    >>> with wrapr('write.csv(c(1,2,3,4),out.fn)') as r :
+            print(r.output)
+       x
+    1  1
+    2  2
+    3  3
+    4  4
+
     '''
 
     with NamedTemporaryFile('wt') as f :

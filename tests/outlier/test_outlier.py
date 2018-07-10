@@ -1,21 +1,19 @@
 import docopt
+import os
+import pandas
 import pytest
 import warnings
-import os
-
 
 def test_entropy():
 
-    '''
-    Function acts as a unit test for the entropy outlier module.
+    from de_toolkit.outlier import entropy_calc
 
-    '''
     ## Generate fake count data ##
     # initialize a vector of zeros with length 20
     base = list([0] * 20)
 
     # initialize the test df
-    test_df = pd.DataFrame()
+    test_df = pandas.DataFrame()
 
     # loop through and incrememnt the base vector
     for num in range(0,20):

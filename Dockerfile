@@ -14,19 +14,15 @@ RUN \
   apt-get -y upgrade && \
   apt-get install -y build-essential && \
   apt-get install -y software-properties-common && \
-  apt-get install -y byobu curl git htop man unzip vim wget && \
+  apt-get install -y byobu curl git htop man unzip wget && \
   rm -rf /var/lib/apt/lists/*
 
-# install R repo
-RUN \
-  echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | tee -a /etc/apt/sources.list && \
-  gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9 && \
-  gpg -a --export E084DAB9 | apt-key add -
-
+ARG DEBIAN_FRONTEND=noninteractive
 # install R
 RUN \
-  apt-get -y update && \ 
-  apt-get -y install r-base r-base-dev
+  apt update -q && \
+  echo "America/New_York" > /etc/timezone && \
+  echo 12 | apt-get -qy install r-base r-base-dev
 
 # install python 3 things
 RUN \

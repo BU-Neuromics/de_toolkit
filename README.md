@@ -1,41 +1,7 @@
 # Introduction
 
 This is a collection of utilities to perform various operations on genomic
-count datasets involving determining differential expression. Submodules
-are:
-
-  * norm - various normalization strategies, including:
-    - DESeq2
-    - trimmed mean (TODO)
-    - reference norm (TODO)
-    - library size (TODO)
-    - FPKM (TODO)
-    - user supplied (TODO)
-  * de - compute differential expression, using one of:
-    - DESeq2 (TODO)
-    - Firth's Logistic Regression
-    - t-test (TODO)
-  * outlier - operations and statistics concerning potential outliers
-    - entropy (TODO)
-    - Cook's distance (TODO)
-  * transform - transform counts into other forms
-    - DESeq2 Variance Stabilizing Transform
-    - RUVSeq transformation (TODO)
-    - trim (TODO)
-    - shrink (TODO)
-  * filter - filter genes based on statistics
-    - nonzero
-    - mean
-    - median
-  * stats - numerous statistics on the counts
-    - summary
-    - base
-    - rowdist
-    - coldist
-    - rowzeros
-    - colzeros
-    - entropy
-    - PCA
+count datasets involving determining differential expression.
 
 # Documentation
 

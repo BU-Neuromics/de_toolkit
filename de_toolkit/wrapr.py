@@ -42,13 +42,15 @@ def check_r() :
 
 def check_r_package(pkg) :
     'Tests whether the R package *pkg* is installed.'
-    return subprocess.run([
+    p = subprocess.run(' '.join([
         get_r_path(),
         '-e',
         '"library({})"'.format(pkg)
-        ],
+        ]),
+        shell=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE).returncode == 0
+        stderr=subprocess.PIPE)
+    return p.returncode == 0
 
 def require_r_package(pkg) :
     'Check whether pkg is installed in R, and raise if not.'

@@ -50,6 +50,10 @@ def test_require_r(monkeypatch) :
     # when true
     wrapr.require_r(lambda x: x)(None)
 
+    # test a nonsense package
+    with pytest.raises(wrapr.RPackageMissing) :
+        wrapr.require_r('arglebargle')(lambda x: x)(None)
+
     def f2(*args,**kwargs):
         return False
     monkeypatch.setattr(wrapr,'check_r_package',f2)

@@ -143,10 +143,6 @@ def deseq2_wrapr(count_obj) :
 
     return norm_counts
 
-@stub
-def trimmed_mean(count_mat) :
-    pass
-
 def library_size(count_mat,sizes=None) :
     '''
     Divide each count by column sum

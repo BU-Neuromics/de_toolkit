@@ -5,6 +5,11 @@ import pandas
 import pytest
 import tempfile
 import warnings
+from de_toolkit import wrapr
+
+# decorator for skipping if Rscript is not installed
+r_test = pytest.mark.skipif(not wrapr.check_r(),reason='Rscript executable not found, skipping test')
+deseq2_test = pytest.mark.skipif(not wrapr.check_r_package('DESeq2'),reason='DESeq2 R package not found, skipping test')
 
 def test_norm_cli():
     from de_toolkit.norm import main
@@ -35,6 +40,7 @@ def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
     # cleanup the csv
     os.remove(f.name)
 
+@deseq2_test
 def test_estimateSizeFactors(fake_counts_numpy_matrix) :
 
     from de_toolkit.norm import estimateSizeFactors, estimateSizeFactors_wrapr
@@ -65,6 +71,7 @@ def test_estimateSizeFactors_allzero(fake_counts_numpy_matrix) :
         with pytest.raises(NormalizationException) :
             estimateSizeFactors(cnts)
 
+@deseq2_test
 def test_estimateSizeFactors_somezero(fake_counts_numpy_matrix) :
 
     from de_toolkit.norm import estimateSizeFactors, estimateSizeFactors_wrapr
@@ -104,7 +111,7 @@ def test_deseq2(fake_counts_obj) :
 
     assert np.allclose(norm_cnts, true_norm_cnts)
 
-
+@deseq2_test
 def test_deseq2_py_vs_wrapr(fake_counts_obj) :
 
     from de_toolkit.norm import deseq2, deseq2_wrapr
@@ -125,6 +132,7 @@ def test_deseq2_py_vs_wrapr(fake_counts_obj) :
 
     assert np.allclose(rpy_norm_counts,py_norm_counts)
 
+@deseq2_test
 def test_deseq2_py_vs_wrapr_somezero(fake_counts_obj) :
 
     from de_toolkit.norm import deseq2, deseq2_wrapr
@@ -148,7 +156,6 @@ def test_deseq2_py_vs_wrapr_somezero(fake_counts_obj) :
         py_norm_counts = deseq2(fake_counts_obj)
 
     assert np.allclose(rpy_norm_counts,py_norm_counts)
-
 
 def test_library_size() :
 

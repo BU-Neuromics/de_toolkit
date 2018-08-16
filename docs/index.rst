@@ -53,7 +53,6 @@ in italics are not yet implemented):
 
 * :doc:`norm`
     - DESeq2
-    - *trimmed mean*
     - *reference norm*
     - library size
     - *FPKM*

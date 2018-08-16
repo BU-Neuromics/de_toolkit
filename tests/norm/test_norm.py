@@ -8,8 +8,14 @@ import warnings
 from de_toolkit import wrapr
 
 # decorator for skipping if Rscript is not installed
-r_test = pytest.mark.skipif(not wrapr.check_r(),reason='Rscript executable not found, skipping test')
-deseq2_test = pytest.mark.skipif(not wrapr.check_r_package('DESeq2'),reason='DESeq2 R package not found, skipping test')
+r_test = pytest.mark.skipif(
+        not wrapr.check_r(),
+        reason='Rscript executable not found, skipping test'
+)
+deseq2_test = pytest.mark.skipif(
+        not wrapr.check_r_package('DESeq2'),
+        reason='DESeq2 R package not found, skipping test'
+)
 
 def test_norm_cli():
     from de_toolkit.norm import main
@@ -176,3 +182,22 @@ def test_library_size() :
     norm_cnts = library_size(cnts)
 
     assert np.allclose(norm_cnts, true_norm_cnts)
+
+def test_fpkm_missing_lens(fake_counts_obj,fake_counts_gene_lengths) :
+    from de_toolkit.norm import fpkm, NormalizationException
+
+    with pytest.raises(NormalizationException) :
+        fpkm(
+            fake_counts_obj.counts,
+            pandas.Series([1,2,3],index=('gene1','gene2','gene3'))
+        )
+
+def test_fpkm(fake_counts_obj,fake_counts_gene_lengths) :
+    from de_toolkit.norm import fpkm, NormalizationException
+
+    res = fpkm(fake_counts_obj.counts, fake_counts_gene_lengths)
+    assert np.allclose(res['a'],[1e-6]*res.shape[0])
+    assert np.allclose(res['b'],list(np.arange(2,res.shape[0]+2)/1e6))
+    assert np.allclose(res['c'],list(np.arange(2,res.shape[0]+2)**2/1e6))
+
+

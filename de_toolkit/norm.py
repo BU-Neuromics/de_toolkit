@@ -1,9 +1,8 @@
 '''
 Usage:
-    detk-norm deseq2 <counts_fn> [options]
-    detk-norm trimmed_mean <counts_fn>
+    detk-norm deseq2 <counts_fn>
     detk-norm library <counts_fn>
-    detk-norm fpkm <counts_fn> <gtf>
+    detk-norm fpkm <counts_fn> <lengths_fn>
     detk-norm custom <counts_fn>
 
 Options:
@@ -130,7 +129,8 @@ def deseq2_wrapr(count_obj) :
     '''
 
     # we need to get rid of the counts from the left hand side and the Intercept
-    # from the right, otherwise the model matrix is not full rank and DESeq2 whines
+    # from the right, otherwise the model matrix is not full rank and DESeq2
+    # whines, whines!
     count_obj.design_matrix.drop_from_lhs('counts')
     count_obj.design_matrix.drop_from_rhs('Intercept')
 
@@ -143,15 +143,33 @@ def deseq2_wrapr(count_obj) :
 
     return norm_counts
 
-def library_size(count_mat,sizes=None) :
+def library_size(count_df,sizes=None) :
     '''
     Divide each count by column sum
     '''
-    return count_mat / np.sum(count_mat,axis=0)
+    return count_df / count_df.sum(axis=0)
 
-@stub
-def fpkm(count_mat,annotation) :
-    pass
+def fpkm(count_df,lengths) :
+    '''
+    Calculate Fragments Per Kilobase per Million reads
+
+    *lengths* should be a pandas.Series object that has an index value for
+    every row name in the counts matrix. If no length is found for a row in the
+    counts matrix, an exception is raised.
+    '''
+
+    missing_indices = count_df.index.difference(lengths.index)
+    if len(missing_indices) != 0 :
+        raise NormalizationException(
+            '{} indices in the counts matrix were '.format(len(missing_indices))+
+            'not found in the lengths parameters, here are a couple: \n'+
+            '\n'.join(_ for _ in list(missing_indices)[:5])
+        )
+
+    lens = lengths[count_df.index]
+    print(lens)
+    res = count_df.div(1e6*lens,axis=0)
+    return res
 
 @stub
 def custom_norm(count_mat,factors) :
@@ -170,3 +188,16 @@ def main(argv=None) :
         count_obj.normalized['deseq2'] = deseq2(count_obj)
         fp = sys.stdout if args['--output']=='stdout' else args['--output']
         count_obj.normalized['deseq2'].to_csv(fp)
+    elif args['library'] :
+        count_obj.normalized['library'] = library_size(count_obj)
+        fp = sys.stdout if args['--output']=='stdout' else args['--output']
+        count_obj.normalized['library'].to_csv(fp)
+    elif args['fpkm'] :
+        # the lengths_fn is assumed to be a file with two columns
+        # ID<delim>int
+        # providing the lengths that should be used for each ID in the counts
+        # file
+        lengths = pandas.read_table(args['<lengths_fn>'],sep=None)
+        count_obj.normalized['fpkm'] = fpkm(count_obj.counts,lengths)
+        fp = sys.stdout if args['--output']=='stdout' else args['--output']
+        count_obj.normalized['fpkm'].to_csv(fp)

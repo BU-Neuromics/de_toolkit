@@ -390,3 +390,10 @@ def pytest_namespace():
       ,'make_counts_obj': make_counts_obj
     }
 
+
+@pytest.fixture()
+def fake_counts_gene_lengths(request,fake_counts_obj):
+    return pandas.Series(
+            range(2,len(fake_counts_obj.counts.index)+2),
+            index=fake_counts_obj.counts.index
+        )

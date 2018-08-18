@@ -1,16 +1,12 @@
 '''
 Usage:
-    detk norm [<args>...]
-    detk de [<args>...]
-    detk transform [<args>...]
-    detk filter [<args>...]
-    detk stats [<args>...]
-    detk outlier [<args>...]
-    detk wrapr [<args>...]
-    detk help
-
-Options:
-
+    detk norm <args>...
+    detk de <args>...
+    detk transform <args>...
+    detk filter <args>...
+    detk stats <args>...
+    detk outlier <args>...
+    detk wrapr <args>...
 '''
 from copy import deepcopy
 from docopt import docopt

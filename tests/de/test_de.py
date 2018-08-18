@@ -77,6 +77,17 @@ def deseq2_test_counts_obj() :
 
 @r_test
 @deseq2_test
+def test_deseq2_cli(fake_counts_csv,fake_column_data_csv) :
+  main(['deseq2','counts ~ category',fake_counts_csv,fake_column_data_csv])
+
+@r_test
+@deseq2_test
+def test_deseq2_cli_w_cov(fake_counts_csv,fake_column_data_csv) :
+  main(['deseq2','counts ~ cont_cov + category',fake_counts_csv,fake_column_data_csv])
+
+
+@r_test
+@deseq2_test
 def test_deseq2_de(deseq2_test_counts_obj) :
     from de_toolkit.de import deseq2
 

@@ -2,6 +2,9 @@
 Usage:
     detk-de deseq2 ( help | [options] <design> <count_fn> <cov_fn> )
     detk-de firth ( help | [options] <design> <count_fn> <cov_fn> )
+'''
+
+TODO = '''
     detk-de t-test ( help | [options] <count_fn> <cov_fn> )
 '''
 
@@ -24,7 +27,24 @@ Options:
                            for the last term in the model, default behavior is to
                            report parameters for all variables in the model
     --cores=N              Tell DESeq2 to use N cores when running, requires the
-                           BiocParallel Bioconductor to be installed [default: none]
+                           BiocParallel Bioconductor package to be installed [default: none]
+''',
+        'firth':'''\
+Usage:
+    detk-de firth [options] <design> <count_fn> <cov_fn>
+
+Options:
+    -o FILE --output=FILE  Destination of primary output [default: stdout]
+    --rda=RDA              Filename passed to saveRDS() R function of the result
+                           objects from the analysis
+    --strict               Require that the sample order indicated by the column names in the
+                           counts file are the same as, and in the same order as, the
+                           sample order in the row names of the covariates file
+    --standardize          Standardize counts prior to running logistic regression
+                           as to obtain standardized (i.e. directly comparable)
+                           beta coefficients
+    --cores=N              Tell R to use N cores when running, requires the
+                           parallel R package to be installed [default: none]
 '''
 }
 
@@ -171,6 +191,10 @@ def deseq2(
         res.df <- cbind(mcols(dds)[['baseMean']],res.df)
         colnames(res.df)[1] <- 'baseMean'
 
+        if(!is.null(params$rda)) {
+            saveRDS(dds,params$rda)
+        }
+
         write.csv(res.df,out.fn,row.names=T)
     '''
     with wrapr(script,
@@ -296,11 +320,15 @@ def main(argv=None) :
 
     args = docopt(__doc__,argv=argv,help=False)
 
+    cores = args.get('--cores')
+    if cores == 'none' :
+        cores = None
+
     if args['deseq2'] :
-        if 'help' in args :
+        if args['help'] :
             docopt(cmd_opts['deseq2'],['-h'])
         else :
-            args = docopt(cmd_opts['deseq2'],argv[1:])
+            args = docopt(cmd_opts['deseq2'],argv)
             count_obj = CountMatrixFile(
                 args['<count_fn>']
                 ,args['<cov_fn>']
@@ -308,22 +336,38 @@ def main(argv=None) :
                 ,strict=args.get('--strict',False)
             )
 
-            deseq2(count_obj,
+            out_df = deseq2(count_obj,
                    normalized=not args.get('--raw-counts',False),
                    rda=args.get('--rda'),
-                   all_coeff_result=not args.get('--last-term-only',False),
-                   cores=args.get('--cores')
+                   all_coeff_results=not args.get('--last-term-only',False),
+                   cores=cores
             )
 
     elif args['firth'] :
-        firth_out = firth_logistic_regression(count_obj,rda=args['--rda'])
-
-        if args['--output'] == 'stdout' :
-            f = sys.stdout
+        if args['help'] :
+            docopt(cmd_opts['firth'],['-h'])
         else :
-            f = args['--output']
+            args = docopt(cmd_opts['firth'],argv)
+            
+            count_obj = CountMatrixFile(
+                args['<count_fn>']
+                ,args['<cov_fn>']
+                ,design=args['<design>']
+                ,strict=args.get('--strict',False)
+            )
 
-        firth_out.to_csv(f,sep='\t')
+            out_df = firth_logistic_regression(count_obj,
+                    rda=args['--rda'],
+                    standardize=args.get('--standardize',False),
+                    cores=cores
+            )
+
+    if args['--output'] == 'stdout' :
+        f = sys.stdout
+    else :
+        f = args['--output']
+
+    out_df.to_csv(f,sep='\t')
 
 if __name__ == '__main__' :
 

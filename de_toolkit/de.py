@@ -316,51 +316,43 @@ def firth_logistic_regression(
 def t_test(count_obj) :
     pass
 
-def main(argv=None) :
+def main(argv=sys.argv) :
 
-    args = docopt(__doc__,argv=argv,help=False)
+    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
+        docopt(__doc__)
+    argv = argv[1:]
+    cmd = argv[0]
 
-    cores = args.get('--cores')
-    if cores == 'none' :
-        cores = None
+    if cmd == 'deseq2' :
+        args = docopt(cmd_opts['deseq2'],argv)
+        count_obj = CountMatrixFile(
+            args['<count_fn>']
+            ,args['<cov_fn>']
+            ,design=args['<design>']
+            ,strict=args.get('--strict',False)
+        )
 
-    if args['deseq2'] :
-        if args['help'] :
-            docopt(cmd_opts['deseq2'],['-h'])
-        else :
-            args = docopt(cmd_opts['deseq2'],argv)
-            count_obj = CountMatrixFile(
-                args['<count_fn>']
-                ,args['<cov_fn>']
-                ,design=args['<design>']
-                ,strict=args.get('--strict',False)
-            )
+        out_df = deseq2(count_obj,
+               normalized=not args.get('--raw-counts',False),
+               rda=args.get('--rda'),
+               all_coeff_results=not args.get('--last-term-only',False),
+               cores=int(args['--cores']) if args['--cores'] != 'none' else None
+        )
 
-            out_df = deseq2(count_obj,
-                   normalized=not args.get('--raw-counts',False),
-                   rda=args.get('--rda'),
-                   all_coeff_results=not args.get('--last-term-only',False),
-                   cores=cores
-            )
+    elif cmd == 'firth' :
+        args = docopt(cmd_opts['firth'],argv)
+        count_obj = CountMatrixFile(
+            args['<count_fn>']
+            ,args['<cov_fn>']
+            ,design=args['<design>']
+            ,strict=args.get('--strict',False)
+        )
 
-    elif args['firth'] :
-        if args['help'] :
-            docopt(cmd_opts['firth'],['-h'])
-        else :
-            args = docopt(cmd_opts['firth'],argv)
-            
-            count_obj = CountMatrixFile(
-                args['<count_fn>']
-                ,args['<cov_fn>']
-                ,design=args['<design>']
-                ,strict=args.get('--strict',False)
-            )
-
-            out_df = firth_logistic_regression(count_obj,
-                    rda=args['--rda'],
-                    standardize=args.get('--standardize',False),
-                    cores=cores
-            )
+        out_df = firth_logistic_regression(count_obj,
+                rda=args['--rda'],
+                standardize=args.get('--standardize',False),
+                cores=int(args['--cores']) if args['--cores'] != 'none' else None
+        )
 
     if args['--output'] == 'stdout' :
         f = sys.stdout

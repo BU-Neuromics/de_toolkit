@@ -24,7 +24,7 @@ deseq2_test = pytest.mark.skipif(not check_r_package('DESeq2'),
 
 def test_de_cli() :
   with pytest.raises(docopt.DocoptExit) :
-    main(argv=None)
+    main()
 
 @pytest.fixture
 def deseq2_test_counts_obj() :
@@ -78,12 +78,12 @@ def deseq2_test_counts_obj() :
 @r_test
 @deseq2_test
 def test_deseq2_cli(fake_counts_csv,fake_column_data_csv) :
-  main(['deseq2','counts ~ category',fake_counts_csv,fake_column_data_csv])
+  main(['detk-de','deseq2','counts ~ category',fake_counts_csv,fake_column_data_csv])
 
 @r_test
 @deseq2_test
 def test_deseq2_cli_w_cov(fake_counts_csv,fake_column_data_csv) :
-  main(['deseq2','counts ~ cont_cov + category',fake_counts_csv,fake_column_data_csv])
+  main(['detk-de','deseq2','counts ~ cont_cov + category',fake_counts_csv,fake_column_data_csv])
 
 
 @r_test
@@ -143,12 +143,12 @@ def test_deseq2_de(deseq2_test_counts_obj) :
 @r_test
 @logistf_test
 def test_firth_cli(fake_counts_csv,fake_column_data_csv) :
-  main(['firth','category ~ counts',fake_counts_csv,fake_column_data_csv])
+  main(['detk-de','firth','category ~ counts',fake_counts_csv,fake_column_data_csv])
 
 @r_test
 @logistf_test
 def test_firth_cli_w_cov(fake_counts_csv,fake_column_data_csv) :
-  main(['firth','category ~ cont_cov + counts',fake_counts_csv,fake_column_data_csv])
+  main(['detk-de','firth','category ~ cont_cov + counts',fake_counts_csv,fake_column_data_csv])
 
 @pytest.fixture
 def logistic_test_counts_obj() :

@@ -1,12 +1,12 @@
 '''
 Usage:
-    detk norm <args>...
-    detk de <args>...
-    detk transform <args>...
-    detk filter <args>...
-    detk stats <args>...
-    detk outlier <args>...
-    detk wrapr <args>...
+    detk norm [options] <args>...
+    detk de [options] <args>...
+    detk transform [options] <args>...
+    detk filter [options] <args>...
+    detk stats [options] <args>...
+    detk outlier [options] <args>...
+    detk wrapr [options] <args>...
 '''
 from copy import deepcopy
 from docopt import docopt
@@ -178,35 +178,41 @@ class CountMatrixFile(CountMatrix) :
             ,**kwargs
         )
 
-def main(argv=None) :
+def main(argv=sys.argv) :
 
+    cmds = 'norm','de','transform','filter','stats','outlier','wrapr','help'
 
-    args = docopt(__doc__)
+    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmds) :
+        docopt(__doc__)
+    cmd = argv[1]
 
-    cli_args = sys.argv[2:]
+    # the individual main methods expect an executable of the form
+    # detk-<mode>, but here the detk and mode come as separate arguments
+    # concatenate them together and pass them on
+    cli_args = ['-'.join(argv[:2])]+argv[2:]
 
-    if args['norm'] :
+    if cmd == 'norm' :
         from .norm import main
         main(cli_args)
-    elif args['de'] :
+    elif cmd == 'de' :
         from .de import main
         main(cli_args)
-    elif args['transform'] :
+    elif cmd == 'transform' :
         from .transform import main
         main(cli_args)
-    elif args['filter'] :
+    elif cmd == 'filter' :
         from .filter import main
         main(cli_args)
-    elif args['stats'] :
+    elif cmd == 'stats' :
         from .stats import main
         main(cli_args)
-    elif args['outlier'] :
+    elif cmd == 'outlier' :
         from .outlier import main
         main(cli_args)
-    elif args['wrapr'] :
+    elif cmd == 'wrapr' :
         from .wrapr import main
         main(cli_args)
-    elif args['help'] :
+    elif cmd == 'help' :
         docopt(__doc__,['-h'])
 
 

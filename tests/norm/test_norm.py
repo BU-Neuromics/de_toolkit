@@ -20,11 +20,11 @@ deseq2_test = pytest.mark.skipif(
 def test_norm_cli():
     from de_toolkit.norm import main
     with pytest.raises(docopt.DocoptExit) :
-        main(argv=None)
+        main()
 
 def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
     from de_toolkit.norm import main
-    main(['deseq2',fake_counts_csv])
+    main(['detk-norm','deseq2',fake_counts_csv])
 
 def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
 
@@ -34,7 +34,7 @@ def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
     f = tempfile.NamedTemporaryFile('wt',delete=False)
     f.close() # close the file so the command can write to it cross-platform
 
-    main(['deseq2',fake_counts_csv,'--output={}'.format(f.name)])
+    main(['detk-norm','deseq2','--output={}'.format(f.name),fake_counts_csv])
 
     in_counts = CountMatrixFile(fake_counts_csv)
     norm_counts = deseq2(in_counts)

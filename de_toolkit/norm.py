@@ -1,14 +1,61 @@
 '''
 Usage:
-    detk-norm deseq2 <counts_fn>
-    detk-norm library <counts_fn>
-    detk-norm fpkm <counts_fn> <lengths_fn>
+    detk-norm deseq2 [options] [<counts_fn>]
+    detk-norm library [options] [<counts_fn>]
+    detk-norm fpkm [options] [<counts_fn> <lengths_fn>]
+Options:
+    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+'''
+
+todo = '''\
     detk-norm custom <counts_fn>
+'''
+cmd_opts = {
+        'deseq2':'''\
+Perform counts normalization on the given counts matrix using the method
+implemented in the DESeq2 package.
+
+Usage:
+    detk-norm deseq2 [options] <counts_fn>
 
 Options:
-    -o FILE --output=FILE        Destination of primary output [default: stdout]
+    -h --help                    Print out this help
+    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+    --size-factors=FILE          Write out the size factors found by the DESeq2
+                                 method to two column tab separated file where
+                                 the first column is sample name and the second
+                                 column is the size factor
+''',
+    'library':'''\
+Perform library size normalization on the columns of the given counts matrix.
+Counts in each column are divided by the sum of each column.
+
+Usage:
+    detk-norm library [options] <counts_fn>
+
+Options:
+    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+''',
+    'fpkm':'''\
+Perform Fragments Per Kilobase per Million normalization on the given counts
+file. <lengths_fn> should be a delimited file with two columns, the first
+being the name of one of the rows in the counts file and the second is the
+effective length of the gene/sequence/etc to use in the normalization.
+
+*Note:* Program will throw an error and exit if there are genes/sequences
+in the counts file that are not found in the lengths file.
+
+The order of names in the counts and lengths files do *not* have to be the
+same.
+
+Usage:
+    detk-norm fpkm [options] <counts_fn> <lengths_fn>
+
+Options:
+    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
 
 '''
+}
 from docopt import docopt
 import sys
 import numpy as np
@@ -175,29 +222,33 @@ def fpkm(count_df,lengths) :
 def custom_norm(count_mat,factors) :
     pass
 
-def main(argv=None) :
+def main(argv=sys.argv) :
 
-    args = docopt(__doc__,argv=argv)
+    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
+        docopt(__doc__)
+    argv = argv[1:]
+    cmd = argv[0]
 
-    count_obj = CountMatrixFile(args['<counts_fn>'])
-
-    if '<cov_fn>' in args :
-        count_obj.add_covariates(args['<cov_fn>'])
-
-    if args['deseq2'] :
-        count_obj.normalized['deseq2'] = deseq2(count_obj)
-        fp = sys.stdout if args['--output']=='stdout' else args['--output']
-        count_obj.normalized['deseq2'].to_csv(fp)
-    elif args['library'] :
-        count_obj.normalized['library'] = library_size(count_obj)
-        fp = sys.stdout if args['--output']=='stdout' else args['--output']
-        count_obj.normalized['library'].to_csv(fp)
-    elif args['fpkm'] :
+    if cmd == 'deseq2' :
+        args = docopt(cmd_opts['deseq2'],argv)
+        count_obj = CountMatrixFile(args['<counts_fn>'])
+        out_df = deseq2(count_obj)
+    elif cmd == 'library' :
+        args = docopt(cmd_opts['library'],argv)
+        count_obj = CountMatrixFile(args['<counts_fn>'])
+        out_df = library_size(count_obj)
+    elif cmd == 'fpkm' :
+        args = docopt(cmd_opts['fpkm'],argv)
         # the lengths_fn is assumed to be a file with two columns
         # ID<delim>int
         # providing the lengths that should be used for each ID in the counts
         # file
         lengths = pandas.read_table(args['<lengths_fn>'],sep=None)
-        count_obj.normalized['fpkm'] = fpkm(count_obj.counts,lengths)
-        fp = sys.stdout if args['--output']=='stdout' else args['--output']
-        count_obj.normalized['fpkm'].to_csv(fp)
+        out_df = fpkm(count_obj.counts,lengths)
+
+    fp = sys.stdout if args['--output']=='stdout' else args['--output']
+    out_df.to_csv(fp)
+
+if __name__ == '__main__' :
+
+    main()

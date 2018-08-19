@@ -1,34 +1,258 @@
 '''
+Easy access to informative count matrix statistics. Each of these functions produces two outputs:
+
+    a json formatted file containing relevant statistics in a machine-parsable format
+    an optional human-friendly HTML page displaying the results
+
+All of the commands accept a single counts file as input with optional arguments as indicated in the
+documentation. By default, the JSON and HTML output files have the same basename without extension as
+the counts file but including .json or .html as appropriate. E.g., counts.csv will produce counts.json
+and counts.html in the current directory. These default filenames can be changed using optional command
+line arguments --json=<json fn> and --html=<html fn> as appropriate for all commands. If <json fn>,
+either default or specified, already exists, it is read in, parsed, and added to. The HTML report is
+overwritten on every invocation using the contents of the JSON file.
+
 Usage:
-    detk-stats [options] summary [--bins=<bins>] [--log] [--density][--column-data=<column data fn>] [--color-col=<column_variable>] <counts_fn>
-    detk-stats [options] base <counts_fn>
-    detk-stats [options] coldist [--bins=<bins>] [--log] [--density] <counts_fn>
-    detk-stats [options] rowdist [--bins=<bins>] [--log] [--density] <counts_fn>
-    detk-stats [options] colzero <counts_fn>
-    detk-stats [options] rowzero <counts_fn>
-    detk-stats [options] entropy <counts_fn>
-    detk-stats [options] pca [--column-data=<column data fn>] [--color-col=<column_variable>] <counts_fn>
+    detk-stats summary [options] <counts_fn>
+    detk-stats base [options] <counts_fn>
+    detk-stats coldist [options] <counts_fn>
+    detk-stats rowdist [options] <counts_fn>
+    detk-stats colzero [options] <counts_fn>
+    detk-stats rowzero [options] <counts_fn>
+    detk-stats entropy [options] <counts_fn>
+    detk-stats pca [options] <counts_fn>
+
+Options:
+    -h --help       Access detailed help for individual commands
+'''
+
+cmd_opts = {
+    'summary':'''\
+Calculate summary statistics. Equivalent to running each of:
+
+base coldist rowdist colzero rowzero entropy
+
+Usage: detk-stats summary [options] <counts_fn>
+
+Options:
+    -h --help
+    --column-data=FN       Use column data provided in FN, only used in PCA
+    --color-col=COLNAME    Use column data column COLNAME for coloring output plots
+    --bins=BINS            Number of bins to use for the calculated
+                           distributions [default: 20]
+    --log                  log transform count statistics
+    --density              Produce density distribution by dividing each distribution
+                           by the appropriate sum
+    -o FILE --output=FILE  Destination of primary output [default: stdout]
+    --json=<json_fn>       Name of JSON output file
+    --html=<html_fn>       Name of HTML output file
+
+
+''',
+    'base':'''\
+Calculate basic statistics of the counts file, including:
+    number of samples
+    number of rows
+
+Usage: detk-stats base [options] <counts file>
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
+''',
+    'coldist':'''\
+Column-wise distribution of counts
 
-Description:
-    Easy access to informative count matrix statistics. Each of these functions produces two outputs:
-    
-        a json formatted file containing relevant statistics in a machine-parsable format
-        an optional human-friendly HTML page displaying the results
-    
-    All of the commands accept a single counts file as input with optional arguments as indicated in the
-    documentation. By default, the JSON and HTML output files have the same basename without extension as
-    the counts file but including .json or .html as appropriate. E.g., counts.csv will produce counts.json
-    and counts.html in the current directory. These default filenames can be changed using optional command
-    line arguments --json=<json fn> and --html=<html fn> as appropriate for all commands. If <json fn>,
-    either default or specified, already exists, it is read in, parsed, and added to. The HTML report is
-    overwritten on every invocation using the contents of the JSON file.
+Compute the distribution of counts column-wise. Each column is subject to
+binning by percentile, with output identical to that produced by np.histogram.
 
+In the stats object, the fields are defined as follows:
+    pct
+        The percentiles of the distributions in the range 0 < pct < 100, by
+        default in increments of 5. This defines the length of the dist and
+        bins arrays in each of the objects for each sample.
+    dists
+        Array of objects containing one object for each column, described below.
+    Each item of dists is an object with the following keys:
+        name
+            Column name from original file
+        dist
+            Array of raw or normalized counts in each bin according to the
+            percentiles from pct
+        bins
+            Array of the bin boundary values for the distribution. Should
+            be of length len(counts)+1. These are what would be the x-axis
+            labels if this was plotted as a histogram.
+        extrema
+            Object with two keys, min and max, that contain the literal
+            count values for counts that have a value larger or smaller than
+            1.5*(inner quartile length) of the distribution. These could be
+            marked as outliers in a boxplot, for example.
+
+Usage: detk-stats coldist [options] <counts file>
+
+Options:
+    --bins=N               The number of bins to use when computing the counts
+                           distribution [default: 20]
+    --log                  Perform a log10 transform on the counts before
+                           calculating the distribution. Zeros are omitted
+                           prior to histogram calculation.
+    --density              Return a density distribution instead of counts,
+                           such that the sum of values in *dist* for each
+                           column approximately sum to 1.
+    -o FILE --output=FILE  Destination of primary output [default: stdout]
+    --json=<json_fn>       Name of JSON output file
+    --html=<html_fn>       Name of HTML output file
+''',
+    'rowdist':'''\
+Row-wise distribution of counts
+
+Compute the distribution of counts row-wise. Each row is subject to binning by
+percentile, with output identical to that produced by np.histogram.
+
+In the stats object, the fields are defined as follows:
+    pct
+        The percentiles of the distributions in the range 0 < pct < 100, by
+        default in increments of 5. This defines the length of the dist and
+        bins arrays in each of the objects for each sample.
+    dists
+        Array of objects containing one object for each column, described
+        below.
+    Each item of dists is an object with the following keys:
+        name
+            Column name from original file
+        dist
+            Array of raw or normalized counts in each bin according to the
+            percentiles from pct
+        bins
+            Array of the bin boundary values for the distribution. Should
+            be of length len(counts)+1. These are what would be the x-axis
+            labels if this was plotted as a histogram.
+        extrema
+            Object with two keys, min and max, that contain the literal
+            count values for counts that have a value larger or smaller than
+            1.5*(inner quartile length) of the distribution. These could be
+            marked as outliers in a boxplot, for example.
+
+Usage: detk-stats rowdist [options] <counts file>
+
+Options:
+    --bins=N               The number of bins to use when computing the counts
+                           distribution [default: 20]
+    --log                  Perform a log10 transform on the counts before calculating
+                           the distribution. Zeros are omitted prior to histogram
+                           calculation.
+    --density              Return a density distribution instead of counts, such that
+                           the sum of values in *dist* for each row approximately
+                           sum to 1.
+    -o FILE --output=FILE  Destination of primary output [default: stdout]
+    --json=<json_fn>       Name of JSON output file
+    --html=<html_fn>       Name of HTML output file
+''',
+    'colzero':'''\
+Column-wise distribution of zero counts
+
+Compute the number and fraction of exact zero counts for each column.
+The stats value is an array containing one object per column as follows:
+    name
+        column name
+    zero_count
+        absolute count of rows with exactly zero counts
+    zero_frac
+        zero_count divided by the number of rows
+    col_mean
+        the mean of counts in the column
+    nonzero_col_mean
+        the mean of only the non-zero counts in the column
+
+Usage: detk-stats colzero [options] <counts fn>
+
+Options:
+    -o FILE --output=FILE  Destination of primary output [default: stdout]
+    --json=<json_fn>       Name of JSON output file
+    --html=<html_fn>       Name of HTML output file
+            ''',
+    'rowzero':'''\
+Row-wise distribution of zero counts
+
+Compute the number and fraction of exact zero counts for each row.
+The stats value is an array containing one object per row as follows:
+    name
+        row name
+    zero_count
+        absolute count of rows with exactly zero counts
+    zero_frac
+        zero_count divided by the number of rows
+    row_mean
+        the mean of counts in the row
+    nonzero_row_mean
+        the mean of only the non-zero counts in the row
+
+Usage: detk-stats colzero [options] <counts fn>
+
+Options:
+    -o FILE --output=FILE  Destination of primary output [default: stdout]
+    --json=<json_fn>       Name of JSON output file
+    --html=<html_fn>       Name of HTML output file
+''',
+    'entropy':'''\
+Row-wise sample entropy calculation
+
+Sample entropy is a metric that can be used to identify outlier samples by locating
+rows which are overly influenced by a single count value. This metric can be
+calculated for a single row as follows:
+    pi = ci/sumj(cj)
+    sum(pi) = 1
+    H = -sumi(pi*log2(pi))
+Here, ci is the number of counts in sample i, pi is the fraction of reads contributed
+by sample i to the overall counts of the row, and H is the Shannon entropy of the row
+when using log2. The maximum value possible for H is 2 when using Shannon entropy.
+
+Rows with a very low H indicate a row has most of its count mass contained in a small
+number of columns. These are rows that are likely to drive outliers in downstream
+analysis, e.g. differential expression.
+
+The key entropies is an array containing one object per row with the following keys:
+    name
+        row name from counts file
+    entropy
+        the value of H calculated as above for that row
+
+Usage: detk-stats [options] entropy <counts fn>
+
+Options:
+    -o FILE --output=FILE  Destination of primary output [default: stdout]
+    --json=<json_fn>       Name of JSON output file
+    --html=<html_fn>       Name of HTML output file
+''',
+    'pca':'''\
+Principal common analysis of the counts matrix.
+
+This module performs PCA on a provided counts matrix and returns the principal
+component weights, scores, and variances. In addition, the weights and scores
+for each individual component can be combined to define the projection of each
+sample along that component.
+
+The PCA module can also accept a metadata file that contains information about
+the samples in each column. The user can specify some of these columns to
+include as variables for plotting purposes. The idea is that columns labeled
+with the same class will be colored according to their class, such that
+separations in the data can be more easily observed when projections are
+plotted.
+
+Usage: detk-stats pca [options] <counts fn>
+
+Options:
+    -m FN --column-data=FN      Column data for annotating PCA results and
+                                plots (experimental)
+    -f NAME --column-name=NAME  Column name from provided column data for
+                                annotation PCA results and plots (experimental)
+    -o FILE --output=FILE       Destination of primary output [default: stdout]
+    --json=<json_fn>            Name of JSON output file
+    --html=<html_fn>            Name of HTML output file
 '''
+}
 import json
 import math
 import argparse
@@ -51,7 +275,11 @@ import csv
 import matplotlib.patches as ptches
 import pkg_resources
 
-def summary(count_mat, bins, log, density, metadata='') :
+def summary(count_mat,
+        bins=20,
+        log=False,
+        density=False,
+        metadata='') :
     '''
         Compute summary statistics on a counts matrix file
             detk-stats [--json=<json_fn>] [--html=<html_fn>] summary <counts file>
@@ -63,7 +291,6 @@ def summary(count_mat, bins, log, density, metadata='') :
             colzero
             rowzero
             entropy
-            pca
         and concatenating the results.
     '''
 
@@ -74,16 +301,13 @@ def summary(count_mat, bins, log, density, metadata='') :
     total_output.append(colzero(count_mat))
     total_output.append(rowzero(count_mat))
     total_output.append(entropy(count_mat))
-    total_output.append(count_PCA(count_mat, metadata))
+    #total_output.append(count_PCA(count_mat, metadata))
 
     return total_output
 
 def base(count_mat) :
     '''
         Basic statistics of the counts file
-
-        Usage: detk-stats base <counts file>
-        
 
         The most basic statistics of the counts file, including:
             number of samples
@@ -105,11 +329,12 @@ def base(count_mat) :
     #Return output
     return output
 
-def coldist(count_mat, b, log, density) :
+def coldist(count_mat,
+        bins=100,
+        log=False,
+        density=False) :
     '''
         Column-wise distribution of counts
-
-        Usage: detk-stats [options] coldist [--bins=<bins>] [--log] [--density] <counts file>
 
         Options:
               --bins=<bins>   The number of bins to use when computing the counts
@@ -122,7 +347,7 @@ def coldist(count_mat, b, log, density) :
                                sum to 1.
         
         Compute the distribution of counts column-wise. Each column is subject to binning by percentile,
-        with output identical to that produced by numpy.histogram.
+        with output identical to that produced by np.histogram.
 
         In the stats object, the fields are defined as follows:
             pct
@@ -158,35 +383,50 @@ def coldist(count_mat, b, log, density) :
     for s in count_mat.sample_names:
         #to access the data in each column
         data = getattr(count_mat.counts,s).tolist()
-        
+
         #Take the log10 of each count if log option is specified
-        if log == 1:
+        if log :
             data=list(filter(lambda a: a != 0.0, data))
             data=np.log10(data)
-        
-     #for the upper and lower outliers
+
+        #for the upper and lower outliers
         Q1 = np.percentile(data, 25)
         Q3 = np.percentile(data, 75)
         IQR =  np.percentile(data, 75) - np.percentile(data, 25)
 
         #for the histogram bin edges and count numbers
-        if density == 1:
-            (n, bins, patches) = plt.hist(data, bins=b, label='hst', weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size)
+        if density :
+            (n, dist_bins, patches) = plt.hist(
+                    data,
+                    bins=bins,
+                    label='hst',
+                    weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size
+            )
         else:
-            (n, bins, patches) = plt.hist(data, bins=b, label='hst')
+            (n, dist_bins, patches) = plt.hist(data, bins=bins, label='hst')
 
         #make the dict for each sample
-        output['stats']['dists'].append({'name':s, 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
+        output['stats']['dists'].append(
+                {
+                    'name':s,
+                    'dist':list(n),
+                    'bins':list(dist_bins)[1:],
+                    'extrema': {
+                        'lower':[i for i in data if i < Q1-1.5*IQR],
+                        'upper':[i for i in data if i > Q3+1.5*IQR]
+                    }
+                }
+            )
 
     return output
 
-
-def rowdist(count_mat, b, log, density) :
+def rowdist(count_mat,
+        bins=100,
+        log=False,
+        density=False) :
     '''
         Row-wise distribution of counts
         
-        Usage: detk-stats [options] rowdist [--bins=<bins>] [--log] [--density] <counts file>
-
         Identical to coldist except calculated across rows. The name key is rowdist, and the
         name key of the items in dists is the row name from the counts file.
     '''
@@ -214,23 +454,34 @@ def rowdist(count_mat, b, log, density) :
 
         #for the histogram bin edges and count numbers
         if density == 1:
-            (n, bins, patches) = plt.hist(data, bins=b, label='hist',  weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size)
+            (n, dist_bins, patches) = plt.hist(
+                    data,
+                    bins=bins,
+                    label='hist',
+                    weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size
+                )
         else:
-            (n, bins, patches) = plt.hist(data, bins=b, label='hst')
+            (n, dist_bins, patches) = plt.hist(data, bins=bins, label='hst')
 
         #make the dict for each row
-        output['stats']['dists'].append({'name':count_mat.feature_names[i], 'dist':list(n), 'bins':list(bins)[1:],'extrema':{'lower':[i for i in data if i < Q1-1.5*IQR], 'upper':[i for i in data if i > Q3+1.5*IQR]}})
+        output['stats']['dists'].append(
+                {
+                    'name':count_mat.feature_names[i],
+                    'dist':list(n),
+                    'bins':list(dist_bins)[1:],
+                    'extrema': {
+                        'lower':[i for i in data if i < Q1-1.5*IQR],
+                        'upper':[i for i in data if i > Q3+1.5*IQR]
+                    }
+                }
+            )
 
     return output
-
-
 
 def colzero(count_mat) :
     '''
         Column-wise distribution of zero counts
     
-        Usage: detk-stats [options] colzero <counts fn>
-
         Compute the number and fraction of exact zero counts for each column.
 
         The stats value is an array containing one object per column as follows:
@@ -289,8 +540,6 @@ def rowzero(count_mat) :
     '''
         Row-wise distribution of zero counts
     
-        Usage: detk-stats [options] rowzero <counts fn>
-
         Identical to colzero, only computed across rows instead of columns. The name 
         key is rowzero, and the name key of the items in dists is the row name from 
         the counts file.
@@ -339,8 +588,6 @@ def entropy(count_mat) :
     '''
         Row-wise sample entropy calculation
     
-        Usage: detk-stats [options] entropy <counts fn>
-
         Sample entropy is a metric that can be used to identify outlier samples by locating
         rows which are overly influenced by a single count value. This metric can be
         calculated for a single row as follows:
@@ -409,17 +656,17 @@ def count_PCA(count_mat, metadata=''):
     '''
     Principal common analysis of the counts matrix.
 
-    Usage: detk-stats [options] pca [--m <column data fn>] [--f <column_variable>] <counts fn>
+    This module performs PCA on a provided counts matrix and returns the
+    principal component weights, scores, and variances. In addition, the
+    weights and scores for each individual component can be combined to define
+    the projection of each sample along that component.  
 
-    This module performs PCA on a provided counts matrix and returns the principal component 
-    weights, scores, and variances. In addition, the weights and scores for each individual 
-    component can be combined to define the projection of each sample along that component.
-
-    The PCA module can also accept a metadata file that contains information about the 
-    samples in each column. The user can specify some of these columns to include as 
-    variables for plotting purposes. The idea is that columns labeled with the same class 
-    will be colored according to their class, such that separations in the data can be 
-    more easily observed when projections are plotted.
+    The PCA module can also accept a metadata file that contains information
+    about the samples in each column. The user can specify some of these
+    columns to include as variables for plotting purposes. The idea is that
+    columns labeled with the same class will be colored according to their
+    class, such that separations in the data can be more easily observed when
+    projections are plotted.
     '''
     
     #Get counts from file and scale counts
@@ -481,29 +728,45 @@ def format_json(filename, output):
 
     # see if filename already exists
     if os.path.isfile(filename) :
-      # read in the existing file
-      previous_output = []
-      with open(filename) as f :
-        for line in f:
-          previous_output.append(json.loads(line))
-        for d in previous_output :
-          if 'name' not in d :
-            raise Exception('Malformed detk-stats JSON record in pre-existing '
-            'file, no name key:',str(d))
-          output_dict[d['name']] = d
+        # read in the existing file
+        with open(filename) as f :
+            previous_output = json.load(f)
+            # examine the file for correctness, each array object must have a
+            # 'name' key
+            for d in previous_output :
+                if 'name' not in d :
+                    raise Exception('Malformed detk-stats JSON record in '
+                            'pre-existing file, no name key:',str(d))
+                output_dict[d['name']] = d
 
     # go through the given output and update output_dict appropriately
-    if 'name' not in output :
-      raise Exception('Malformed detk-stats JSON record in output '
-        'file, no name key:',str(output))
-
-    output_dict[output['name']] = output
+    for d in output :
+        if 'name' not in d :
+          raise Exception('Malformed detk-stats JSON record in output '
+              'file, no name key:',str(d))
+        output_dict[d['name']] = d
 
     # write out values in output_dict
     with open(filename,'w') as f :
-      for value in output_dict.values():
-        json.dump(value,f)
-        f.write('\n')
+        json.dump(list(output_dict.values()),f)
+
+# monkeypatch mpld3._display.NumpyEncoder pending fix to
+# https://github.com/mpld3/mpld3/issues/434
+import mpld3
+class NumpyEncoder(json.JSONEncoder):
+    """ Special json encoder for numpy types """
+    def default(self, obj):
+        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
+            np.int16, np.int32, np.int64, np.uint8,
+            np.uint16,np.uint32, np.uint64)):
+            return int(obj)
+        elif isinstance(obj, (np.float_, np.float16, np.float32, 
+            np.float64)):
+            return float(obj)
+        elif isinstance(obj,(np.ndarray,)): #### This is the fix
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+mpld3._display.NumpyEncoder = NumpyEncoder
 
 def format_html(html_fn, json_fn, counts_obj, color_col):
 
@@ -513,11 +776,8 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
     s = Template(resource)
 
     output_dict = OrderedDict()
-    output = []
     with open(json_fn) as f:
-        for line in f:
-            output.append(json.loads(line))
-        for d in output:
+        for d in json.load(f) :
             output_dict[d['name']] = d
 
     #Format base HTML output (table)
@@ -590,6 +850,8 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
         plt.ylabel('Nonzero Mean', fontsize=15)
         tooltip1 = mpld3.plugins.PointHTMLTooltip(points, row_names, hoffset=10)
         mpld3.plugins.connect(fig1, tooltip1)
+
+        print(type(zero_fracs), type(nonzero_means), type(row_names))
 
         fig2 = plt.figure(2)
         fig2.clf()
@@ -774,7 +1036,7 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
     html_output = s.substitute(base_hide=base_hide, num_cols=num_cols, num_rows=num_rows,
                                colzero_hide=colzero_hide, colzero=colzero,
                                rowzero_hide=rowzero_hide, rowzero_scatter=rowzero_scatter, 
-			       rowzero_hist=rowzero_hist, rowzero_scatter2=rowzero_scatter2,
+                               rowzero_hist=rowzero_hist, rowzero_scatter2=rowzero_scatter2,
                                entropy_hide=entropy_hide, entropy=entropy,
                                coldist_hide=coldist_hide, coldist_boxplot=coldist_boxplot,
                                pca_hide=pca_hide, pca_scree=pca_scree, pca_swarm=pca_swarm)
@@ -782,96 +1044,81 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
     html_fn.write(html_output)
     html_fn.close()
 
-def main(argv=None):
+def main(argv=sys.argv) :
 
-    #Create commandline arguments to pass in data files and selected method
-    args = docopt(__doc__,argv=argv)
-    
-    #Create CountMatrix object from given data
-    args['<counts_fn>'] = args.get('<counts_fn>')
-    counts_obj = CountMatrixFile(args['<counts_fn>'])
- 
-   #If bin option is specified, set to given number (otherwise, default=20)
-    args['--bins'] = args.get('--bins')
-    if args['--bins'] is None:
-        args['--bins'] = 20
-    else:
-        args['--bins'] = int(args['--bins'])
+    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
+        docopt(__doc__)
+    argv = argv[1:]
+    cmd = argv[0]
 
-    #Set log option
-    args['--log'] = args.get('--log')
- 
-   #Set density option
-    args['--density'] = args.get('--density')
+    # all modes have a counts file argument
 
-   #Get metadata if provided
-    args['--column-data'] = args.get('--column-data')
-    if args['--column-data'] is None:
-        args['--column-data'] = ''
-
-   #Get column variable to color pca plots by if provided
-    args['--color-col'] = args.get('--color-col')
-    if args['--color-col'] is None:
-        args['--color-col'] = ''
-
-    if args['pca'] :
+    if cmd == 'pca' :
+        args = docopt(cmd_opts['pca'],argv)
+        counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = count_PCA(counts_obj, metadata=args['--column-data'])
-    elif args['summary'] :
+    elif cmd == 'summary' :
+        args = docopt(cmd_opts['summary'],argv)
+        counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = summary(counts_obj
-          ,args['--bins']
+          ,int(args['--bins'])
           ,args['--log']
           ,args['--density']
           ,metadata=args['--column-data']
         )
-    elif args['coldist'] :
+    elif cmd == 'coldist' :
+        args = docopt(cmd_opts['coldist'],argv)
+        counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = coldist(counts_obj
-          ,args['--bins']
-          ,args['--log']
-          ,args['--density']
+          ,bins=int(args['--bins'])
+          ,log=args['--log']
+          ,density=args['--density']
         )
-    elif args['rowdist'] :
+    elif cmd == 'rowdist' :
+        args = docopt(cmd_opts['rowdist'],argv)
+        counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = rowdist(counts_obj
-          ,args['--bins']
-          ,args['--log']
-          ,args['--density']
+          ,bins=int(args['--bins'])
+          ,log=args['--log']
+          ,density=args['--density']
         )
-    elif args['colzero'] :
-      output = colzero(counts_obj)
-    elif args['rowzero'] :
-      output = rowzero(counts_obj)
-    elif args['entropy'] :
-      output = entropy(counts_obj)
-    elif args['base']:
-      output = base(counts_obj)
+    elif cmd == 'colzero' :
+        args = docopt(cmd_opts['colzero'],argv)
+        counts_obj = CountMatrixFile(args['<counts_fn>'])
+        output = colzero(counts_obj)
+    elif cmd == 'rowzero' :
+        args = docopt(cmd_opts['rowzero'],argv)
+        counts_obj = CountMatrixFile(args['<counts_fn>'])
+        output = rowzero(counts_obj)
+    elif cmd == 'entropy' :
+        args = docopt(cmd_opts['entropy'],argv)
+        counts_obj = CountMatrixFile(args['<counts_fn>'])
+        output = entropy(counts_obj)
+    elif cmd == 'base' :
+        args = docopt(cmd_opts['base'],argv)
+        counts_obj = CountMatrixFile(args['<counts_fn>'])
+        output = base(counts_obj)
 
     #Obtain string used to name output files, unless filename is specified
-    filename_prefix = os.path.splitext(args['<counts_fn>'])
+    filename_prefix = os.path.splitext(args['<counts_fn>'])[0]
 
     #Check if JSON file option was specified
     json_fn = args.get('--json')
     if json_fn is None:
-        json_fn = filename_prefix[0]+'.json'    
+        json_fn = filename_prefix+'.json'
 
     #Format JSON output file
-    if args['summary']:
-        with open(json_fn,'w') as f:
-            for item in output:
-                json.dump(item,f)
-                f.write('\n')
-    else:
-        format_json(json_fn ,output)
+    format_json(json_fn ,output)
 
     # determine the html filename
     html_fn = args.get('--html')
     if html_fn is None:
-        html_fn = filename_prefix[0]+'.html'
+        html_fn = filename_prefix+'.html'
 
     # if user specified no html fn, or html_fn != 'None', then we are
     # writing out an html file
-    
     if html_fn != 'None' :
         format_html(html_fn, json_fn, counts_obj, args['--color-col'])
-    
 
 if __name__ == '__main__':
     main()

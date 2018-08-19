@@ -4,7 +4,7 @@ from de_toolkit.common import main, InvalidDesignException
 
 def test_cli() :
   with pytest.raises(docopt.DocoptExit) :
-    main(argv=None)
+    main()
 
 def test_CountMatrix(
   fake_counts_pandas_dataframe

@@ -22,7 +22,10 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN \
   apt update -q && \
   echo "America/New_York" > /etc/timezone && \
-  echo 12 | apt-get -qy install r-base r-base-dev
+  echo 12 | apt-get -qy install r-base r-base-dev libcurl4-openssl-dev libxml2-dev
+
+RUN Rscript -e "source('http://bioconductor.org/biocLite.R'); biocLite('DESeq2')"
+RUN Rscript -e "install.packages('logistf')"
 
 # install python 3 things
 RUN \

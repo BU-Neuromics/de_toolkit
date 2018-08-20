@@ -11,6 +11,5 @@ pipelines:
         caches:
           - pip
         script: # Modify the commands below to build your repository.
-          - Rscript install_r_packages.R
           - pip3 install -r requirements.txt
           - python3 setup.py test

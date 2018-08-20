@@ -4,6 +4,12 @@
 ### Added
 - norm.fpkm
 - de.deseq2
+### Changed
+- major CLI help overhaul, added individual help messages for norm, de, and stats
+- modified entrypoint function signatures to fix cli problems when calling with both detk <cmd> and detk-<cmd> forms
+- fixed incorrect JSON output format in stats
+- monkeypatched JSON encoding error due to mpld3 NumpyEncoder bug
+- many test improvements
 
 ## [ 0.4.0 ]
 ### Added

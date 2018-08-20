@@ -19,9 +19,9 @@ pip install de_toolkit
 
 ## Installing R and packages
 
-Certain functions in detk, particularly the `de` module, use rpy2 to interface
-with R and bioconductor packages. You must have a version of R installed and
-the following packages to use the corresponding submodule functions:
+Certain functions in detk, particularly the `de` module, interface with R and
+bioconductor packages. You must have a version of R installed and the following
+packages to use the corresponding submodule functions:
 
   - [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
   - [logistf](https://cran.r-project.org/web/packages/logistf/index.html)

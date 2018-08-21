@@ -12,7 +12,7 @@ as the median ratio of each gene count divided by the geometric mean count
 across all samples. The implementation here is a python port of the R version,
 and is roughly equivalent to the following R code:
 
-.. code-block: R
+.. code-block:: R
 
     library(DESeq2)
 

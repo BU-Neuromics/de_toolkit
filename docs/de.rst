@@ -18,7 +18,7 @@ analysis on a counts matrix and accompanying column data file::
 
 This is roughly equivalent to the following R:
 
-.. code-block: R
+.. code-block:: R
 
     library(DESeq2)
 

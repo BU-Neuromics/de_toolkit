@@ -12,7 +12,7 @@ Introduction
 ``de_toolkit`` is a suite of Bioinformatics tools useful in differential
 expression analysis and other high-throughput sequencing count-based workflows.
 The tools are implemented either through direct implementation in python or as
-a convenience wrapper around R packages using rpy2_.
+a convenience wrapper around R packages using a :doc:`custom wrapr<wrapr>`.
 
 The toolkit is both a python module and a command line interface that wraps
 primary module functions to facilitate easy integration into workflows. For
@@ -24,13 +24,7 @@ file ``counts_matrix.tsv``, you could run on the command line:
   detk-norm deseq counts_matrix.tsv > norm_counts_matrix.tsv
 
 The counts in the counts matrix file will be normalized using the DESeq2 method
-and output to the ``norm_counts_matrix.tsv`` file as the equivalent of:
-
-.. code-block:: R
-
-  library(DESeq2)
-
-  # TODO: add actual equivalent code
+and output to the ``norm_counts_matrix.tsv`` file.
 
 Module Documentation
 --------------------
@@ -48,46 +42,17 @@ Module Documentation
    stats
    wrapr
 
-The following functionality is (or will be) implemented by the package (items
-in italics are not yet implemented):
-
-* :doc:`norm`
-    - DESeq2
-    - *reference norm*
-    - library size
-    - *FPKM*
-    - *user supplied*
-* :doc:`de`
-    - *DESeq2*
-    - Firth's Logistic Regression
-    - *t-test*
-* :doc:`outlier`
-    - *entropy*
-    - *Cook's distance*
-* :doc:`transform`
-    - DESeq2 Variance Stabilizing Transform
-    - *RUVSeq transformation*
-    - *trim*
-    - *shrink*
-* :doc:`filter`
-    - *nonzero*
-    - *mean*
-* :doc:`stats`
-    - *summary*
-    - *dist*
-    - *PCA*
-
-Installing
-----------
+Installation
+------------
 
 conda package
 +++++++++++++
 
-We suggest installing this package using anaconda_ on the bubhub channel:
+We suggest installing this package using pip:
 
 .. code-block:: bash
 
-  conda install -c bubhub de_toolkit
+  pip install de_toolkit
 
 Manual installation
 +++++++++++++++++++
@@ -101,14 +66,12 @@ available in your environment:
     - numpy
 * R packages (R>=3.2)
     - R>=3.2
-    - docopt
 
 The following packages are only required to use the corresponding submodule
 functions:
 
 * R packages
     - DESeq2 (bioconductor)
-    - RUVSeq (bioconductor)
     - logistf (CRAN)
 
 We suggest using anaconda_ to create an environment that contains the software
@@ -131,7 +94,6 @@ In development, when you want to run the toolkit, use the ``setup.py`` script:
 
 This should make the ``detk`` and its subtools available on the command line. Whenever you make changes
 to the code you will need to run this command again.
-
 
 .. _rpy2: https://rpy2.readthedocs.io/
 .. _DESeq2: http://bioconductor.org/packages/release/bioc/html/DESeq2.html

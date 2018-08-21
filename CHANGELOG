@@ -10,6 +10,8 @@
 - fixed incorrect JSON output format in stats
 - monkeypatched JSON encoding error due to mpld3 NumpyEncoder bug
 - many test improvements
+- fixed issue #34
+- switched docs to RTD theme
 
 ## [ 0.4.0 ]
 ### Added

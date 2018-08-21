@@ -3,6 +3,7 @@
 ## unreleased
 ### Added
 - norm.fpkm
+- norm docs page
 - de.deseq2
 ### Changed
 - major CLI help overhaul, added individual help messages for norm, de, and stats

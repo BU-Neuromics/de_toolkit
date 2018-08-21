@@ -3,7 +3,7 @@
 ## unreleased
 ### Added
 - norm.fpkm
-- norm docs page
+- norm and de docs page
 - de.deseq2
 ### Changed
 - major CLI help overhaul, added individual help messages for norm, de, and stats
@@ -11,7 +11,7 @@
 - fixed incorrect JSON output format in stats
 - monkeypatched JSON encoding error due to mpld3 NumpyEncoder bug
 - many test improvements
-- fixed issue #34
+- fixed issue #34, allowing some non-alphanumeric characters in patsy_lite formula term names
 - switched docs to RTD theme
 
 ## [ 0.4.0 ]

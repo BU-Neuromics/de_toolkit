@@ -32,7 +32,7 @@ Module Documentation
 .. toctree::
    :maxdepth: 2
 
-   workflow
+   workflow/workflow
    norm
    de
    patsy_lite

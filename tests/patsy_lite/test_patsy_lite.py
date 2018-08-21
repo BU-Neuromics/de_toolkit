@@ -33,16 +33,16 @@ def test_patsy_lite_to_patsy(model_data) :
 
   # test patsy passthrough
   assert (pltp('np.log(x) ~ category[cont]').describe() == 
-    "np.log(x) ~ C(category, Treatment('cont'))")
+    "Q(\"np.log(x)\") ~ C(category, Treatment('cont'))")
 
   assert (pltp('np.log(x) ~ a:b + category[cont]').describe() == 
-    "np.log(x) ~ a:b + C(category, Treatment('cont'))")
+    "Q(\"np.log(x)\") ~ a:b + C(category, Treatment('cont'))")
 
   assert (pltp('1 + np.log(x) ~ 1 + category[cont]').describe() == 
-    "1 + np.log(x) ~ C(category, Treatment('cont'))")
+    "1 + Q(\"np.log(x)\") ~ C(category, Treatment('cont'))")
 
   assert (pltp('np.log(x) ~ -1 + category[cont]').describe() == 
-    "np.log(x) ~ 0 + C(category, Treatment('cont'))")
+    "Q(\"np.log(x)\") ~ 0 + C(category, Treatment('cont'))")
 
 def test_DesignMatrix(model_data) :
 
@@ -117,4 +117,21 @@ def test_DesignMatrix(model_data) :
                        'binary_str__B:cat_str__A + binary_str__B:cat_str__B + '
                        'binary_str__B:cat_str__C + binary_str__B:cat_str__D')
 
+def test_DesignMatrix_colnames(model_data) :
+  
+    from de_toolkit.patsy_lite import DesignMatrix, PatsyLiteParseError
 
+    # add . to column names
+    model_data.columns = ['fld.{}'.format(_) for _ in model_data.columns]
+
+    dm = DesignMatrix('fld.cont ~ fld.cat_int',model_data)
+    assert dm.design == 'fld.cont ~ Intercept + fld.cat_int'
+
+    dm = DesignMatrix('fld.cont ~ fld.cat_int[4]',model_data)
+    assert dm.design == 'fld.cont ~ Intercept + fld.cat_int__1 + fld.cat_int__2 + fld.cat_int__3'
+
+    dm = DesignMatrix('fld.cont ~ fld.cat_int[4,1,2,3]',model_data)
+    assert dm.design == 'fld.cont ~ Intercept + fld.cat_int__1 + fld.cat_int__2 + fld.cat_int__3'
+
+    with pytest.raises(PatsyLiteParseError) :
+        dm = DesignMatrix('fld.cont ~ fld.cat_int[4,1,2,3] + fld.]lsaj',model_data)

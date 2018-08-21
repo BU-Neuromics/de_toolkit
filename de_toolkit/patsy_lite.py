@@ -7,28 +7,35 @@ import re
 
 class PatsyLiteParseError(Exception): pass
 
-tokens = ('CONSTANT','SIMPLETERM','BINARYTERM','FACTORTERM','RELATION','OP','COUNT')
+tokens = ('CONSTANT','FACTORTERM','RELATION','OP','COUNT')
 
 t_COUNT = r'count'
 t_CONSTANT = r'-?\d+(?:\.\d*)?'
-t_SIMPLETERM = r'\w[\w:*.()]*'
+#t_SIMPLETERM = r'\w[\w:*.()]*'
 t_RELATION = r'~'
 t_OP = r'[-+*/]'
 t_ignore = ' '
 
-def t_BINARYTERM(t) :
-    r'(\w+)\[(\w+)\]'
-    t.term, t.args = t.lexer.lexmatch.groups()[1:3]
-    return t
+#def t_BINARYTERM(t) :
+#    r'(\w[^[]*)\[([^]]+)\]$'
+#    t.term, t.args = t.lexer.lexmatch.groups()[1:3]
+#    return t
 
 def t_FACTORTERM(t) :
-    r'(\w+)\[((?:\w+,)+\w+)\]'
+    r'([\w](?:[\w.():]+)?)(?:\[([^]]+)\])?'
     # this regex returns a bunch of empty groups for some reason
     # filter out the None valued groups and just operate on what
     # is left
-    groups = [_ for _ in t.lexer.lexmatch.groups() if _]
-    t.term, t.args = groups[1], groups[2]
-    t.args = t.args.split(',')
+    groups = [_ for _ in t.lexer.lexmatch.groups() if _][1:]
+    if len(groups) == 1 :
+        t.term = groups[0]
+    elif len(groups) == 2 :
+        args = groups[1]
+        if ',' in args :
+            t.term, t.levels = groups[0], args
+            t.levels = t.levels.split(',')
+        else :
+            t.term, t.ref = groups[0], args
     return t
 
 def t_error(t) :
@@ -36,6 +43,22 @@ def t_error(t) :
     return t
 
 lexer = lex.lex()
+
+def quote_var(v) :
+    if any(_ in v for _ in '#.()[]@') :
+        return 'Q("{}")'.format(v)
+    return v
+
+def repr_val(v) :
+    try :
+        return int(v)
+    except :
+        pass
+    try :
+        return float(v)
+    except :
+        pass
+    return v
 
 def patsy_lite_to_patsy(formula) :
 
@@ -57,24 +80,37 @@ def patsy_lite_to_patsy(formula) :
         try :
             tok = lexer.token()
         except lex.LexError as e :
-            raise PatsyLiteParseError('Error parsing formula:',e.args)
+            raise PatsyLiteParseError('Error parsing formula:\n{}\n{}'.format(
+                formula,e.args)
+            )
 
         if not tok : break
 
-        if tok.type in ('CONSTANT','SIMPLETERM','RELATION','OP','COUNT') :
+        if tok.type in ('CONSTANT','RELATION','OP','COUNT') :
             patsy_formula.append(tok.value)
 
+        # term
         # term[ref] -> C(term, Treatment("ref"))
-        if tok.type == 'BINARYTERM' :
-            term = 'C({}, Treatment({}))'.format(tok.term,repr(tok.args))
-            name_map[term] = tok.term
-            patsy_formula.append(term)
-
         # term[lev1,lev2,lev3] -> C(term, levels=["lev1","lev2","lev3"])
         if tok.type == 'FACTORTERM' :
-            term = 'C({}, levels={})'.format(tok.term,repr(tok.args))
-            name_map[term] = tok.term
-            patsy_formula.append(term)
+            if hasattr(tok,'ref') :
+                term = 'C({}, Treatment({}))'.format(
+                        quote_var(tok.term),
+                        repr(repr_val(tok.ref))
+                )
+                name_map[term] = tok.term
+                patsy_formula.append(term)
+            elif hasattr(tok,'levels') :
+                term = 'C({}, levels={})'.format(
+                        quote_var(tok.term),
+                        [repr_val(_) for _ in tok.levels]
+                )
+                name_map[term] = tok.term
+                patsy_formula.append(term)
+            else :
+                term = quote_var(tok.value)
+                patsy_formula.append(term)
+                name_map[term] = tok.value
 
     patsy_formula = ' '.join(patsy_formula)
     model = ModelDesc.from_formula(patsy_formula)

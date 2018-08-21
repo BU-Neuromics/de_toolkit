@@ -229,9 +229,9 @@ def test_firth(logistic_test_counts_obj) :
   firth_out = firth_logistic_regression(logistic_test_counts_obj)
 
   # the beta estimates can be within 1% of each other
-  rtol=1e-2
-  assert numpy.allclose(coeffs['Intercept'],firth_out['int__beta'],rtol=rtol)
-  assert numpy.allclose(coeffs['counts'],firth_out['counts__beta'],rtol=rtol)
+  atol=1e-2
+  assert numpy.allclose(coeffs['Intercept'],firth_out['int__beta'],atol=atol)
+  assert numpy.allclose(coeffs['counts'],firth_out['counts__beta'],atol=atol)
 
 def test_firth_rda(logistic_test_counts_obj) :
 
@@ -273,10 +273,10 @@ def test_firth_w_cov(logistic_test_counts_obj) :
   firth_out = firth_logistic_regression(logistic_test_counts_obj)
 
   # the beta estimates can be within 1% of each other
-  rtol=1e-2
-  assert numpy.allclose(coeffs['Intercept'],firth_out['int__beta'],rtol=rtol)
-  assert numpy.allclose(coeffs['cov__high'],firth_out['cov__high__beta'],rtol=rtol)
-  assert numpy.allclose(coeffs['counts'],firth_out['counts__beta'],rtol=rtol)
+  atol=1e-1
+  assert numpy.allclose(coeffs['Intercept'],firth_out['int__beta'],atol=atol)
+  assert numpy.allclose(coeffs['cov__high'],firth_out['cov__high__beta'],atol=atol)
+  assert numpy.allclose(coeffs['counts'],firth_out['counts__beta'],atol=atol)
 
 @pytest.mark.skip(reason='test takes a long time, only turn on periodically')
 def test_firth_w_big_data_cov(fake_big_counts_obj) :

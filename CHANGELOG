@@ -13,6 +13,7 @@
 - many test improvements
 - fixed issue #34, allowing some non-alphanumeric characters in patsy_lite formula term names
 - switched docs to RTD theme
+- workflow docs update
 
 ## [ 0.4.0 ]
 ### Added

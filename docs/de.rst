@@ -94,7 +94,7 @@ A ``counts`` term must be included on the right hand side of the design formula.
 
 ::
 
-    detk-de deseq2 "Status ~ AgeOfDeath + counts" norm_counts.csv column_data.csv > firth_results.csv
+    detk-de firth "Status ~ AgeOfDeath + counts" norm_counts.csv column_data.csv > firth_results.csv
 
 
 Usage::

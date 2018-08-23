@@ -1,5 +1,10 @@
 # Changelog
 
+## [ 0.5.1 ]
+### Changed
+- fix for #35, incorrectly specified stats cli docopt usage
+- fix for stats json output bug and tests
+
 ## [ 0.5.0 ]
 ### Added
 - norm.fpkm

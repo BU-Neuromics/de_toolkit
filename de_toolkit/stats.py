@@ -32,7 +32,8 @@ Calculate summary statistics. Equivalent to running each of:
 
 base coldist rowdist colzero rowzero entropy
 
-Usage: detk-stats summary [options] <counts_fn>
+Usage:
+    detk-stats summary [options] <counts_fn>
 
 Options:
     -h --help
@@ -54,7 +55,8 @@ Calculate basic statistics of the counts file, including:
     number of samples
     number of rows
 
-Usage: detk-stats base [options] <counts file>
+Usage:
+    detk-stats base [options] <counts_fn>
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
@@ -90,7 +92,8 @@ In the stats object, the fields are defined as follows:
             1.5*(inner quartile length) of the distribution. These could be
             marked as outliers in a boxplot, for example.
 
-Usage: detk-stats coldist [options] <counts file>
+Usage:
+    detk-stats coldist [options] <counts_fn>
 
 Options:
     --bins=N               The number of bins to use when computing the counts
@@ -135,7 +138,8 @@ In the stats object, the fields are defined as follows:
             1.5*(inner quartile length) of the distribution. These could be
             marked as outliers in a boxplot, for example.
 
-Usage: detk-stats rowdist [options] <counts file>
+Usage:
+    detk-stats rowdist [options] <counts_fn>
 
 Options:
     --bins=N               The number of bins to use when computing the counts
@@ -166,7 +170,8 @@ The stats value is an array containing one object per column as follows:
     nonzero_col_mean
         the mean of only the non-zero counts in the column
 
-Usage: detk-stats colzero [options] <counts fn>
+Usage:
+    detk-stats colzero [options] <counts_fn>
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
@@ -189,7 +194,8 @@ The stats value is an array containing one object per row as follows:
     nonzero_row_mean
         the mean of only the non-zero counts in the row
 
-Usage: detk-stats colzero [options] <counts fn>
+Usage:
+    detk-stats colzero [options] <counts_fn>
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
@@ -219,7 +225,8 @@ The key entropies is an array containing one object per row with the following k
     entropy
         the value of H calculated as above for that row
 
-Usage: detk-stats [options] entropy <counts fn>
+Usage:
+    detk-stats [options] entropy <counts_fn>
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
@@ -241,7 +248,8 @@ with the same class will be colored according to their class, such that
 separations in the data can be more easily observed when projections are
 plotted.
 
-Usage: detk-stats pca [options] <counts fn>
+Usage:
+    detk-stats pca [options] <counts fn>
 
 Options:
     -m FN --column-data=FN      Column data for annotating PCA results and

@@ -428,7 +428,7 @@ def coldist(count_mat,
 
     return output
 
-def rowdist(count_mat,
+def rowdist(count_obj,
         bins=100,
         log=False,
         density=False) :
@@ -446,12 +446,12 @@ def rowdist(count_mat,
 
     output['stats']['dists'] = []
     
-    for i in range(len(count_mat.feature_names)):
+    for i in range(len(count_obj.feature_names)):
         #to access the data in each row
-        data = count_mat.counts.iloc[i].tolist()
+        data = count_obj.counts.iloc[i].tolist()
 
         #Compute log10 of each count if log option is specified
-        if log==1:
+        if log :
             data=list(filter(lambda a: a != 0.0, data))
             data=np.log10(data)
         
@@ -474,7 +474,7 @@ def rowdist(count_mat,
         #make the dict for each row
         output['stats']['dists'].append(
                 {
-                    'name':count_mat.feature_names[i],
+                    'name':count_obj.feature_names[i],
                     'dist':list(n),
                     'bins':list(dist_bins)[1:],
                     'extrema': {
@@ -859,7 +859,7 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
         tooltip1 = mpld3.plugins.PointHTMLTooltip(points, row_names, hoffset=10)
         mpld3.plugins.connect(fig1, tooltip1)
 
-        print(type(zero_fracs), type(nonzero_means), type(row_names))
+        #print(type(zero_fracs), type(nonzero_means), type(row_names))
 
         fig2 = plt.figure(2)
         fig2.clf()
@@ -1005,7 +1005,7 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
 
         stats = pca_output.get('stats')
         column_variables = stats.get('column_variables')
-        if color_col == '' and len(column_variables)!=0: 
+        if color_col == None and len(column_variables)!=0: 
             color_col = list(column_variables)[0]
        
         sample_type = column_variables.get(color_col)
@@ -1116,7 +1116,10 @@ def main(argv=sys.argv) :
         json_fn = filename_prefix+'.json'
 
     #Format JSON output file
-    format_json(json_fn ,output)
+    if not isinstance(output,list) :
+        output = [output]
+
+    format_json(json_fn, output)
 
     # determine the html filename
     html_fn = args.get('--html')
@@ -1126,7 +1129,7 @@ def main(argv=sys.argv) :
     # if user specified no html fn, or html_fn != 'None', then we are
     # writing out an html file
     if html_fn != 'None' :
-        format_html(html_fn, json_fn, counts_obj, args['--color-col'])
+        format_html(html_fn, json_fn, counts_obj, args.get('--color-col'))
 
 if __name__ == '__main__':
     main()

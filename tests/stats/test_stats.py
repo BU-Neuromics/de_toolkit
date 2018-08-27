@@ -173,6 +173,12 @@ def test_stats_coldist_names(fake_count_coldist_obj):
     col_name_true = ['a','b','c']
     assert col_name_func == col_name_true
 
+#test that coldist function has the correct pct values
+def test_stats_coldist_pct(fake_count_coldist_obj):
+    output = coldist(fake_count_coldist_obj, 20, -1, -1)
+    col_pct = output.get('stats').get('pct')
+    assert col_pct == list((_+1)/.2 for _ in range(20))
+
 #test that coldist function gets correct column dist
 def test_stats_coldist_dist(fake_count_coldist_obj):
     output = coldist(fake_count_coldist_obj, bins=10)
@@ -225,7 +231,7 @@ def test_stats_coldist_JSON(fake_count_coldist_obj):
     pct = json_output.get('stats', {}).get('pct')
     dists = json_output.get('stats', {}).get('dists')    
 
-    true_pct = [x for x in range(5, 100, 5)]
+    true_pct = [10*x for x in range(1, 11)]
 
     true_col_names = ['a', 'b', 'c']
     col_names = []
@@ -294,6 +300,12 @@ def test_stats_rowdist_names(fake_count_rowdist_obj):
     row_name_true = ['gene1','gene2','gene3']
     assert row_name_func == row_name_true
 
+#test that rowdist function has the correct pct values
+def test_stats_rowdist_pct(fake_count_rowdist_obj):
+    output = rowdist(fake_count_rowdist_obj, 20, -1, -1)
+    row_pct = output.get('stats').get('pct')
+    assert row_pct == list((_+1)/.2 for _ in range(20))
+
 #test that rowdist function gets correct row dists
 def test_stats_rowdist_dist(fake_count_rowdist_obj):
     output = rowdist(fake_count_rowdist_obj, bins=10)
@@ -346,7 +358,7 @@ def test_stats_rowdist_JSON(fake_count_rowdist_obj):
     pct = json_output.get('stats', {}).get('pct')
     dists = json_output.get('stats', {}).get('dists')    
 
-    true_pct = [x for x in range(5, 100, 5)]
+    true_pct = [50,100]
 
     true_row_names = ['gene1', 'gene2', 'gene3']
     row_names = []

@@ -345,46 +345,50 @@ def coldist(count_mat,
         Column-wise distribution of counts
 
         Options:
-              --bins=<bins>   The number of bins to use when computing the counts
-                               distribution
-              --log           Perform a log10 transform on the counts before calculating
-                               the distribution. Zeros are omitted prior to histogram
-                               calculation.
-              --density       Return a density distribution instead of counts, such that
-                               the sum of values in *dist* for each column approximately
-                               sum to 1.
+              --bins=<bins>  The number of bins to use when computing the counts
+                             distribution
+              --log          Perform a log10 transform on the counts before
+                             calculating the distribution. Zeros are omitted
+                             prior to histogram calculation.
+              --density      Return a density distribution instead of counts,
+                             such that
+                             the sum of values in *dist* for each column
+                             approximately sum to 1.
         
-        Compute the distribution of counts column-wise. Each column is subject to binning by percentile,
-        with output identical to that produced by np.histogram.
+        Compute the distribution of counts column-wise. Each column is subject
+        to binning by percentile, with output identical to that produced by
+        np.histogram.
 
         In the stats object, the fields are defined as follows:
             pct
-                The percentiles of the distributions in the range 0 < pct < 100, by default in
-                increments of 5. This defines the length of the dist and bins arrays in each of
-                the objects for each sample.
+                The percentiles of the distributions in the range 0 < pct <
+                100, by default in increments of 5. This defines the length of
+                the dist and bins arrays in each of the objects for each sample.
             dists
-                Array of objects containing one object for each column, described below.
+                Array of objects containing one object for each column,
+                described below.
             Each item of dists is an object with the following keys:
                 name
                     Column name from original file
                 dist
-                    Array of raw or normalized counts in each bin according to the
-                    percentiles from pct
+                    Array of raw or normalized counts in each bin according to
+                    the percentiles from pct
                 bins
-                    Array of the bin boundary values for the distribution. Should
-                    be of length len(counts)+1. These are what would be the x-axis
-                    labels if this was plotted as a histogram.
+                    Array of the bin boundary values for the distribution.
+                    Should be of length len(counts)+1. These are what would be
+                    the x-axis labels if this was plotted as a histogram.
                 extrema
-                    Object with two keys, min and max, that contain the literal
-                    count values for counts that have a value larger or smaller than
-                    1.5*(inner quartile length) of the distribution. These could be
-                    marked as outliers in a boxplot, for example.
+                    Object with two keys, lower and upper, that contain the
+                    literal count values for counts that have a value larger or
+                    smaller than 1.5*(inner quartile length) of the
+                    distribution. These could be marked as outliers in a
+                    boxplot, for example.
     '''
     #Format output
     output = {}
     output['name'] = 'coldist'
     output['stats'] = {}
-    output['stats']['pct'] = list(range(5, 100, 5))
+    output['stats']['pct'] = list(100*(_+1)/bins for _ in range(bins))
 
     output['stats']['dists'] = []
 
@@ -442,7 +446,7 @@ def rowdist(count_obj,
     output = {}
     output['name'] = 'rowdist'
     output['stats'] = {}
-    output['stats']['pct'] = list(range(5, 100, 5))
+    output['stats']['pct'] = list(100*(_+1)/bins for _ in range(bins))
 
     output['stats']['dists'] = []
     

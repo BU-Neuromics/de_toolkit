@@ -1,5 +1,10 @@
 # Changelog
 
+## unreleased
+### Changed
+- fixed stats pca cli bug
+- fixed pct calculation in rowdist and coldist
+
 ## [ 0.5.1 ]
 ### Changed
 - fix for #35, incorrectly specified stats cli docopt usage

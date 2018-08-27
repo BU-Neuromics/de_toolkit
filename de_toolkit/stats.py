@@ -249,7 +249,7 @@ separations in the data can be more easily observed when projections are
 plotted.
 
 Usage:
-    detk-stats pca [options] <counts fn>
+    detk-stats pca [options] <counts_fn>
 
 Options:
     -m FN --column-data=FN      Column data for annotating PCA results and

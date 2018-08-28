@@ -4,6 +4,7 @@
 ### Changed
 - fixed stats pca cli bug
 - fixed pct calculation in rowdist and coldist
+- refactored stats module into objects for better output control
 
 ## [ 0.5.1 ]
 ### Changed

@@ -2,7 +2,7 @@
 
 ## unreleased
 ### Added
-- tabular output to stats module
+- tabular output to stats module, in either csv or terminaltables table format
 ### Changed
 - fixed stats pca cli bug
 - fixed pct calculation in rowdist and coldist

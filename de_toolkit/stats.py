@@ -45,6 +45,7 @@ Options:
     --density              Produce density distribution by dividing each distribution
                            by the appropriate sum
     -o FILE --output=FILE  Destination of primary output [default: stdout]
+    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
 
@@ -60,6 +61,7 @@ Usage:
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
+    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
 ''',
@@ -105,6 +107,7 @@ Options:
                            such that the sum of values in *dist* for each
                            column approximately sum to 1.
     -o FILE --output=FILE  Destination of primary output [default: stdout]
+    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
 ''',
@@ -151,6 +154,7 @@ Options:
                            the sum of values in *dist* for each row approximately
                            sum to 1.
     -o FILE --output=FILE  Destination of primary output [default: stdout]
+    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
 ''',
@@ -175,6 +179,7 @@ Usage:
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
+    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
             ''',
@@ -199,6 +204,7 @@ Usage:
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
+    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
 ''',
@@ -230,6 +236,7 @@ Usage:
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
+    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
 ''',
@@ -257,6 +264,7 @@ Options:
     -f NAME --column-name=NAME  Column name from provided column data for
                                 annotation PCA results and plots (experimental)
     -o FILE --output=FILE       Destination of primary output [default: stdout]
+    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
     --json=<json_fn>            Name of JSON output file
     --html=<html_fn>            Name of HTML output file
 '''
@@ -351,6 +359,7 @@ class Base(CountStatistics) :
     @property
     def tabular(self):
         return [
+                ['stat','val'],
                 ['num_cols',self['num_cols']],
                 ['num_rows',self['num_rows']]
                ]
@@ -1203,15 +1212,23 @@ def main(argv=sys.argv) :
     if args['--output'] != 'stdout' :
         outf = open(args['--output'],'wt')
 
-    out_writer = csv.writer(outf,delimiter=',')
-
-    # write out the tabular data
-    if len(output) == 1 :
-        out_writer.writerows(output[0].tabular)
-    else :
+    if args['--format'] == 'table' :
+        from terminaltables import AsciiTable
         for out in output :
-            out_writer.writerow(['#{}'.format(out.name)])
-            out_writer.writerows(out.tabular)
+            table = AsciiTable(out.tabular)
+            table.title = out.name
+            outf.write(table.table+'\n')
+
+    else : # csv is default
+        out_writer = csv.writer(outf,delimiter=',')
+
+        # write out the tabular data
+        if len(output) == 1 :
+            out_writer.writerows(output[0].tabular)
+        else :
+            for out in output :
+                out_writer.writerow(['#{}'.format(out.name)])
+                out_writer.writerows(out.tabular)
 
     #Check if JSON file option was specified
     json_fn = args.get('--json')

@@ -43,12 +43,16 @@ def fake_column_data(request) :
 # fake count data to test the rowzero
 ################################################################################
 
-def test_stats_cli() :
+def test_stats_cli(fake_count_coldist_csv) :
   from de_toolkit.stats import main
   from docopt import DocoptExit
-  for cmd in ('summary','base','coldist','rowdist','colzero','rowzero','entropy','pca') :
+  for cmd in ('summary','base','coldist','rowdist','colzero','rowzero','entropy') :
       with pytest.raises(DocoptExit) :
           main(['detk-stats',cmd])
+      main(['detk-stats',cmd,fake_count_coldist_csv])
+
+  # pca includes metadata
+  main(['detk-stats',cmd,fake_count_coldist_csv])
 
 ################################################################################
 # CountStatistics base class
@@ -812,6 +816,18 @@ def test_stats_entropy_JSON(fake_count_rowzero_obj):
     assert name=='entropy'
     assert true_row_entropies==row_entropies
 
+def test_stats_entropy_tabular(fake_count_rowzero_obj):
+    output = Entropy(fake_count_rowzero_obj)
+
+    H1 = -((1/25)*math.log(1/25,2) + (3/25)*math.log(3/25,2) + (5/25)*math.log(5/25,2)
+               + (7/25)*math.log(7/25,2) + (9/25)*math.log(9/25,2))
+    H2 = -((2/30)*math.log(2/30,2) + (4/30)*math.log(4/30,2) + (6/30)*math.log(6/30,2)
+               + (8/30)*math.log(8/30,2) + (10/30)*math.log(10/30,2))
+    H3 = 0
+
+    assert output.tabular[0] == ['name','entropy']
+    assert output.tabular[1:] == [['gene1',H1],['gene2',H2],['gene3',H3]]
+ 
 #test that all functions were written to JSON output when summary is called
 def test_stats_summary_JSON(fake_count_rowdist_obj, fake_count_rowdist_csv):
 

@@ -195,7 +195,7 @@ The stats value is an array containing one object per row as follows:
         the mean of only the non-zero counts in the row
 
 Usage:
-    detk-stats colzero [options] <counts_fn>
+    detk-stats rowzero [options] <counts_fn>
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
@@ -304,7 +304,7 @@ def summary(count_mat,
         bins=20,
         log=False,
         density=False,
-        metadata='') :
+        metadata=None) :
     '''
         Compute summary statistics on a counts matrix file
             detk-stats [--json=<json_fn>] [--html=<html_fn>] summary <counts file>
@@ -319,13 +319,14 @@ def summary(count_mat,
         and concatenating the results.
     '''
 
-    total_output = []
-    total_output.append(Base(count_mat))
-    total_output.append(ColDist(count_mat, bins, log, density))
-    total_output.append(RowDist(count_mat, bins, log, density))
-    total_output.append(ColZero(count_mat))
-    total_output.append(RowZero(count_mat))
-    total_output.append(Entropy(count_mat))
+    total_output = [
+        Base(count_mat),
+        ColDist(count_mat, bins, log, density),
+        RowDist(count_mat, bins, log, density),
+        ColZero(count_mat),
+        RowZero(count_mat),
+        Entropy(count_mat)
+    ]
     #total_output.append(count_PCA(count_mat, metadata))
 
     return total_output
@@ -726,7 +727,22 @@ class Entropy(CountStatistics) :
             row['entropy'] = entropies[i]
             self['entropies'].append(row)
 
-def count_PCA(count_mat, metadata=''):
+    @property
+    def tabular(self) :
+        '''
+            Tabular output is a table where each row corresponds to a row
+            with the following fields:
+
+              - name: Row name
+              - entropy: sample entropy for the row
+        '''
+        res = [['name','entropy']]
+        for col in self['entropies'] :
+            res.append([col[_] for _ in res[0]])
+        return res
+
+
+def count_PCA(count_mat, metadata=None):
     '''
     Principal common analysis of the counts matrix.
 
@@ -757,7 +773,7 @@ def count_PCA(count_mat, metadata=''):
     sample_names = list(count_mat.sample_names)
 
     #If metadata option is given, get column variables
-    if metadata != '':
+    if metadata is not None:
       m = open(metadata, 'r')
       s = csv.Sniffer()
       delim = s.sniff(m.read()).delimiter
@@ -1143,7 +1159,7 @@ def main(argv=sys.argv) :
     elif cmd == 'coldist' :
         args = docopt(cmd_opts['coldist'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
-        output = coldist(counts_obj
+        output = ColDist(counts_obj
           ,bins=int(args['--bins'])
           ,log=args['--log']
           ,density=args['--density']
@@ -1151,7 +1167,7 @@ def main(argv=sys.argv) :
     elif cmd == 'rowdist' :
         args = docopt(cmd_opts['rowdist'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
-        output = rowdist(counts_obj
+        output = RowDist(counts_obj
           ,bins=int(args['--bins'])
           ,log=args['--log']
           ,density=args['--density']
@@ -1159,22 +1175,24 @@ def main(argv=sys.argv) :
     elif cmd == 'colzero' :
         args = docopt(cmd_opts['colzero'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
-        output = colzero(counts_obj)
+        output = ColZero(counts_obj)
     elif cmd == 'rowzero' :
         args = docopt(cmd_opts['rowzero'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
-        output = rowzero(counts_obj)
+        output = RowZero(counts_obj)
     elif cmd == 'entropy' :
         args = docopt(cmd_opts['entropy'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
-        output = entropy(counts_obj)
+        output = Entropy(counts_obj)
     elif cmd == 'base' :
         args = docopt(cmd_opts['base'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
-        output = base(counts_obj)
+        output = Base(counts_obj)
 
     #Obtain string used to name output files, unless filename is specified
     filename_prefix = os.path.splitext(args['<counts_fn>'])[0]
+
+    
 
     #Check if JSON file option was specified
     json_fn = args.get('--json')

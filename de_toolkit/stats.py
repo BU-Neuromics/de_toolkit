@@ -1134,6 +1134,9 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
     html_fn.write(html_output)
     html_fn.close()
 
+    # close matplotlib figures to free memory
+    plt.close('all')
+
 def main(argv=sys.argv) :
 
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :

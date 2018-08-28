@@ -1,6 +1,8 @@
 # Changelog
 
 ## unreleased
+### Added
+- tabular output to stats module
 ### Changed
 - fixed stats pca cli bug
 - fixed pct calculation in rowdist and coldist

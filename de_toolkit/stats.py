@@ -28,9 +28,17 @@ Options:
 
 cmd_opts = {
     'summary':'''\
-Calculate summary statistics. Equivalent to running each of:
+Compute summary statistics on a counts matrix file.
 
-base coldist rowdist colzero rowzero entropy
+This is equivalent to running each of these tools separately:
+
+- base
+- coldist
+- rowdist
+- colzero
+- rowzero
+- entropy
+- pca
 
 Usage:
     detk-stats summary [options] <counts_fn>
@@ -311,20 +319,31 @@ class CountStatistics(OrderedDict) :
 def summary(count_mat,
         bins=20,
         log=False,
-        density=False,
-        metadata=None) :
+        density=False) :
     '''
-        Compute summary statistics on a counts matrix file
-            detk-stats [--json=<json_fn>] [--html=<html_fn>] summary <counts file>
+    Compute summary statistics on a counts matrix file.
 
-        This command is equivalent to running each of the following stats commands:
-            base
-            coldist
-            rowdist
-            colzero
-            rowzero
-            entropy
-        and concatenating the results.
+    This is equivalent to running each of these tools separately:
+
+    - base
+    - coldist
+    - rowdist
+    - colzero
+    - rowzero
+    - entropy
+    - pca
+
+    Parameters
+    ----------
+    count_mat : CountMatrix object
+        count matrix object
+    bins : int
+        number of bins, passed to coldist and rowdist
+    log : bool
+        perform log10 transform of counts in coldist and rowdist
+    density : bool
+        return a density distribution from coldist and rowdist
+
     '''
 
     total_output = [
@@ -333,9 +352,9 @@ def summary(count_mat,
         RowDist(count_mat, bins, log, density),
         ColZero(count_mat),
         RowZero(count_mat),
-        Entropy(count_mat)
+        Entropy(count_mat),
+        CountPCA(count_mat)
     ]
-    #total_output.append(count_PCA(count_mat, metadata))
 
     return total_output
 
@@ -751,7 +770,7 @@ class Entropy(CountStatistics) :
         return res
 
 
-def count_PCA(count_mat, metadata=None):
+class CountPCA(CountStatistics) :
     '''
     Principal common analysis of the counts matrix.
 
@@ -760,65 +779,41 @@ def count_PCA(count_mat, metadata=None):
     weights and scores for each individual component can be combined to define
     the projection of each sample along that component.  
 
-    The PCA module can also accept a metadata file that contains information
-    about the samples in each column. The user can specify some of these
-    columns to include as variables for plotting purposes. The idea is that
-    columns labeled with the same class will be colored according to their
+    The PCA module can also use a counts matrix that has associated column data
+    information about the samples in each column. The user can specify some of
+    these columns to include as variables for plotting purposes. The idea is
+    that columns labeled with the same class will be colored according to their
     class, such that separations in the data can be more easily observed when
     projections are plotted.
     '''
-    
-    #Get counts from file and scale counts
-    cnts = count_mat.counts.values
+    def __init__(self,count_mat) :
 
-    cnts = scale(cnts)
+        #Get counts from file and scale counts
+        cnts = scale(count_mat.counts.values)
 
-    #Perform PCA and fit to the data
-    pca = PCA()
-    pca.fit(cnts)
-    X = pca.transform(cnts)
+        #Perform PCA and fit to the data
+        pca = PCA()
+        pca.fit(cnts)
+        X = pca.transform(cnts)
 
-    #Get sample names
-    sample_names = list(count_mat.sample_names)
+        #Get sample names
+        sample_names = list(count_mat.counts.columns)
 
-    #If metadata option is given, get column variables
-    if metadata is not None:
-      m = open(metadata, 'r')
-      s = csv.Sniffer()
-      delim = s.sniff(m.read()).delimiter
-      m.seek(0)
-      df = pandas.read_csv(m, sep=delim)
+        #Format output
+        self['column_names'] = sample_names
+        self['column_variables'] = {}
+        if count_mat.column_data is not None :
+            self['column_variables'] = {k:list(v) for k,v in count_mat.column_data.iterrows()}
 
-      column_names = list(df)
-      column_variables = [[] for i in range(0, len(column_names)-1)]
-
-      for name in sample_names:
-        row = df[df[column_names[0]] == name]
-        for i in range(1, len(column_names)):
-          column_variables[i-1].append(row.iloc[0][column_names[i]])
-    
-    #If metadata option is not given, column variables are empty lists
-    else:
-      column_names = []
-      column_variables = []
-
-    #Format output
-    output = {}
-    output['name'] = 'pca'
-    output['stats'] = {}
-    output['stats']['column_names'] = sample_names
-    output['stats']['column_variables'] = {}
-    output['components'] = []
-    for i in range(1, len(column_names)):
-      output['stats']['column_variables'][column_names[i]] = column_variables[i-1]
-    for i in range(0, pca.n_components_):
-        comp = {}
-        comp['name'] = 'PC' + str(i+1)
-        comp['scores'] = [row[i] for row in X]
-        comp['projections'] = [row[i] for row in pca.components_]
-        comp['perc_variance'] =  pca.explained_variance_ratio_[i]
-        output['components'].append(comp)
-    return output
+        #If metadata option is given, get column variables
+        self['components'] = []
+        for i in range(0, pca.n_components_):
+            comp = {}
+            comp['name'] = 'PC' + str(i+1)
+            comp['scores'] = [row[i] for row in X]
+            comp['projections'] = [row[i] for row in pca.components_]
+            comp['perc_variance'] =  pca.explained_variance_ratio_[i]
+            self['components'].append(comp)
 
 def format_json(filename, output):
 
@@ -1157,16 +1152,21 @@ def main(argv=sys.argv) :
 
     if cmd == 'pca' :
         args = docopt(cmd_opts['pca'],argv)
-        counts_obj = CountMatrixFile(args['<counts_fn>'])
-        output = count_PCA(counts_obj, metadata=args['--column-data'])
+        counts_obj = CountMatrixFile(
+                args['<counts_fn>'],
+                column_data_f=args['--column-data']
+            )
+        output = CountPCA(counts_obj)
     elif cmd == 'summary' :
         args = docopt(cmd_opts['summary'],argv)
-        counts_obj = CountMatrixFile(args['<counts_fn>'])
+        counts_obj = CountMatrixFile(
+                args['<counts_fn>'],
+                column_data_f=args['--column-data']
+            )
         output = summary(counts_obj
           ,int(args['--bins'])
           ,args['--log']
           ,args['--density']
-          ,metadata=args['--column-data']
         )
     elif cmd == 'coldist' :
         args = docopt(cmd_opts['coldist'],argv)

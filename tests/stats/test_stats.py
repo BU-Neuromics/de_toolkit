@@ -50,6 +50,21 @@ def test_stats_cli() :
       with pytest.raises(DocoptExit) :
           main(['detk-stats',cmd])
 
+################################################################################
+# CountStatistics base class
+def test_CountStatistics() :
+    stat = CountStatistics()
+    assert stat.json == {'name':'countstatistics','stats':{}}
+    assert stat.name == 'countstatistics'
+    assert stat.tabular is None
+    assert stat.html is None
+
+################################################################################
+def test_format_json() :
+    stat = CountStatistics()
+    output = get_json_output([stat])[0]
+    assert output['name'] == 'countstatistics'
+
 # write and remove a json file containing the given output
 def get_json_output(output) :
     with tempfile.NamedTemporaryFile() as f :
@@ -68,54 +83,29 @@ def get_json_output(output) :
 
     return json_output
 
-#test that all functions were written to JSON output when summary is called
-def test_stats_cli_JSON(fake_count_rowdist_obj, fake_count_rowdist_csv):
-
-    output = summary(fake_count_rowdist_obj)
-
-    true_funcs = set(['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy'])
-
-    with tempfile.NamedTemporaryFile() as f :
-        json_fn = f.name
-
-    main(['detk-stats','summary','--json={}'.format(json_fn),fake_count_rowdist_csv])
-    with open(json_fn) as f :
-        output = json.load(f)
-
-    names = set()
-    for section in output :
-        names.add(section['name'])
-
-    os.remove(json_fn)
-
-    assert true_funcs==names
 
 ################################################################################
 # base tests
 #test for base function
 def test_stats_base(fake_counts_obj):
-    output = base(fake_counts_obj)
-    cols = output.get('stats', {}).get('num_cols')
-    rows = output.get('stats', {}).get('num_rows')
-    n = output.get('name')
-    assert cols==3
-    assert rows==5
-    assert n=='base'
+    output = Base(fake_counts_obj)
+    assert output['num_cols'] == 3
+    assert output['num_rows'] == 5
+    assert output.name == 'base'
 
 #test that JSON output for base function is correct
 def test_stats_base_JSON(fake_counts_obj):
-    output = base(fake_counts_obj)
+    output = Base(fake_counts_obj)
 
     json_output = get_json_output(output)[0]
 
-    name = json_output.get('name')
-    cols = json_output.get('stats', {}).get('num_cols')
-    rows = json_output.get('stats', {}).get('num_rows')
+    assert json_output.get('name') == 'base'
+    assert json_output.get('stats', {}).get('num_cols') == 3
+    assert json_output.get('stats', {}).get('num_rows') == 5
 
-    assert name=='base'
-    assert cols==3
-    assert rows==5
-
+def test_stats_base_tabular(fake_counts_obj):
+    output = Base(fake_counts_obj)
+    assert output.tabular == [['num_cols',3],['num_rows',5]]
 
 ################################################################################
 # coldist tests
@@ -166,8 +156,8 @@ def fake_count_coldist_obj(
 
 #test that coldist function gets correct column names
 def test_stats_coldist_names(fake_count_coldist_obj):
-    output = coldist(fake_count_coldist_obj, 20, -1, -1)
-    col_dists = output.get('stats').get('dists')
+    output = ColDist(fake_count_coldist_obj, 20, -1, -1)
+    col_dists = output['dists']
     col_name_func = [d['name'] for d in col_dists]
 
     col_name_true = ['a','b','c']
@@ -175,22 +165,22 @@ def test_stats_coldist_names(fake_count_coldist_obj):
 
 #test that coldist function has the correct pct values
 def test_stats_coldist_pct(fake_count_coldist_obj):
-    output = coldist(fake_count_coldist_obj, 20, -1, -1)
-    col_pct = output.get('stats').get('pct')
+    output = ColDist(fake_count_coldist_obj, 20, -1, -1)
+    col_pct = output['pct']
     assert col_pct == list((_+1)/.2 for _ in range(20))
 
 #test that coldist function gets correct column dist
 def test_stats_coldist_dist(fake_count_coldist_obj):
-    output = coldist(fake_count_coldist_obj, bins=10)
-    col_dists = output.get('stats').get('dists')
+    output = ColDist(fake_count_coldist_obj, bins=10)
+    col_dists = output['dists']
     col_dist_func = [d['dist'] for d in col_dists]
     col_dist_true = [[10.0 for i in range(10)] for j in range(3)]
     assert col_dist_func == col_dist_true
 
 #test that coldist function with density option gets correct dists
 def test_stats_coldist_density(fake_count_coldist_obj):
-    output = coldist(fake_count_coldist_obj, 20, density=True)
-    col_dists = output.get('stats').get('dists')
+    output = ColDist(fake_count_coldist_obj, 20, density=True)
+    col_dists = output['dists']
     col_dist_func = [d['dist'] for d in col_dists]
     col_dist_sums = [sum(x) for x in col_dist_func]
     
@@ -200,8 +190,8 @@ def test_stats_coldist_density(fake_count_coldist_obj):
 
 #test that coldist function get correct number of bins
 def test_stats_coldist_bins(fake_count_coldist_obj):
-    output = coldist(fake_count_coldist_obj, bins=5)
-    col_dists = output.get('stats').get('dists')
+    output = ColDist(fake_count_coldist_obj, bins=5)
+    col_dists = output['dists']
     col_dist_bins = [d['bins'] for d in col_dists]
     num_bins = [len(b) for b in col_dist_bins]
     true_bins = [5, 5, 5]
@@ -209,21 +199,22 @@ def test_stats_coldist_bins(fake_count_coldist_obj):
     assert num_bins == true_bins
 
 #test log option for coldist function
-def test_stats_coldist_log_bins():
-    f = open('tests/stats/test_coldist.csv', 'r')
-    count_obj = CountMatrixFile(f)
-    output = coldist(count_obj, bins=2, log=True)
-    col_dists = output.get('stats').get('dists')
+def test_stats_coldist_log_bins(fake_count_coldist_obj):
+    # the counts go from 0 to 99, make them go from 1 to 100 to make testing
+    # easier
+    fake_count_coldist_obj.counts = fake_count_coldist_obj.counts+1
+    output = ColDist(fake_count_coldist_obj, bins=2, log=True)
+    col_dists = output['dists']
     col_dist_bins = [d['bins'] for d in col_dists]
     col_dist_func = [d['dist'] for d in col_dists]
-    true_bins = [[1.5, 2.0],[3.5, 4.0], [5.5, 6.0]]
-    true_dists = [[2,2],[2,2],[2,2]]
+    true_bins = [[1.0, 2.0]]*3
+    true_dists = [[9,91]]*3
     assert col_dist_bins==true_bins
     assert col_dist_func==true_dists
 
 #test that JSON output for coldist function is correct
 def test_stats_coldist_JSON(fake_count_coldist_obj):
-    output = coldist(fake_count_coldist_obj, bins=10)
+    output = ColDist(fake_count_coldist_obj, bins=10)
 
     json_output = get_json_output(output)[0]
 
@@ -249,6 +240,14 @@ def test_stats_coldist_JSON(fake_count_coldist_obj):
     assert true_col_names==col_names
     assert col_dist_func==col_dist_true
 
+def test_stats_coldist_tabular(fake_count_coldist_obj):
+    # the counts go from 0 to 99, make them go from 1 to 100 to make testing
+    # easier
+    fake_count_coldist_obj.counts = fake_count_coldist_obj.counts+1
+    output = ColDist(fake_count_coldist_obj, bins=2)
+
+    assert output.tabular[0] == ['colname','bin_50.0','bin_100.0','dist_50.0','dist_100.0']
+    assert output.tabular[1] == ['a', 50.5, 100, 50, 50]
 
 ################################################################################
 # rowdist tests
@@ -293,8 +292,8 @@ def fake_count_rowdist_obj(
 
 #test that rowdist function gets correct row names
 def test_stats_rowdist_names(fake_count_rowdist_obj):
-    output = rowdist(fake_count_rowdist_obj, 20, -1, -1)
-    row_dists = output.get('stats').get('dists')
+    output = RowDist(fake_count_rowdist_obj, 20, -1, -1)
+    row_dists = output['dists']
     row_name_func = [d['name'] for d in row_dists]
 
     row_name_true = ['gene1','gene2','gene3']
@@ -302,44 +301,43 @@ def test_stats_rowdist_names(fake_count_rowdist_obj):
 
 #test that rowdist function has the correct pct values
 def test_stats_rowdist_pct(fake_count_rowdist_obj):
-    output = rowdist(fake_count_rowdist_obj, 20, -1, -1)
-    row_pct = output.get('stats').get('pct')
+    output = RowDist(fake_count_rowdist_obj, 20, -1, -1)
+    row_pct = output['pct']
     assert row_pct == list((_+1)/.2 for _ in range(20))
 
 #test that rowdist function gets correct row dists
 def test_stats_rowdist_dist(fake_count_rowdist_obj):
-    output = rowdist(fake_count_rowdist_obj, bins=10)
-    row_dists = output.get('stats').get('dists')
+    output = RowDist(fake_count_rowdist_obj, bins=10)
+    row_dists = output['dists']
     row_dist_func = [d['dist'] for d in row_dists]
     row_dist_true = [[10.0 for i in range(10)] for j in range(3)]
     assert row_dist_func == row_dist_true
 
-
 #test that rowdist function with density option gets correct dists
 def test_stats_rowdist_density(fake_count_rowdist_obj):
-    output = rowdist(fake_count_rowdist_obj, 20, -1, 1)
-    row_dists = output.get('stats').get('dists')
+    output = RowDist(fake_count_rowdist_obj, 20, -1, 1)
+    row_dists = output['dists']
     row_dist_func = [d['dist'] for d in row_dists]
     row_dist_sums = [sum(x) for x in row_dist_func]
-    
+
     row_dist_true = [1.0 for i in range(3)]
 
     assert np.allclose(row_dist_sums,row_dist_true)
 
 #test that rowdist function get correct number of bins
 def test_stats_rowdist_bins(fake_count_rowdist_obj):
-    output = rowdist(fake_count_rowdist_obj, 5, -1, -1)
-    row_dists = output.get('stats').get('dists')
+    output = RowDist(fake_count_rowdist_obj, 5, -1, -1)
+    row_dists = output['dists']
     row_dist_bins = [d['bins'] for d in row_dists]
     num_bins = [len(b) for b in row_dist_bins]
     true_bins = [5, 5, 5]
 
     assert num_bins == true_bins
-    
+
 #test log option for rowdist function
 def test_stats_rowdist_bins(fake_count_rowdist_obj):
-    output = rowdist(fake_count_rowdist_obj, bins=2, log=True)
-    row_dists = output.get('stats').get('dists')
+    output = RowDist(fake_count_rowdist_obj, bins=2, log=True)
+    row_dists = output['dists']
     row_dist_bins = [d['bins'] for d in row_dists]
     row_dist_func = [d['dist'] for d in row_dists]
     true_bins = [[1,2]]*3
@@ -350,7 +348,7 @@ def test_stats_rowdist_bins(fake_count_rowdist_obj):
 #test that JSON output for rowdist function is correct
 def test_stats_rowdist_JSON(fake_count_rowdist_obj):
 
-    output = rowdist(fake_count_rowdist_obj, bins=2, log=True)
+    output = RowDist(fake_count_rowdist_obj, bins=2, log=True)
 
     json_output = get_json_output(output)[0]
 
@@ -377,13 +375,17 @@ def test_stats_rowdist_JSON(fake_count_rowdist_obj):
     assert true_row_names==row_names
     assert row_dist_func==row_dist_true
 
+def test_stats_rowdist_tabular(fake_count_rowdist_obj):
+    output = RowDist(fake_count_rowdist_obj, bins=2)
+    assert output.tabular[0] == ['rowname','bin_50.0','bin_100.0','dist_50.0','dist_100.0']
+    assert output.tabular[1] == ['gene1', 50.5, 100, 50, 50]
 
 ################################################################################
 # colzero tests
 #test that colzero function gets correct column names
 def test_stats_colzero_names(fake_counts_obj_with_zeros):
-    output = colzero(fake_counts_obj_with_zeros)
-    zeros = output.get('stats', {}).get('zeros')
+    output = ColZero(fake_counts_obj_with_zeros)
+    zeros = output['zeros']
 
     true_col_names = ['a', 'b', 'c']
 
@@ -397,8 +399,8 @@ def test_stats_colzero_names(fake_counts_obj_with_zeros):
 
 #test that colzero function gets correct zero counts
 def test_stats_colzero_zero_counts(fake_counts_obj_with_zeros):
-    output = colzero(fake_counts_obj_with_zeros)
-    zeros = output.get('stats', {}).get('zeros')
+    output = ColZero(fake_counts_obj_with_zeros)
+    zeros = output['zeros']
 
     true_zero_counts = [1, 2, 3]
 
@@ -412,8 +414,8 @@ def test_stats_colzero_zero_counts(fake_counts_obj_with_zeros):
 
 #test that colzero function gets correct zero fractions
 def test_stats_colzero_zero_fracs(fake_counts_obj_with_zeros):
-    output = colzero(fake_counts_obj_with_zeros)
-    zeros = output.get('stats', {}).get('zeros')
+    output = ColZero(fake_counts_obj_with_zeros)
+    zeros = output['zeros']
 
     true_zero_fracs = [1/5, 2/5, 3/5]
 
@@ -427,8 +429,8 @@ def test_stats_colzero_zero_fracs(fake_counts_obj_with_zeros):
 
 #test that colzero function gets correct column means
 def test_stats_colzero_col_means(fake_counts_obj_with_zeros):
-    output = colzero(fake_counts_obj_with_zeros)
-    zeros = output.get('stats', {}).get('zeros')
+    output = ColZero(fake_counts_obj_with_zeros)
+    zeros = output['zeros']
 
     true_col_means = [(2+4+5+6)/5, (4+9+36)/5, (125+216)/5]
 
@@ -442,8 +444,8 @@ def test_stats_colzero_col_means(fake_counts_obj_with_zeros):
 
 #test that colzero function gets correct nonzero column means
 def test_stats_colzero_nonzero_col_means(fake_counts_obj_with_zeros):
-    output = colzero(fake_counts_obj_with_zeros)
-    zeros = output.get('stats', {}).get('zeros')
+    output = ColZero(fake_counts_obj_with_zeros)
+    zeros = output['zeros']
 
     true_nonzero_col_means = [(2+4+5+6)/4, (4+9+36)/3, (125+216)/2]
 
@@ -458,7 +460,7 @@ def test_stats_colzero_nonzero_col_means(fake_counts_obj_with_zeros):
 #test that JSON output for colzero function is correct
 def test_stats_colzero_JSON(fake_counts_obj_with_zeros):
 
-    output = colzero(fake_counts_obj_with_zeros)
+    output = ColZero(fake_counts_obj_with_zeros)
 
     json_output = get_json_output(output)[0]
     name = json_output.get('name')
@@ -511,6 +513,12 @@ def test_stats_colzero_JSON(fake_counts_obj_with_zeros):
     assert true_col_means==col_means
     assert true_nonzero_col_means==nonzero_col_means
 
+def test_stats_colzero_tabular(fake_counts_obj_with_zeros):
+    output = ColZero(fake_counts_obj_with_zeros)
+    assert output.tabular[0] == ['name','zero_count','zero_frac','mean','nonzero_mean']
+    assert output.tabular[1] == ['a', 1, 0.2, 3.4, 4.25]
+    assert output.tabular[2][:2] == ['b', 2]
+    assert output.tabular[3][:2] == ['c', 3]
 
 ################################################################################
 # rowzero tests
@@ -546,8 +554,8 @@ def fake_count_rowzero_obj(
 
 #test that rowzero function gets correct row names
 def test_stats_rowzero_names(fake_counts_obj_with_zeros):
-    output = rowzero(fake_counts_obj_with_zeros)
-    zeros = output.get('stats', {}).get('zeros')
+    output = RowZero(fake_counts_obj_with_zeros)
+    zeros = output['zeros']
 
     true_row_names = ['gene1', 'gene2', 'gene3', 'gene4', 'gene5']
 
@@ -561,8 +569,8 @@ def test_stats_rowzero_names(fake_counts_obj_with_zeros):
 
 #test that rowzero function gets correct zero counts
 def test_stats_rowzero_zero_counts(fake_counts_obj_with_zeros):
-    output = rowzero(fake_counts_obj_with_zeros)
-    zeros = output.get('stats', {}).get('zeros')
+    output = RowZero(fake_counts_obj_with_zeros)
+    zeros = output['zeros']
 
     true_zero_counts = [1, 2, 2, 1, 0]
 
@@ -576,8 +584,8 @@ def test_stats_rowzero_zero_counts(fake_counts_obj_with_zeros):
 
 #test that rowzero function gets correct zero fractions
 def test_stats_rowzero_zero_fracs(fake_counts_obj_with_zeros):
-    output = rowzero(fake_counts_obj_with_zeros)
-    zeros = output.get('stats', {}).get('zeros')
+    output = RowZero(fake_counts_obj_with_zeros)
+    zeros = output['zeros']
 
     true_zero_fracs = [1/3, 2/3, 2/3, 1/3, 0]
 
@@ -591,8 +599,8 @@ def test_stats_rowzero_zero_fracs(fake_counts_obj_with_zeros):
 
 #test that rowzero function gets correct row means
 def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
-    output = rowzero(fake_counts_obj_with_zeros)
-    zeros = output.get('stats', {}).get('zeros')
+    output = RowZero(fake_counts_obj_with_zeros)
+    zeros = output['zeros']
 
     true_row_means = [(2+4)/3, 9/3, 4/3, (5+125)/3, (6+36+216)/3]
 
@@ -606,8 +614,8 @@ def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
 
 #test that rowzero function gets correct nonzero row means
 def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
-    output = rowzero(fake_counts_obj_with_zeros)
-    zeros = output.get('stats', {}).get('zeros')
+    output = RowZero(fake_counts_obj_with_zeros)
+    zeros = output['zeros']
 
     true_nonzero_row_means = [(2+4)/2, 9, 4, (5+125)/2, (6+36+216)/3]
 
@@ -621,8 +629,8 @@ def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
 
 #test that rowzero gets correct nonzero row means with an all zero row
 def test_stats_rowzero_all_zeros(fake_count_rowzero_obj):
-    output = rowzero(fake_count_rowzero_obj)
-    zeros = output.get('stats', {}).get('zeros')
+    output = RowZero(fake_count_rowzero_obj)
+    zeros = output['zeros']
 
     true_nonzero_row_means = [5, 6, 0]
     nonzero_row_means = []
@@ -636,7 +644,7 @@ def test_stats_rowzero_all_zeros(fake_count_rowzero_obj):
 #test that JSON output for rowzero function is correct
 def test_stats_rowzero_JSON(fake_count_rowzero_obj):
 
-    output = rowzero(fake_count_rowzero_obj)
+    output = RowZero(fake_count_rowzero_obj)
 
     json_output = get_json_output(output)[0]
 
@@ -690,13 +698,23 @@ def test_stats_rowzero_JSON(fake_count_rowzero_obj):
     assert true_row_means==row_means
     assert true_nonzero_row_means==nonzero_row_means
 
+def test_stats_colzero_tabular(fake_counts_obj_with_zeros):
+    output = RowZero(fake_counts_obj_with_zeros)
+    print(fake_counts_obj_with_zeros.counts)
+    assert output.tabular[0] == ['name','zero_count','zero_frac','mean','nonzero_mean']
+    assert output.tabular[1] == ['gene1', 1, 1/3, 2, 3]
+    assert output.tabular[2][:2] == ['gene2', 2]
+    assert output.tabular[3][:2] == ['gene3', 2]
+    assert output.tabular[4][:2] == ['gene4', 1]
+    assert output.tabular[5][:2] == ['gene5', 0]
 
 ################################################################################
 # entropy tests
 #test that entropy function gets correct row names
 def test_stats_entropy_names(fake_counts_obj):
-    output = entropy(fake_counts_obj)
-    entropies = output.get('stats', {}).get('entropies')
+    output = Entropy(fake_counts_obj)
+    print(output)
+    entropies = output['entropies']
 
     true_row_names = ['gene1', 'gene2', 'gene3', 'gene4', 'gene5']
 
@@ -710,8 +728,8 @@ def test_stats_entropy_names(fake_counts_obj):
 
 #test that entropy function calculates correct entropy values
 def test_stats_entropies(fake_counts_obj):
-    output = entropy(fake_counts_obj)
-    entropies = output.get('stats', {}).get('entropies')
+    output = Entropy(fake_counts_obj)
+    entropies = output['entropies']
 
     H1 = -((2/14)*math.log(2/14,2) + (4/14)*math.log(4/14,2) + (8/14)*math.log(8/14,2))
     H2 = -((3/39)*math.log(3/39,2) + (9/39)*math.log(9/39,2) + (27/39)*math.log(27/39,2))
@@ -730,8 +748,8 @@ def test_stats_entropies(fake_counts_obj):
 
 #test that entropy function calculates correct entropy values when there are 0 counts
 def test_stats_entropies(fake_counts_obj_with_zeros):
-    output = entropy(fake_counts_obj_with_zeros)
-    entropies = output.get('stats', {}).get('entropies')
+    output = Entropy(fake_counts_obj_with_zeros)
+    entropies = output['entropies']
 
     H1 = -((2/6)*math.log(2/6,2) + (4/6)*math.log(4/6,2))
     H2 = -((9/9)*math.log(9/9,2))
@@ -751,8 +769,8 @@ def test_stats_entropies(fake_counts_obj_with_zeros):
 
 #test that entropy gets correct values with an all zero row
 def test_stats_entropy_all_zeros(fake_count_rowzero_obj):
-    output = entropy(fake_count_rowzero_obj)
-    entropies = output.get('stats', {}).get('entropies')
+    output = Entropy(fake_count_rowzero_obj)
+    entropies = output['entropies']
 
     H1 = -((1/25)*math.log(1/25,2) + (3/25)*math.log(3/25,2) + (5/25)*math.log(5/25,2)
                + (7/25)*math.log(7/25,2) + (9/25)*math.log(9/25,2))
@@ -772,8 +790,8 @@ def test_stats_entropy_all_zeros(fake_count_rowzero_obj):
 #test that JSON output for entropy function is correct
 def test_stats_entropy_JSON(fake_count_rowzero_obj):
 
-    output = entropy(fake_count_rowzero_obj)
-    entropies = output['stats']['entropies']
+    output = Entropy(fake_count_rowzero_obj)
+    entropies = output['entropies']
     json_output = get_json_output(output)[0]
 
     true_row_entropies = []
@@ -806,6 +824,28 @@ def test_stats_summary_JSON(fake_count_rowdist_obj, fake_count_rowdist_csv):
     names = set()
     for section in json_output :
         names.add(section['name'])
+
+    assert true_funcs==names
+
+#test that all functions were written to JSON output when summary is called
+def test_stats_cli_JSON(fake_count_rowdist_obj, fake_count_rowdist_csv):
+
+    output = summary(fake_count_rowdist_obj)
+
+    true_funcs = set(['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy'])
+
+    with tempfile.NamedTemporaryFile() as f :
+        json_fn = f.name
+
+    main(['detk-stats','summary','--json={}'.format(json_fn),fake_count_rowdist_csv])
+    with open(json_fn) as f :
+        output = json.load(f)
+
+    names = set()
+    for section in output :
+        names.add(section['name'])
+
+    os.remove(json_fn)
 
     assert true_funcs==names
 

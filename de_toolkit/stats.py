@@ -283,6 +283,23 @@ import csv
 import matplotlib.patches as ptches
 import pkg_resources
 
+class CountStatistics(OrderedDict) :
+    @property
+    def json(self) :
+        return {
+                'name': self.name,
+                'stats': dict(self)
+               }
+    @property
+    def tabular(self) :
+        pass
+    @property
+    def html(self) :
+        pass
+    @property
+    def name(self) :
+        return self.__class__.__name__.lower()
+
 def summary(count_mat,
         bins=20,
         log=False,
@@ -303,44 +320,42 @@ def summary(count_mat,
     '''
 
     total_output = []
-    total_output.append(base(count_mat))
-    total_output.append(coldist(count_mat, bins, log, density))
-    total_output.append(rowdist(count_mat, bins, log, density))
-    total_output.append(colzero(count_mat))
-    total_output.append(rowzero(count_mat))
-    total_output.append(entropy(count_mat))
+    total_output.append(Base(count_mat))
+    total_output.append(ColDist(count_mat, bins, log, density))
+    total_output.append(RowDist(count_mat, bins, log, density))
+    total_output.append(ColZero(count_mat))
+    total_output.append(RowZero(count_mat))
+    total_output.append(Entropy(count_mat))
     #total_output.append(count_PCA(count_mat, metadata))
 
     return total_output
 
-def base(count_mat) :
+class Base(CountStatistics) :
     '''
         Basic statistics of the counts file
 
         The most basic statistics of the counts file, including:
-            number of samples
+            number of columns
             number of rows
     '''
+    def __init__(self, count_mat) :
 
-    #Get counts, number of columns, and number of rows
-    cnts = count_mat.counts.values
-    num_cols=len(cnts[0])
-    num_rows=len(cnts)
+        #Get counts, number of columns, and number of rows
+        self.num_rows, self.num_cols = count_mat.counts.shape
 
-    #Format output
-    output = {}
-    output['name'] = 'base'
-    output['stats'] = {}
-    output['stats']['num_cols'] = num_cols
-    output['stats']['num_rows'] = num_rows
+        #Format output
+        self['num_cols'] = self.num_cols
+        self['num_rows'] = self.num_rows
 
-    #Return output
-    return output
+    @property
+    def tabular(self):
+        return [
+                ['num_cols',self['num_cols']],
+                ['num_rows',self['num_rows']]
+               ]
 
-def coldist(count_mat,
-        bins=100,
-        log=False,
-        density=False) :
+
+class ColDist(CountStatistics) :
     '''
         Column-wise distribution of counts
 
@@ -384,113 +399,142 @@ def coldist(count_mat,
                     distribution. These could be marked as outliers in a
                     boxplot, for example.
     '''
-    #Format output
-    output = {}
-    output['name'] = 'coldist'
-    output['stats'] = {}
-    output['stats']['pct'] = list(100*(_+1)/bins for _ in range(bins))
 
-    output['stats']['dists'] = []
 
-    for s in count_mat.sample_names:
-        #to access the data in each column
-        data = getattr(count_mat.counts,s).tolist()
+    def __init__(self,count_mat,bins=100,log=False,density=False):
 
-        #Take the log10 of each count if log option is specified
-        if log :
-            data=list(filter(lambda a: a != 0.0, data))
-            data=np.log10(data)
+        self['pct'] = list(100*(_+1)/bins for _ in range(bins))
 
-        #for the upper and lower outliers
-        Q1 = np.percentile(data, 25)
-        Q3 = np.percentile(data, 75)
-        IQR =  np.percentile(data, 75) - np.percentile(data, 25)
+        self['dists'] = []
 
-        #for the histogram bin edges and count numbers
-        if density :
-            (n, dist_bins, patches) = plt.hist(
-                    data,
-                    bins=bins,
-                    label='hst',
-                    weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size
-            )
-        else:
-            (n, dist_bins, patches) = plt.hist(data, bins=bins, label='hst')
+        for s in count_mat.sample_names:
+            #to access the data in each column
+            data = getattr(count_mat.counts,s).tolist()
 
-        #make the dict for each sample
-        output['stats']['dists'].append(
-                {
-                    'name':s,
-                    'dist':list(n),
-                    'bins':list(dist_bins)[1:],
-                    'extrema': {
-                        'lower':[i for i in data if i < Q1-1.5*IQR],
-                        'upper':[i for i in data if i > Q3+1.5*IQR]
+            #Take the log10 of each count if log option is specified
+            if log :
+                data=list(filter(lambda a: a != 0.0, data))
+                data=np.log10(data)
+
+            #for the upper and lower outliers
+            Q1 = np.percentile(data, 25)
+            Q3 = np.percentile(data, 75)
+            IQR =  np.percentile(data, 75) - np.percentile(data, 25)
+
+            #for the histogram bin edges and count numbers
+            if density :
+                (n, dist_bins, patches) = plt.hist(
+                        data,
+                        bins=bins,
+                        label='hst',
+                        weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size
+                )
+            else:
+                (n, dist_bins, patches) = plt.hist(data, bins=bins, label='hst')
+
+            #make the dict for each sample
+            self['dists'].append(
+                    {
+                        'name':s,
+                        'dist':list(n),
+                        'bins':list(dist_bins)[1:],
+                        'extrema': {
+                            'lower':[i for i in data if i < Q1-1.5*IQR],
+                            'upper':[i for i in data if i > Q3+1.5*IQR]
+                        }
                     }
-                }
-            )
+                )
 
-    return output
+    @property
+    def tabular(self) :
+        '''
+            Tabular output is a table where each row corresponds to a column
+            with column name as the first column. The next columns are broken
+            into two parts:
 
-def rowdist(count_obj,
-        bins=100,
-        log=False,
-        density=False) :
+              - the bin start values, named like bin_N, where N is the
+                percentile
+              - the bin count values, named like dist_N, where N is the
+                percentile
+        '''
+        colnames = ['colname']+\
+                ['bin_{:.1f}'.format(_) for _ in self['pct']]+\
+                ['dist_{:.1f}'.format(_) for _ in self['pct']]
+        res = [colnames]
+        for dist in self['dists'] :
+            res.append([dist['name']]+dist['bins']+dist['dist'])
+        return res
+
+class RowDist(CountStatistics):
     '''
         Row-wise distribution of counts
         
         Identical to coldist except calculated across rows. The name key is rowdist, and the
         name key of the items in dists is the row name from the counts file.
     '''
-    #Format output
-    output = {}
-    output['name'] = 'rowdist'
-    output['stats'] = {}
-    output['stats']['pct'] = list(100*(_+1)/bins for _ in range(bins))
+    def __init__(self, count_obj, bins=100, log=False, density=False) :
 
-    output['stats']['dists'] = []
-    
-    for i in range(len(count_obj.feature_names)):
-        #to access the data in each row
-        data = count_obj.counts.iloc[i].tolist()
+        self['pct'] = list(100*(_+1)/bins for _ in range(bins))
+        self['dists'] = []
 
-        #Compute log10 of each count if log option is specified
-        if log :
-            data=list(filter(lambda a: a != 0.0, data))
-            data=np.log10(data)
-        
-        #for the upper and lower outliers
-        Q1 = np.percentile(data, 25)
-        Q3 = np.percentile(data, 75)
-        IQR =  np.percentile(data, 75) - np.percentile(data, 25)
+        for i in range(len(count_obj.feature_names)):
+            #to access the data in each row
+            data = count_obj.counts.iloc[i].tolist()
 
-        #for the histogram bin edges and count numbers
-        if density == 1:
-            (n, dist_bins, patches) = plt.hist(
-                    data,
-                    bins=bins,
-                    label='hist',
-                    weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size
-                )
-        else:
-            (n, dist_bins, patches) = plt.hist(data, bins=bins, label='hst')
+            #Compute log10 of each count if log option is specified
+            if log :
+                data=list(filter(lambda a: a != 0.0, data))
+                data=np.log10(data)
+            
+            #for the upper and lower outliers
+            Q1 = np.percentile(data, 25)
+            Q3 = np.percentile(data, 75)
+            IQR =  np.percentile(data, 75) - np.percentile(data, 25)
 
-        #make the dict for each row
-        output['stats']['dists'].append(
-                {
-                    'name':count_obj.feature_names[i],
-                    'dist':list(n),
-                    'bins':list(dist_bins)[1:],
-                    'extrema': {
-                        'lower':[i for i in data if i < Q1-1.5*IQR],
-                        'upper':[i for i in data if i > Q3+1.5*IQR]
+            #for the histogram bin edges and count numbers
+            if density == 1:
+                (n, dist_bins, patches) = plt.hist(
+                        data,
+                        bins=bins,
+                        label='hist',
+                        weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size
+                    )
+            else:
+                (n, dist_bins, patches) = plt.hist(data, bins=bins, label='hst')
+
+            #make the dict for each row
+            self['dists'].append(
+                    {
+                        'name':count_obj.feature_names[i],
+                        'dist':list(n),
+                        'bins':list(dist_bins)[1:],
+                        'extrema': {
+                            'lower':[i for i in data if i < Q1-1.5*IQR],
+                            'upper':[i for i in data if i > Q3+1.5*IQR]
+                        }
                     }
-                }
-            )
+                )
+    @property
+    def tabular(self) :
+        '''
+            Tabular output is a table where each row corresponds to a row
+            with row name as the first column. The next columns are broken
+            into two parts:
 
-    return output
+              - the bin start values, named like bin_N, where N is the
+                percentile
+              - the bin count values, named like dist_N, where N is the
+                percentile
+        '''
+        colnames = ['rowname']+\
+              ['bin_{}'.format(_) for _ in self['pct']]+\
+              ['dist_{}'.format(_) for _ in self['pct']]
+        res = [colnames]
+        for dist in self['dists'] :
+            res.append([dist['name']]+dist['bins']+dist['dist'])
+        return res
 
-def colzero(count_mat) :
+class ColZero(CountStatistics) :
     '''
         Column-wise distribution of zero counts
     
@@ -508,47 +552,55 @@ def colzero(count_mat) :
             nonzero_col_mean
                 the mean of only the non-zero counts in the column
     '''
+    def __init__(self,count_mat) :
+        #Get counts, number of columns, number of rows, and sample names
+        num_rows, num_cols = count_mat.counts.shape
+        col_names=count_mat.sample_names
 
-    #Get counts, number of columns, number of rows, and sample names
-    cnts = count_mat.counts.values
-    num_cols=len(cnts[0])
-    num_rows=len(cnts)
-    col_names=count_mat.sample_names
+        #Calculate zero counts, zero fractions, means, and nonzero means for each column
+        zero_counts = []
+        zero_fracs = []
+        col_means = []
+        nonzero_col_means = []
+        for s in col_names:
+            data = getattr(count_mat.counts,s).tolist()
+            zero_counts.append(data.count(0.0))
+            zero_fracs.append(data.count(0.0)/len(data))
+            col_means.append(sum(data)/len(data))
+            if len(data) != data.count(0.0):
+                nonzero_col_means.append(sum(data)/((len(data)-data.count(0.0))))
+            else:
+                nonzero_col_means.append(0.0)
+        
+        self['zeros'] = []
 
-    #Calculate zero counts, zero fractions, means, and nonzero means for each column
-    zero_counts = []
-    zero_fracs = []
-    col_means = []
-    nonzero_col_means = []
-    for s in col_names:
-        data = getattr(count_mat.counts,s).tolist()
-        zero_counts.append(data.count(0.0))
-        zero_fracs.append(data.count(0.0)/len(data))
-        col_means.append(sum(data)/len(data))
-        if len(data) != data.count(0.0):
-            nonzero_col_means.append(sum(data)/((len(data)-data.count(0.0))))
-        else:
-            nonzero_col_means.append(0.0)
-    
-    #Format output
-    output = {}
-    output['name'] = 'colzero'
-    output['stats'] = {}
-    output['stats']['zeros'] = []
+        for i in range(0, num_cols):
+            col = {}
+            col['name'] = col_names[i]
+            col['zero_count'] = zero_counts[i]
+            col['zero_frac'] = zero_fracs[i]
+            col['mean'] = col_means[i]
+            col['nonzero_mean'] = nonzero_col_means[i]
+            self['zeros'].append(col)
 
-    for i in range(0, num_cols):
-        col = {}
-        col['name'] = col_names[i]
-        col['zero_count'] = zero_counts[i]
-        col['zero_frac'] = zero_fracs[i]
-        col['mean'] = col_means[i]
-        col['nonzero_mean'] = nonzero_col_means[i]
-        output['stats']['zeros'].append(col)
+    @property
+    def tabular(self) :
+        '''
+            Tabular output is a table where each row corresponds to a column
+            with the following fields:
 
-    #Return output
-    return output
+              - name: Column name
+              - zero_count: Number of zero counts
+              - zero_frac: Fraction of zero counts
+              - mean: Overall mean count
+              - nonzero_mean: Mean of non-zero counts only
+        '''
+        res = [['name','zero_count','zero_frac','mean','nonzero_mean']]
+        for col in self['zeros'] :
+            res.append([col[_] for _ in res[0]])
+        return res
 
-def rowzero(count_mat) :
+class RowZero(CountStatistics):
     '''
         Row-wise distribution of zero counts
     
@@ -556,113 +608,123 @@ def rowzero(count_mat) :
         key is rowzero, and the name key of the items in dists is the row name from 
         the counts file.
     '''
+    def __init__(self,count_mat):
 
-    #Get counts, number of columns, number of rows, and gene names
-    cnts = count_mat.counts.values
-    num_cols=len(cnts[0])
-    num_rows=len(cnts)
-    row_names = count_mat.feature_names
+        #Get counts, number of columns, number of rows, and gene names
+        cnts = count_mat.counts.values
+        num_cols=len(cnts[0])
+        num_rows=len(cnts)
+        row_names = count_mat.feature_names
 
-    #Calculate zero counts, zero fractions, means, and nonzero means for each row
-    zero_counts = []
-    zero_fracs = []
-    row_means = []
-    nonzero_row_means = []
-    for i in range(len(row_names)):
-        data = count_mat.counts.iloc[i].tolist()
-        zero_counts.append(data.count(0.0))
-        zero_fracs.append(data.count(0.0)/len(data))
-        row_means.append(sum(data)/len(data))
-        if len(data) != data.count(0.0):
-            nonzero_row_means.append(sum(data)/(len(data)-data.count(0.0)))
-        else:
-            nonzero_row_means.append(0.0)
+        #Calculate zero counts, zero fractions, means, and nonzero means for each row
+        zero_counts = []
+        zero_fracs = []
+        row_means = []
+        nonzero_row_means = []
+        for i in range(len(row_names)):
+            data = count_mat.counts.iloc[i].tolist()
+            zero_counts.append(data.count(0.0))
+            zero_fracs.append(data.count(0.0)/len(data))
+            row_means.append(sum(data)/len(data))
+            if len(data) != data.count(0.0):
+                nonzero_row_means.append(sum(data)/(len(data)-data.count(0.0)))
+            else:
+                nonzero_row_means.append(0.0)
 
-    #Format output
-    output = {}
-    output['name'] = 'rowzero'
-    output['stats'] = {}
-    output['stats']['zeros'] = []
+        self['zeros'] = []
 
-    for i in range(0, num_rows):
-        row = {}
-        row['name'] = row_names[i]
-        row['zero_count'] = zero_counts[i]
-        row['zero_frac'] = zero_fracs[i]
-        row['mean'] = row_means[i]
-        row['nonzero_mean'] = nonzero_row_means[i]
-        output['stats']['zeros'].append(row)
-    
-    #Return output
-    return output
+        for i in range(0, num_rows):
+            row = {}
+            row['name'] = row_names[i]
+            row['zero_count'] = zero_counts[i]
+            row['zero_frac'] = zero_fracs[i]
+            row['mean'] = row_means[i]
+            row['nonzero_mean'] = nonzero_row_means[i]
+            self['zeros'].append(row)
 
-def entropy(count_mat) :
+    @property
+    def tabular(self) :
+        '''
+            Tabular output is a table where each row corresponds to a row
+            with the following fields:
+
+              - name: Row name
+              - zero_count: Number of zero counts
+              - zero_frac: Fraction of zero counts
+              - mean: Overall mean count
+              - nonzero_mean: Mean of non-zero counts only
+        '''
+        res = [['name','zero_count','zero_frac','mean','nonzero_mean']]
+        for col in self['zeros'] :
+            res.append([col[_] for _ in res[0]])
+        return res
+
+class Entropy(CountStatistics) :
     '''
         Row-wise sample entropy calculation
     
-        Sample entropy is a metric that can be used to identify outlier samples by locating
-        rows which are overly influenced by a single count value. This metric can be
-        calculated for a single row as follows:
+        Sample entropy is a metric that can be used to identify outlier samples
+        by locating rows which are overly influenced by a small number of count
+        values. This metric can be calculated for a single row as follows:
+
             pi = ci/sumj(cj)
             sum(pi) = 1
             H = -sumi(pi*log2(pi))
-        Here, ci is the number of counts in sample i, pi is the fraction of reads contributed
-        by sample i to the overall counts of the row, and H is the Shannon entropy of the row
-        when using log2. The maximum value possible for H is 2 when using Shannon entropy.
 
-        Rows with a very low H indicate a row has most of its count mass contained in a small
-        number of columns. These are rows that are likely to drive outliers in downstream
-        analysis, e.g. differential expression.
+        Here, ci is the number of counts in sample i, pi is the fraction of
+        reads contributed by sample i to the overall counts of the row, and H
+        is the Shannon entropy of the row when using log2. The maximum value
+        possible for H is 2 when using Shannon entropy.
 
-        The key entropies is an array containing one object per row with the following keys:
+        Rows with a very low H indicate a row has most of its count mass
+        contained in a small number of columns. These are rows that are likely
+        to drive outliers in downstream analysis, e.g. differential expression.
+
+        The key entropies is an array containing one object per row with the
+        following keys:
             name
                 row name from counts file
             entropy
                 the value of H calculated as above for that row
     '''
+    def __init__(self,count_mat) :
 
-    #Get counts, number of columns, number of rows, and gene names
-    cnts = count_mat.counts.values
-    num_cols=len(cnts[0])
-    num_rows=len(cnts)
-    row_names = count_mat.feature_names
+        #Get counts, number of columns, number of rows, and gene names
+        cnts = count_mat.counts.values
+        num_cols=len(cnts[0])
+        num_rows=len(cnts)
+        row_names = count_mat.feature_names
 
-    probs = []
-    for i in range(len(row_names)):
-        data = count_mat.counts.iloc[i].tolist()
-        row_prob = []
-        for item in data:
-            if sum(data) != 0:
-                row_prob.append(item/sum(data))
-            else:
-                row_prob.append(0.0)
-        probs.append(row_prob)
+        probs = []
+        for i in range(len(row_names)):
+            data = count_mat.counts.iloc[i].tolist()
+            row_prob = []
+            for item in data:
+                if sum(data) != 0:
+                    row_prob.append(item/sum(data))
+                else:
+                    row_prob.append(0.0)
+            probs.append(row_prob)
 
-    #Calculate entropies
-    entropies = []
-    for i in range(0, num_rows):
-        H = 0.0
-        row_probs = probs[i]
-        for j in range(0, len(row_probs)):
-            if row_probs[j] != 0.0:
-                H += row_probs[j]*math.log(row_probs[j], 2)
-        H = -1*H
-        entropies.append(H)
+        #Calculate entropies
+        entropies = []
+        for i in range(0, num_rows):
+            H = 0.0
+            row_probs = probs[i]
+            for j in range(0, len(row_probs)):
+                if row_probs[j] != 0.0:
+                    H += row_probs[j]*math.log(row_probs[j], 2)
+            H = -1*H
+            entropies.append(H)
 
-    #Format output
-    output = {}
-    output['name'] = 'entropy'
-    output['stats'] = {}
-    output['stats']['entropies'] = []
+        #Format output
+        self['entropies'] = []
 
-    for i in range(0, num_rows):
-        row = {}
-        row['name'] = row_names[i]
-        row['entropy'] = entropies[i]
-        output['stats']['entropies'].append(row)
-
-    #Return output
-    return output
+        for i in range(0, num_rows):
+            row = {}
+            row['name'] = row_names[i]
+            row['entropy'] = entropies[i]
+            self['entropies'].append(row)
 
 def count_PCA(count_mat, metadata=''):
     '''
@@ -753,10 +815,10 @@ def format_json(filename, output):
 
     # go through the given output and update output_dict appropriately
     for d in output :
-        if 'name' not in d :
-          raise Exception('Malformed detk-stats JSON record in output '
-              'file, no name key:',str(d))
-        output_dict[d['name']] = d
+        if not hasattr(d,'json') :
+          raise Exception('Could not serialize output, could not find .json '
+              'attribute on output object:',str(d))
+        output_dict[d.name] = d.json
 
     # write out values in output_dict
     with open(filename,'w') as f :

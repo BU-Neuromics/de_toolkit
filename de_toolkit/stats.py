@@ -1192,19 +1192,31 @@ def main(argv=sys.argv) :
         counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = Base(counts_obj)
 
+    # make output a list if it is a singleton
+    if not isinstance(output,list) :
+        output = [output]
+
     #Obtain string used to name output files, unless filename is specified
     filename_prefix = os.path.splitext(args['<counts_fn>'])[0]
 
-    
+    outf = sys.stdout
+    if args['--output'] != 'stdout' :
+        outf = open(args['--output'],'wt')
+
+    out_writer = csv.writer(outf,delimiter=',')
+
+    # write out the tabular data
+    if len(output) == 1 :
+        out_writer.writerows(output[0].tabular)
+    else :
+        for out in output :
+            out_writer.writerow(['#{}'.format(out.name)])
+            out_writer.writerows(out.tabular)
 
     #Check if JSON file option was specified
     json_fn = args.get('--json')
     if json_fn is None:
         json_fn = filename_prefix+'.json'
-
-    #Format JSON output file
-    if not isinstance(output,list) :
-        output = [output]
 
     format_json(json_fn, output)
 

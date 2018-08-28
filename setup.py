@@ -18,7 +18,22 @@ setup(name='de_toolkit',
       ,description='Suite of tools for working with count data'
       ,author='Adam Labadorf and the BU Bioinformatics Hub Team'
       ,author_email='labadorf@bu.edu'
-      ,install_requires=[_.strip() for _ in open('requirements.txt')]
+      ,install_requires=[
+          'docopt',
+          'future',
+          'matplotlib',
+          'mpld3',
+          'numpy',
+          'pandas',
+          'patsy',
+          'ply',
+          'seaborn',
+          'setuptools',
+          'scipy',
+          'scikit-learn',
+          'statsmodels>=0.8.0',
+          'terminaltables'
+          ]
       ,packages=find_packages()
       ,package_data={'de_toolkit':['html_template.html']}
       ,entry_points={

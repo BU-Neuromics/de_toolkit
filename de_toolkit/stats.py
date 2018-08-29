@@ -277,43 +277,75 @@ Options:
     --html=<html_fn>            Name of HTML output file
 '''
 }
+from collections import OrderedDict
+import csv
+from docopt import docopt
 import json
 import math
-import argparse
-from collections import OrderedDict
-import numpy as np
 import matplotlib
 matplotlib.use('agg')
+import matplotlib.patches as ptches
 import matplotlib.pyplot as plt
+import mpld3
+import numpy as np
 import pandas
-from docopt import docopt
-from .common import *
+import pkg_resources
 import os.path
+import seaborn as sns
 from sklearn.decomposition import PCA
 from string import Template
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
-import mpld3
-import seaborn as sns
-import csv
-import matplotlib.patches as ptches
-import pkg_resources
+
+from .common import *
 
 class CountStatistics(OrderedDict) :
+    '''
+    Base class for holding count matrix statistics
+
+    Each stats function in this module is a subclass of this class, which
+    is itself a subclass of :py:class:`collections.OrderedDict`.
+    '''
     @property
     def json(self) :
-        return {
-                'name': self.name,
-                'stats': dict(self)
-               }
+        '''
+        Format the stats object into a form amenable to serializing with JSON
+
+        Returns
+        -------
+        dict
+            dictionary with keys 'name' and 'stats' containing the module name
+            and dictionary of stats in the object
+        '''
+        return { 'name': self.name,
+                'stats': dict(self) }
     @property
     def tabular(self) :
-        pass
+        '''
+        Construct tabular output of the stats object
+
+        Returns
+        -------
+        list
+            list of lists containing tabular stats data, first row contains
+            column names
+        '''
+        return None
     @property
     def html(self) :
-        pass
+        '''
+        Construct html output of the stats object
+
+        Returns
+        -------
+        string
+            string containing html and javascript representation of this stat
+            module
+        '''
+        return None
     @property
     def name(self) :
+        'Name of this stats object, by default the class name in all lower case'
         return self.__class__.__name__.lower()
 
 def summary(count_mat,
@@ -344,6 +376,10 @@ def summary(count_mat,
     density : bool
         return a density distribution from coldist and rowdist
 
+    Returns
+    -------
+    list
+        list of CountStatistics subclasses for each of the called submodules
     '''
 
     total_output = [
@@ -363,8 +399,9 @@ class Base(CountStatistics) :
         Basic statistics of the counts file
 
         The most basic statistics of the counts file, including:
-            number of columns
-            number of rows
+        - number of columns
+        - number of rows
+
     '''
     def __init__(self, count_mat) :
 
@@ -377,61 +414,59 @@ class Base(CountStatistics) :
 
     @property
     def tabular(self):
+        '''
+        Example tabular output::
+
+            +base------+-----+
+            | stat     | val |
+            +----------+-----+
+            | num_cols | 4   |
+            | num_rows | 3   |
+            +----------+-----+
+        '''
         return [
                 ['stat','val'],
                 ['num_cols',self['num_cols']],
                 ['num_rows',self['num_rows']]
                ]
 
+    @property
+    def json(self):
+        '''
+        Example JSON output::
+
+            {
+              'name': 'base',
+              'stats': {
+                'num_cols': 50,
+                'num_rows': 27143
+              }
+            }
+        '''
+        return {'name': self.name, 'stats': dict(self)}
 
 class ColDist(CountStatistics) :
     '''
         Column-wise distribution of counts
 
-        Options:
-              --bins=<bins>  The number of bins to use when computing the counts
-                             distribution
-              --log          Perform a log10 transform on the counts before
-                             calculating the distribution. Zeros are omitted
-                             prior to histogram calculation.
-              --density      Return a density distribution instead of counts,
-                             such that
-                             the sum of values in *dist* for each column
-                             approximately sum to 1.
-        
         Compute the distribution of counts column-wise. Each column is subject
         to binning by percentile, with output identical to that produced by
         np.histogram.
 
-        In the stats object, the fields are defined as follows:
-            pct
-                The percentiles of the distributions in the range 0 < pct <
-                100, by default in increments of 5. This defines the length of
-                the dist and bins arrays in each of the objects for each sample.
-            dists
-                Array of objects containing one object for each column,
-                described below.
-            Each item of dists is an object with the following keys:
-                name
-                    Column name from original file
-                dist
-                    Array of raw or normalized counts in each bin according to
-                    the percentiles from pct
-                bins
-                    Array of the bin boundary values for the distribution.
-                    Should be of length len(counts)+1. These are what would be
-                    the x-axis labels if this was plotted as a histogram.
-                extrema
-                    Object with two keys, lower and upper, that contain the
-                    literal count values for counts that have a value larger or
-                    smaller than 1.5*(inner quartile length) of the
-                    distribution. These could be marked as outliers in a
-                    boxplot, for example.
+        Parameters
+        ----------
+        count_mat : CountMatrix
+            count matrix containing counts
+        bins : int
+            number of bins to use when computing distribution
+        log : bool
+            take the log10 of counts prior to computing distribution
+        density : bool
+            return densities rather than absolute bin counts for the
+            distribution, densities sum to 1
+
     '''
-
-
     def __init__(self,count_mat,bins=100,log=False,density=False):
-
         self['pct'] = list(100*(_+1)/bins for _ in range(bins))
 
         self['dists'] = []
@@ -477,14 +512,12 @@ class ColDist(CountStatistics) :
     @property
     def tabular(self) :
         '''
-            Tabular output is a table where each row corresponds to a column
-            with column name as the first column. The next columns are broken
-            into two parts:
+        Tabular output is a table where each row corresponds to a column
+        with column name as the first column. The next columns are broken
+        into two parts:
 
-              - the bin start values, named like bin_N, where N is the
-                percentile
-              - the bin count values, named like dist_N, where N is the
-                percentile
+          - the bin start values, named like bin_N, where N is the percentile
+          - the bin count values, named like dist_N, where N is the percentile
         '''
         colnames = ['colname']+\
                 ['bin_{:.1f}'.format(_) for _ in self['pct']]+\
@@ -493,13 +526,89 @@ class ColDist(CountStatistics) :
         for dist in self['dists'] :
             res.append([dist['name']]+dist['bins']+dist['dist'])
         return res
+    @property
+    def json(self) :
+        '''
+        In the JSON object, the fields are defined as follows
+
+        pct
+            The percentiles of the distributions in the range 0 < pct <
+            100, by default in increments of 5. This defines the length of
+            the dist and bins arrays in each of the objects for each sample.
+        dists
+            Array of objects containing one object for each column,
+            described below.
+
+        Each item of dists is an object with the following keys:
+
+        name
+            Column name from original file
+        dist
+            Array of raw or normalized counts in each bin according to
+            the percentiles from pct
+        bins
+            Array of the bin boundary values for the distribution.
+            Should be of length len(counts)+1. These are what would be
+            the x-axis labels if this was plotted as a histogram.
+        extrema
+            Object with two keys, lower and upper, that contain the
+            literal count values for counts that have a value larger or
+            smaller than 1.5*(inner quartile length) of the
+            distribution. These could be marked as outliers in a
+            boxplot, for example.
+
+        Example JSON output::
+
+            {
+              'name': 'coldist',
+              'stats': {
+                'pct' : [ 5, 10, 20, ..., 95 ],
+                'dists' : [
+                  {
+                    'name': 'H_0001',
+                    'dist': [ 129, 317, 900, 1325, ...],
+                    'bins': [ 100, 200, 300, 400, ...],
+                    'extrema': {
+                      'lower': [1, 2, 5],
+                      'upper': [19325, 5233]
+                      }
+                    ]
+                  },
+                  {
+                    'name': 'H_0002',
+                    'dist': [ 502, 127, 222, 591, ...],
+                    'bins': [ 6000, 6200, 6400, 6600, ...],
+                    'extrema': {
+                      'lower': [419, 2, 20],
+                      'upper': [21999,74381]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+        '''
+        return {'name': self.name, 'stats': dict(self)}
 
 class RowDist(CountStatistics):
     '''
         Row-wise distribution of counts
-        
-        Identical to coldist except calculated across rows. The name key is rowdist, and the
-        name key of the items in dists is the row name from the counts file.
+
+        Identical to coldist except calculated across rows. The name key is
+        rowdist, and the name key of the items in dists is the row name from
+        the counts file.
+
+        Parameters
+        ----------
+        count_mat : CountMatrix
+            count matrix containing counts
+        bins : int
+            number of bins to use when computing distribution
+        log : bool
+            take the log10 of counts prior to computing distribution
+        density : bool
+            return densities rather than absolute bin counts for the
+            distribution, densities sum to 1
     '''
     def __init__(self, count_obj, bins=100, log=False, density=False) :
 
@@ -569,17 +678,6 @@ class ColZero(CountStatistics) :
     
         Compute the number and fraction of exact zero counts for each column.
 
-        The stats value is an array containing one object per column as follows:
-            name
-                column name
-            zero_count
-                absolute count of rows with exactly zero counts
-            zero_frac
-                zero_count divided by the number of rows
-            col_mean
-                the mean of counts in the column
-            nonzero_col_mean
-                the mean of only the non-zero counts in the column
     '''
     def __init__(self,count_mat) :
         #Get counts, number of columns, number of rows, and sample names
@@ -618,16 +716,57 @@ class ColZero(CountStatistics) :
             Tabular output is a table where each row corresponds to a column
             with the following fields:
 
-              - name: Column name
-              - zero_count: Number of zero counts
-              - zero_frac: Fraction of zero counts
-              - mean: Overall mean count
-              - nonzero_mean: Mean of non-zero counts only
+            - name: Column name
+            - zero_count: Number of zero counts
+            - zero_frac: Fraction of zero counts
+            - mean: Overall mean count
+            - nonzero_mean: Mean of non-zero counts only
         '''
         res = [['name','zero_count','zero_frac','mean','nonzero_mean']]
         for col in self['zeros'] :
             res.append([col[_] for _ in res[0]])
         return res
+    @property
+    def json(self):
+        '''
+        The stats value is an array containing one object per column as follows:
+
+        name
+            column name
+        zero_count
+            absolute count of rows with exactly zero counts
+        zero_frac
+            zero_count divided by the number of rows
+        col_mean
+            the mean of counts in the column
+        nonzero_col_mean
+            the mean of only the non-zero counts in the column
+
+        Example JSON output::
+
+            {
+              'name': 'colzero',
+              'stats': {
+                'zeros' : [
+                  {
+                    'name': 'col1',
+                    'zero_count': 20,
+                    'zero_frac': 0.2,
+                    'mean': 101.31,
+                    'nonzero_mean': 155.23
+                  },
+                  {
+                    'name': 'col2',
+                    'zero_count': 0,
+                    'zero_frac': 0,
+                    'mean': 3021.92,
+                    'nonzero_mean': 3021.92
+                  },
+                ]
+              }
+            }
+        '''
+        return {'name': self.name, 'stats': dict(self)}
 
 class RowZero(CountStatistics):
     '''
@@ -690,31 +829,26 @@ class RowZero(CountStatistics):
 
 class Entropy(CountStatistics) :
     '''
-        Row-wise sample entropy calculation
-    
-        Sample entropy is a metric that can be used to identify outlier samples
-        by locating rows which are overly influenced by a small number of count
-        values. This metric can be calculated for a single row as follows:
+    Row-wise sample entropy calculation
 
-            pi = ci/sumj(cj)
-            sum(pi) = 1
-            H = -sumi(pi*log2(pi))
+    Sample entropy is a metric that can be used to identify outlier samples
+    by locating rows which are overly influenced by a small number of count
+    values. This metric can be calculated for a single row as follows::
 
-        Here, ci is the number of counts in sample i, pi is the fraction of
-        reads contributed by sample i to the overall counts of the row, and H
-        is the Shannon entropy of the row when using log2. The maximum value
-        possible for H is 2 when using Shannon entropy.
+        pi = ci/sumj(cj)
+        sum(pi) = 1
+        H = -sumi(pi*log2(pi))
 
-        Rows with a very low H indicate a row has most of its count mass
-        contained in a small number of columns. These are rows that are likely
-        to drive outliers in downstream analysis, e.g. differential expression.
+    Here, ci is the number of counts in sample i, pi is the fraction of
+    reads contributed by sample i to the overall counts of the row, and H
+    is the `Shannon entropy`_ of the row when using log2. The maximum value
+    possible for H is 2 when using Shannon entropy.
 
-        The key entropies is an array containing one object per row with the
-        following keys:
-            name
-                row name from counts file
-            entropy
-                the value of H calculated as above for that row
+    Rows with a very low H indicate a row has most of its count mass
+    contained in a small number of columns. These are rows that are likely
+    to drive outliers in downstream analysis, e.g. differential expression.
+
+    .. _Shannon entropy: https://en.wikipedia.org/wiki/Entropy_(information_theory)
     '''
     def __init__(self,count_mat) :
 
@@ -758,17 +892,46 @@ class Entropy(CountStatistics) :
     @property
     def tabular(self) :
         '''
-            Tabular output is a table where each row corresponds to a row
-            with the following fields:
+        Tabular output is a table where each row corresponds to a row
+        with the following fields:
 
-              - name: Row name
-              - entropy: sample entropy for the row
+          - name: Row name
+          - entropy: sample entropy for the row
         '''
         res = [['name','entropy']]
         for col in self['entropies'] :
             res.append([col[_] for _ in res[0]])
         return res
+    @property
+    def json(self) :
+        '''
+        The key entropies is an array containing one object per row with the
+        following keys:
 
+        name
+            row name from counts file
+        entropy
+            the value of H calculated as above for that row
+
+        Example JSON output::
+
+            [
+              'name': 'entropy',
+              'stats': {
+                'entropies': [
+                  {
+                    'name': 'gene1',
+                    'entropy': 1.013
+                  },
+                  {
+                    'name': 'gene2',
+                    'entropy': 0.001
+                  }
+                ]
+              }
+            ]
+        '''
+        return {'name': self.name, 'stats': dict(self)}
 
 class CountPCA(CountStatistics) :
     '''
@@ -788,24 +951,31 @@ class CountPCA(CountStatistics) :
     '''
     def __init__(self,count_mat) :
 
-        #Get counts from file and scale counts
-        cnts = scale(count_mat.counts.values)
+        # get counts from file and scale counts
+        # counts matrices are n_features x n_samples, need to transpose
+        # since PCA expects n_samples x n_features
+        cnts = scale(count_mat.counts.values.astype(float).T)
 
-        #Perform PCA and fit to the data
-        pca = PCA()
+        # sanity check, column mean==0
+        assert np.allclose(cnts.mean(axis=0),0)
+        assert cnts.shape[0] == count_mat.counts.shape[1]
+
+        # perform PCA and fit to the data
+        pca = PCA(n_components=min(*cnts.shape))
         pca.fit(cnts)
         X = pca.transform(cnts)
 
-        #Get sample names
+        # get sample names
         sample_names = list(count_mat.counts.columns)
 
-        #Format output
+        # format output
         self['column_names'] = sample_names
         self['column_variables'] = {}
+
+        # if metadata option is given, get column variables
         if count_mat.column_data is not None :
             self['column_variables'] = {k:list(v) for k,v in count_mat.column_data.iterrows()}
 
-        #If metadata option is given, get column variables
         self['components'] = []
         for i in range(0, pca.n_components_):
             comp = {}
@@ -813,7 +983,65 @@ class CountPCA(CountStatistics) :
             comp['scores'] = [row[i] for row in X]
             comp['projections'] = [row[i] for row in pca.components_]
             comp['perc_variance'] =  pca.explained_variance_ratio_[i]
+            if np.isnan(comp['perc_variance']) :
+                raise Exception('nan encountered in calculating PCA component '
+                        'percent variance, this means the counts features have '
+                        'zero total variance, cannot compute PCA. Examine your '
+                        'counts matrix if you did not expect this?')
             self['components'].append(comp)
+    @property
+    def name(self):
+        return 'pca'
+    @property
+    def tabular(self) :
+        '''
+        Tabular output is a table where each row corresponds to a column
+        in the counts matrix with the following fields:
+
+        name
+            name of the column for the row
+        PC*X*_*YY*
+            projections of principal component X (e.g. 1) that explains YY
+            percent of the variance for each column 
+        '''
+        res = [['colname']+self['column_names']]
+        for comp in self['components'] :
+            name = '{}_{:03d}'.format(comp['name'],int(100*comp['perc_variance']))
+            res.append([name]+comp['projections'])
+        # transpose the list of lists
+        res = list(zip(*res))
+        return res
+    @property
+    def json(self) :
+        '''
+        Example JSON output::
+
+            [
+                'name': 'pca',
+                'stats': {
+                    'column_names': ['sample1','sample2',...],
+                    'column_variables': {
+                        'sample_type':['HD','HD','C',...],
+                        'sample_batch':['Batch1','Batch2','Batch2',...]
+                    },
+                    'components': [
+                        {
+                            'name': 'PC1',
+                            'scores': [0.126,0.975,...], # length n
+                            'projections': [-8.01,5.93,...], # length m, ordered by 'column_names'
+                            'perc_variance': 0.75
+                        },
+                        {
+                            'name': 'PC2',
+                            'scores' : [0.126,0.975,...], # length n
+                            'projections': [5.93,-5.11,...], # length m
+                            'perc_variance': 0.22
+                        }
+                    ]
+                }
+            ]
+        '''
+        return {'name': self.name, 'stats': dict(self)}
 
 def format_json(filename, output):
 
@@ -1060,7 +1288,7 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
     #Format PCA HTML output (Scree plot and swarm plots for projections)
     if 'pca' in output_dict:
         pca_hide = ''
-        pca_output = output_dict['pca']
+        pca_output = output_dict['pca'].get('stats')
         perc_variance = []
         names = []
         projections = []
@@ -1089,10 +1317,12 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
         plt.legend(handles=[var,cumulative])
         pca_scree=mpld3.fig_to_html(fig)    
 
-        stats = pca_output.get('stats')
-        column_variables = stats.get('column_variables')
-        if color_col == None and len(column_variables)!=0: 
-            color_col = list(column_variables)[0]
+        column_variables = pca_output['column_variables']
+        if color_col is None :
+            if len(column_variables)!=0: 
+                color_col = list(column_variables)[0]
+            else :
+                color_col = 'data'
        
         sample_type = column_variables.get(color_col)
         if sample_type is None:
@@ -1107,10 +1337,17 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
                 for i in range(0, len(projection)):
                     xlabel = name + ': ' + '{0:.3f}'.format(variance*100.0) + '%'
                     d.append([xlabel, projection[i], sample_type[i]])
+
         df = pandas.DataFrame(d, columns=['Principle Components', 'Projection', color_col])
         sns.set_style('whitegrid')
         palette_colors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'black']
-        ax = sns.swarmplot(x='Principle Components', y='Projection', data=df, hue=color_col, palette=sns.color_palette(palette_colors))
+        ax = sns.swarmplot(
+                x='Principle Components',
+                y='Projection',
+                data=df,
+                hue=color_col,
+                palette=sns.color_palette(palette_colors)
+        )
         labels = []
         for item in sample_type:
             if item not in labels:

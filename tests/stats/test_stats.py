@@ -43,16 +43,16 @@ def fake_column_data(request) :
 # fake count data to test the rowzero
 ################################################################################
 
-def test_stats_cli(fake_count_coldist_csv) :
+def test_stats_cli(fake_counts_csv) :
   from de_toolkit.stats import main
   from docopt import DocoptExit
   for cmd in ('summary','base','coldist','rowdist','colzero','rowzero','entropy') :
       with pytest.raises(DocoptExit) :
           main(['detk-stats',cmd])
-      main(['detk-stats',cmd,fake_count_coldist_csv])
+      main(['detk-stats',cmd,fake_counts_csv])
 
   # pca includes metadata
-  main(['detk-stats',cmd,fake_count_coldist_csv])
+  main(['detk-stats',cmd,fake_counts_csv])
 
 ################################################################################
 # CountStatistics base class
@@ -74,7 +74,7 @@ def get_json_output(output) :
     with tempfile.NamedTemporaryFile() as f :
         json_fn = f.name
 
-    #Format JSON output file
+    #Format json output file
     if not isinstance(output,list) :
         output = [output]
 
@@ -97,8 +97,8 @@ def test_stats_base(fake_counts_obj):
     assert output['num_rows'] == 5
     assert output.name == 'base'
 
-#test that JSON output for base function is correct
-def test_stats_base_JSON(fake_counts_obj):
+#test that json output for base function is correct
+def test_stats_base_json(fake_counts_obj):
     output = Base(fake_counts_obj)
 
     json_output = get_json_output(output)[0]
@@ -216,8 +216,8 @@ def test_stats_coldist_log_bins(fake_count_coldist_obj):
     assert col_dist_bins==true_bins
     assert col_dist_func==true_dists
 
-#test that JSON output for coldist function is correct
-def test_stats_coldist_JSON(fake_count_coldist_obj):
+#test that json output for coldist function is correct
+def test_stats_coldist_json(fake_count_coldist_obj):
     output = ColDist(fake_count_coldist_obj, bins=10)
 
     json_output = get_json_output(output)[0]
@@ -349,8 +349,8 @@ def test_stats_rowdist_bins(fake_count_rowdist_obj):
     assert row_dist_bins==true_bins
     assert row_dist_func==true_dists
 
-#test that JSON output for rowdist function is correct
-def test_stats_rowdist_JSON(fake_count_rowdist_obj):
+#test that json output for rowdist function is correct
+def test_stats_rowdist_json(fake_count_rowdist_obj):
 
     output = RowDist(fake_count_rowdist_obj, bins=2, log=True)
 
@@ -461,8 +461,8 @@ def test_stats_colzero_nonzero_col_means(fake_counts_obj_with_zeros):
 
     assert true_nonzero_col_means == nonzero_col_means
 
-#test that JSON output for colzero function is correct
-def test_stats_colzero_JSON(fake_counts_obj_with_zeros):
+#test that json output for colzero function is correct
+def test_stats_colzero_json(fake_counts_obj_with_zeros):
 
     output = ColZero(fake_counts_obj_with_zeros)
 
@@ -645,8 +645,8 @@ def test_stats_rowzero_all_zeros(fake_count_rowzero_obj):
 
     assert true_nonzero_row_means == nonzero_row_means
 
-#test that JSON output for rowzero function is correct
-def test_stats_rowzero_JSON(fake_count_rowzero_obj):
+#test that json output for rowzero function is correct
+def test_stats_rowzero_json(fake_count_rowzero_obj):
 
     output = RowZero(fake_count_rowzero_obj)
 
@@ -704,7 +704,6 @@ def test_stats_rowzero_JSON(fake_count_rowzero_obj):
 
 def test_stats_colzero_tabular(fake_counts_obj_with_zeros):
     output = RowZero(fake_counts_obj_with_zeros)
-    print(fake_counts_obj_with_zeros.counts)
     assert output.tabular[0] == ['name','zero_count','zero_frac','mean','nonzero_mean']
     assert output.tabular[1] == ['gene1', 1, 1/3, 2, 3]
     assert output.tabular[2][:2] == ['gene2', 2]
@@ -717,7 +716,6 @@ def test_stats_colzero_tabular(fake_counts_obj_with_zeros):
 #test that entropy function gets correct row names
 def test_stats_entropy_names(fake_counts_obj):
     output = Entropy(fake_counts_obj)
-    print(output)
     entropies = output['entropies']
 
     true_row_names = ['gene1', 'gene2', 'gene3', 'gene4', 'gene5']
@@ -791,8 +789,8 @@ def test_stats_entropy_all_zeros(fake_count_rowzero_obj):
 
     assert true_entropies == row_entropies
 
-#test that JSON output for entropy function is correct
-def test_stats_entropy_JSON(fake_count_rowzero_obj):
+#test that json output for entropy function is correct
+def test_stats_entropy_json(fake_count_rowzero_obj):
 
     output = Entropy(fake_count_rowzero_obj)
     entropies = output['entropies']
@@ -828,14 +826,130 @@ def test_stats_entropy_tabular(fake_count_rowzero_obj):
     assert output.tabular[0] == ['name','entropy']
     assert output.tabular[1:] == [['gene1',H1],['gene2',H2],['gene3',H3]]
  
-#test that all functions were written to JSON output when summary is called
-def test_stats_summary_JSON(fake_count_rowdist_obj, fake_count_rowdist_csv):
+################################################################################
+# PCA tests
+@pytest.fixture
+def pca_counts_obj(request) :
 
-    output = summary(fake_count_rowdist_obj)
+    np.random.seed(1337)
+
+    # first principal component should be about (9.5, -9.5) or so
+    X = np.array([[_,_] for _ in range(10,100)]).astype(float)
+    # add a little noise to avoid invalid component variance
+    X += 0.01*np.random.random(size=X.shape)
+
+    return CountMatrix(
+            pandas.DataFrame(
+                X,
+                columns=('a','b'),
+                index=['gene{}'.format(_) for _ in range(X.shape[0])]
+            )
+        )
+
+def test_stats_countPCA(pca_counts_obj):
+
+    output = CountPCA(pca_counts_obj)
+    assert output.name == 'pca'
+
+def test_stats_PCA_col_names(pca_counts_obj):
+    output = CountPCA(pca_counts_obj)
+    col_names = output['column_names']
+    true_col_names = ['a', 'b']
+    assert col_names == true_col_names
+
+def test_stats_PCA_num_components(pca_counts_obj):
+    output = CountPCA(pca_counts_obj)
+    num_components = len(output['components'])
+    assert num_components == 2
+
+def test_stats_PCA_component_names(pca_counts_obj):
+    output = CountPCA(pca_counts_obj)
+    true_comp_names = ['PC1', 'PC2']
+    comp_names = []
+    components = output['components']
+    for item in components:
+        comp_names.append(item.get('name'))
+    assert true_comp_names == comp_names
+
+def test_stats_PCA_num_scores(pca_counts_obj):
+    output = CountPCA(pca_counts_obj)
+    true_num_scores = [min(*pca_counts_obj.counts.shape)]*2
+    num_scores = []
+    components = output['components']
+    for item in components:
+        num_scores.append(len(item.get('scores')))
+    assert true_num_scores == num_scores
+
+def test_stats_PCA_num_projections(pca_counts_obj):
+    output = CountPCA(pca_counts_obj)
+    true_num_projections = [2, 2]
+    num_projections = []
+    components = output['components']
+    for item in components:
+        num_projections.append(len(item.get('projections')))
+    assert true_num_projections == num_projections
+
+def test_stats_PCA_perc_variance(pca_counts_obj):
+    output = CountPCA(pca_counts_obj)
+    true_perc_variance = [1, 0.]
+    perc_variance = []
+    components = output['components']
+    for item in components:
+        perc_variance.append(item.get('perc_variance'))
+    assert np.allclose(true_perc_variance, perc_variance,atol=0.1)
+
+def test_stats_PCA_scores(pca_counts_obj):
+    output = CountPCA(pca_counts_obj)
+    true_scores = [[9.48,-9.48],[0,0]]
+    scores = []
+    components = output['components']
+    for item in components:
+        scores.append(item.get('scores'))
+    assert np.allclose(true_scores, scores, atol=0.1)
+
+def test_stats_PCA_projections(pca_counts_obj):
+    output = CountPCA(pca_counts_obj)
+    true_projections = np.array([[0.1,0.99],[0.1,0]])
+    projections = []
+    components = output['components']
+    for item in components:
+        projections.append([abs(_) for _ in item.get('projections')])
+    assert np.allclose(true_projections, projections, atol=0.1)
+
+def test_stats_PCA_json(pca_counts_obj):
+    output = CountPCA(pca_counts_obj)
+    true_projections = np.array([[0.1,0.99],[0.1,0]])
+    projections = []
+    output = get_json_output(output)[0]
+    components = output['stats']['components']
+    for item in components:
+        projections.append([abs(_) for _ in item.get('projections')])
+    assert np.allclose(true_projections, projections, atol=0.1)
+
+def test_stats_PCA_tabular(pca_counts_obj):
+    output = CountPCA(pca_counts_obj)
+    true_projections = np.array([[0.1,0.99],[0.1,0]])
+    assert output.tabular[0] == ('colname','PC1_100','PC2_000')
+    a_proj, pc1, pc2 = output.tabular[1]
+    assert a_proj == 'a'
+    assert np.isclose(abs(pc1),0.1,atol=0.1)
+    assert np.isclose(abs(pc2),0.1,atol=0.1)
+
+    b_proj, pc1, pc2 = output.tabular[2]
+    assert b_proj == 'b'
+    assert np.isclose(abs(pc1),0.99,atol=0.1)
+    assert np.isclose(abs(pc2),0.0,atol=0.1)
+
+################################################################################
+# summary tests
+#test that all functions were written to json output when summary is called
+def test_stats_summary_json(fake_counts_obj):
+
+    output = summary(fake_counts_obj)
 
     json_output = get_json_output(output)
 
-    true_funcs = set(['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy'])
+    true_funcs = set(['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy', 'pca'])
 
     names = set()
     for section in json_output :
@@ -843,17 +957,17 @@ def test_stats_summary_JSON(fake_count_rowdist_obj, fake_count_rowdist_csv):
 
     assert true_funcs==names
 
-#test that all functions were written to JSON output when summary is called
-def test_stats_cli_JSON(fake_count_rowdist_obj, fake_count_rowdist_csv):
+#test that all functions were written to json output when summary is called
+def test_stats_cli_json(fake_count_rowdist_obj, fake_count_rowdist_csv):
 
     output = summary(fake_count_rowdist_obj)
 
-    true_funcs = set(['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy'])
+    true_funcs = set(['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy','pca'])
 
     with tempfile.NamedTemporaryFile() as f :
         json_fn = f.name
 
-    main(['detk-stats','summary','--json={}'.format(json_fn),fake_count_rowdist_csv])
+    main(['detk-stats','summary','--json={}'.format(json_fn),'-o','/dev/null',fake_count_rowdist_csv])
     with open(json_fn) as f :
         output = json.load(f)
 
@@ -865,79 +979,4 @@ def test_stats_cli_JSON(fake_count_rowdist_obj, fake_count_rowdist_csv):
 
     assert true_funcs==names
 
-@pytest.mark.skip(reason='will integrate PCA tests after merge')
-def test_stats_countPCA(fake_counts_obj):
 
-    output = CountPCA(fake_counts_obj)
-    name = output.get('name')
-    assert name == 'pca'
-
-def test_stats_PCA_col_names(fake_counts_obj):
-    output = CountPCA(fake_counts_obj)
-    print(fake_counts_obj.column_data)
-    col_names = output['column_names']
-    true_col_names = ['a', 'b', 'c']
-    assert col_names == true_col_names
-
-def test_stats_PCA_num_components(fake_counts_obj):
-    output = CountPCA(fake_counts_obj)
-    num_components = len(output['components'])
-    assert num_components == 3
-
-def test_stats_PCA_component_names(fake_counts_obj):
-    output = CountPCA(fake_counts_obj)
-    true_comp_names = ['PC1', 'PC2', 'PC3']
-    comp_names = []
-    components = output['components']
-    for item in components:
-      comp_names.append(item.get('name'))
-    assert true_comp_names == comp_names
-
-def test_stats_PCA_num_scores(fake_counts_obj):
-    output = CountPCA(fake_counts_obj)
-    true_num_scores = [5, 5, 5]
-    num_scores = []
-    components = output['components']
-    for item in components:
-      num_scores.append(len(item.get('scores')))
-    assert true_num_scores == num_scores
-
-def test_stats_PCA_num_projections(fake_counts_obj):
-    output = CountPCA(fake_counts_obj)
-    true_num_projections = [3, 3, 3]
-    num_projections = []
-    components = output['components']
-    for item in components:
-      num_projections.append(len(item.get('projections')))
-    assert true_num_projections == num_projections
-
-def test_stats_PCA_perc_variance(fake_counts_obj):
-    output = CountPCA(fake_counts_obj)
-    true_perc_variance = [0.9878246911444414, 0.01214185070132599, 3.34581542e-05]
-    perc_variance = []
-    components = output['components']
-    for item in components:
-      perc_variance.append(item.get('perc_variance'))
-    assert np.allclose(true_perc_variance, perc_variance)
-
-def test_stats_PCA_scores(fake_counts_obj):
-    output = CountPCA(fake_counts_obj)
-    true_scores = [[-2.13538377e+00, -1.32959347e+00, -2.84804960e-01, 1.04478851e+00, 2.70499369e+00],
-                   [2.51638701e-01, -7.20344487e-02, -2.25158739e-01, -1.53124291e-01, 1.98678777e-01],
-                   [-8.08657117e-03, 1.45810998e-02, 9.72247845e-04, -1.36088520e-02, 6.14207548e-03]]
-    scores = []
-    components = output['components']
-    for item in components:
-      scores.append(item.get('scores'))
-    assert np.allclose(true_scores, scores)
-
-def test_stats_PCA_projections(fake_counts_obj):
-    output = CountPCA(fake_counts_obj)
-    true_projections = [[0.57528892, -0.72606076, 0.37666754],
-                [0.58086251, 0.03842312, -0.81309434],
-            [0.57588315, 0.68655622, 0.44384587]]
-    projections = []
-    components = output['components']
-    for item in components:
-      projections.append(item.get('projections'))
-    assert np.allclose(true_projections, projections)

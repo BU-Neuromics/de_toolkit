@@ -1,6 +1,6 @@
 # Changelog
 
-## unreleased
+## [0.6.0]
 ### Added
 - tabular output to stats module, in either csv or terminaltables table format
 ### Changed

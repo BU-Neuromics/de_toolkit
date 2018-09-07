@@ -150,6 +150,17 @@ class DesignMatrix(object) :
             raise PatsyLiteParseError('Misspecified column in design, check term '
                 'names. {}'.format(e.args))
 
+        # patsy reorders the terms after calling dmatrices for some reason
+        # rearrange them back again to what was specified in the design
+        new_order = []
+        for term in model.rhs_termlist :
+            for col in self.rhs.columns:
+                if col.startswith(term.name()) :
+                    new_order.append(col)
+
+        print(new_order)
+        self.rhs = self.rhs[new_order]
+
         # the patsy formula names are ugly and not very machine (or human)
         # readable
         # replace the patsy names with the patsy lite names

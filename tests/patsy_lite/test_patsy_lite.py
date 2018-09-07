@@ -87,22 +87,22 @@ def test_DesignMatrix(model_data) :
 
   # cat_str[A] is missing from right
   dm = DesignMatrix('binary_str[B] ~ cont + cat_str[A]',model_data)
-  assert dm.design == 'binary_str__A ~ Intercept + cat_str__B + cat_str__C + cat_str__D + cont'
+  assert dm.design == 'binary_str__A ~ Intercept + cont + cat_str__B + cat_str__C + cat_str__D'
   assert 'cat_str__A' not in dm.rhs
 
   # cat_str[B] is missing from right
   dm = DesignMatrix('binary_str[B] ~ cont + cat_str[B,C,D,A]',model_data)
-  assert dm.design == 'binary_str__A ~ Intercept + cat_str__C + cat_str__D + cat_str__A + cont'
+  assert dm.design == 'binary_str__A ~ Intercept + cont + cat_str__C + cat_str__D + cat_str__A'
   assert 'cat_str__B' not in dm.rhs
 
   # cat_str[A] is missing from right
   dm = DesignMatrix('binary_str[A] ~ cont + cat_str[B,C,D,A]',model_data)
-  assert dm.design == 'binary_str__B ~ Intercept + cat_str__C + cat_str__D + cat_str__A + cont'
+  assert dm.design == 'binary_str__B ~ Intercept + cont + cat_str__C + cat_str__D + cat_str__A'
   assert 'cat_str__A' not in dm.lhs
 
   # cat_str[A] is missing from right implicitly (no ref group set)
   dm = DesignMatrix('binary_str ~ cont + cat_str',model_data)
-  assert dm.design == 'binary_str__B ~ Intercept + cat_str__B + cat_str__C + cat_str__D + cont'
+  assert dm.design == 'binary_str__B ~ Intercept + cont + cat_str__B + cat_str__C + cat_str__D'
   assert 'cat_str__A' not in dm.lhs
 
   # binary_str[A] and cat_str[A] missing from right implicitly
@@ -111,15 +111,13 @@ def test_DesignMatrix(model_data) :
   assert 'binary_str__A' not in dm.rhs
   assert 'cat_str__A' not in dm.rhs
 
-  # whatever, people can do this at their own risk
-  dm = DesignMatrix('cont ~ binary_str:cat_str',model_data)
-  assert dm.design == ('cont ~ Intercept + cat_str__B + cat_str__C + cat_str__D + '
-                       'binary_str__B:cat_str__A + binary_str__B:cat_str__B + '
-                       'binary_str__B:cat_str__C + binary_str__B:cat_str__D')
-
 def test_DesignMatrix_colnames(model_data) :
-  
-    from de_toolkit.patsy_lite import DesignMatrix, PatsyLiteParseError
+
+    from de_toolkit.patsy_lite import DesignMatrix, PatsyLiteParseError, patsy_lite_to_patsy
+
+
+    dm = DesignMatrix('cont ~ cont + binary_str',model_data)
+    assert dm.design == 'cont ~ Intercept + cont + binary_str__B'
 
     # add . to column names
     model_data.columns = ['fld.{}'.format(_) for _ in model_data.columns]
@@ -135,3 +133,5 @@ def test_DesignMatrix_colnames(model_data) :
 
     with pytest.raises(PatsyLiteParseError) :
         dm = DesignMatrix('fld.cont ~ fld.cat_int[4,1,2,3] + fld.]lsaj',model_data)
+
+

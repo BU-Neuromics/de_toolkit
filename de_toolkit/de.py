@@ -195,7 +195,13 @@ def deseq2(
             saveRDS(dds,params$rda)
         }
 
-        write.csv(res.df,out.fn,row.names=T)
+        # because R is stupid and can't easily write out a column name for
+        # a row name
+        res.df.cols <- colnames(res.df)
+        res.df[[index.name]] <- rnames
+        res.df <- res.df[c(index.name,res.df.cols)]
+
+        write.csv(res.df,out.fn,row.names=F)
     '''
     with wrapr(script,
             counts=count_obj.counts,

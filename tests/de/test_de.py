@@ -1,5 +1,5 @@
 
-from de_toolkit.common import CountMatrix, InvalidDesignException
+from de_toolkit.common import CountMatrix, CountMatrixFile, InvalidDesignException
 from de_toolkit.de import main
 from de_toolkit.wrapr import check_r, require_r, check_r_package
 
@@ -7,6 +7,7 @@ from copy import deepcopy
 import docopt
 from itertools import cycle
 import numpy
+import os
 import pandas
 import pytest
 from tempfile import NamedTemporaryFile
@@ -75,15 +76,68 @@ def deseq2_test_counts_obj() :
 
   return CountMatrix(counts,column_data,design)
 
+'''
 @r_test
 @deseq2_test
 def test_deseq2_cli(fake_counts_csv,fake_column_data_csv) :
-  main(['detk-de','deseq2','counts ~ category',fake_counts_csv,fake_column_data_csv])
+
+    with NamedTemporaryFile() as f :
+        out_fn = f.name
+
+    main(['detk-de','deseq2','counts ~ category',fake_counts_csv,fake_column_data_csv,'-o',out_fn])
+
+    orig_res = pandas.read_csv(fake_counts_csv)
+    res = pandas.read_table(out_fn)
+    assert all(res.gene == orig_res.gene)
+
+    assert all(res.columns == [
+                                'gene',
+                                'baseMean',
+                                'category__cont__log2FoldChange',
+                                'category__cont__lfcSE',
+                                'category__cont__stat',
+                                'category__cont__pvalue',
+                                'category__cont__padj'
+                                ])
+
+    os.remove(out_fn)
+'''
 
 @r_test
 @deseq2_test
 def test_deseq2_cli_w_cov(fake_counts_csv,fake_column_data_csv) :
-  main(['detk-de','deseq2','counts ~ cont_cov + category',fake_counts_csv,fake_column_data_csv])
+
+    with NamedTemporaryFile() as f :
+        out_fn = f.name
+
+    mat = CountMatrixFile(
+              fake_counts_csv,
+              fake_column_data_csv,
+              'counts ~ cont_cov + category'
+          )
+    print(mat.design)
+
+    main(['detk-de','deseq2','counts ~ cont_cov + category',fake_counts_csv,fake_column_data_csv,'-o',out_fn])
+
+    orig_res = pandas.read_csv(fake_counts_csv)
+    res = pandas.read_table(out_fn)
+    assert all(res.gene == orig_res.gene)
+    assert all(res.columns == [
+                                'gene',
+                                'baseMean',
+                                'cont_cov__log2FoldChange',
+                                'cont_cov__lfcSE',
+                                'cont_cov__stat',
+                                'cont_cov__pvalue',
+                                'cont_cov__padj',
+                                'category__cont__log2FoldChange',
+                                'category__cont__lfcSE',
+                                'category__cont__stat',
+                                'category__cont__pvalue',
+                                'category__cont__padj'
+                                ])
+
+    os.remove(out_fn)
 
 
 @r_test
@@ -99,6 +153,7 @@ def test_deseq2_de(deseq2_test_counts_obj) :
         )
 
     # these counts have true lfc in range(-4,5)
+    assert all(res.index == deseq2_test_counts_obj.counts.index)
     assert numpy.allclose(res['category__case__log2FoldChange'],numpy.arange(-4,5),atol=0.2)
 
     # all coef results off

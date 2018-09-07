@@ -158,7 +158,6 @@ class DesignMatrix(object) :
                 if col.startswith(term.name()) :
                     new_order.append(col)
 
-        print(new_order)
         self.rhs = self.rhs[new_order]
 
         # the patsy formula names are ugly and not very machine (or human)

@@ -6,6 +6,8 @@
 - fixed bug where deseq2 model term order was wrong, causing --last-term-only
   functionality to be incorrect
 - fixed issue #37
+- addressed issue #39 by changing the default deseq2 behavior to accept raw
+  counts by default
 
 ## [0.6.0]
 ### Added

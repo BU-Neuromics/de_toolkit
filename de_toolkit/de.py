@@ -20,9 +20,9 @@ Options:
     --strict               Require that the sample order indicated by the column names in the
                            counts file are the same as, and in the same order as, the
                            sample order in the row names of the covariates file
-    --raw-counts           Let DESeq2 normalize counts prior to running differential
-                           expression, default behavior assumes that counts are
-                           already normalized
+    --norm-counts          Prevent DESeq2 from normalizing counts prior to
+                           running differential expression, default behavior
+                           assumes that provided counts are raw
     --last-term-only       Use the default DESeq2 behavior of returning DE parameters
                            for the last term in the model, default behavior is to
                            report parameters for all variables in the model
@@ -339,7 +339,7 @@ def main(argv=sys.argv) :
         )
 
         out_df = deseq2(count_obj,
-               normalized=not args.get('--raw-counts',False),
+               normalized=args.get('--norm-counts',False),
                rda=args.get('--rda'),
                all_coeff_results=not args.get('--last-term-only',False),
                cores=int(args['--cores']) if args['--cores'] != 'none' else None

@@ -41,14 +41,13 @@ the following ways:
 
 * the design formula specified on the command line *must* have the value
   ``counts`` as the only term of the left hand side
-* counts are *assumed to already be normalized* prior to analysis (pass raw
-  counts using the ``--raw-counts`` command line flag)
 * no outlier mean trimming based on Cooks distance is performed
 * no p-values or adjusted p-values are flagged or omitted due to outliers
 * estimated parameters, statistics, and p-values are reported for
   *all variables in the model* in the output, rather than just the last term
   (request the default behavior using the ``--last-term-only`` command line
   flag)
+* no independent filtering is performed
 * all columns related to a term in the model have the term name prepended
   in the output, e.g. ``Status__log2FoldChange``
 
@@ -64,9 +63,9 @@ Usage::
         --strict               Require that the sample order indicated by the column names in the
                                counts file are the same as, and in the same order as, the
                                sample order in the row names of the covariates file
-        --raw-counts           Let DESeq2 normalize counts prior to running differential
-                               expression, default behavior assumes that counts are
-                               already normalized
+        --norm-counts          Prevent DESeq2 from normalizing counts prior to
+                               running differential expression, default behavior
+                               assumes that provided counts are raw
         --last-term-only       Use the default DESeq2 behavior of returning DE parameters
                                for the last term in the model, default behavior is to
                                report parameters for all variables in the model

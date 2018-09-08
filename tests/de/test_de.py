@@ -23,12 +23,6 @@ deseq2_test = pytest.mark.skipif(not check_r_package('DESeq2'),
         reason='DESeq2 package not installed, skipping test'
 )
 
-@r_test
-@logistf_test
-def test_firth_cli_multicore(fake_counts_csv,fake_column_data_csv) :
-  main(['detk-de','firth','--cores=2','category ~ counts',fake_counts_csv,fake_column_data_csv])
-
-
 def test_de_cli() :
   with pytest.raises(docopt.DocoptExit) :
     main()
@@ -203,6 +197,11 @@ def test_deseq2_de(deseq2_test_counts_obj) :
 @logistf_test
 def test_firth_cli(fake_counts_csv,fake_column_data_csv) :
   main(['detk-de','firth','category ~ counts',fake_counts_csv,fake_column_data_csv])
+
+@r_test
+@logistf_test
+def test_firth_cli_multicore(fake_counts_csv,fake_column_data_csv) :
+  main(['detk-de','firth','--cores=2','category ~ counts',fake_counts_csv,fake_column_data_csv])
 
 @r_test
 @logistf_test

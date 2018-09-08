@@ -3,6 +3,9 @@
 ## unreleased
 ### Changed
 - fixed bug where patsy lite model term order was different than specified formula
+- fixed bug where deseq2 model term order was wrong, causing --last-term-only
+  functionality to be incorrect
+- fixed issue #37
 
 ## [0.6.0]
 ### Added

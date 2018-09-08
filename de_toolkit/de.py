@@ -272,7 +272,7 @@ def firth_logistic_regression(
         applyf <- lapply
         if(!is.null(params$cores)) {
             library(parallel)
-            applyf <- function(l,f) { mclapply(l,f,cores=params$cores) }
+            applyf <- function(l,f) { mclapply(l,f,mc.cores=params$cores) }
         }
         res.orig <- applyf(rownames(cnts),
             function(gene) {

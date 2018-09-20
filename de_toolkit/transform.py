@@ -1,11 +1,51 @@
 '''
 Usage:
-    detk-transform vst <counts_fn> <cov_fn>
-    detk-transform ruvseq <counts_fn>
-    detk-transform trim <counts_fn>
-    detk-transform shrink <counts_fn>
+    detk-transform plog [options] <count_fn>
+    detk-transform vst [options] <count_fn>
+    detk-transform rlog [options] <count_fn> [<design> <cov_fn>]
 '''
+TODO = '''
+    detk-transform ruvseq <count_fn>
+'''
+
+cmd_opts = {
+    'vst':'''\
+Usage:
+    detk-transform vst [options] <count_fn>
+
+Options:
+    -o FILE --output=FILE  Destination of primary output [default: stdout]
+    --rda=RDA              Filename passed to saveRDS() R function of the result
+                           objects from the analysis
+''',
+    'plog':'''\
+Usage:
+    detk-transform plog [options] <count_fn>
+
+Options:
+    -c N --pseudocount=N   The pseudocount to use when taking the log transform [default:1]
+    -b B --base=B          The base of the log to use [default: 10]
+    -o FILE --output=FILE  Destination of primary output [default: stdout]
+''',
+    'rlog':'''\
+Usage:
+    detk-transform rlog [options] <count_fn> [<design> <cov_fn>]
+
+Options:
+    -o FILE --output=FILE  Destination of primary output [default: stdout]
+    --rda=RDA              Filename passed to saveRDS() R function of the result
+                           objects from the analysis
+    --strict               Require that the sample order indicated by the column names in the
+                           counts file are the same as, and in the same order as, the
+                           sample order in the row names of the covariates file
+''',
+}
+
 from docopt import docopt
+import math
+import numpy
+import pandas
+import sys
 from .common import CountMatrixFile
 from .wrapr import (
                 require_r, require_deseq2, wrapr, RExecutionError, RPackageMissing,
@@ -13,44 +53,41 @@ from .wrapr import (
         )
 from .util import stub
 
-def pmf_transform(x,shrink_factor=0.25,max_p=None,iters=1000) :
+def plog(count_obj,pseudocount=1,base=10) :
+    '''
+    Logarithmic transform of a counts matrix with fixed pseudocount, i.e. $\\log(x+c)$
 
-    x = x.copy()
-    max_p = max_p or sqrt(1./len(x))
+    Parameters
+    ----------
+    count_obj : CountMatrix object
+        count matrix object
 
-    for i in range(iters) :
-        p_x = x/x.sum()
+    Returns
+    -------
+    pandas.DataFrame
+        log transformed counts dataframe with the same dimensionality as input
+        counts
 
-        if x.sum() == 0 :
-            print('all samples set to zero, returning')
-            break
-
-        p_x_outliers = p_x>max_p
-
-        if not any(p_x_outliers) :
-            break # done
-
-        max_non_outliers = max(x[~p_x_outliers])
-
-        x[p_x_outliers] = max_non_outliers+(x[p_x_outliers]-max_non_outliers)*shrink_factor
-
-    if i == iters :
-        print('PMF transform did not converge')
-        print(p_x)
-        print(p_x_outliers)
-
-    return x
-
-@stub
-def shrink_outliers(count_obj) :
-    pass
-
-@stub
-def trim_outliers(count_obj) :
-    pass
+    '''
+    return numpy.log(count_obj.counts+pseudocount)/numpy.log(base)
 
 @require_r('DESeq2','SummarizedExperiment')
 def vst(count_obj) :
+    '''
+    Variance Stabilizing Transformation implemented in the DESeq2 bioconductor
+    package.
+
+    Parameters
+    ----------
+    count_obj : CountMatrix object
+        count matrix object
+
+    Returns
+    -------
+    pandas.DataFrame
+        VST transformed counts dataframe with the same dimensionality as input
+        counts
+    '''
 
     script = '''\
     library(DESeq2)
@@ -68,7 +105,80 @@ def vst(count_obj) :
     with wrapr(script,
             counts=count_obj.counts,
             raise_on_error=True) as r :
-        vsd_values = r.output.values
+        vsd_values = r.output
+
+    return vsd_values
+
+@require_r('DESeq2','SummarizedExperiment')
+def rlog(count_obj,blind=True) :
+    '''
+    Regularized log (rlog) transformation implemented in the DESeq2 bioconductor
+    package.
+
+    Parameters
+    ----------
+    count_obj : CountMatrix object
+        count matrix object
+    blind : bool
+        the `blind` parameter as passed to the `rlog` function in DESeq2. if
+        False, `count_obj` is expected to have `column_data` and a valid
+        design as required by the R function
+
+    Returns
+    -------
+    pandas.DataFrame
+        rlog transformed counts dataframe with the same dimensionality as input
+        counts
+    '''
+
+
+    script = '''\
+    library(DESeq2)
+    library(SummarizedExperiment)
+
+    cnts <- as.matrix(read.csv(counts.fn,row.names=1))
+
+    # load design matrix
+    if(file.info(metadata.fn)$size != 0) {
+        colData <- read.csv(metadata.fn,header=T,as.is=T,row.names=1)
+    } else {
+        # just to convince DESeq2 that everything is ok when we're doing a
+        # blind rlog
+        n.fake.class.1 <- floor(ncol(cnts)/2)
+        fake.classes <- factor(c(
+            rep(0,n.fake.class.1),
+            rep(1,ncol(cnts)-n.fake.class.1))
+        )
+        colData <- data.frame(name=fake.classes)
+    }
+
+    blind <- params$blind
+    form <- params$design
+
+    dds <- DESeqDataSetFromMatrix(countData = cnts,
+        colData = colData,
+        design = formula(form)
+    )
+
+    dds <- rlog(dds,blind=blind)
+    write.csv(assay(dds),out.fn)
+    '''
+
+    column_data = None
+    if not blind and count_obj.column_data is not None :
+        column_data = count_obj.design_matrix.full_matrix
+
+    params = {
+        'design': '~ 1' if blind else count_obj.design,
+        'blind': blind
+    }
+
+    with wrapr(script,
+            counts=count_obj.counts,
+            metadata=column_data,
+            params=params,
+            raise_on_error=True) as r :
+        vsd_values = r.output
 
     return vsd_values
 
@@ -76,24 +186,43 @@ def vst(count_obj) :
 def ruvseq(count_obj) :
     pass
 
-def main(argv=None) :
+def main(argv=sys.argv) :
 
-    args = docopt(__doc__,argv=argv)
+    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
+        docopt(__doc__)
+    argv = argv[1:]
+    cmd = argv[0]
 
-    count_obj = CountMatrixFile(
-        args['<counts_fn>']
-        ,column_data_f=args['<cov_fn>']
-    )
+    if cmd == 'vst' :
+        args = docopt(cmd_opts['vst'],argv)
+        count_obj = CountMatrixFile(args['<count_fn>'])
 
-    if args['vst'] :
-        vst_counts = vst(count_obj)
+        out_df = vst(count_obj)
 
-    elif args['ruvseq'] :
-        ruvseq(count_obj)
-    elif args['trim'] :
-        trim_outliers(count_obj)
-    elif args['shrink'] :
-        shrink_outliers(count_obj)
+    if cmd == 'plog' :
+        args = docopt(cmd_opts['plog'],argv)
+        count_obj = CountMatrixFile(args['<count_fn>'])
+
+        out_df = plog(count_obj)
+    
+    elif cmd == 'rlog' :
+        args = docopt(cmd_opts['rlog'],argv)
+
+        count_obj = CountMatrixFile(
+            args['<count_fn>']
+            ,args['<cov_fn>']
+            ,design=args['<design>']
+            ,strict=args.get('--strict',False)
+        )
+
+        out_df = rlog(count_obj)
+
+    if args['--output'] == 'stdout' :
+        f = sys.stdout
+    else :
+        f = args['--output']
+
+    out_df.to_csv(f,sep='\t')
 
 if __name__ == '__main__' :
     main()

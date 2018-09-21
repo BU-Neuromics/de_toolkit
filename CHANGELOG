@@ -5,8 +5,11 @@
 - fixed transform CLI bug #42
 - enable estimateDispersionsGeneEst functionality when DESeq2 complains about
   dispersions being within two orders of magnitude
+- small fixes to CLI docopt usage text
+- code refactor and doc changes to outlier module
 ### Added
 - fully implemented vst, rlog, and plog transforms, with tests and docs
+- outlier.shrink outlier shrinking method
 
 ## [ 0.6.1 ]
 ### Changed

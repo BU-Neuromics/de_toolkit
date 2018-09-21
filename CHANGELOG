@@ -1,6 +1,6 @@
 # Changelog
 
-## unreleased
+## [ 0.7.0 ]
 ### Changed
 - fixed transform CLI bug #42
 - enable estimateDispersionsGeneEst functionality when DESeq2 complains about

@@ -1,8 +1,8 @@
 '''
 Usage:
-    detk-norm deseq2 [options] [<counts_fn>]
-    detk-norm library [options] [<counts_fn>]
-    detk-norm fpkm [options] [<counts_fn> <lengths_fn>]
+    detk-norm deseq2 [options] <counts_fn>
+    detk-norm library [options] <counts_fn>
+    detk-norm fpkm [options] <counts_fn> <lengths_fn>
 Options:
     -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
 '''

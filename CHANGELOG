@@ -1,5 +1,13 @@
 # Changelog
 
+## unreleased
+### Changed
+- fixed transform CLI bug #42
+- enable estimateDispersionsGeneEst functionality when DESeq2 complains about
+  dispersions being within two orders of magnitude
+### Added
+- fully implemented vst, rlog, and plog transforms, with tests and docs
+
 ## [ 0.6.1 ]
 ### Changed
 - fixed bug where patsy lite model term order was different than specified formula

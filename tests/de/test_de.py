@@ -83,7 +83,7 @@ def test_deseq2_cli(fake_counts_csv,fake_column_data_csv) :
     with NamedTemporaryFile() as f :
         out_fn = f.name
 
-    main(['detk-de','deseq2','counts ~ category',fake_counts_csv,fake_column_data_csv,'-o',out_fn])
+    main(['detk-de','deseq2','--gene-wise-disp','counts ~ category',fake_counts_csv,fake_column_data_csv,'-o',out_fn])
 
     orig_res = pandas.read_csv(fake_counts_csv)
     res = pandas.read_table(out_fn)

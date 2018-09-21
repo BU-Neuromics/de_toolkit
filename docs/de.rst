@@ -69,6 +69,7 @@ Usage::
         --last-term-only       Use the default DESeq2 behavior of returning DE parameters
                                for the last term in the model, default behavior is to
                                report parameters for all variables in the model
+        --gene-wise-disp       Use estimateDispersionsGeneEst instead of estimateDispersions
         --cores=N              Tell DESeq2 to use N cores when running, requires the
                                BiocParallel Bioconductor package to be installed [default: none]
 

@@ -1,7 +1,7 @@
 '''\
 Usage:
-    detk-de deseq2 ( help | [options] <design> <count_fn> <cov_fn> )
-    detk-de firth ( help | [options] <design> <count_fn> <cov_fn> )
+    detk-de deseq2 [options] <design> <count_fn> <cov_fn>
+    detk-de firth [options] <design> <count_fn> <cov_fn>
 '''
 
 TODO = '''
@@ -26,6 +26,7 @@ Options:
     --last-term-only       Use the default DESeq2 behavior of returning DE parameters
                            for the last term in the model, default behavior is to
                            report parameters for all variables in the model
+    --gene-wise-disp       Use estimateDispersionsGeneEst instead of estimateDispersions
     --cores=N              Tell DESeq2 to use N cores when running, requires the
                            BiocParallel Bioconductor package to be installed [default: none]
 ''',
@@ -64,6 +65,7 @@ def deseq2(
         normalized=True,
         rda=None,
         all_coeff_results=True,
+        gene_wise_disp_est=False,
         cores=None) :
 
     # make a copy of count_obj, since we mutate it
@@ -97,7 +99,8 @@ def deseq2(
         'normalized': normalized,
         'rda': rda,
         'cores': cores,
-        'all.coeff.results': all_coeff_results
+        'all.coeff.results': all_coeff_results,
+        'gene.wise.disp.est': gene_wise_disp_est
     }
     script = '''\
         library(DESeq2)
@@ -137,10 +140,22 @@ def deseq2(
         # if counts are already normalized, don't normalize them
         if(params$normalized) {
             sizeFactors(dds) <- rep(1,nrow(design.mat))
+        } else {
+            dds <- estimateSizeFactors(dds)
+        }
+
+        # in some cases R can throw this error:
+        if(params$gene.wise.disp.est) {
+            dds <- estimateDispersionsGeneEst(dds)
+            dispersions(dds) <- mcols(dds)$dispGeneEst
+        } else {
+            dds <- estimateDispersions(dds)
         }
 
         # turn off cooks distance outlier replacement
-        dds <- DESeq(dds,minReplicatesForReplace=Inf,parallel=parallel)
+        #dds <- DESeq(dds,minReplicatesForReplace=Inf,parallel=parallel)
+
+        dds <- nbinomWaldTest(dds)
 
         result_from_dds <- function(name) {
             res.df <- data.frame(
@@ -342,6 +357,7 @@ def main(argv=sys.argv) :
                normalized=args.get('--norm-counts',False),
                rda=args.get('--rda'),
                all_coeff_results=not args.get('--last-term-only',False),
+               gene_wise_disp_est=args.get('--gene-wise-disp',False),
                cores=int(args['--cores']) if args['--cores'] != 'none' else None
         )
 

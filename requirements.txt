@@ -16,3 +16,4 @@ sphinx-autobuild
 sphinx-rtd-theme
 statsmodels>=0.8.0
 terminaltables
+twine

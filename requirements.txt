@@ -1,5 +1,6 @@
 docopt
 future
+jinja2
 matplotlib
 mpld3
 numpy

@@ -21,6 +21,7 @@ setup(name='de_toolkit',
       ,install_requires=[
           'docopt',
           'future',
+          'jinja2',
           'matplotlib',
           'mpld3',
           'numpy',

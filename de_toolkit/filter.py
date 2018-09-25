@@ -242,10 +242,12 @@ def filter_counts(counts_obj, command) :
 
 def main(argv=sys.argv):
 
-    if argv[0] == 'detk' :
+    if argv[0].endswith('detk') :
         argv = argv[2:]
-    elif argv[0] == 'detk-filter' :
+    elif argv[0].endswith('detk-filter') :
         argv = argv[1:]
+
+    print(argv)
 
     #Create command line arguments to pass in data and filter command
     args = docopt(__doc__, argv=argv)

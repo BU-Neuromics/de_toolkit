@@ -1,6 +1,10 @@
 # Changelog
 
-## [ unreleased ]
+## [ 0.7.2 ]
+### Changed
+- CLI bugfix for filter module
+
+## [ 0.7.1 ]
 ### Changed
 - complete overhaul to filter system
 

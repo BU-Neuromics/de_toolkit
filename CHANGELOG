@@ -1,5 +1,9 @@
 # Changelog
 
+## [ unreleased ]
+### Changed
+- complete overhaul to filter system
+
 ## [ 0.7.0 ]
 ### Changed
 - fixed transform CLI bug #42

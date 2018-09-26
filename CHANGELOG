@@ -3,6 +3,7 @@
 ## [ unreleased ]
 ### Changed
 - fixed incorrect count shrinking
+- fixed bug when counts to rlog are not integers
 
 ## [ 0.7.2 ]
 ### Changed

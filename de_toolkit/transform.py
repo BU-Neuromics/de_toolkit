@@ -138,6 +138,16 @@ def rlog(count_obj,blind=True) :
 
     cnts <- as.matrix(read.csv(counts.fn,row.names=1))
 
+    rnames <- rownames(cnts)
+
+    # DESeq2 whines when input counts aren't integers
+    # round the counts matrix
+    cnts <- data.frame(apply(cnts,2,function(x) { round(as.numeric(x)) }))
+    print(dim(cnts))
+    print(rnames)
+    print(rownames(cnts))
+    rownames(cnts) <- rnames
+
     # load design matrix
     if(file.info(metadata.fn)$size != 0) {
         colData <- read.csv(metadata.fn,header=T,as.is=T,row.names=1)

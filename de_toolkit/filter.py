@@ -247,8 +247,6 @@ def main(argv=sys.argv):
     elif argv[0].endswith('detk-filter') :
         argv = argv[1:]
 
-    print(argv)
-
     #Create command line arguments to pass in data and filter command
     args = docopt(__doc__, argv=argv)
 

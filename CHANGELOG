@@ -4,6 +4,7 @@
 ### Changed
 - fixed incorrect count shrinking
 - fixed bug when counts to rlog are not integers
+- removed erroneous cli arg print in filter
 
 ## [ 0.7.2 ]
 ### Changed

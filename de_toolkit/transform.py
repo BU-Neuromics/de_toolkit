@@ -143,9 +143,6 @@ def rlog(count_obj,blind=True) :
     # DESeq2 whines when input counts aren't integers
     # round the counts matrix
     cnts <- data.frame(apply(cnts,2,function(x) { round(as.numeric(x)) }))
-    print(dim(cnts))
-    print(rnames)
-    print(rownames(cnts))
     rownames(cnts) <- rnames
 
     # load design matrix

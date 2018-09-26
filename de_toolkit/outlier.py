@@ -109,8 +109,8 @@ def shrink(count_obj,shrink_factor=0.25,p_max=None,iters=1000) :
         ``sqrt(1/num_samples)``
     '''
 
-    shrunk_counts = pmf_transform(
-        count_obj.counts.values,
+    shrunk_counts = count_obj.counts.apply(
+        pmf_transform,
         shrink_factor=shrink_factor,
         p_max=p_max,
         iters=iters

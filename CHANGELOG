@@ -1,5 +1,9 @@
 # Changelog
 
+## [ unreleased ]
+### Changed
+- fixed incorrect count shrinking
+
 ## [ 0.7.2 ]
 ### Changed
 - CLI bugfix for filter module

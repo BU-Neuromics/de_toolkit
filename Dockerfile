@@ -45,5 +45,12 @@ ENV HOME /root
 # Define working directory.
 WORKDIR /root
 
+# install current detk
+RUN \
+    git clone https://bitbucket.org/bubioinformaticshub/de_toolkit.git && \
+    cd de_toolkit && \
+    pip3 install -r requirements.txt && \
+    python3 setup.py install
+
 # Define default command.
 CMD ["bash"]

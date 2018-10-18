@@ -42,6 +42,7 @@ setup(name='de_toolkit',
           'detk=de_toolkit.common:main'
           ,'detk-norm=de_toolkit.norm:main'
           ,'detk-de=de_toolkit.de:main'
+          ,'detk-enrich=de_toolkit.enrich:main'
           ,'detk-transform=de_toolkit.transform:main'
           ,'detk-filter=de_toolkit.filter:main'
           ,'detk-stats=de_toolkit.stats:main'

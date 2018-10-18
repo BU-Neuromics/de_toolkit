@@ -197,6 +197,9 @@ def main(argv=sys.argv) :
     elif cmd == 'de' :
         from .de import main
         main(cli_args)
+    elif cmd == 'enrich' :
+        from .enrich import main
+        main(cli_args)
     elif cmd == 'transform' :
         from .transform import main
         main(cli_args)

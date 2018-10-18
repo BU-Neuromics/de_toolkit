@@ -1,6 +1,8 @@
 # Changelog
 
 ## [ unreleased ]
+### Added
+- detk-enrich fgsea and tests
 ### Changed
 - fixed incorrect count shrinking
 - fixed bug when counts to rlog are not integers

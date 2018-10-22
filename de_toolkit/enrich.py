@@ -46,6 +46,7 @@ import numpy as np
 import os
 import pandas
 import tempfile
+import warnings
 from .common import CountMatrixFile
 from .util import stub
 from .wrapr import require_r, wrapr, require_r_package, RPackageMissing
@@ -88,6 +89,12 @@ def fgsea(
         nperm=10000,
         nproc=None,
         rda_fn=None) :
+
+    # check for NAs in the stat
+    if stat.isnull().any() :
+        nas = stat[stat.isnull()]
+        warnings.warn('The following statistics were NaN and were filtered prior to fgsea:\n{}'.format(nas))
+        stat = stat[~stat.isnull()]
 
     script = '''\
     library(fgsea)

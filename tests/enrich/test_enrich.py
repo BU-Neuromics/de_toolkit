@@ -58,6 +58,27 @@ def result_csv(request,stat) :
   # cleanup the csv
   os.remove(f.name)
 
+def test_fgsea(gmt_obj,stat) :
+    from de_toolkit.enrich import fgsea
+
+    # this way has set1, set2, and set3 negative NES,
+    # set4 and set5 positive
+    res = fgsea(gmt_obj,stat,minSize=1)
+    assert all(res.loc[['set1','set2','set3'],'NES'] < 0)
+    assert all(res.loc[['set4','set5'],'NES'] > 0)
+
+    # this is the opposite direction
+    res = fgsea(gmt_obj,(-stat).sort_values(),minSize=1)
+    assert all(res.loc[['set1','set2','set3'],'NES'] > 0)
+    assert all(res.loc[['set4','set5'],'NES'] < 0)
+
+    # if the stat column has NAs in it, fgsea warns the user that the
+    # gene has been filtered out
+    na_stat = stat.copy().astype(float)
+    na_stat[0] = np.nan
+    with pytest.warns(UserWarning) :
+        res = fgsea(gmt_obj,na_stat.sort_values(),minSize=1)
+
 def test_fgsea_cli(gmt_file,result_csv) :
     from de_toolkit.enrich import main
     from de_toolkit.wrapr import wrapr
@@ -161,19 +182,5 @@ def test_gmt_file(gset_dict, gmt_file) :
             assert line[0] == 'set1'
             assert line[1] == 'set1'
             assert line[2:] == ['gene1','gene2','gene3']
-
-def test_fgsea(gmt_obj,stat) :
-    from de_toolkit.enrich import fgsea
-
-    # this way has set1, set2, and set3 negative NES,
-    # set4 and set5 positive
-    res = fgsea(gmt_obj,stat,minSize=1)
-    assert all(res.loc[['set1','set2','set3'],'NES'] < 0)
-    assert all(res.loc[['set4','set5'],'NES'] > 0)
-
-    # this is the opposite direction
-    res = fgsea(gmt_obj,(-stat).sort_values(),minSize=1)
-    assert all(res.loc[['set1','set2','set3'],'NES'] > 0)
-    assert all(res.loc[['set4','set5'],'NES'] < 0)
 
 

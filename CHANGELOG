@@ -1,5 +1,9 @@
 # Changelog
 
+## [ 0.8.1 ]
+### Changed
+- fixed bug where fgsea would crash if passed NaN stats
+
 ## [ 0.8.0 ]
 ### Added
 - detk-enrich fgsea and tests

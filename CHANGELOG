@@ -1,6 +1,6 @@
 # Changelog
 
-## unreleased
+## [ 0.8.2 ]
 ### Changed
 - fixed parse error on underscore in filter
 - fixed parse error on period in filter

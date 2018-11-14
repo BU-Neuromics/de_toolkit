@@ -45,7 +45,7 @@ There are four different filter functions available:
             Filter data based on the mean value of the row or column spec.
 - ``median``:
             Filter data based on the median value of the row or column spec.
-- ``zeros``:
+- ``zero``:
             Filter data based on how many zero counts are in the row. If the
             input number is between 0 and 1, (0 < number < 1), then the 
             number is the fraction of samples that must be zero. If the number
@@ -75,7 +75,7 @@ White spaces are disregarded, so the following are equivalent::
 Additionally, multiple terms can be input at once to filter on more than one 
 criteria at a time using the keywords ``and`` or ``or``. For example::
 
-  mean(all) > 10 and zeros(all) < 0.5
+  mean(all) > 10 and zero(all) < 0.5
 
 This filter will include all genes with greater than an overall mean of 10 and
 with more than 50% of the samples having nonzero counts. Commands may be

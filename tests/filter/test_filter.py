@@ -124,6 +124,9 @@ def test_parser(filter_count_obj):
     p2 = parse_filter_command('mean(cov[case]) > 3 and mean(cov[cont]) > 3')
     assert p1(filter_count_obj) == p2(filter_count_obj)
 
+    p = parse_filter_command('zero(all) == 10')
+    assert p(filter_count_obj) == {'gene05','gene08'}
+
     p = parse_filter_command('nonzero(all) >= 20')
     assert p(filter_count_obj) == {'gene00','gene01','gene02','gene03','gene04','gene06','gene07'}
 
@@ -156,4 +159,12 @@ def test_parser(filter_count_obj):
 
     filter_count_obj.column_data.cov_with_underscore = [_+'_o' for _ in filter_count_obj.column_data.cov_with_underscore]
     p = parse_filter_command('nonzero(cov_with_underscore[case_o]) == -1')
+    assert p(filter_count_obj) == set()
+
+    filter_count_obj.column_data.columns = ['id','cov_with.period','counts']
+    p = parse_filter_command('nonzero(cov_with.period) == -1')
+    assert p(filter_count_obj) == set()
+
+    filter_count_obj.column_data.cov_with_underscore = [_+'.o' for _ in filter_count_obj.column_data.cov_with_underscore]
+    p = parse_filter_command('nonzero(cov_with.period[case.o]) == -1')
     assert p(filter_count_obj) == set()

@@ -1,5 +1,10 @@
 # Changelog
 
+## unreleased
+### Changed
+- fixed parse error on underscore in filter
+- changed zeros filter to zero in filter + docs
+
 ## [ 0.8.1 ]
 ### Changed
 - fixed bug where fgsea would crash if passed NaN stats

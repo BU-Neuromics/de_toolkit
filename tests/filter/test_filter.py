@@ -149,3 +149,11 @@ def test_parser(filter_count_obj):
 
     p = parse_filter_command('nonzero(all) == -1')
     assert p(filter_count_obj) == set()
+
+    filter_count_obj.column_data.columns = ['id','cov_with_underscore','counts']
+    p = parse_filter_command('nonzero(cov_with_underscore) == -1')
+    assert p(filter_count_obj) == set()
+
+    filter_count_obj.column_data.cov_with_underscore = [_+'_o' for _ in filter_count_obj.column_data.cov_with_underscore]
+    p = parse_filter_command('nonzero(cov_with_underscore[case_o]) == -1')
+    assert p(filter_count_obj) == set()

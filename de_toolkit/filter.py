@@ -36,7 +36,7 @@ t_RPAREN = r'\)'
 t_LBRACKET = r'\['
 t_RBRACKET = r'\]'
 t_OP = r'>=|<=|==|!=|<|>'
-t_WORD = r'[a-zA-Z0-9]+'
+t_WORD = r'[a-zA-Z0-9_]+'
 t_NUMBER = r'-?[0-9]+([.][0-9]+)?'
 
 #Mini language ignores spaces, tabs, brackets, and parentheses

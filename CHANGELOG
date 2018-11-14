@@ -3,6 +3,7 @@
 ## unreleased
 ### Changed
 - fixed parse error on underscore in filter
+- fixed parse error on period in filter
 - changed zeros filter to zero in filter + docs
 
 ## [ 0.8.1 ]

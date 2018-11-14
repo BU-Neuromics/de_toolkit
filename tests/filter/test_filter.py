@@ -66,6 +66,11 @@ def test_filter_cli(filter_count_obj):
             counts_f.flush()
 
             with NamedTemporaryFile('wt') as out_f :
+                main(['detk-filter','-o',out_f.name,'mean(all) == 1',counts_f.name])
+                df = pandas.read_csv(out_f.name,index_col=0)
+                assert all(df.index == ['gene00'])
+
+            with NamedTemporaryFile('wt') as out_f :
                 main(['detk-filter','-o',out_f.name,'mean(all) == 1 or mean(all) == 0',counts_f.name])
                 df = pandas.read_csv(out_f.name,index_col=0)
                 assert all(df.index == ['gene00','gene11'])
@@ -165,6 +170,6 @@ def test_parser(filter_count_obj):
     p = parse_filter_command('nonzero(cov_with.period) == -1')
     assert p(filter_count_obj) == set()
 
-    filter_count_obj.column_data.cov_with_underscore = [_+'.o' for _ in filter_count_obj.column_data.cov_with_underscore]
-    p = parse_filter_command('nonzero(cov_with.period[case.o]) == -1')
+    filter_count_obj.column_data['cov_with.period'] = [_+'.o' for _ in filter_count_obj.column_data['cov_with.period']]
+    p = parse_filter_command('nonzero(cov_with.period[case_o.o]) == -1')
     assert p(filter_count_obj) == set()

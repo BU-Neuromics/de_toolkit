@@ -21,23 +21,25 @@ from warnings import warn
 from .common import *
 
 #Available tokens for mini language
-tokens = (
-  'ALL','BOOL','FUNC',
-  'LPAREN','RPAREN','LBRACKET','RBRACKET',
-  'OP','WORD','NUMBER'
-)
+reserved = ('ALL','OR','AND','MEDIAN','MEAN','ZERO','NONZERO','MAX','MIN')
+tokens = ('LPAREN','RPAREN','LBRACKET','RBRACKET',
+          'OP','WORD','NUMBER'
+         ) + reserved
+reserved = dict((_,)*2 for _ in reserved)
 
 #Definitions of the mini language tokens
-t_ALL = r'all|ALL'
-t_BOOL = r'or|OR|and|AND'
-t_FUNC = r'median|MEDIAN|mean|MEAN|zero|ZERO|nonzero|ZERO'
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_LBRACKET = r'\['
 t_RBRACKET = r'\]'
 t_OP = r'>=|<=|==|!=|<|>'
-t_WORD = r'[a-zA-Z0-9_]+'
 t_NUMBER = r'-?[0-9]+([.][0-9]+)?'
+
+# http://www.dabeaz.com/ply/ply.html#ply_nn6
+def t_WORD(t) :
+    r'[a-zA-Z_.][a-zA-Z0-9_.]+'
+    t.type = reserved.get(t.value.upper(),'WORD')
+    return t
 
 #Mini language ignores spaces, tabs, brackets, and parentheses
 t_ignore = ' '
@@ -49,7 +51,8 @@ def t_error(t):
 # mini language is like:
 #
 # expression : spec OP NUMBER
-#            | expression BOOL expression
+#            | expression OR expression
+#            | expression AND expression
 #            | LPAREN expression RPAREN
 # spec       : FUNC LPAREN ALL RPAREN
 #            | FUNC LPAREN word RPAREN
@@ -105,6 +108,10 @@ class Clause(Expr) :
                 val = df.median(axis=1)
             elif self.func == 'mean' :
                 val = df.mean(axis=1)
+            elif self.func == 'min' :
+                val = df.min(axis=1)
+            elif self.func == 'max' :
+                val = df.max(axis=1)
             elif self.func == 'zero' :
                 val = (df==0).sum(axis=1)
                 if 0 < self.val < 1 :
@@ -181,9 +188,11 @@ class ColSpec(Expr) :
                     repr(self.group)
                 )
 
+
 def p_expression(p) :
     '''expression : clause
-                  | expression BOOL expression
+                  | expression OR expression
+                  | expression AND expression
                   | LPAREN expression RPAREN'''
     if len(p) == 2 :
         p[0] = p[1]
@@ -198,8 +207,18 @@ def p_expression(p) :
             raise Exception('unrecognized expression:',p)
 
 def p_clause(p) :
-    '''clause : FUNC LPAREN colspec RPAREN OP NUMBER'''
+    '''clause : func LPAREN colspec RPAREN OP NUMBER'''
     p[0] = Clause(p[1],p[3],p[5],p[6])
+
+def p_func(p) :
+    '''func : MEAN
+            | MEDIAN
+            | ZERO
+            | NONZERO
+            | MIN
+            | MAX
+        '''
+    p[0] = p[1]
 
 def p_spec(p) :
     '''colspec : ALL
@@ -226,6 +245,7 @@ def parse_filter_command(cmd) :
         lexer = lex.lex(outputdir=tmpdir)
 
         parser = yacc.yacc(outputdir=tmpdir)
+
 
     parsed = parser.parse(cmd)
     if parsed is None : # failed to parse

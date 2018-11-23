@@ -6,18 +6,17 @@ def test_cli() :
   with pytest.raises(docopt.DocoptExit) :
     main()
 
-def test_cli_version() :
+def test_cli_version(monkeypatch) :
     from io import StringIO
+
     import sys
-    oldstdout = sys.stdout
-    sys.stdout = StringIO()
+    stdout = StringIO()
+    monkeypatch.setattr(sys,'stdout', stdout)
 
     main(['detk','--version'])
 
     from de_toolkit.common import __version__
-    assert sys.stdout.value.strip() == __version__
-
-    sys.stdout = oldstdout
+    assert stdout.getvalue().strip() == __version__
 
 def test_CountMatrix(
   fake_counts_pandas_dataframe

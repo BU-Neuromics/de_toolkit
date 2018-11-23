@@ -276,6 +276,8 @@ def logistic(counts_obj) :
 
   return coeffs
 
+@r_test
+@logistf_test
 def test_firth(logistic_test_counts_obj) :
 
   from de_toolkit.de import firth_logistic_regression
@@ -291,6 +293,8 @@ def test_firth(logistic_test_counts_obj) :
   assert numpy.allclose(coeffs['Intercept'],firth_out['int__beta'],atol=atol)
   assert numpy.allclose(coeffs['counts'],firth_out['counts__beta'],atol=atol)
 
+@r_test
+@logistf_test
 def test_firth_rda(logistic_test_counts_obj) :
 
   from de_toolkit.de import firth_logistic_regression
@@ -307,6 +311,8 @@ def test_firth_rda(logistic_test_counts_obj) :
 
       assert len(f.read()) != 0
 
+@r_test
+@logistf_test
 def test_firth_parallel(logistic_test_counts_obj) :
 
   from de_toolkit.de import firth_logistic_regression
@@ -318,7 +324,8 @@ def test_firth_parallel(logistic_test_counts_obj) :
           cores=2
   )
 
-
+@r_test
+@logistf_test
 def test_firth_w_cov(logistic_test_counts_obj) :
   from de_toolkit.de import firth_logistic_regression
 

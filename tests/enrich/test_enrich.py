@@ -6,6 +6,15 @@ import pytest
 import os
 import tempfile
 
+from de_toolkit.wrapr import check_r, require_r, check_r_package
+
+r_test = pytest.mark.skipif(not check_r(),
+        reason='r is not installed, skipping test'
+)
+fgsea_test = pytest.mark.skipif(not check_r_package('gsea'), 
+        reason='fgsea package not installed, skipping test'
+)
+
 @pytest.fixture
 def gset_dict(request):
     d = OrderedDict()
@@ -58,6 +67,8 @@ def result_csv(request,stat) :
   # cleanup the csv
   os.remove(f.name)
 
+@r_test
+@fgsea_test
 def test_fgsea(gmt_obj,stat) :
     from de_toolkit.enrich import fgsea
 
@@ -79,6 +90,8 @@ def test_fgsea(gmt_obj,stat) :
     with pytest.warns(UserWarning) :
         res = fgsea(gmt_obj,na_stat.sort_values(),minSize=1)
 
+@r_test
+@fgsea_test
 def test_fgsea_cli(gmt_file,result_csv) :
     from de_toolkit.enrich import main
     from de_toolkit.wrapr import wrapr

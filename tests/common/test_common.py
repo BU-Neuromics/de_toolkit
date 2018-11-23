@@ -6,6 +6,19 @@ def test_cli() :
   with pytest.raises(docopt.DocoptExit) :
     main()
 
+def test_cli_version() :
+    from io import StringIO
+    import sys
+    oldstdout = sys.stdout
+    sys.stdout = StringIO()
+
+    main(['detk','--version'])
+
+    from de_toolkit.common import __version__
+    assert sys.stdout.value.strip() == __version__
+
+    sys.stdout = oldstdout
+
 def test_CountMatrix(
   fake_counts_pandas_dataframe
   ,fake_column_data_pandas_dataframe

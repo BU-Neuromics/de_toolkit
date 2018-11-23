@@ -1,5 +1,9 @@
 # Changelog
 
+## unreleased
+### Changed
+- moved version info into module
+
 ## [ 0.8.2 ]
 ### Changed
 - fixed parse error on underscore in filter

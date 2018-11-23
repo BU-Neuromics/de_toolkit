@@ -13,8 +13,12 @@ except ImportError :
         'install them first and then try again.')
   sys.exit(1)
 
+# https://packaging.python.org/guides/single-sourcing-package-version/
+with open('de_toolkit/version.py') as f :
+    exec(f.read())
+
 setup(name='de_toolkit',
-      version=open('VERSION').read().strip()
+      version=__version__
       ,description='Suite of tools for working with count data'
       ,author='Adam Labadorf and the BU Bioinformatics Hub Team'
       ,author_email='labadorf@bu.edu'

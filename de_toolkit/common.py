@@ -8,6 +8,7 @@ Usage:
     detk outlier [options] <args>...
     detk wrapr [options] <args>...
 '''
+from collections import OrderedDict
 from copy import deepcopy
 from docopt import docopt
 import pandas
@@ -193,6 +194,71 @@ class CountMatrixFile(CountMatrix) :
             ,design=design
             ,**kwargs
         )
+
+class DetkModule(OrderedDict) :
+    '''
+    Base class for all detk methods.
+
+    Each function in detk is a subclass of this class.
+    A module has the following properties:
+    - ``name``: name of the module
+    - ``workdir``: path to the directory where detk was run
+    - ``file_path``: path to the file that was processed
+    - ``out_file_path``: path to the file that was output, if available
+    - ``detk_version``: version of detk that generated this file
+    - ``params``: the module-dependent params passed to the module
+    - ``output``: the output of the module in tabular form
+    - ``properties``: properties and statistics about the module, used for
+        formatting the results into a report
+
+    All of these properties are JSON serializable, i.e. basic python
+    types (int, float, str, bool, array, dict).
+    '''
+    @property
+    def json(self) :
+        '''
+        Format the module object into a form amenable to serializing with JSON
+        for report creation. By default this returns all of the module-level
+        fields except output. Override if additional serialization is needed.
+        '''
+        return {
+                   'name': self.name
+                   ,'detk_version': __version__
+                   ,'file_path': self.get('file_path')
+                   ,'out_file_path': self.get('out_file_path')
+                   ,'workdir': self.get('workdir')
+                   ,'params': self.params
+                   ,'properties': self.properties
+               }
+    @property
+    def params(self) :
+        '''
+        Override this method to return a dictionary with relevant parameters
+        for the method.
+        '''
+        return {}
+    @property
+    def output(self) :
+        '''
+        Override this method to return a tabular form of the output. Can be
+        any rectangular-shaped object (i.e. list of lists, pandas.DataFrame,
+        numpy array, etc)
+        '''
+        return []
+    @property
+    def properties(self) :
+        '''
+        Override this method to return a dictionary with relevant properties
+        for the method. These might include metadata or summary statistics of
+        the output that would not otherwise be included. Primarily used in the
+        construction of report sections.
+        '''
+        return {}
+    @property
+    def name(self) :
+        'Name of this stats object, by default the class name in all lower case'
+        return self.__class__.__name__.lower()
+
 
 def main(argv=sys.argv) :
 

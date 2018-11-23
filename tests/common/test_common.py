@@ -1,6 +1,6 @@
 import docopt
 import pytest
-from de_toolkit.common import main, InvalidDesignException
+from de_toolkit.common import main, InvalidDesignException, DetkModule
 
 def test_cli() :
   with pytest.raises(docopt.DocoptExit) :
@@ -118,3 +118,22 @@ def test_CountMatrixFile(
     fake_counts_csv
     ,column_data_f=fake_column_data_csv
   )
+
+################################################################################
+# DetkModule base class
+def test_DetkModule() :
+    from de_toolkit.common import __version__
+    stat = DetkModule()
+    assert stat.json == {
+            'name':'detkmodule',
+            'detk_version': __version__,
+            'file_path': None,
+            'out_file_path': None,
+            'workdir': None,
+            'params': {},
+            'properties': {}
+            }
+    assert stat.name == 'detkmodule'
+    assert stat.params == {}
+    assert stat.output == []
+    assert stat.properties == {}

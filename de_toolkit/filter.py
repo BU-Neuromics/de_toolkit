@@ -1,4 +1,4 @@
-'''
+r'''
 Usage:
     detk-filter [options] <command> <counts_fn> [<cov_fn>]
 
@@ -15,10 +15,11 @@ import pandas as pd
 import os.path
 import ply.lex as lex
 import ply.yacc as yacc
+import sys
 from tempfile import TemporaryDirectory
 from warnings import warn
 
-from .common import *
+from .common import CountMatrixFile, _cli_doc
 
 #Available tokens for mini language
 reserved = ('ALL','OR','AND','MEDIAN','MEAN','ZERO','NONZERO','MAX','MIN')
@@ -262,13 +263,18 @@ def filter_counts(counts_obj, command) :
 
 def main(argv=sys.argv):
 
+    if '--version' in argv :
+        from .version import __version__
+        print(__version__)
+        return
+
     if argv[0].endswith('detk') :
         argv = argv[2:]
     elif argv[0].endswith('detk-filter') :
         argv = argv[1:]
 
     #Create command line arguments to pass in data and filter command
-    args = docopt(__doc__, argv=argv)
+    args = docopt(_cli_doc(__doc__), argv=argv)
 
     #Create CountMatrixFile object from given data
     count_fn = args.get('<counts_fn>')

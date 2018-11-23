@@ -1,4 +1,4 @@
-'''
+r'''
 Usage:
     detk-outlier entropy <counts_fn> [options]
     detk-transform shrink [options] <count_fn>
@@ -8,7 +8,7 @@ TODO = '''
 '''
 
 cmd_opts = {
-    'entropy':'''\
+    'entropy':r'''
 Usage:
     detk-outlier entropy <counts_fn> [options]
 
@@ -17,7 +17,7 @@ Options:
     -o FILE --output=FILE  Name of the ouput csv
     --plot-output=FILE     Name of the plot png
 ''',
-    'shrink':'''\
+    'shrink':r'''
 Usage:
     detk-transform shrink [options] <count_fn>
 
@@ -35,7 +35,7 @@ import pandas as pd
 import scipy.stats as sc
 import sys
 
-from .common import CountMatrixFile
+from .common import CountMatrixFile, _cli_doc
 from .util import stub
 
 def pmf_transform(x,shrink_factor=0.25,p_max=None,iters=1000) :
@@ -236,8 +236,17 @@ def plot_entropy(entropy_res, threshold, name=None, show=None):
 
 def main(argv=sys.argv):
 
+    if '--version' in argv :
+        from .version import __version__
+        print(__version__)
+        return
+
+    # add the common opts to the docopt strings
+    for k,v in cmd_opts.items() :
+        cmd_opts[k] = _cli_doc(v)
+
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
-        docopt(__doc__)
+        docopt(_cli_doc(__doc__),argv)
     argv = argv[1:]
     cmd = argv[0]
 

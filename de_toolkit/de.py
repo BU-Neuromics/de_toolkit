@@ -1,15 +1,15 @@
-'''\
+r'''\
 Usage:
     detk-de deseq2 [options] <design> <count_fn> <cov_fn>
     detk-de firth [options] <design> <count_fn> <cov_fn>
 '''
 
-TODO = '''
+TODO = r'''
     detk-de t-test ( help | [options] <count_fn> <cov_fn> )
 '''
 
 cmd_opts = {
-        'deseq2':'''\
+        'deseq2':r'''\
 Usage:
     detk-de deseq2 [options] <design> <count_fn> <cov_fn>
 
@@ -30,7 +30,7 @@ Options:
     --cores=N              Tell DESeq2 to use N cores when running, requires the
                            BiocParallel Bioconductor package to be installed [default: none]
 ''',
-        'firth':'''\
+        'firth':r'''\
 Usage:
     detk-de firth [options] <design> <count_fn> <cov_fn>
 
@@ -52,7 +52,7 @@ Options:
 from docopt import docopt
 import pandas
 import sys
-from .common import CountMatrixFile, InvalidDesignException
+from .common import CountMatrixFile, InvalidDesignException, _cli_doc
 from .wrapr import (
         require_r, require_deseq2, wrapr, RExecutionError, RPackageMissing,
         require_r_package
@@ -339,8 +339,17 @@ def t_test(count_obj) :
 
 def main(argv=sys.argv) :
 
+    if '--version' in argv :
+        from .version import __version__
+        print(__version__)
+        return
+
+    # add the common opts to the docopt strings
+    for k,v in cmd_opts.items() :
+        cmd_opts[k] = _cli_doc(v)
+
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
-        docopt(__doc__)
+        docopt(_cli_doc(__doc__))
     argv = argv[1:]
     cmd = argv[0]
 

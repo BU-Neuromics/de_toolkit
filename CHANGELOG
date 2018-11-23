@@ -3,6 +3,7 @@
 ## unreleased
 ### Changed
 - moved version info into module
+- updated all CLI docs to have common options
 
 ## [ 0.8.2 ]
 ### Changed

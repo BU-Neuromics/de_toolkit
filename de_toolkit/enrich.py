@@ -1,15 +1,15 @@
-'''
+r'''
 Usage:
     detk-enrich fgsea [options] <gmt_fn> <result_fn>
 Options:
     -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
 '''
 
-todo = '''\
+todo = r'''\
     detk-enrich fisher [options] <gmt_fn> <result_fn>
 '''
 cmd_opts = {
-        'fgsea':'''\
+        'fgsea':r'''
 Perform preranked Gene Set Enrichment Analysis using the fgsea bioconductor
 package on the given gmt gene set file.
 
@@ -47,7 +47,7 @@ import os
 import pandas
 import tempfile
 import warnings
-from .common import CountMatrixFile
+from .common import CountMatrixFile, _cli_doc
 from .util import stub
 from .wrapr import require_r, wrapr, require_r_package, RPackageMissing
 
@@ -146,6 +146,15 @@ def fgsea(
     return gsea_res
 
 def main(argv=sys.argv) :
+
+    if '--version' in argv :
+        from .version import __version__
+        print(__version__)
+        return
+
+    # add the common opts to the docopt strings
+    for k,v in cmd_opts.items() :
+        cmd_opts[k] = _cli_doc(v)
 
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
         docopt(__doc__)

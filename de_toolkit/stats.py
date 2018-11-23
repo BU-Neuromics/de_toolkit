@@ -1,4 +1,4 @@
-'''
+r'''
 Easy access to informative count matrix statistics. Each of these functions produces two outputs:
 
     a json formatted file containing relevant statistics in a machine-parsable format
@@ -27,7 +27,7 @@ Options:
 '''
 
 cmd_opts = {
-    'summary':'''\
+    'summary':r'''
 Compute summary statistics on a counts matrix file.
 
 This is equivalent to running each of these tools separately:
@@ -59,7 +59,7 @@ Options:
 
 
 ''',
-    'base':'''\
+    'base':r'''
 Calculate basic statistics of the counts file, including:
     number of samples
     number of rows
@@ -73,7 +73,7 @@ Options:
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
 ''',
-    'coldist':'''\
+    'coldist':r'''
 Column-wise distribution of counts
 
 Compute the distribution of counts column-wise. Each column is subject to
@@ -119,7 +119,7 @@ Options:
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
 ''',
-    'rowdist':'''\
+    'rowdist':r'''
 Row-wise distribution of counts
 
 Compute the distribution of counts row-wise. Each row is subject to binning by
@@ -166,7 +166,7 @@ Options:
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
 ''',
-    'colzero':'''\
+    'colzero':r'''
 Column-wise distribution of zero counts
 
 Compute the number and fraction of exact zero counts for each column.
@@ -191,7 +191,7 @@ Options:
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
             ''',
-    'rowzero':'''\
+    'rowzero':r'''
 Row-wise distribution of zero counts
 
 Compute the number and fraction of exact zero counts for each row.
@@ -216,7 +216,7 @@ Options:
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
 ''',
-    'entropy':'''\
+    'entropy':r'''
 Row-wise sample entropy calculation
 
 Sample entropy is a metric that can be used to identify outlier samples by locating
@@ -248,7 +248,7 @@ Options:
     --json=<json_fn>       Name of JSON output file
     --html=<html_fn>       Name of HTML output file
 ''',
-    'pca':'''\
+    'pca':r'''
 Principal common analysis of the counts matrix.
 
 This module performs PCA on a provided counts matrix and returns the principal
@@ -296,8 +296,9 @@ from sklearn.decomposition import PCA
 from string import Template
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
+import sys
 
-from .common import *
+from .common import CountMatrixFile, _cli_doc
 
 class CountStatistics(OrderedDict) :
     '''
@@ -1380,8 +1381,17 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
 
 def main(argv=sys.argv) :
 
+    if '--version' in argv :
+        from .version import __version__
+        print(__version__)
+        return
+
+    # add the common opts to the docopt strings
+    for k,v in cmd_opts.items() :
+        cmd_opts[k] = _cli_doc(v)
+
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
-        docopt(__doc__)
+        docopt(_cli_doc(__doc__))
     argv = argv[1:]
     cmd = argv[0]
 

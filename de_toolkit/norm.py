@@ -1,4 +1,4 @@
-'''
+r'''
 Usage:
     detk-norm deseq2 [options] <counts_fn>
     detk-norm library [options] <counts_fn>
@@ -7,11 +7,11 @@ Options:
     -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
 '''
 
-todo = '''\
+todo = r'''
     detk-norm custom <counts_fn>
 '''
 cmd_opts = {
-        'deseq2':'''\
+        'deseq2':r'''
 Perform counts normalization on the given counts matrix using the method
 implemented in the DESeq2 package.
 
@@ -26,7 +26,7 @@ Options:
                                  the first column is sample name and the second
                                  column is the size factor
 ''',
-    'library':'''\
+    'library':r'''
 Perform library size normalization on the columns of the given counts matrix.
 Counts in each column are divided by the sum of each column.
 
@@ -36,7 +36,7 @@ Usage:
 Options:
     -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
 ''',
-    'fpkm':'''\
+    'fpkm':r'''
 Perform Fragments Per Kilobase per Million normalization on the given counts
 file. <lengths_fn> should be a delimited file with two columns, the first
 being the name of one of the rows in the counts file and the second is the
@@ -60,7 +60,7 @@ from docopt import docopt
 import sys
 import numpy as np
 import pandas
-from .common import CountMatrixFile
+from .common import CountMatrixFile, _cli_doc
 from .util import stub
 from .wrapr import require_r, wrapr
 
@@ -224,8 +224,17 @@ def custom_norm(count_mat,factors) :
 
 def main(argv=sys.argv) :
 
+    if '--version' in argv :
+        from .version import __version__
+        print(__version__)
+        return
+
+    # add the common opts to the docopt strings
+    for k,v in cmd_opts.items() :
+        cmd_opts[k] = _cli_doc(v)
+
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
-        docopt(__doc__)
+        docopt(_cli_doc(__doc__),argv)
     argv = argv[1:]
     cmd = argv[0]
 

@@ -1,4 +1,4 @@
-'''
+r'''
 Usage:
     detk-wrapr check
     detk-wrapr run [options] <rscript> <counts_in> <out>
@@ -25,7 +25,7 @@ import pandas as pd
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile
-from .common import CountMatrixFile
+from .common import CountMatrixFile, _cli_doc
 from .util import which
 
 class RscriptExecutableNotFound(Exception) : pass
@@ -447,7 +447,12 @@ def wrapr(Rcode,**kwargs) :
 
 def main(argv=None) :
 
-    args = docopt(__doc__,argv=argv)
+    if '--version' in argv :
+        from .version import __version__
+        print(__version__)
+        return
+
+    args = docopt(_cli_doc(__doc__),argv=argv)
 
     if args['run'] :
 

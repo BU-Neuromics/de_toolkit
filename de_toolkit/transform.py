@@ -1,4 +1,4 @@
-'''
+r'''
 Usage:
     detk-transform plog [options] <count_fn>
     detk-transform vst [options] <count_fn>
@@ -9,7 +9,7 @@ TODO = '''
 '''
 
 cmd_opts = {
-    'vst':'''\
+    'vst':r'''
 Usage:
     detk-transform vst [options] <count_fn>
 
@@ -18,7 +18,7 @@ Options:
     --rda=RDA              Filename passed to saveRDS() R function of the result
                            objects from the analysis
 ''',
-    'plog':'''\
+    'plog':r'''
 Usage:
     detk-transform plog [options] <count_fn>
 
@@ -27,7 +27,7 @@ Options:
     -b B --base=B          The base of the log to use [default: 10]
     -o FILE --output=FILE  Destination of primary output [default: stdout]
 ''',
-    'rlog':'''\
+    'rlog':r'''
 Usage:
     detk-transform rlog [options] <count_fn> [<design> <cov_fn>]
 
@@ -46,7 +46,7 @@ import math
 import numpy
 import pandas
 import sys
-from .common import CountMatrixFile
+from .common import CountMatrixFile, _cli_doc
 from .wrapr import (
                 require_r, require_deseq2, wrapr, RExecutionError, RPackageMissing,
                 require_r_package
@@ -195,8 +195,17 @@ def ruvseq(count_obj) :
 
 def main(argv=sys.argv) :
 
+    if '--version' in argv :
+        from .version import __version__
+        print(__version__)
+        return
+
+    # add the common opts to the docopt strings
+    for k,v in cmd_opts.items() :
+        cmd_opts[k] = _cli_doc(v)
+
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
-        docopt(__doc__)
+        docopt(_cli_doc(__doc__))
     argv = argv[1:]
     cmd = argv[0]
 

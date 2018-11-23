@@ -1,4 +1,4 @@
-'''
+r'''\
 Usage:
     detk norm [options] <args>...
     detk de [options] <args>...
@@ -14,6 +14,22 @@ import pandas
 import re
 import sys
 from .patsy_lite import DesignMatrix, PatsyLiteParseError
+from .version import __version__
+
+_cli_version = '''\
+detk version: {}\n
+'''.format(__version__)
+
+_cli_common_opts = '''\
+
+Common options:
+    --report-dir=DIR  Specify the report directory [default: ./detk_report]
+    --version         Print out detk version and exit
+'''
+
+def _cli_doc(src) :
+    'Add the common command line arguments to the given *src* docopt string'
+    return _cli_version+src+_cli_common_opts
 
 class InvalidDesignException(Exception): pass
 class SampleMismatchException(Exception): pass
@@ -180,10 +196,14 @@ class CountMatrixFile(CountMatrix) :
 
 def main(argv=sys.argv) :
 
+    if '--version' in argv :
+        print(__version__)
+        return
+
     cmds = 'norm','de','transform','filter','stats','outlier','wrapr','help'
 
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmds) :
-        docopt(__doc__)
+        docopt(_cli_doc(__doc__))
     cmd = argv[1]
 
     # the individual main methods expect an executable of the form

@@ -236,7 +236,7 @@ class DetkModule(OrderedDict) :
         Override this method to return a dictionary with relevant parameters
         for the method.
         '''
-        return {}
+        return self.get('params',{})
     @property
     def output(self) :
         '''
@@ -253,7 +253,7 @@ class DetkModule(OrderedDict) :
         the output that would not otherwise be included. Primarily used in the
         construction of report sections.
         '''
-        return {}
+        return self.get('properties',{})
     @property
     def name(self) :
         'Name of this stats object, by default the class name in all lower case'

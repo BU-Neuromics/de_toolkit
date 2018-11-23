@@ -298,56 +298,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 import sys
 
-from .common import CountMatrixFile, _cli_doc
-
-class CountStatistics(OrderedDict) :
-    '''
-    Base class for holding count matrix statistics
-
-    Each stats function in this module is a subclass of this class, which
-    is itself a subclass of :py:class:`collections.OrderedDict`.
-    '''
-    @property
-    def json(self) :
-        '''
-        Format the stats object into a form amenable to serializing with JSON
-
-        Returns
-        -------
-        dict
-            dictionary with keys 'name' and 'stats' containing the module name
-            and dictionary of stats in the object
-        '''
-        return { 'name': self.name,
-                'stats': dict(self) }
-    @property
-    def tabular(self) :
-        '''
-        Construct tabular output of the stats object
-
-        Returns
-        -------
-        list
-            list of lists containing tabular stats data, first row contains
-            column names
-        '''
-        return None
-    @property
-    def html(self) :
-        '''
-        Construct html output of the stats object
-
-        Returns
-        -------
-        string
-            string containing html and javascript representation of this stat
-            module
-        '''
-        return None
-    @property
-    def name(self) :
-        'Name of this stats object, by default the class name in all lower case'
-        return self.__class__.__name__.lower()
+from .common import CountMatrixFile, DetkModule, _cli_doc
 
 def summary(count_mat,
         bins=20,
@@ -380,7 +331,7 @@ def summary(count_mat,
     Returns
     -------
     list
-        list of CountStatistics subclasses for each of the called submodules
+        list of DetkModule subclasses for each of the called submodules
     '''
 
     total_output = [
@@ -395,7 +346,7 @@ def summary(count_mat,
 
     return total_output
 
-class Base(CountStatistics) :
+class Base(DetkModule) :
     '''
         Basic statistics of the counts file
 
@@ -406,17 +357,20 @@ class Base(CountStatistics) :
     '''
     def __init__(self, count_mat) :
 
-        #Get counts, number of columns, and number of rows
-        self.num_rows, self.num_cols = count_mat.counts.shape
-
-        #Format output
-        self['num_cols'] = self.num_cols
-        self['num_rows'] = self.num_rows
+        self.count_mat = count_mat
 
     @property
-    def tabular(self):
+    def properties(self):
+        #Get counts, number of columns, and number of rows
+        return {
+                'num_rows': self.count_mat.counts.shape[0],
+                'num_cols': self.count_mat.counts.shape[1]
+               }
+
+    @property
+    def output(self):
         '''
-        Example tabular output::
+        Example output output::
 
             +base------+-----+
             | stat     | val |
@@ -427,26 +381,11 @@ class Base(CountStatistics) :
         '''
         return [
                 ['stat','val'],
-                ['num_cols',self['num_cols']],
-                ['num_rows',self['num_rows']]
+                ['num_cols',self.properties['num_cols']],
+                ['num_rows',self.properties['num_rows']]
                ]
 
-    @property
-    def json(self):
-        '''
-        Example JSON output::
-
-            {
-              'name': 'base',
-              'stats': {
-                'num_cols': 50,
-                'num_rows': 27143
-              }
-            }
-        '''
-        return {'name': self.name, 'stats': dict(self)}
-
-class ColDist(CountStatistics) :
+class ColDist(DetkModule) :
     '''
         Column-wise distribution of counts
 
@@ -468,6 +407,13 @@ class ColDist(CountStatistics) :
 
     '''
     def __init__(self,count_mat,bins=100,log=False,density=False):
+
+        self['params'] = {
+                'bins': bins,
+                'log': log,
+                'density': density
+        }
+
         self['pct'] = list(100*(_+1)/bins for _ in range(bins))
 
         self['dists'] = []
@@ -511,7 +457,7 @@ class ColDist(CountStatistics) :
                 )
 
     @property
-    def tabular(self) :
+    def output(self) :
         '''
         Tabular output is a table where each row corresponds to a column
         with column name as the first column. The next columns are broken
@@ -528,9 +474,9 @@ class ColDist(CountStatistics) :
             res.append([dist['name']]+dist['bins']+dist['dist'])
         return res
     @property
-    def json(self) :
+    def properties(self) :
         '''
-        In the JSON object, the fields are defined as follows
+        In the properties object, the fields are defined as follows
 
         pct
             The percentiles of the distributions in the range 0 < pct <
@@ -558,11 +504,9 @@ class ColDist(CountStatistics) :
             distribution. These could be marked as outliers in a
             boxplot, for example.
 
-        Example JSON output::
+        Example JSON properties output::
 
             {
-              'name': 'coldist',
-              'stats': {
                 'pct' : [ 5, 10, 20, ..., 95 ],
                 'dists' : [
                   {
@@ -589,9 +533,12 @@ class ColDist(CountStatistics) :
               }
             }
         '''
-        return {'name': self.name, 'stats': dict(self)}
+        return {
+                'pct': self['pct'],
+                'dists': self['dists']
+               }
 
-class RowDist(CountStatistics):
+class RowDist(DetkModule):
     '''
         Row-wise distribution of counts
 
@@ -612,6 +559,12 @@ class RowDist(CountStatistics):
             distribution, densities sum to 1
     '''
     def __init__(self, count_obj, bins=100, log=False, density=False) :
+
+        self['params'] = {
+                'bins': bins,
+                'log': log,
+                'density': density
+        }
 
         self['pct'] = list(100*(_+1)/bins for _ in range(bins))
         self['dists'] = []
@@ -654,7 +607,7 @@ class RowDist(CountStatistics):
                     }
                 )
     @property
-    def tabular(self) :
+    def output(self) :
         '''
             Tabular output is a table where each row corresponds to a row
             with row name as the first column. The next columns are broken
@@ -672,8 +625,14 @@ class RowDist(CountStatistics):
         for dist in self['dists'] :
             res.append([dist['name']]+dist['bins']+dist['dist'])
         return res
+    @property
+    def properties(self) :
+        return {
+                'pct': self['pct'],
+                'dists': self['dists']
+               }
 
-class ColZero(CountStatistics) :
+class ColZero(DetkModule) :
     '''
         Column-wise distribution of zero counts
     
@@ -712,7 +671,7 @@ class ColZero(CountStatistics) :
             self['zeros'].append(col)
 
     @property
-    def tabular(self) :
+    def output(self) :
         '''
             Tabular output is a table where each row corresponds to a column
             with the following fields:
@@ -728,7 +687,7 @@ class ColZero(CountStatistics) :
             res.append([col[_] for _ in res[0]])
         return res
     @property
-    def json(self):
+    def properties(self):
         '''
         The stats value is an array containing one object per column as follows:
 
@@ -767,9 +726,9 @@ class ColZero(CountStatistics) :
               }
             }
         '''
-        return {'name': self.name, 'stats': dict(self)}
+        return { 'zeros':self['zeros'] }
 
-class RowZero(CountStatistics):
+class RowZero(DetkModule):
     '''
         Row-wise distribution of zero counts
     
@@ -812,7 +771,7 @@ class RowZero(CountStatistics):
             self['zeros'].append(row)
 
     @property
-    def tabular(self) :
+    def output(self) :
         '''
             Tabular output is a table where each row corresponds to a row
             with the following fields:
@@ -827,8 +786,11 @@ class RowZero(CountStatistics):
         for col in self['zeros'] :
             res.append([col[_] for _ in res[0]])
         return res
+    @property
+    def properties(self) :
+        return {'zeros':self['zeros']}
 
-class Entropy(CountStatistics) :
+class Entropy(DetkModule) :
     '''
     Row-wise sample entropy calculation
 
@@ -891,7 +853,7 @@ class Entropy(CountStatistics) :
             self['entropies'].append(row)
 
     @property
-    def tabular(self) :
+    def output(self) :
         '''
         Tabular output is a table where each row corresponds to a row
         with the following fields:
@@ -904,7 +866,7 @@ class Entropy(CountStatistics) :
             res.append([col[_] for _ in res[0]])
         return res
     @property
-    def json(self) :
+    def properties(self) :
         '''
         The key entropies is an array containing one object per row with the
         following keys:
@@ -932,9 +894,9 @@ class Entropy(CountStatistics) :
               }
             ]
         '''
-        return {'name': self.name, 'stats': dict(self)}
+        return {'entropies': self['entropies']}
 
-class CountPCA(CountStatistics) :
+class CountPCA(DetkModule) :
     '''
     Principal common analysis of the counts matrix.
 
@@ -994,7 +956,7 @@ class CountPCA(CountStatistics) :
     def name(self):
         return 'pca'
     @property
-    def tabular(self) :
+    def output(self) :
         '''
         Tabular output is a table where each row corresponds to a column
         in the counts matrix with the following fields:
@@ -1013,7 +975,7 @@ class CountPCA(CountStatistics) :
         res = list(zip(*res))
         return res
     @property
-    def json(self) :
+    def properties(self) :
         '''
         Example JSON output::
 
@@ -1042,7 +1004,11 @@ class CountPCA(CountStatistics) :
                 }
             ]
         '''
-        return {'name': self.name, 'stats': dict(self)}
+        return {
+                'column_names': self['column_names'],
+                'column_variables': self['column_variables'],
+                'components': self['components']
+               }
 
 def format_json(filename, output):
 
@@ -1462,20 +1428,20 @@ def main(argv=sys.argv) :
     if args['--format'] == 'table' :
         from terminaltables import AsciiTable
         for out in output :
-            table = AsciiTable(out.tabular)
+            table = AsciiTable(out.output)
             table.title = out.name
             outf.write(table.table+'\n')
 
     else : # csv is default
         out_writer = csv.writer(outf,delimiter=',')
 
-        # write out the tabular data
+        # write out the output data
         if len(output) == 1 :
-            out_writer.writerows(output[0].tabular)
+            out_writer.writerows(output[0].output)
         else :
             for out in output :
                 out_writer.writerow(['#{}'.format(out.name)])
-                out_writer.writerows(out.tabular)
+                out_writer.writerows(out.output)
 
     #Check if JSON file option was specified
     json_fn = args.get('--json')
@@ -1485,14 +1451,14 @@ def main(argv=sys.argv) :
     format_json(json_fn, output)
 
     # determine the html filename
-    html_fn = args.get('--html')
-    if html_fn is None:
-        html_fn = filename_prefix+'.html'
+    #html_fn = args.get('--html')
+    #if html_fn is None:
+    #    html_fn = filename_prefix+'.html'
 
     # if user specified no html fn, or html_fn != 'None', then we are
     # writing out an html file
-    if html_fn != 'None' :
-        format_html(html_fn, json_fn, counts_obj, args.get('--color-col'))
+    #if html_fn != 'None' :
+    #    format_html(html_fn, json_fn, counts_obj, args.get('--color-col'))
 
 if __name__ == '__main__':
     main()

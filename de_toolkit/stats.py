@@ -1,20 +1,24 @@
 r'''
-Easy access to informative count matrix statistics. Each of these functions produces two outputs:
+Easy access to informative count matrix statistics. Each of these functions
+produces two outputs:
 
-    a json formatted file containing relevant statistics in a machine-parsable format
-    an optional human-friendly HTML page displaying the results
+- a json formatted file containing relevant statistics in a machine-parsable
+  format
+- an optional human-friendly HTML page displaying the results
 
-All of the commands accept a single counts file as input with optional arguments as indicated in the
-documentation. By default, the JSON and HTML output files have the same basename without extension as
-the counts file but including .json or .html as appropriate. E.g., counts.csv will produce counts.json
-and counts.html in the current directory. These default filenames can be changed using optional command
-line arguments --json=<json fn> and --html=<html fn> as appropriate for all commands. If <json fn>,
-either default or specified, already exists, it is read in, parsed, and added to. The HTML report is
-overwritten on every invocation using the contents of the JSON file.
+All of the commands accept a single counts file as input with optional
+arguments as indicated in the documentation. By default, the JSON and HTML
+output files have the same basename without extension as the counts file but
+including .json or .html as appropriate. E.g., counts.csv will produce
+counts.json and counts.html in the current directory. These default filenames
+can be changed using optional command line arguments --json=<json fn> and
+--html=<html fn> as appropriate for all commands. If <json fn>, either default
+or specified, already exists, it is read in, parsed, and added to. The HTML
+report is overwritten on every invocation using the contents of the JSON file.
 
 Usage:
     detk-stats summary [options] <counts_fn>
-    detk-stats base [options] <counts_fn>
+    detk-stats basestats [options] <counts_fn>
     detk-stats coldist [options] <counts_fn>
     detk-stats rowdist [options] <counts_fn>
     detk-stats colzero [options] <counts_fn>
@@ -32,7 +36,7 @@ Compute summary statistics on a counts matrix file.
 
 This is equivalent to running each of these tools separately:
 
-- base
+- basestats
 - coldist
 - rowdist
 - colzero
@@ -59,13 +63,13 @@ Options:
 
 
 ''',
-    'base':r'''
+    'basestats':r'''
 Calculate basic statistics of the counts file, including:
     number of samples
     number of rows
 
 Usage:
-    detk-stats base [options] <counts_fn>
+    detk-stats basestats [options] <counts_fn>
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
@@ -299,6 +303,7 @@ from sklearn.preprocessing import scale
 import sys
 
 from .common import CountMatrixFile, DetkModule, _cli_doc
+from .report import DetkReport
 
 def summary(count_mat,
         bins=20,
@@ -309,7 +314,7 @@ def summary(count_mat,
 
     This is equivalent to running each of these tools separately:
 
-    - base
+    - basestats
     - coldist
     - rowdist
     - colzero
@@ -335,7 +340,7 @@ def summary(count_mat,
     '''
 
     total_output = [
-        Base(count_mat),
+        BaseStats(count_mat),
         ColDist(count_mat, bins, log, density),
         RowDist(count_mat, bins, log, density),
         ColZero(count_mat),
@@ -346,7 +351,7 @@ def summary(count_mat,
 
     return total_output
 
-class Base(DetkModule) :
+class BaseStats(DetkModule) :
     '''
         Basic statistics of the counts file
 
@@ -372,7 +377,7 @@ class Base(DetkModule) :
         '''
         Example output output::
 
-            +base------+-----+
+            +basestats-+-----+
             | stat     | val |
             +----------+-----+
             | num_cols | 4   |
@@ -1070,9 +1075,9 @@ def format_html(html_fn, json_fn, counts_obj, color_col):
             output_dict[d['name']] = d
 
     #Format base HTML output (table)
-    if 'base' in output_dict:
+    if 'basestats' in output_dict:
         base_hide=''
-        base_output = output_dict['base']
+        base_output = output_dict['basestats']
         num_cols = base_output['stats']['num_cols']
         num_rows = base_output['stats']['num_rows']
     else:
@@ -1410,10 +1415,10 @@ def main(argv=sys.argv) :
         args = docopt(cmd_opts_aug['entropy'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = Entropy(counts_obj)
-    elif cmd == 'base' :
-        args = docopt(cmd_opts_aug['base'],argv)
+    elif cmd == 'basestats' :
+        args = docopt(cmd_opts_aug['basestats'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
-        output = Base(counts_obj)
+        output = BaseStats(counts_obj)
 
     # make output a list if it is a singleton
     if not isinstance(output,list) :
@@ -1444,22 +1449,15 @@ def main(argv=sys.argv) :
                 out_writer.writerow(['#{}'.format(out.name)])
                 out_writer.writerows(out.output)
 
-    #Check if JSON file option was specified
-    json_fn = args.get('--json')
-    if json_fn is None:
-        json_fn = filename_prefix+'.json'
-
-    format_json(json_fn, output)
-
-    # determine the html filename
-    #html_fn = args.get('--html')
-    #if html_fn is None:
-    #    html_fn = filename_prefix+'.html'
-
-    # if user specified no html fn, or html_fn != 'None', then we are
-    # writing out an html file
-    #if html_fn != 'None' :
-    #    format_html(html_fn, json_fn, counts_obj, args.get('--color-col'))
+    # write out the report json
+    with DetkReport(args['--report-dir']) as r :
+        for out in output :
+            r.add_module(
+                    out,
+                    file_path=args['<counts_fn>'],
+                    out_file_path=args['--output'],
+                    workdir=os.getcwd()
+                )
 
 if __name__ == '__main__':
     main()

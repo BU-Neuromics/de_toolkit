@@ -46,35 +46,33 @@ def fake_column_data(request) :
 def test_stats_cli(fake_counts_csv) :
   from de_toolkit.stats import main
   from docopt import DocoptExit
-  for cmd in ('summary','base','coldist','rowdist','colzero','rowzero','entropy') :
-      with pytest.raises(DocoptExit) :
-          main(['detk-stats',cmd])
-      main(['detk-stats',cmd,fake_counts_csv])
-
-  # pca includes metadata
-  main(['detk-stats',cmd,fake_counts_csv])
+  with tempfile.TemporaryDirectory() as d :
+      for cmd in ('summary','basestats','coldist','rowdist','colzero','rowzero','entropy') :
+          with pytest.raises(DocoptExit) :
+              main(['detk-stats',cmd])
+          main(['detk-stats',cmd,fake_counts_csv,'--report-dir={}'.format(d)])
 
 ################################################################################
 # base tests
 #test for base function
 def test_stats_base(fake_counts_obj):
-    output = Base(fake_counts_obj)
+    output = BaseStats(fake_counts_obj)
     assert output.properties['num_cols'] == 3
     assert output.properties['num_rows'] == 5
-    assert output.name == 'base'
+    assert output.name == 'basestats'
 
 #test that json output for base function is correct
 def test_stats_base_json(fake_counts_obj):
-    output = Base(fake_counts_obj)
+    output = BaseStats(fake_counts_obj)
 
     json_output = output.json
 
-    assert json_output.get('name') == 'base'
+    assert json_output.get('name') == 'basestats'
     assert json_output.get('properties', {}).get('num_cols') == 3
     assert json_output.get('properties', {}).get('num_rows') == 5
 
 def test_stats_base_output(fake_counts_obj):
-    output = Base(fake_counts_obj)
+    output = BaseStats(fake_counts_obj)
     assert output.output == [['stat','val'],['num_cols',3],['num_rows',5]]
 
 ################################################################################
@@ -928,7 +926,7 @@ def test_stats_summary_json(fake_counts_obj):
 
     output = summary(fake_counts_obj)
 
-    true_funcs = set(['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy', 'pca'])
+    true_funcs = set(['basestats', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy', 'pca'])
 
     names = set()
     for section in output :
@@ -941,21 +939,23 @@ def test_stats_cli_json(fake_count_rowdist_obj, fake_count_rowdist_csv):
 
     output = summary(fake_count_rowdist_obj)
 
-    true_funcs = set(['base', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy','pca'])
+    true_funcs = set(['basestats', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy','pca'])
 
-    with tempfile.NamedTemporaryFile() as f :
-        json_fn = f.name
+    with tempfile.TemporaryDirectory() as d :
 
-    main(['detk-stats','summary','--json={}'.format(json_fn),'-o','/dev/null',fake_count_rowdist_csv])
-    with open(json_fn) as f :
-        output = json.load(f)
+        main(['detk-stats','summary','--report-dir={}'.format(d),
+            '-o','/dev/null',fake_count_rowdist_csv])
 
-    names = set()
-    for section in output :
-        names.add(section['name'])
+        # summary is supposed to run seven different modules
+        # check that there is that number of output json files
+        json_fns = os.listdir(os.path.join(d,'json'))
+        assert len(json_fns) == 7
 
-    os.remove(json_fn)
+        names = set()
+        for fn in json_fns :
+            with open(os.path.join(d,'json',fn)) as f :
+                names.add(json.load(f)['name'])
 
-    assert true_funcs==names
+        assert true_funcs==names
 
 

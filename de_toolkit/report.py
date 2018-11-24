@@ -36,8 +36,9 @@ def hash_str(st) :
 class DetkModuleJSON(object):
     def __init__(self,
             module,
-            file_path=None,
+            in_file_path=None,
             out_file_path=None,
+            column_data_path=None,
             workdir=None,
             json_dir='.',
             json_path=None) :
@@ -48,7 +49,7 @@ class DetkModuleJSON(object):
 
             # the json filename is calculated as the combination of
             # the module name, the parameters passed, and the input filename
-            repl_file_path = '-' if file_path is None else file_path
+            repl_file_path = '-' if in_file_path is None else in_file_path
 
             # since the parameters is a dictionary, convert to a json string
             # to calculate the hash
@@ -68,8 +69,9 @@ class DetkModuleJSON(object):
             ('name',module.name),
             ('detk_version',__version__),
             ('last_modified',int(1000*time.time())),
-            ('file_path',file_path),
+            ('in_file_path',in_file_path),
             ('out_file_path',out_file_path),
+            ('column_data_path',column_data_path),
             ('workdir',workdir),
             ('params',module_json['params']),
             ('properties',module_json['properties'])
@@ -85,9 +87,9 @@ class DetkModuleJSON(object):
         - ``last_modified``: local system timestamp in milliseconds when this
           file was created/modified
         - ``workdir``: path to the directory where detk was run
-        - ``file_path``: path to the file that was processed
+        - ``in_file_path``: path to the file that was processed
         - ``out_file_path``: path to the file that was output, if available
-        - 
+        - ``column_data_path``: path to the column data file used, if available
         '''
 
         with open(self.filepath,'wt') as f :
@@ -104,15 +106,17 @@ class DetkReport(object):
 
     def add_module(self,
             module,
-            file_path=None,
+            in_file_path=None,
             out_file_path=None,
+            column_data_path=None,
             workdir=None
             ) :
         'Add and serialize the given module to the report directory'
         module_json = DetkModuleJSON(
                 module,
-                file_path=file_path,
+                in_file_path=in_file_path,
                 out_file_path=out_file_path,
+                column_data_path=column_data_path,
                 workdir=workdir,
                 json_dir=self.json_dir
         )

@@ -1454,8 +1454,9 @@ def main(argv=sys.argv) :
         for out in output :
             r.add_module(
                     out,
-                    file_path=args['<counts_fn>'],
+                    in_file_path=args['<counts_fn>'],
                     out_file_path=args['--output'],
+                    column_data_path=args.get('--column-data'),
                     workdir=os.getcwd()
                 )
 

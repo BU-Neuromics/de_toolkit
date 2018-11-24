@@ -41,6 +41,7 @@ setup(name='de_toolkit',
           ]
       ,packages=find_packages()
       ,package_data={'de_toolkit':['html_template.html']}
+      ,include_package_data=True
       ,entry_points={
         'console_scripts': [
           'detk=de_toolkit.common:main'
@@ -68,6 +69,6 @@ setup(name='de_toolkit',
         ,'Programming Language :: Python :: 3'
         ,'Topic :: Scientific/Engineering :: Bio-Informatics'
       ]
-      ,keywords='bioinformatics'
+      ,keywords=['bioinformatics','biology','sequencing','NGS']
       ,python_requires='~=3.3'
      )

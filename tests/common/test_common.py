@@ -126,10 +126,6 @@ def test_DetkModule() :
     stat = DetkModule()
     assert stat.json == {
             'name':'detkmodule',
-            'detk_version': __version__,
-            'file_path': None,
-            'out_file_path': None,
-            'workdir': None,
             'params': {},
             'properties': {}
             }

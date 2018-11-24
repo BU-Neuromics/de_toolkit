@@ -297,7 +297,6 @@ def fake_big_counts_obj(
     ,fake_logistic_design
   )
 
-print(fake_big_counts_obj)
 ################################################################################
 
 

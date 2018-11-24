@@ -295,12 +295,14 @@ import numpy as np
 import pandas
 import pkg_resources
 import os.path
+import scipy
 import seaborn as sns
 from sklearn.decomposition import PCA
 from string import Template
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 import sys
+import warnings
 
 from .common import CountMatrixFile, DetkModule, _cli_doc
 from .report import DetkReport
@@ -423,14 +425,13 @@ class ColDist(DetkModule) :
 
         self['dists'] = []
 
-        for s in count_mat.sample_names:
+        for col in count_mat.counts:
             #to access the data in each column
-            data = getattr(count_mat.counts,s).tolist()
+            data = count_mat.counts[col]
 
             #Take the log10 of each count if log option is specified
             if log :
-                data=list(filter(lambda a: a != 0.0, data))
-                data=np.log10(data)
+                data = np.log10(data)
 
             #for the upper and lower outliers
             Q1 = np.percentile(data, 25)
@@ -443,7 +444,7 @@ class ColDist(DetkModule) :
             #make the dict for each sample
             self['dists'].append(
                     {
-                        'name':s,
+                        'name':col,
                         'dist':list(n),
                         'bins':list(dist_bins)[1:],
                         'extrema': {
@@ -568,28 +569,19 @@ class RowDist(DetkModule):
 
         for i in range(len(count_obj.feature_names)):
             #to access the data in each row
-            data = count_obj.counts.iloc[i].tolist()
+            data = count_obj.counts.iloc[i]
 
             #Compute log10 of each count if log option is specified
             if log :
-                data=list(filter(lambda a: a != 0.0, data))
-                data=np.log10(data)
-            
+                data = np.log10(data)
+
             #for the upper and lower outliers
             Q1 = np.percentile(data, 25)
             Q3 = np.percentile(data, 75)
             IQR =  np.percentile(data, 75) - np.percentile(data, 25)
 
             #for the histogram bin edges and count numbers
-            if density == 1:
-                (n, dist_bins, patches) = plt.hist(
-                        data,
-                        bins=bins,
-                        label='hist',
-                        weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size
-                    )
-            else:
-                (n, dist_bins, patches) = plt.hist(data, bins=bins, label='hst')
+            n, dist_bins = np.histogram(data,bins=bins,density=density)
 
             #make the dict for each row
             self['dists'].append(
@@ -641,21 +633,19 @@ class ColZero(DetkModule) :
         num_rows, num_cols = count_mat.counts.shape
         col_names=count_mat.sample_names
 
-        #Calculate zero counts, zero fractions, means, and nonzero means for each column
-        zero_counts = []
-        zero_fracs = []
-        col_means = []
-        nonzero_col_means = []
-        for s in col_names:
-            data = getattr(count_mat.counts,s).tolist()
-            zero_counts.append(data.count(0.0))
-            zero_fracs.append(data.count(0.0)/len(data))
-            col_means.append(sum(data)/len(data))
-            if len(data) != data.count(0.0):
-                nonzero_col_means.append(sum(data)/((len(data)-data.count(0.0))))
-            else:
-                nonzero_col_means.append(0.0)
-        
+        # Calculate zero counts, zero fractions, means, and nonzero means for
+        # each column
+        # the mean and median function raise warnings when a row/col is all zero
+        # ignore
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            zero_counts = (count_mat.counts==0).sum(axis=0).fillna(0)
+            zero_fracs = zero_counts/num_rows
+            col_means = count_mat.counts.mean(axis=0)
+            col_medians = count_mat.counts.median(axis=0)
+            nonzero_col_means = count_mat.counts[count_mat.counts!=0].mean(axis=0)
+            nonzero_col_medians = count_mat.counts[count_mat.counts!=0].median(axis=0)
+
         self['zeros'] = []
 
         for i in range(0, num_cols):
@@ -664,7 +654,9 @@ class ColZero(DetkModule) :
             col['zero_count'] = zero_counts[i]
             col['zero_frac'] = zero_fracs[i]
             col['mean'] = col_means[i]
+            col['median'] = col_medians[i]
             col['nonzero_mean'] = nonzero_col_means[i]
+            col['nonzero_median'] = nonzero_col_medians[i]
             self['zeros'].append(col)
 
     @property
@@ -677,9 +669,11 @@ class ColZero(DetkModule) :
             - zero_count: Number of zero counts
             - zero_frac: Fraction of zero counts
             - mean: Overall mean count
+            - median: Overall median count
             - nonzero_mean: Mean of non-zero counts only
+            - nonzero_median: Mean of non-zero counts only
         '''
-        res = [['name','zero_count','zero_frac','mean','nonzero_mean']]
+        res = [['name','zero_count','zero_frac','mean','median','nonzero_mean','nonzero_median']]
         for col in self['zeros'] :
             res.append([col[_] for _ in res[0]])
         return res
@@ -696,31 +690,36 @@ class ColZero(DetkModule) :
             zero_count divided by the number of rows
         col_mean
             the mean of counts in the column
+        col_median
+            the median of counts in the column
         nonzero_col_mean
             the mean of only the non-zero counts in the column
+        nonzero_col_median
+            the median of only the non-zero counts in the column
 
         Example JSON output::
 
             {
-              'name': 'colzero',
-              'stats': {
-                'zeros' : [
-                  {
-                    'name': 'col1',
-                    'zero_count': 20,
-                    'zero_frac': 0.2,
-                    'mean': 101.31,
-                    'nonzero_mean': 155.23
-                  },
-                  {
-                    'name': 'col2',
-                    'zero_count': 0,
-                    'zero_frac': 0,
-                    'mean': 3021.92,
-                    'nonzero_mean': 3021.92
-                  },
-                ]
-              }
+              'zeros' : [
+                {
+                  'name': 'col1',
+                  'zero_count': 20,
+                  'zero_frac': 0.2,
+                  'mean': 101.31,
+                  'median': 31.31,
+                  'nonzero_mean': 155.23,
+                  'nonzero_median': 55.18
+                },
+                {
+                  'name': 'col2',
+                  'zero_count': 0,
+                  'zero_frac': 0,
+                  'mean': 3021.92,
+                  'median': 329.23,
+                  'nonzero_mean': 3021.92,
+                  'nonzero_median': 819.32
+                },
+              ]
             }
         '''
         return { 'zeros':self['zeros'] }
@@ -742,19 +741,18 @@ class RowZero(DetkModule):
         row_names = count_mat.feature_names
 
         #Calculate zero counts, zero fractions, means, and nonzero means for each row
-        zero_counts = []
-        zero_fracs = []
-        row_means = []
-        nonzero_row_means = []
-        for i in range(len(row_names)):
-            data = count_mat.counts.iloc[i].tolist()
-            zero_counts.append(data.count(0.0))
-            zero_fracs.append(data.count(0.0)/len(data))
-            row_means.append(sum(data)/len(data))
-            if len(data) != data.count(0.0):
-                nonzero_row_means.append(sum(data)/(len(data)-data.count(0.0)))
-            else:
-                nonzero_row_means.append(0.0)
+        # Calculate zero counts, zero fractions, means, and nonzero means for
+        # each column
+        # the mean and median function raise warnings when a row/col is all zero
+        # ignore
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            zero_counts = (count_mat.counts==0).sum(axis=1).fillna(0)
+            zero_fracs = zero_counts/num_cols
+            row_means = count_mat.counts.mean(axis=1).fillna(0)
+            row_medians = count_mat.counts.median(axis=1).fillna(0)
+            nonzero_row_means = count_mat.counts[count_mat.counts!=0].mean(axis=1).fillna(0)
+            nonzero_row_medians = count_mat.counts[count_mat.counts!=0].median(axis=1).fillna(0)
 
         self['zeros'] = []
 
@@ -764,7 +762,9 @@ class RowZero(DetkModule):
             row['zero_count'] = zero_counts[i]
             row['zero_frac'] = zero_fracs[i]
             row['mean'] = row_means[i]
+            row['median'] = row_medians[i]
             row['nonzero_mean'] = nonzero_row_means[i]
+            row['nonzero_median'] = nonzero_row_medians[i]
             self['zeros'].append(row)
 
     @property
@@ -777,9 +777,11 @@ class RowZero(DetkModule):
               - zero_count: Number of zero counts
               - zero_frac: Fraction of zero counts
               - mean: Overall mean count
+              - median: Overall median count
               - nonzero_mean: Mean of non-zero counts only
+              - nonzero_median: Mean of non-zero counts only
         '''
-        res = [['name','zero_count','zero_frac','mean','nonzero_mean']]
+        res = [['name','zero_count','zero_frac','mean','median','nonzero_mean','nonzero_median']]
         for col in self['zeros'] :
             res.append([col[_] for _ in res[0]])
         return res
@@ -818,27 +820,11 @@ class Entropy(DetkModule) :
         num_rows=len(cnts)
         row_names = count_mat.feature_names
 
-        probs = []
-        for i in range(len(row_names)):
-            data = count_mat.counts.iloc[i].tolist()
-            row_prob = []
-            for item in data:
-                if sum(data) != 0:
-                    row_prob.append(item/sum(data))
-                else:
-                    row_prob.append(0.0)
-            probs.append(row_prob)
-
-        #Calculate entropies
-        entropies = []
-        for i in range(0, num_rows):
-            H = 0.0
-            row_probs = probs[i]
-            for j in range(0, len(row_probs)):
-                if row_probs[j] != 0.0:
-                    H += row_probs[j]*math.log(row_probs[j], 2)
-            H = -1*H
-            entropies.append(H)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            entropies = count_mat.counts.apply(scipy.stats.entropy,axis=1).fillna(0)
+            print(count_mat.counts)
+            print(entropies)
 
         #Format output
         self['entropies'] = []

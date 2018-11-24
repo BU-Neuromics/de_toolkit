@@ -140,7 +140,7 @@ def test_stats_coldist_names(fake_count_coldist_obj):
 
 #test that coldist function has the correct pct values
 def test_stats_coldist_pct(fake_count_coldist_obj):
-    output = ColDist(fake_count_coldist_obj, 20, -1, -1)
+    output = ColDist(fake_count_coldist_obj, 20, False, False)
     col_pct = output['pct']
     assert col_pct == list((_+1)/.2 for _ in range(20))
 
@@ -154,11 +154,10 @@ def test_stats_coldist_dist(fake_count_coldist_obj):
 
 #test that coldist function with density option gets correct dists
 def test_stats_coldist_density(fake_count_coldist_obj):
-    output = ColDist(fake_count_coldist_obj, 20, density=True)
+    output = ColDist(fake_count_coldist_obj, 99, density=True)
     col_dists = output['dists']
-    col_dist_func = [d['dist'] for d in col_dists]
-    col_dist_sums = [sum(x) for x in col_dist_func]
-    
+    col_dist_sums = [sum(d['dist']) for d in col_dists]
+
     col_dist_true = [1.0 for i in range(3)]
 
     assert np.allclose(col_dist_sums,col_dist_true)
@@ -275,7 +274,7 @@ def test_stats_rowdist_params(fake_count_rowdist_obj):
 
 #test that rowdist function gets correct row names
 def test_stats_rowdist_names(fake_count_rowdist_obj):
-    output = RowDist(fake_count_rowdist_obj, 20, -1, -1)
+    output = RowDist(fake_count_rowdist_obj, 20, False, False)
     row_dists = output['dists']
     row_name_func = [d['name'] for d in row_dists]
 
@@ -284,7 +283,7 @@ def test_stats_rowdist_names(fake_count_rowdist_obj):
 
 #test that rowdist function has the correct pct values
 def test_stats_rowdist_pct(fake_count_rowdist_obj):
-    output = RowDist(fake_count_rowdist_obj, 20, -1, -1)
+    output = RowDist(fake_count_rowdist_obj, 20, False, False)
     row_pct = output['pct']
     assert row_pct == list((_+1)/.2 for _ in range(20))
 
@@ -298,7 +297,7 @@ def test_stats_rowdist_dist(fake_count_rowdist_obj):
 
 #test that rowdist function with density option gets correct dists
 def test_stats_rowdist_density(fake_count_rowdist_obj):
-    output = RowDist(fake_count_rowdist_obj, 20, -1, 1)
+    output = RowDist(fake_count_rowdist_obj, 99, False, True)
     row_dists = output['dists']
     row_dist_func = [d['dist'] for d in row_dists]
     row_dist_sums = [sum(x) for x in row_dist_func]
@@ -309,7 +308,7 @@ def test_stats_rowdist_density(fake_count_rowdist_obj):
 
 #test that rowdist function get correct number of bins
 def test_stats_rowdist_bins(fake_count_rowdist_obj):
-    output = RowDist(fake_count_rowdist_obj, 5, -1, -1)
+    output = RowDist(fake_count_rowdist_obj, 5, False, False)
     row_dists = output['dists']
     row_dist_bins = [d['bins'] for d in row_dists]
     num_bins = [len(b) for b in row_dist_bins]
@@ -498,8 +497,11 @@ def test_stats_colzero_json(fake_counts_obj_with_zeros):
 
 def test_stats_colzero_output(fake_counts_obj_with_zeros):
     output = ColZero(fake_counts_obj_with_zeros)
-    assert output.output[0] == ['name','zero_count','zero_frac','mean','nonzero_mean']
-    assert output.output[1] == ['a', 1, 0.2, 3.4, 4.25]
+    assert output.output[0] == [
+            'name','zero_count','zero_frac',
+            'mean','median','nonzero_mean','nonzero_median'
+        ]
+    assert output.output[1] == ['a', 1, 0.2, 3.4, 4, 4.25, 4.5]
     assert output.output[2][:2] == ['b', 2]
     assert output.output[3][:2] == ['c', 3]
 
@@ -681,10 +683,13 @@ def test_stats_rowzero_json(fake_count_rowzero_obj):
     assert true_row_means==row_means
     assert true_nonzero_row_means==nonzero_row_means
 
-def test_stats_colzero_output(fake_counts_obj_with_zeros):
+def test_stats_rowzero_output(fake_counts_obj_with_zeros):
     output = RowZero(fake_counts_obj_with_zeros)
-    assert output.output[0] == ['name','zero_count','zero_frac','mean','nonzero_mean']
-    assert output.output[1] == ['gene1', 1, 1/3, 2, 3]
+    assert output.output[0] == [
+            'name','zero_count','zero_frac',
+            'mean','median','nonzero_mean','nonzero_median'
+        ]
+    assert output.output[1] == ['gene1', 1, 1/3, 2, 2, 3, 3]
     assert output.output[2][:2] == ['gene2', 2]
     assert output.output[3][:2] == ['gene3', 2]
     assert output.output[4][:2] == ['gene4', 1]
@@ -709,18 +714,20 @@ def test_stats_entropy_names(fake_counts_obj):
 
 #test that entropy function calculates correct entropy values
 def test_stats_entropies(fake_counts_obj):
+    from math import log
     output = Entropy(fake_counts_obj)
     entropies = output['entropies']
 
-    H1 = -((2/14)*math.log(2/14,2) + (4/14)*math.log(4/14,2) + (8/14)*math.log(8/14,2))
-    H2 = -((3/39)*math.log(3/39,2) + (9/39)*math.log(9/39,2) + (27/39)*math.log(27/39,2))
-    H3 = -((4/84)*math.log(4/84,2) + (16/84)*math.log(16/84,2) + (64/84)*math.log(64/84,2))
-    H4 = -((5/155)*math.log(5/155,2) + (25/155)*math.log(25/155,2) + (125/155)*math.log(125/155,2))
-    H5 = -((6/258)*math.log(6/258,2) + (36/258)*math.log(36/258,2) + (216/258)*math.log(216/258,2))
-    true_entropies = [H1, H2, H3, H4, H5]
+    true_entropies = [
+            -(2/14*log(2/14)+4/14*log(4/14)+8/14*log(8/14)),
+            -(3/39*log(3/39)+9/39*log(9/39)+27/39*log(27/39)),
+            -(4/84*log(4/84)+16/84*log(16/84)+64/84*log(64/84)),
+            -(5/155*log(5/155)+25/155*log(25/155)+125/155*log(125/155)),
+            -(6/258*log(6/258)+36/258*log(36/258)+216/258*log(216/258))
+        ]
 
     row_entropies = []
-    for i in range(0, len(entropies)):
+    for i in range(len(entropies)):
         row = entropies[i]
         row_entropy = row.get('entropy')
         row_entropies.append(row_entropy)
@@ -728,16 +735,18 @@ def test_stats_entropies(fake_counts_obj):
     assert true_entropies == row_entropies
 
 #test that entropy function calculates correct entropy values when there are 0 counts
-def test_stats_entropies(fake_counts_obj_with_zeros):
+def test_stats_entropies_with_zeros(fake_counts_obj_with_zeros):
+    from math import log
     output = Entropy(fake_counts_obj_with_zeros)
     entropies = output['entropies']
 
-    H1 = -((2/6)*math.log(2/6,2) + (4/6)*math.log(4/6,2))
-    H2 = -((9/9)*math.log(9/9,2))
-    H3 = -((4/4)*math.log(4/4,2))
-    H4 = -((5/130)*math.log(5/130,2) + (125/130)*math.log(125/130,2))
-    H5 = -((6/258)*math.log(6/258,2) + (36/258)*math.log(36/258,2) + (216/258)*math.log(216/258,2))
-    true_entropies = [H1, H2, H3, H4, H5]
+    true_entropies = [
+        -(2/6*log(1/3)+4/6*log(4/6)),
+        0,
+        0,
+        -(5/130*log(5/130)+125/130*log(125/130)),
+        -(6/258*log(6/258)+36/258*log(36/258)+216/258*log(216/258))
+    ]
 
     row_entropies = []
     for i in range(0, len(entropies)):
@@ -745,18 +754,18 @@ def test_stats_entropies(fake_counts_obj_with_zeros):
         row_entropy = row.get('entropy')
         row_entropies.append(row_entropy)
 
-
     assert true_entropies == row_entropies
 
 #test that entropy gets correct values with an all zero row
 def test_stats_entropy_all_zeros(fake_count_rowzero_obj):
+    from math import log
     output = Entropy(fake_count_rowzero_obj)
     entropies = output['entropies']
 
-    H1 = -((1/25)*math.log(1/25,2) + (3/25)*math.log(3/25,2) + (5/25)*math.log(5/25,2)
-               + (7/25)*math.log(7/25,2) + (9/25)*math.log(9/25,2))
-    H2 = -((2/30)*math.log(2/30,2) + (4/30)*math.log(4/30,2) + (6/30)*math.log(6/30,2)
-               + (8/30)*math.log(8/30,2) + (10/30)*math.log(10/30,2))
+    H1 = -((1/25)*log(1/25) + (3/25)*log(3/25) + (5/25)*log(5/25)
+               + (7/25)*log(7/25) + (9/25)*log(9/25))
+    H2 = -((2/30)*log(2/30) + (4/30)*log(4/30) + (6/30)*log(6/30)
+               + (8/30)*log(8/30) + (10/30)*log(10/30))
     H3 = 0
     true_entropies = [H1, H2, H3]
     
@@ -794,12 +803,13 @@ def test_stats_entropy_json(fake_count_rowzero_obj):
     assert true_row_entropies==row_entropies
 
 def test_stats_entropy_output(fake_count_rowzero_obj):
+    from math import log
     output = Entropy(fake_count_rowzero_obj)
 
-    H1 = -((1/25)*math.log(1/25,2) + (3/25)*math.log(3/25,2) + (5/25)*math.log(5/25,2)
-               + (7/25)*math.log(7/25,2) + (9/25)*math.log(9/25,2))
-    H2 = -((2/30)*math.log(2/30,2) + (4/30)*math.log(4/30,2) + (6/30)*math.log(6/30,2)
-               + (8/30)*math.log(8/30,2) + (10/30)*math.log(10/30,2))
+    H1 = -((1/25)*log(1/25) + (3/25)*log(3/25) + (5/25)*log(5/25)
+               + (7/25)*log(7/25) + (9/25)*log(9/25))
+    H2 = -((2/30)*log(2/30) + (4/30)*log(4/30) + (6/30)*log(6/30)
+               + (8/30)*log(8/30) + (10/30)*log(10/30))
     H3 = 0
 
     assert output.output[0] == ['name','entropy']

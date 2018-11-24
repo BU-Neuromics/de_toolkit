@@ -6,6 +6,7 @@
 ### Changed
 - moved version info into module
 - updated all CLI docs to have common options
+- significant stats module performance improvements
 
 ## [ 0.8.2 ]
 ### Changed

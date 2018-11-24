@@ -53,6 +53,7 @@ setup(name='de_toolkit',
           ,'detk-stats=de_toolkit.stats:main'
           ,'detk-outlier=de_toolkit.outlier:main'
           ,'detk-wrapr=de_toolkit.wrapr:main'
+          ,'detk-report=de_toolkit.report:main'
         ]
       }
       ,setup_requires=[

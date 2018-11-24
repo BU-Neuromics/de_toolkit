@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <script type="text/javascript">
+        // top level namespace
+        var detk = {};
+
+        // dynamically loaded JS
+        {% for name, code in js.items() %}
+            {{ code }}
+        {% endfor %}
+    </script>
+    <style>
+        {% for name, code in css.items() %}
+            {{ code }}
+        {% endfor %}
+    </style>
+    </head>
+    <body>
+        <!-- dynamically loaded  HTML templates -->
+        {% for name, tmpl in html.items() %}
+        <template id="{{name}}">
+            {{ tmpl }}
+        </template>
+        {% endfor %}
+        <script type="text/javascript">
+            detk.data = [{{ data|join(', ') }}];
+        </script>
+    </body>
+</html>

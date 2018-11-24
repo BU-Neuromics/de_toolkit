@@ -1,6 +1,8 @@
 # Changelog
 
 ## unreleased
+### Added
+- modular report functionality
 ### Changed
 - moved version info into module
 - updated all CLI docs to have common options

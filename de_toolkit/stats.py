@@ -438,15 +438,7 @@ class ColDist(DetkModule) :
             IQR =  np.percentile(data, 75) - np.percentile(data, 25)
 
             #for the histogram bin edges and count numbers
-            if density :
-                (n, dist_bins, patches) = plt.hist(
-                        data,
-                        bins=bins,
-                        label='hst',
-                        weights=np.zeros_like(np.asarray(data)) + 1. / np.asarray(data).size
-                )
-            else:
-                (n, dist_bins, patches) = plt.hist(data, bins=bins, label='hst')
+            n, dist_bins = np.histogram(data,bins=bins,density=density)
 
             #make the dict for each sample
             self['dists'].append(
@@ -1014,53 +1006,6 @@ class CountPCA(DetkModule) :
                 'column_variables': self['column_variables'],
                 'components': self['components']
                }
-
-def format_json(filename, output):
-
-    # new dict for holding stats recs
-    output_dict = OrderedDict()
-
-    # see if filename already exists
-    if os.path.isfile(filename) :
-        # read in the existing file
-        with open(filename) as f :
-            previous_output = json.load(f)
-            # examine the file for correctness, each array object must have a
-            # 'name' key
-            for d in previous_output :
-                if 'name' not in d :
-                    raise Exception('Malformed detk-stats JSON record in '
-                            'pre-existing file, no name key:',str(d))
-                output_dict[d['name']] = d
-
-    # go through the given output and update output_dict appropriately
-    for d in output :
-        if not hasattr(d,'json') :
-          raise Exception('Could not serialize output, could not find .json '
-              'attribute on output object:',str(d))
-        output_dict[d.name] = d.json
-
-    # write out values in output_dict
-    with open(filename,'w') as f :
-        json.dump(list(output_dict.values()),f)
-
-# monkeypatch mpld3._display.NumpyEncoder pending fix to
-# https://github.com/mpld3/mpld3/issues/434
-import mpld3
-class NumpyEncoder(json.JSONEncoder):
-    """ Special json encoder for numpy types """
-    def default(self, obj):
-        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
-            np.int16, np.int32, np.int64, np.uint8,
-            np.uint16,np.uint32, np.uint64)):
-            return int(obj)
-        elif isinstance(obj, (np.float_, np.float16, np.float32, 
-            np.float64)):
-            return float(obj)
-        elif isinstance(obj,(np.ndarray,)): #### This is the fix
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
-mpld3._display.NumpyEncoder = NumpyEncoder
 
 def format_html(html_fn, json_fn, counts_obj, color_col):
 

@@ -21,6 +21,7 @@ from glob import glob
 import hashlib
 import jinja2
 import json
+import numpy as np
 import os
 import pathlib
 import pkg_resources
@@ -29,6 +30,20 @@ import sys
 import time
 from .common import _cli_doc
 from .version import __version__
+
+class NumpyEncoder(json.JSONEncoder):
+    """ Special json encoder for numpy types """
+    def default(self, obj):
+        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
+            np.int16, np.int32, np.int64, np.uint8,
+            np.uint16,np.uint32, np.uint64)):
+            return int(obj)
+        elif isinstance(obj, (np.float_, np.float16, np.float32, 
+            np.float64)):
+            return float(obj)
+        elif isinstance(obj,(np.ndarray,)): #### This is the fix
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
 
 def hash_str(st) :
     return hashlib.md5(st.encode()).hexdigest()
@@ -53,7 +68,7 @@ class DetkModuleJSON(object):
 
             # since the parameters is a dictionary, convert to a json string
             # to calculate the hash
-            param_str = json.dumps(module.params, sort_keys=True)
+            param_str = json.dumps(module.params, sort_keys=True, cls=NumpyEncoder)
 
             file_name_string = hash_str(module.name+param_str+repl_file_path)
 
@@ -93,7 +108,7 @@ class DetkModuleJSON(object):
         '''
 
         with open(self.filepath,'wt') as f :
-            json.dump(self.out_d,f,indent=indent)
+            json.dump(self.out_d,f,indent=indent,cls=NumpyEncoder)
 
 class DetkReport(object):
     def __init__(self, report_dir='./detk_report') :

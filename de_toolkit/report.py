@@ -15,10 +15,10 @@ Usage:
 '''
 }
 
-import base64
 from collections import OrderedDict
 from docopt import docopt
 from glob import glob
+import hashlib
 import jinja2
 import json
 import os
@@ -30,8 +30,8 @@ import time
 from .common import _cli_doc
 from .version import __version__
 
-def str_to_b64(st) :
-    return base64.urlsafe_b64encode(st.encode()).decode('utf-8')
+def hash_str(st) :
+    return hashlib.md5(st.encode()).hexdigest()
 
 class DetkModuleJSON(object):
     def __init__(self,
@@ -54,7 +54,7 @@ class DetkModuleJSON(object):
             # to calculate the hash
             param_str = json.dumps(module.params, sort_keys=True)
 
-            file_name_string = str_to_b64(module.name+param_str+repl_file_path)
+            file_name_string = hash_str(module.name+param_str+repl_file_path)
 
             filename = '{}.json'.format(file_name_string)
 

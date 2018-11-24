@@ -1,4 +1,3 @@
-import base64
 import docopt
 import json
 import os
@@ -44,12 +43,12 @@ def test_report_cli(fake_module):
         main(['detk-report','clean','oogabooga'])
 
 def test_detk_module_json(fake_module):
-    from de_toolkit.report import DetkModuleJSON, str_to_b64
+    from de_toolkit.report import DetkModuleJSON, hash_str
 
     with TemporaryDirectory() as d :
         j = DetkModuleJSON(fake_module,json_dir=d).write()
         # hashed filename should be
-        fn = str_to_b64('fakemodule{"a": 1}-')+'.json'
+        fn = hash_str('fakemodule{"a": 1}-')+'.json'
         assert os.path.exists(os.path.join(d,fn))
 
         j = DetkModuleJSON(

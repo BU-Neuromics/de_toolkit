@@ -202,10 +202,6 @@ class DetkModule(OrderedDict) :
     Each function in detk is a subclass of this class.
     A module has the following properties:
     - ``name``: name of the module
-    - ``workdir``: path to the directory where detk was run
-    - ``file_path``: path to the file that was processed
-    - ``out_file_path``: path to the file that was output, if available
-    - ``detk_version``: version of detk that generated this file
     - ``params``: the module-dependent params passed to the module
     - ``output``: the output of the module in tabular form
     - ``properties``: properties and statistics about the module, used for
@@ -223,10 +219,6 @@ class DetkModule(OrderedDict) :
         '''
         return {
                    'name': self.name
-                   ,'detk_version': __version__
-                   ,'file_path': self.get('file_path')
-                   ,'out_file_path': self.get('out_file_path')
-                   ,'workdir': self.get('workdir')
                    ,'params': self.params
                    ,'properties': self.properties
                }

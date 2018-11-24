@@ -242,8 +242,9 @@ def main(argv=sys.argv):
         return
 
     # add the common opts to the docopt strings
+    cmd_opts_aug = {}
     for k,v in cmd_opts.items() :
-        cmd_opts[k] = _cli_doc(v)
+        cmd_opts_aug[k] = _cli_doc(v)
 
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
         docopt(_cli_doc(__doc__),argv)
@@ -252,7 +253,7 @@ def main(argv=sys.argv):
 
     if cmd == 'entropy' :
 
-        args = docopt(cmd_opts['vst'],argv)
+        args = docopt(cmd_opts_aug['vst'],argv)
         count_obj = CountMatrixFile(args['<count_fn>'])
 
         data = CountMatrixFile(args['<counts_fn>'])
@@ -266,14 +267,14 @@ def main(argv=sys.argv):
             plot_entropy(out_df, pval, name=plot)
 
     elif cmd == 'trim' :
-        args = docopt(cmd_opts['trim'],argv)
+        args = docopt(cmd_opts_aug['trim'],argv)
 
         count_obj = CountMatrixFile(args['<count_fn>'])
 
         out_df = trim(count_obj)
 
     elif cmd == 'shrink' :
-        args = docopt(cmd_opts['shrink'],argv)
+        args = docopt(cmd_opts_aug['shrink'],argv)
 
         count_obj = CountMatrixFile(args['<count_fn>'])
 

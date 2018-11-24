@@ -345,16 +345,17 @@ def main(argv=sys.argv) :
         return
 
     # add the common opts to the docopt strings
+    cmd_opts_aug = {}
     for k,v in cmd_opts.items() :
-        cmd_opts[k] = _cli_doc(v)
+        cmd_opts_aug[k] = _cli_doc(v)
 
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
+    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts_aug) :
         docopt(_cli_doc(__doc__))
     argv = argv[1:]
     cmd = argv[0]
 
     if cmd == 'deseq2' :
-        args = docopt(cmd_opts['deseq2'],argv)
+        args = docopt(cmd_opts_aug['deseq2'],argv)
         count_obj = CountMatrixFile(
             args['<count_fn>']
             ,args['<cov_fn>']
@@ -371,7 +372,7 @@ def main(argv=sys.argv) :
         )
 
     elif cmd == 'firth' :
-        args = docopt(cmd_opts['firth'],argv)
+        args = docopt(cmd_opts_aug['firth'],argv)
         count_obj = CountMatrixFile(
             args['<count_fn>']
             ,args['<cov_fn>']

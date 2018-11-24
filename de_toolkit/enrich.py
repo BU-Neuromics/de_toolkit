@@ -153,8 +153,9 @@ def main(argv=sys.argv) :
         return
 
     # add the common opts to the docopt strings
+    cmd_opts_aug = {}
     for k,v in cmd_opts.items() :
-        cmd_opts[k] = _cli_doc(v)
+        cmd_opts_aug[k] = _cli_doc(v)
 
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
         docopt(__doc__)
@@ -162,7 +163,7 @@ def main(argv=sys.argv) :
     cmd = argv[0]
 
     if cmd == 'fgsea' :
-        args = docopt(cmd_opts['fgsea'],argv)
+        args = docopt(cmd_opts_aug['fgsea'],argv)
         gmt = GMT()
         gmt.load_file(args['<gmt_fn>'])
         res_df = pandas.read_csv(

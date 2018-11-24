@@ -1353,8 +1353,9 @@ def main(argv=sys.argv) :
         return
 
     # add the common opts to the docopt strings
+    cmd_opts_aug = {}
     for k,v in cmd_opts.items() :
-        cmd_opts[k] = _cli_doc(v)
+        cmd_opts_aug[k] = _cli_doc(v)
 
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
         docopt(_cli_doc(__doc__))
@@ -1364,14 +1365,14 @@ def main(argv=sys.argv) :
     # all modes have a counts file argument
 
     if cmd == 'pca' :
-        args = docopt(cmd_opts['pca'],argv)
+        args = docopt(cmd_opts_aug['pca'],argv)
         counts_obj = CountMatrixFile(
                 args['<counts_fn>'],
                 column_data_f=args['--column-data']
             )
         output = CountPCA(counts_obj)
     elif cmd == 'summary' :
-        args = docopt(cmd_opts['summary'],argv)
+        args = docopt(cmd_opts_aug['summary'],argv)
         counts_obj = CountMatrixFile(
                 args['<counts_fn>'],
                 column_data_f=args['--column-data']
@@ -1382,7 +1383,7 @@ def main(argv=sys.argv) :
           ,args['--density']
         )
     elif cmd == 'coldist' :
-        args = docopt(cmd_opts['coldist'],argv)
+        args = docopt(cmd_opts_aug['coldist'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = ColDist(counts_obj
           ,bins=int(args['--bins'])
@@ -1390,7 +1391,7 @@ def main(argv=sys.argv) :
           ,density=args['--density']
         )
     elif cmd == 'rowdist' :
-        args = docopt(cmd_opts['rowdist'],argv)
+        args = docopt(cmd_opts_aug['rowdist'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = RowDist(counts_obj
           ,bins=int(args['--bins'])
@@ -1398,19 +1399,19 @@ def main(argv=sys.argv) :
           ,density=args['--density']
         )
     elif cmd == 'colzero' :
-        args = docopt(cmd_opts['colzero'],argv)
+        args = docopt(cmd_opts_aug['colzero'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = ColZero(counts_obj)
     elif cmd == 'rowzero' :
-        args = docopt(cmd_opts['rowzero'],argv)
+        args = docopt(cmd_opts_aug['rowzero'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = RowZero(counts_obj)
     elif cmd == 'entropy' :
-        args = docopt(cmd_opts['entropy'],argv)
+        args = docopt(cmd_opts_aug['entropy'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = Entropy(counts_obj)
     elif cmd == 'base' :
-        args = docopt(cmd_opts['base'],argv)
+        args = docopt(cmd_opts_aug['base'],argv)
         counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = Base(counts_obj)
 

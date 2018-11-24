@@ -201,8 +201,9 @@ def main(argv=sys.argv) :
         return
 
     # add the common opts to the docopt strings
+    cmd_opts_aug = {}
     for k,v in cmd_opts.items() :
-        cmd_opts[k] = _cli_doc(v)
+        cmd_opts_aug[k] = _cli_doc(v)
 
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
         docopt(_cli_doc(__doc__))
@@ -210,19 +211,19 @@ def main(argv=sys.argv) :
     cmd = argv[0]
 
     if cmd == 'vst' :
-        args = docopt(cmd_opts['vst'],argv)
+        args = docopt(cmd_opts_aug['vst'],argv)
         count_obj = CountMatrixFile(args['<count_fn>'])
 
         out_df = vst(count_obj)
 
     if cmd == 'plog' :
-        args = docopt(cmd_opts['plog'],argv)
+        args = docopt(cmd_opts_aug['plog'],argv)
         count_obj = CountMatrixFile(args['<count_fn>'])
 
         out_df = plog(count_obj)
     
     elif cmd == 'rlog' :
-        args = docopt(cmd_opts['rlog'],argv)
+        args = docopt(cmd_opts_aug['rlog'],argv)
 
         count_obj = CountMatrixFile(
             args['<count_fn>']

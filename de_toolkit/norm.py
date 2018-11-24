@@ -230,8 +230,9 @@ def main(argv=sys.argv) :
         return
 
     # add the common opts to the docopt strings
+    cmd_opts_aug = {}
     for k,v in cmd_opts.items() :
-        cmd_opts[k] = _cli_doc(v)
+        cmd_opts_aug[k] = _cli_doc(v)
 
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
         docopt(_cli_doc(__doc__),argv)
@@ -239,15 +240,15 @@ def main(argv=sys.argv) :
     cmd = argv[0]
 
     if cmd == 'deseq2' :
-        args = docopt(cmd_opts['deseq2'],argv)
+        args = docopt(cmd_opts_aug['deseq2'],argv)
         count_obj = CountMatrixFile(args['<counts_fn>'])
         out_df = deseq2(count_obj)
     elif cmd == 'library' :
-        args = docopt(cmd_opts['library'],argv)
+        args = docopt(cmd_opts_aug['library'],argv)
         count_obj = CountMatrixFile(args['<counts_fn>'])
         out_df = library_size(count_obj)
     elif cmd == 'fpkm' :
-        args = docopt(cmd_opts['fpkm'],argv)
+        args = docopt(cmd_opts_aug['fpkm'],argv)
         # the lengths_fn is assumed to be a file with two columns
         # ID<delim>int
         # providing the lengths that should be used for each ID in the counts

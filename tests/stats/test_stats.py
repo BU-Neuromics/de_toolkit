@@ -936,7 +936,7 @@ def test_stats_summary_json(fake_counts_obj):
 
     output = summary(fake_counts_obj)
 
-    true_funcs = set(['basestats', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy', 'pca'])
+    true_funcs = set(['basestats', 'coldist', 'colzero', 'rowzero', 'entropy', 'pca'])
 
     names = set()
     for section in output :
@@ -949,17 +949,16 @@ def test_stats_cli_json(fake_count_rowdist_obj, fake_count_rowdist_csv):
 
     output = summary(fake_count_rowdist_obj)
 
-    true_funcs = set(['basestats', 'coldist', 'rowdist', 'colzero', 'rowzero', 'entropy','pca'])
+    true_funcs = set(['basestats', 'coldist', 'colzero', 'rowzero', 'entropy','pca'])
 
     with tempfile.TemporaryDirectory() as d :
 
         main(['detk-stats','summary','--report-dir={}'.format(d),
             '-o','/dev/null',fake_count_rowdist_csv])
 
-        # summary is supposed to run seven different modules
         # check that there is that number of output json files
         json_fns = os.listdir(os.path.join(d,'json'))
-        assert len(json_fns) == 7
+        assert len(json_fns) == len(true_funcs)
 
         names = set()
         for fn in json_fns :

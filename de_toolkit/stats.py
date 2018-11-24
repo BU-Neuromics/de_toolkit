@@ -38,7 +38,6 @@ This is equivalent to running each of these tools separately:
 
 - basestats
 - coldist
-- rowdist
 - colzero
 - rowzero
 - entropy
@@ -318,7 +317,6 @@ def summary(count_mat,
 
     - basestats
     - coldist
-    - rowdist
     - colzero
     - rowzero
     - entropy
@@ -329,11 +327,11 @@ def summary(count_mat,
     count_mat : CountMatrix object
         count matrix object
     bins : int
-        number of bins, passed to coldist and rowdist
+        number of bins, passed to coldist
     log : bool
-        perform log10 transform of counts in coldist and rowdist
+        perform log10 transform of counts in coldist
     density : bool
-        return a density distribution from coldist and rowdist
+        return a density distribution from coldist
 
     Returns
     -------
@@ -344,7 +342,7 @@ def summary(count_mat,
     total_output = [
         BaseStats(count_mat),
         ColDist(count_mat, bins, log, density),
-        RowDist(count_mat, bins, log, density),
+        #RowDist(count_mat, bins, log, density),
         ColZero(count_mat),
         RowZero(count_mat),
         Entropy(count_mat),
@@ -823,8 +821,6 @@ class Entropy(DetkModule) :
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             entropies = count_mat.counts.apply(scipy.stats.entropy,axis=1).fillna(0)
-            print(count_mat.counts)
-            print(entropies)
 
         #Format output
         self['entropies'] = []

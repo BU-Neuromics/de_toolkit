@@ -8,3 +8,4 @@ dist
 .pytest_cache/
 docs/_build
 twine_creds.sh
+.snakemake/

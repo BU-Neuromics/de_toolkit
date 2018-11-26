@@ -445,14 +445,19 @@ def wrapr(Rcode,**kwargs) :
         wr.execute()
         return wr
 
-def main(argv=None) :
+def main(argv=sys.argv) :
 
     if '--version' in argv :
         from .version import __version__
         print(__version__)
         return
 
-    args = docopt(_cli_doc(__doc__),argv=argv)
+    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in ('check','run')) :
+        docopt(__doc__,argv=argv)
+    argv = argv[1:]
+    cmd = argv[0]
+
+    args = docopt(__doc__,argv=argv)
 
     if args['run'] :
 

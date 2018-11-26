@@ -1,3 +1,4 @@
+import docopt
 import pytest
 from de_toolkit import wrapr
 
@@ -8,15 +9,18 @@ def test_wrapr_cli_check(monkeypatch) :
 
     from de_toolkit import wrapr
 
+    with pytest.raises(docopt.DocoptExit) :
+        wrapr.main()
+
     monkeypatch.setattr(wrapr,'check_r',lambda: False)
     monkeypatch.setattr(wrapr,'check_r_package',lambda x: True)
     with pytest.raises(wrapr.RscriptExecutableNotFound) :
-        wrapr.main(['check'])
+        wrapr.main(['detk-wrapr','check'])
 
     monkeypatch.setattr(wrapr,'check_r',lambda: True)
     monkeypatch.setattr(wrapr,'check_r_package',lambda x: False)
     with pytest.raises(wrapr.RPackageMissing) :
-        wrapr.main(['check'])
+        wrapr.main(['detk-wrapr','check'])
 
 def test_get_r_path(monkeypatch) :
     from de_toolkit import wrapr

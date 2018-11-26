@@ -1,8 +1,10 @@
 import docopt
 import pytest
+import subprocess
+import warnings
+
 from de_toolkit.transform import main
 from de_toolkit.wrapr import check_r, require_r, check_r_package
-import warnings
 
 r_test = pytest.mark.skipif(not check_r(),
         reason='r is not installed, skipping test'

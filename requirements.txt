@@ -12,6 +12,7 @@ seaborn
 setuptools
 scipy
 scikit-learn
+snakemake
 sphinx
 sphinx-autobuild
 sphinx-rtd-theme

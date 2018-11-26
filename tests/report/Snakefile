@@ -25,4 +25,4 @@ rule generate:
     output:
         'detk_report/detk_report.html'
     shell:
-        'detk-report generate'
+        'detk-report generate --dev'

@@ -1,30 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+    <!-- asset css -->
+    {% for name, code in assets['css'].items() %}
+    <style>
+        {{ code }}
+    </style>
+    {% endfor %}
+    <!-- asset js -->
+    {% for name, code in assets['js'].items() %}
+    <script type="text/javascript>
+        {{ code }}
+    </script>
+    {% endfor %}
     <script type="text/javascript">
         // top level namespace
         var detk = {};
 
         // dynamically loaded JS
-        {% for name, code in js.items() %}
+        {% for name, code in templates['js'].items() %}
             {{ code }}
         {% endfor %}
     </script>
     <style>
-        {% for name, code in css.items() %}
+        {% for name, code in templates['css'].items() %}
             {{ code }}
         {% endfor %}
     </style>
     </head>
     <body>
         <!-- dynamically loaded  HTML templates -->
-        {% for name, tmpl in html.items() %}
+        {% for name, tmpl in templates['html'].items() %}
         <template id="{{name}}">
             {{ tmpl }}
         </template>
         {% endfor %}
         <script type="text/javascript">
-            detk.data = [{{ data|join(', ') }}];
+            detk.data = {{ data }};
         </script>
     </body>
 </html>

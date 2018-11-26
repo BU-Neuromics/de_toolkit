@@ -1,0 +1,25 @@
+        <template id="file_div">
+            <div id="{{=it.id}}">
+                <h2>{{=it.name}}</h2>
+            </div>
+        </template>
+
+        <template id="accordion">
+          <div class="card">
+              <div class="card-header" id="{{=it.id}}">
+                  <h5 class="mb-0">
+                      <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse_{{=it.id}}" aria-expanded="true" aria-controls="collapse_{{=it.id}}">
+                          {{=it.name}} - {{=it.in_file_path}}
+                      </button>
+                  </h5>
+              </div>
+              <div id="collapse_{{=it.id}}" class="collapse hide" aria-labelledby="{{=it.id}}" data-parent="#modules">
+                  <div class="card-body">
+                      {{=it.body}}
+                  </div>
+              </div>
+          </div>
+        </template>
+
+        <!-- main element -->
+        <div id="modules" class="accordion"></div>

@@ -61,22 +61,21 @@ class DetkModuleJSON(object):
             json_dir='.',
             json_path=None) :
 
+        # the json filename is calculated as the combination of
+        # the module name, the parameters passed, and the input filename
+        repl_file_path = '-' if in_file_path is None else in_file_path
+
+        # since the parameters is a dictionary, convert to a json string
+        # to calculate the hash
+        param_str = json.dumps(module.params, sort_keys=True, cls=NumpyEncoder)
+
+        module_id = hash_str(module.name+param_str+repl_file_path+__version__)
+
+        filename = '{}.json'.format(module_id)
+
         if json_path is not None :
             self.filepath = json_path
         else :
-
-            # the json filename is calculated as the combination of
-            # the module name, the parameters passed, and the input filename
-            repl_file_path = '-' if in_file_path is None else in_file_path
-
-            # since the parameters is a dictionary, convert to a json string
-            # to calculate the hash
-            param_str = json.dumps(module.params, sort_keys=True, cls=NumpyEncoder)
-
-            file_name_string = hash_str(module.name+param_str+repl_file_path)
-
-            filename = '{}.json'.format(file_name_string)
-
             self.filepath = os.path.realpath(os.path.join(json_dir,filename))
 
         if workdir is None :
@@ -85,6 +84,7 @@ class DetkModuleJSON(object):
         module_json = module.json
         self.out_d = OrderedDict([
             ('name',module.name),
+            ('id',module_id),
             ('detk_version',__version__),
             ('last_modified',int(1000*time.time())),
             ('in_file_path',in_file_path),
@@ -101,6 +101,7 @@ class DetkModuleJSON(object):
 
         Each JSON file has one top level object with the following properties:
         - ``name``: name of the module
+        - ``id``: machine readable ID
         - ``detk_version``: version of detk that generated this file
         - ``last_modified``: local system timestamp in milliseconds when this
           file was created/modified
@@ -114,14 +115,20 @@ class DetkModuleJSON(object):
             json.dump(self.out_d,f,indent=indent,cls=NumpyEncoder)
 
 class DetkReport(object):
-    def __init__(self, report_dir='./detk_report', dev=False) :
+    def __init__(self, report_dir='./detk_report') :
         self.report_dir = os.path.realpath(report_dir)
         self.json_dir = os.path.join(self.report_dir,'json')
         pathlib.Path(self.json_dir).mkdir(parents=True, exist_ok=True)
         self.report_path = os.path.join(self.report_dir,'detk_report.html')
-        self.dev=dev
 
         self.modules = []
+
+        self._template_data = {
+                'data':None,
+                'common': {},
+                'templates': {},
+                'assets': {}
+                }
 
     def add_module(self,
             module,
@@ -141,7 +148,57 @@ class DetkReport(object):
         )
         self.modules.append(module_json)
 
-    def write(self) :
+    @property
+    def template_name(self) :
+        return 'base.html'
+
+    @property
+    def template_data(self) :
+
+        template_data = self._template_data
+
+        json_str = self.json
+
+        # loading the whole json object on a single long line is hard on text
+        # editors
+        template_data['data'] = json.dumps(json_str)
+
+        # format the report
+        # do a scan through the json directory to pick up all the existing
+        # reports
+        module_names = set()
+        for module in json_str :
+            module_names.add(module.get('name'))
+
+        # load the module templates for the modules found in the report dir
+        for asset in ('js','css','html') :
+            # common (common) assets
+            common_path = 'templates/{}/common.{}'.format(asset,asset)
+            if pkg_resources.resource_exists('de_toolkit',common_path) :
+                template_data['common'][asset] = \
+                    pkg_resources.resource_string('de_toolkit',common_path).decode()
+
+            # module templates
+            d = template_data['templates'][asset] = {}
+            for name in module_names :
+                tmpl_path = 'templates/{}/{}.{}'.format(asset,name,asset)
+                if pkg_resources.resource_exists('de_toolkit',tmpl_path) :
+                    template_data['templates'][asset][name] = \
+                        pkg_resources.resource_string('de_toolkit',tmpl_path).decode()
+
+            # third party assets
+            template_data['assets'][asset] = {}
+            asset_dir = 'templates/{}/assets/'.format(asset)
+            if pkg_resources.resource_exists('de_toolkit',asset_dir) :
+                for tmpl_path in pkg_resources.resource_listdir('de_toolkit',asset_dir):
+                    template_data['assets'][asset][tmpl_path] =  \
+                        pkg_resources.resource_string('de_toolkit',
+                                os.path.join(asset_dir,tmpl_path)).decode()
+
+        return template_data
+
+    @property
+    def json(self) :
 
         # write all the module JSON
         for module in self.modules :
@@ -151,41 +208,116 @@ class DetkReport(object):
         # do a scan through the json directory to pick up all the existing
         # reports
         json_str = []
-        module_names = set()
         for fn in glob(os.path.join(self.json_dir,'*.json')) :
             with open(fn) as f :
                 j = f.read().strip()
                 json_str.append(json.loads(j))
-                module_names.add(json.loads(j).get('name'))
 
-        # loading the whole json object on a single long line is hard on text
-        # editors
-        json_str = json.dumps(json_str, indent=2 if self.dev else None)
+        return json_str
 
-        # load the module templates for the modules found in the report dir
-        template_data = {'data':json_str}
-        for asset in ('js','css','html') :
-            d = template_data[asset] = {}
-            for name in module_names :
-                tmpl_path = 'templates/{}/{}.{}'.format(asset,name,asset)
-                if pkg_resources.resource_exists('de_toolkit',tmpl_path) :
-                    template_data[asset][name] = pkg_resources.resource_string(
-                            'de_toolkit',tmpl_path
-                    ).decode()
+    def write(self) :
+
+        # write all the module JSON for this report
+        for module in self.modules :
+            module.write()
 
         # create and render the template
         template = jinja2.Template(
             pkg_resources.resource_string(
-                'de_toolkit','templates/html/base.html'
+                'de_toolkit','templates/html/{}'.format(
+                    self.template_name
+                )
             ).decode()
         )
+
         with open(self.report_path,'w') as f :
-            f.write(template.render(**template_data))
+            f.write(template.render(**self.template_data))
 
     def __enter__(self) :
         return self
     def __exit__(self,type,value,traceback):
         self.write()
+
+class DetkReportDev(DetkReport) :
+    @property
+    def template_name(self) :
+        return 'base_dev.html'
+
+    @property
+    def template_data(self) :
+        template_data = self._template_data
+        # in development mode, copy assets and data to the report directory
+        # instead of writing into the file
+
+        json_str = self.json
+
+        # write the data into its own javascript file
+        data_path = os.path.join(self.json_dir,'data.js')
+        template_data['data_path'] = 'json/data.js'
+        with open(data_path,'w') as f :
+            f.write('var detk = detk || {};')
+            f.write('detk.data = {};'.format(
+                        json.dumps(json_str,indent=2)
+                    )
+            )
+
+        # format the report
+        # do a scan through the json directory to pick up all the existing
+        # reports
+        module_names = set()
+        for module in json_str :
+            module_names.add(module.get('name'))
+
+        # load the module templates for the modules found in the report dir
+        for asset in ('js','css','html') :
+
+            dest_dir = pathlib.Path(os.path.join(self.report_dir,asset))
+            dest_dir.mkdir(parents=True, exist_ok=True)
+
+            # common assets
+            common_path = 'templates/{}/common.{}'.format(asset,asset)
+            if pkg_resources.resource_exists('de_toolkit',common_path) :
+                template_data['common'][asset] = \
+                    pkg_resources.resource_string('de_toolkit',common_path).decode()
+                # copy the asset
+                #shutil.copy(
+                #    pkg_resources.resource_filename(
+                #        'de_toolkit',common_path
+                #    ),
+                #    os.path.join(self.report_dir,asset,os.path.basename(common_path))
+                #)
+                # give the relative path to the asset
+                #template_data['common'][asset] = '{}/{}'.format(
+                #        asset,
+                #        os.path.basename(common_path)
+                #)
+
+            # module templates, loaded in as in production mode
+            d = template_data['templates'][asset] = {}
+            for name in module_names :
+                tmpl_path = 'templates/{}/{}.{}'.format(asset,name,asset)
+                if pkg_resources.resource_exists('de_toolkit',tmpl_path) :
+                    template_data['templates'][asset][name] = \
+                        pkg_resources.resource_string('de_toolkit',tmpl_path).decode()
+            # third party assets, copied as files instead of inserted into the
+            # page
+            template_data['assets'][asset] = {}
+            asset_dir = 'templates/{}/assets/'.format(asset)
+
+            if pkg_resources.resource_exists('de_toolkit',asset_dir) :
+
+                for tmpl_path in pkg_resources.resource_listdir('de_toolkit',asset_dir) :
+                    # copy the asset
+                    shutil.copy(
+                        pkg_resources.resource_filename(
+                            'de_toolkit',os.path.join(asset_dir,tmpl_path)
+                        ),
+                        dest_dir
+                    )
+                    # give the relative path to the asset
+                    template_data['assets'][asset][tmpl_path] = '{}/{}'.format(asset,tmpl_path)
+
+        return template_data
 
 def main(argv=sys.argv) :
 
@@ -206,8 +338,13 @@ def main(argv=sys.argv) :
 
     if cmd == 'generate' :
         args = docopt(cmd_opts_aug['generate'],argv)
+
+        report_class = DetkReport
+        if args['--dev'] :
+            report_class = DetkReportDev
+
         # the context manager loads and writes, do nothing inside
-        with DetkReport(args['--report-dir'],args['--dev']) :
+        with report_class(args['--report-dir']) :
             pass
     elif cmd == 'clean' :
         args = docopt(cmd_opts_aug['clean'],argv)

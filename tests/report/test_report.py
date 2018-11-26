@@ -49,7 +49,7 @@ def test_detk_module_json(fake_module):
     with TemporaryDirectory() as d :
         j = DetkModuleJSON(fake_module,json_dir=d).write()
         # hashed filename should be
-        fn = hash_str('fakemodule{"a": 1}-')+'.json'
+        fn = hash_str('fakemodule{"a": 1}-'+__version__)+'.json'
         assert os.path.exists(os.path.join(d,fn))
 
         j = DetkModuleJSON(
@@ -81,7 +81,8 @@ def check_snakemake() :
 snakemake_test = pytest.mark.skipif(not check_snakemake(),reason='Rscript executable not found, skipping test')
 @snakemake_test
 def test_report_generate():
-    subprocess.run("snakemake",
+    p = subprocess.run("snakemake",
             shell=True,
             cwd=os.path.dirname(__file__)
     )
+    assert p.returncode == 0

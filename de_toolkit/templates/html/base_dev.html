@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <!-- asset css -->
+    {% for name, path in assets['css'].items() %}
+    <!-- {{ name }} asset -->
+    <link rel="stylesheet" type="text/css" href="{{ path }}">
+    {% endfor %}
+
+    <script type="text/javascript" src="{{ assets['js']['jquery-3.3.1.min.js'] }}"></script>
+    <script type="text/javascript" src="{{ assets['js']['bootstrap.bundle.min.js'] }}"></script>
+    <script type="text/javascript" src="{{ assets['js']['underscore-min.js'] }}"></script>
+    <script type="text/javascript" src="{{ assets['js']['doT.min.js'] }}"></script>
+
+    <script type="text/javascript">
+        // top level namespace
+        var detk = {};
+
+        // dynamically loaded JS
+        {% for name, code in templates['js'].items() %}
+            {{ code }}
+        {% endfor %}
+
+        {{ common['js'] }}
+    </script>
+    <script type="text/javascript" src="{{ data_path }}"></script>
+    <style>
+        <!-- common css -->
+        {{ common['css'] }}
+
+        <!-- module css -->
+        {% for name, code in templates['css'].items() %}
+            {{ code }}
+        {% endfor %}
+    </style>
+    </head>
+    <body>
+        <!-- dynamically loaded  HTML templates -->
+        {% for name, tmpl in templates['html'].items() %}
+        <template id="{{name}}">
+            {{ tmpl }}
+        </template>
+        {% endfor %}
+
+        {{ common['html'] }}
+
+    </body>
+</html>

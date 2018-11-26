@@ -8,6 +8,9 @@ cmd_opts = {
         'generate':r'''\
 Usage:
     detk-report generate [options]
+
+Options:
+    --dev  Format html for development (larger file size)
 ''',
         'clean':r'''\
 Usage:
@@ -111,11 +114,12 @@ class DetkModuleJSON(object):
             json.dump(self.out_d,f,indent=indent,cls=NumpyEncoder)
 
 class DetkReport(object):
-    def __init__(self, report_dir='./detk_report') :
+    def __init__(self, report_dir='./detk_report', dev=False) :
         self.report_dir = os.path.realpath(report_dir)
         self.json_dir = os.path.join(self.report_dir,'json')
         pathlib.Path(self.json_dir).mkdir(parents=True, exist_ok=True)
         self.report_path = os.path.join(self.report_dir,'detk_report.html')
+        self.dev=dev
 
         self.modules = []
 
@@ -151,8 +155,12 @@ class DetkReport(object):
         for fn in glob(os.path.join(self.json_dir,'*.json')) :
             with open(fn) as f :
                 j = f.read().strip()
-                json_str.append(j)
+                json_str.append(json.loads(j))
                 module_names.add(json.loads(j).get('name'))
+
+        # loading the whole json object on a single long line is hard on text
+        # editors
+        json_str = json.dumps(json_str, indent=2 if self.dev else None)
 
         # load the module templates for the modules found in the report dir
         template_data = {'data':json_str}
@@ -163,7 +171,7 @@ class DetkReport(object):
                 if pkg_resources.resource_exists('de_toolkit',tmpl_path) :
                     template_data[asset][name] = pkg_resources.resource_string(
                             'de_toolkit',tmpl_path
-                    )
+                    ).decode()
 
         # create and render the template
         template = jinja2.Template(
@@ -199,7 +207,7 @@ def main(argv=sys.argv) :
     if cmd == 'generate' :
         args = docopt(cmd_opts_aug['generate'],argv)
         # the context manager loads and writes, do nothing inside
-        with DetkReport(args['--report-dir']) :
+        with DetkReport(args['--report-dir'],args['--dev']) :
             pass
     elif cmd == 'clean' :
         args = docopt(cmd_opts_aug['clean'],argv)

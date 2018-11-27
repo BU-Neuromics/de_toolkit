@@ -18,7 +18,8 @@
                                 {"id":id,"name":fn}
                             )
                         );
-                        mods.forEach(function(d) {
+                        _.sortBy(mods,'name').forEach(function(d) {
+
                             // populate the 'body' value with the template
                             d.body = detk.templates[d.name](d);
                             $("#"+id).append(detk.templates.accordion(d));

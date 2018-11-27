@@ -1,5 +1,4 @@
-                var container = $("#"+elem+" > #colzero_count")[0],
-                    bounds = {
+                var bounds = {
                     mean_max: 0, mean_min: Number.MAX_SAFE_INTEGER,
                     median_max: 0, median_min: Number.MAX_SAFE_INTEGER
                 };
@@ -11,7 +10,7 @@
                         bounds.median_min = Math.min(x.median, x.nonzero_median, bounds.median_min);
                     }
                 )
-                Highcharts.chart(container.id, {
+                Highcharts.chart(elem.find(".colzero_count")[0], {
                     chart: { parallelCoordinates: true },
                     title: { text: 'Column Zeros' },
                     xAxis: {

@@ -114,6 +114,16 @@ class DetkModuleJSON(object):
         with open(self.filepath,'wt') as f :
             json.dump(self.out_d,f,indent=indent,cls=NumpyEncoder)
 
+def walk(path) :
+    l = []
+    for tmpl_path in pkg_resources.resource_listdir('de_toolkit',path) :
+        tmpl_path = os.path.join(path,tmpl_path)
+        if pkg_resources.resource_isdir('de_toolkit',tmpl_path) :
+            l.extend(walk(tmpl_path))
+        else :
+            l.append(tmpl_path)
+    return l
+
 class DetkReport(object):
     def __init__(self, report_dir='./detk_report') :
         self.report_dir = os.path.realpath(report_dir)
@@ -190,10 +200,9 @@ class DetkReport(object):
             template_data['assets'][asset] = {}
             asset_dir = 'templates/{}/assets/'.format(asset)
             if pkg_resources.resource_exists('de_toolkit',asset_dir) :
-                for tmpl_path in pkg_resources.resource_listdir('de_toolkit',asset_dir):
+                for tmpl_path in walk(asset_dir) :
                     template_data['assets'][asset][tmpl_path] =  \
-                        pkg_resources.resource_string('de_toolkit',
-                                os.path.join(asset_dir,tmpl_path)).decode()
+                        pkg_resources.resource_string('de_toolkit', tmpl_path).decode()
 
         return template_data
 
@@ -306,16 +315,18 @@ class DetkReportDev(DetkReport) :
 
             if pkg_resources.resource_exists('de_toolkit',asset_dir) :
 
-                for tmpl_path in pkg_resources.resource_listdir('de_toolkit',asset_dir) :
+                for tmpl_path in walk(asset_dir) :
+                    dest_path_str = tmpl_path.replace('templates/','')
+                    dest_path = pathlib.Path(os.path.join(self.report_dir,dest_path_str))
+                    dest_path.parent.mkdir(parents=True, exist_ok=True)
                     # copy the asset
                     shutil.copy(
-                        pkg_resources.resource_filename(
-                            'de_toolkit',os.path.join(asset_dir,tmpl_path)
-                        ),
-                        dest_dir
+                        pkg_resources.resource_filename('de_toolkit',tmpl_path),
+                        dest_path
                     )
                     # give the relative path to the asset
-                    template_data['assets'][asset][tmpl_path] = '{}/{}'.format(asset,tmpl_path)
+                    #rel_path = tmpl_path.replace('assets/','')
+                    #template_data['assets'][asset][rel_path] = dest_path_str
 
         return template_data
 

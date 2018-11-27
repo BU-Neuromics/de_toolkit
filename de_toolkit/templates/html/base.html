@@ -7,12 +7,13 @@
         {{ code }}
     </style>
     {% endfor %}
-    <!-- asset js -->
-    {% for name, code in assets['js'].items() %}
-    <script type="text/javascript>
-        {{ code }}
-    </script>
-    {% endfor %}
+
+    <script type="text/javascript" src="{{ assets['js']['jquery-3.3.1.min.js'] }}"></script>
+    <script type="text/javascript" src="{{ assets['js']['bootstrap.bundle.min.js'] }}"></script>
+    <script type="text/javascript" src="{{ assets['js']['underscore-min.js'] }}"></script>
+    <script type="text/javascript" src="{{ assets['js']['doT.min.js'] }}"></script>
+    <script type="text/javascript" src="{{ assets['js']['highcharts.js'] }}"></script>
+
     <script type="text/javascript">
         // top level namespace
         var detk = {};

@@ -25,7 +25,7 @@
 
                             // call the javascript function by type
                             if(d.name in detk.functions) {
-                                detk.functions[d.name]("body_"+d.id,d);
+                                detk.functions[d.name]($("#body_"+d.id),d);
                             }
                         });
                     }

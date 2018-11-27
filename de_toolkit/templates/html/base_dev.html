@@ -28,10 +28,8 @@
     </script>
     <script type="text/javascript" src="{{ data_path }}"></script>
     <style>
-        <!-- common css -->
         {{ common['css'] }}
 
-        <!-- module css -->
         {% for name, code in templates['css'].items() %}
             {{ code }}
         {% endfor %}

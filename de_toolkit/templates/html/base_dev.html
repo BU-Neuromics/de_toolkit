@@ -15,12 +15,16 @@
 
     <script type="text/javascript">
         // top level namespace
-        var detk = {};
+        var detk = detk || {};
 
         // dynamically loaded JS
+        detk.functions = {
         {% for name, code in templates['js'].items() %}
-            {{ code }}
+            "{{name}}": function(elem,d) {
+                {{ code }}
+            },
         {% endfor %}
+        }
 
         {{ common['js'] }}
     </script>

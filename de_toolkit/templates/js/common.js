@@ -19,11 +19,15 @@
                             )
                         );
                         mods.forEach(function(d) {
-                            console.log(d);
                             // populate the 'body' value with the template
                             d.body = detk.templates[d.name](d);
                             $("#"+id).append(detk.templates.accordion(d));
-                        })
+
+                            // call the javascript function by type
+                            if(d.name in detk.functions) {
+                                detk.functions[d.name]("body_"+d.id,d);
+                            }
+                        });
                     }
             );
 

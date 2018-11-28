@@ -21,11 +21,13 @@
                         _.sortBy(mods,'name').forEach(function(d) {
 
                             // populate the 'body' value with the template
-                            d.body = detk.templates[d.name](d);
-                            $("#"+id).append(detk.templates.accordion(d));
+                            if(detk.templates.hasOwnProperty(d.name)) {
+                                d.body = detk.templates[d.name](d);
+                                $("#"+id).append(detk.templates.accordion(d));
+                            }
 
                             // call the javascript function by type
-                            if(d.name in detk.functions) {
+                            if(detk.functions.hasOwnProperty(d.name)) {
                                 detk.functions[d.name]($("#body_"+d.id),d);
                             }
                         });

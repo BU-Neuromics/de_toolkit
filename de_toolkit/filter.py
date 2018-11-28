@@ -272,7 +272,7 @@ class FilterCounts(DetkModule) :
     def properties(self):
         return {
                 'num_kept': len(self.kept),
-                'num_filtered': self.counts_obj.counts.shape[1]-len(self.kept)
+                'num_filtered': self.counts_obj.counts.shape[0]-len(self.kept)
                }
 
 def main(argv=sys.argv):

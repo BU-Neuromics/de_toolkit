@@ -43,23 +43,81 @@
                     )
                 });
 
+                var pairwise_component_series = function(i,j) {
+                    var series = [];
+                    
+                    if (i != j) {
+                        series = [{
+                            name: 'PC'+(i+1)+' vs PC'+(j+1),
+                            type: 'scatter',
+                            data: _.map(
+                                _.zip(d.properties.column_names, data[i].projections,data[j].projections),
+                                function(sxy) {
+                                    return {
+                                        name: sxy[0],
+                                        x: sxy[1],
+                                        y: sxy[2],
+                                    }
+                                }
+                            )
+                        }];
+                    } else {
+                        series = [{
+                            name: 'PC'+(i+1),
+                            type: 'column',
+                            data: _.map(
+                                _.zip(d.properties.column_names, data[i].projections),
+                                function(sxy) {
+                                    return {
+                                        name: sxy[0],
+                                        y: sxy[1],
+                                    }
+                                }
+                            )
+                        }];
+                    }
+                    return series;
+                };
                 var pcs = _.pluck(data,'name');
+                var pairwise = Highcharts.chart(elem.find(".pca_pairwise")[0],{
+                    chart: { },
+                    series: pairwise_component_series(0,1)
+                });
                 Highcharts.chart(elem.find(".component_grid")[0], {
                     chart: {
                         type: 'heatmap',
                         marginTop: 15
                     },
-                    title: { text: 'Pairwise Comparison' },
+                    xAxis: { visible: false },
+                    yAxis: { visible: false },
+                    legend: { enabled: false },
+                    title: { text: 'Compare PCs', fontsize: 9 },
                     plotOptions: {
                         series: { }
                     },
                     tooltip: {
                         formatter: function() {
-                            return pcs[this.point.x] + ' vs ' + pcs[this.point.y];
+                            if(this.point.x == this.point.y) {
+                                return pcs[this.point.x];
+                            } else {
+                                return pcs[this.point.x] + ' vs ' + pcs[this.point.y];
+                            }
                         }
                     },
                     series: [{
                         name: 'Comparisons',
+                        label: { enabled: false },
+                        pointPadding: 1,
+                        events: {
+                            click: function(event) {
+                                //pairwise.series[0].setData([0].data);
+                                var series = pairwise_component_series(event.point.x,event.point.y);
+                                pairwise.update({
+                                    title: { text: series[0].name },
+                                    series: series
+                                });
+                            }
+                        },
                         data: _.flatten(
                             pcs.map(function(pc1,i) {
                                 return pcs.map(function(pc2,j) {

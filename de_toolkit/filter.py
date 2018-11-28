@@ -19,7 +19,8 @@ import sys
 from tempfile import TemporaryDirectory
 from warnings import warn
 
-from .common import CountMatrixFile, _cli_doc
+from .common import CountMatrixFile, DetkModule, _cli_doc
+from .report import DetkReport
 
 #Available tokens for mini language
 reserved = ('ALL','OR','AND','MEDIAN','MEAN','ZERO','NONZERO','MAX','MIN')
@@ -255,11 +256,24 @@ def parse_filter_command(cmd) :
     return parsed
 
 def filter_counts(counts_obj, command) :
-    parser = parse_filter_command(command)
+    obj = FilterCounts(counts_obj,command)
+    return obj.output
 
-    kept = parser(counts_obj)
-
-    return counts_obj.counts.loc[counts_obj.counts.index.isin(kept)]
+class FilterCounts(DetkModule) :
+    def __init__(self, counts_obj, command) :
+        self['params'] = {'command': command}
+        parser = parse_filter_command(command)
+        self.counts_obj = counts_obj
+        self.kept = parser(counts_obj)
+    @property
+    def output(self):
+        return self.counts_obj.counts.loc[self.counts_obj.counts.index.isin(self.kept)]
+    @property
+    def properties(self):
+        return {
+                'num_kept': len(self.kept),
+                'num_filtered': self.counts_obj.counts.shape[1]-len(self.kept)
+               }
 
 def main(argv=sys.argv):
 
@@ -293,13 +307,24 @@ def main(argv=sys.argv):
 
     counts_obj = CountMatrixFile(args['<counts_fn>'],column_data_f=cov_fn)
 
-    filtered = filter_counts(counts_obj, args['<command>'])
+    filtered = FilterCounts(counts_obj, args['<command>'])
 
     outf = sys.stdout
     if args['--output'] != 'stdout' :
         outf = open(args['--output'],'wt')
 
-    filtered.to_csv(outf)
+    filtered.output.to_csv(outf)
+
+    # write out the report json
+    with DetkReport(args['--report-dir']) as r :
+        r.add_module(
+                filtered,
+                in_file_path=args['<counts_fn>'],
+                out_file_path=args['--output'],
+                column_data_path=args.get('--column-data'),
+                workdir=os.getcwd()
+            )
+
 
 if __name__ == '__main__':
     main()

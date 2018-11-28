@@ -19,10 +19,19 @@ rule stats:
     shell:
         'detk-stats summary {input} -o {output}'
 
+rule filter:
+    input:
+        'all_mRNA_nonzero_{type}_counts_trim.csv'
+    output:
+        temp('{type}_filtered.csv')
+    shell:
+        'detk-filter "mean(all) > 10" -o {output} {input}'
+
 rule generate:
     input:
         'raw_summary_stats.csv',
-        'norm_summary_stats.csv'
+        'norm_summary_stats.csv',
+        'norm_filtered.csv'
     output:
         'detk_report/detk_report.html'
     shell:

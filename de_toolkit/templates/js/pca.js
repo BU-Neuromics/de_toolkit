@@ -1,6 +1,6 @@
 // component projection parallel coordinate plot
                 var data = d.properties.components.slice(0,10);
-                Highcharts.chart(elem.find(".pca_parallel")[0], {
+                Highcharts.chart(elem.querySelector(".pca_parallel"), {
                     chart: { parallelCoordinates: true },
                     title: { text: 'PCA Projections' },
                     xAxis: {
@@ -79,11 +79,11 @@
                     return series;
                 };
                 var pcs = _.pluck(data,'name');
-                var pairwise = Highcharts.chart(elem.find(".pca_pairwise")[0],{
+                var pairwise = Highcharts.chart(elem.querySelector(".pca_pairwise"),{
                     chart: { },
                     series: pairwise_component_series(0,1)
                 });
-                Highcharts.chart(elem.find(".component_grid")[0], {
+                Highcharts.chart(elem.querySelector(".component_grid"), {
                     chart: {
                         type: 'heatmap',
                         marginTop: 15

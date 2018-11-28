@@ -1,6 +1,6 @@
 var data = _.sortBy(d.properties.entropies,'entropy');
                 data.reverse();
-                Highcharts.chart(elem.find(".entropy")[0], {
+                Highcharts.chart(elem.querySelector(".entropy"), {
                     title: { text: 'Sample Entropy' },
                     xAxis: {
                         title: { text: 'Features' },

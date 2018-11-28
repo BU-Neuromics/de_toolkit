@@ -10,7 +10,7 @@
                         bounds.median_min = Math.min(x.median, x.nonzero_median, bounds.median_min);
                     }
                 )
-                Highcharts.chart(elem.find(".colzero_count")[0], {
+                Highcharts.chart(elem.querySelector(".colzero_count"), {
                     chart: { parallelCoordinates: true },
                     title: { text: 'Column Zeros' },
                     xAxis: {

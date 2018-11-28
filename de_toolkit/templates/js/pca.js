@@ -9,11 +9,7 @@
                                 return x.name + '(' + (x.perc_variance*100).toFixed(2) + '%)';
                             }
                         ),
-                        labels: {
-                            styles: {
-                                color: '#DFDFDF'
-                            }
-                        }
+                        labels: { styles: { color: '#DFDFDF' } }
                     },
                     plotOptions: {
                         series: {
@@ -47,3 +43,30 @@
                     )
                 });
 
+                var pcs = _.pluck(data,'name');
+                Highcharts.chart(elem.find(".component_grid")[0], {
+                    chart: {
+                        type: 'heatmap',
+                        marginTop: 15
+                    },
+                    title: { text: 'Pairwise Comparison' },
+                    plotOptions: {
+                        series: { }
+                    },
+                    tooltip: {
+                        formatter: function() {
+                            return pcs[this.point.x] + ' vs ' + pcs[this.point.y];
+                        }
+                    },
+                    series: [{
+                        name: 'Comparisons',
+                        data: _.flatten(
+                            pcs.map(function(pc1,i) {
+                                return pcs.map(function(pc2,j) {
+                                    return [i, j, 0];
+                                })
+                            }),
+                            shallow=true
+                        )
+                    }]
+                });

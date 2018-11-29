@@ -27,8 +27,10 @@ Options:
     -c FIELD --statcol=FIELD  Column name or 0-based integer index to use as
                               the statistic for ranking, defaults to the last
                               numeric column in the file
-    -d --descending           Sort column descending, default is to sort
-                              ascending, use this if you are sorting by p-value
+    -a --ascending            Sort column ascending, default is to sort
+                              descending, use this if you are sorting by p-value
+                              or want to reverse the directionality of the NES
+                              scores
     --abs                     Take the absolute value of the column before
                               passing to fgsea
     --minSize=INT             minSize argument to fgsea [default: 15]
@@ -218,7 +220,7 @@ def main(argv=sys.argv) :
 
             stat.index = res_df[idcol]
 
-        if args['--descending'] :
+        if args['--ascending'] :
             stat = -stat
 
         out_df = fgsea(

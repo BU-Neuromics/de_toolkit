@@ -126,7 +126,7 @@ def test_fgsea_cli(gmt_file,result_csv) :
     with tempfile.NamedTemporaryFile('wt') as f:
 
         # sort descending operation on last numerical column
-        main(['detk-enrich','fgsea','--minSize=1','-d',gmt_file,result_csv,
+        main(['detk-enrich','fgsea','--minSize=1','-a',gmt_file,result_csv,
             '-o',f.name])
         res = pandas.read_csv(f.name,index_col=0)
         assert all(res.loc[['set1','set2','set3'],'NES'] > 0)

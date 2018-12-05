@@ -49,9 +49,10 @@ import os
 import pandas
 import tempfile
 import warnings
-from .common import CountMatrixFile, _cli_doc
+from .common import CountMatrixFile, DetkModule, _cli_doc
 from .util import stub
 from .wrapr import require_r, wrapr, require_r_package, RPackageMissing
+from .report import DetkReport
 
 GeneSet = namedtuple('GeneSet',('name','desc','ids'))
 class GMT(OrderedDict):
@@ -91,61 +92,83 @@ def fgsea(
         nperm=10000,
         nproc=None,
         rda_fn=None) :
+    obj = fgseaRes(gmt, stat, minSize, maxSize, nperm, nproc, rda_fn)
+    return obj.output
 
-    # check for NAs in the stat
-    if stat.isnull().any() :
-        nas = stat[stat.isnull()]
-        warnings.warn('The following statistics were NaN and were filtered prior to fgsea:\n{}'.format(nas))
-        stat = stat[~stat.isnull()]
+class fgseaRes(DetkModule) :
+    def __init__(self, gmt, stat, minSize, maxSize, nperm, nproc, rda_fn) :
+        self['params'] = {
+                'minSize': minSize,
+                'maxSize': maxSize,
+                'nperm': nperm,
+                'nproc': nproc,
+                'rda_fn': rda_fn
+                }
+        self.gmt = gmt
 
-    script = '''\
-    library(fgsea)
-    library(data.table)
+        # check for NAs in the stat
+        if stat.isnull().any() :
+            nas = stat[stat.isnull()]
+            warnings.warn('The following statistics were NaN and were filtered prior to fgsea:\n{}'.format(nas))
+            stat = stat[~stat.isnull()]
 
-    ranks <- setNames(params$stat,params$id)
-    pathways <- gmtPathways(params$gmt.fn)
+        script = '''\
+        library(fgsea)
+        library(data.table)
 
-    fgseaRes <- fgsea(
-        pathways,
-        ranks,
-        minSize=params$minSize,
-        maxSize=params$maxSize,
-        nperm=params$nperm,
-        nproc=params$nproc
-    )
-    if(!is.null(params$rda.fn)) {
-        saveRDS(
-            list(
-                fgseaRes=fgseaRes,
-                pathways=pathways,
-                ranks=ranks,
-                params=params
-            ),
-            file=params$rda.fn
+        ranks <- setNames(params$stat,params$id)
+        pathways <- gmtPathways(params$gmt.fn)
+
+        fgseaRes <- fgsea(
+            pathways,
+            ranks,
+            minSize=params$minSize,
+            maxSize=params$maxSize,
+            nperm=params$nperm,
+            nproc=params$nproc
         )
-    }
-    fwrite(fgseaRes,file=out.fn,sep=",",sep2=c("", " ", ""))
-    '''
-
-    # need to write out the gmt to file
-    with tempfile.NamedTemporaryFile() as f :
-        gmt.write_file(f.name)
-        params = {
-            'gmt.fn': os.path.realpath(f.name),
-            'stat': stat.tolist(),
-            'id': stat.index.tolist(),
-            'minSize': minSize,
-            'maxSize': maxSize,
-            'nperm': nperm,
-            'rda.fn': rda_fn,
-            'nproc': nproc or 0
+        if(!is.null(params$rda.fn)) {
+            saveRDS(
+                list(
+                    fgseaRes=fgseaRes,
+                    pathways=pathways,
+                    ranks=ranks,
+                    params=params
+                ),
+                file=params$rda.fn
+            )
         }
-        with wrapr(script,
-                params=params,
-                raise_on_error=True) as r :
-            gsea_res = r.output
+        fwrite(fgseaRes,file=out.fn,sep=",",sep2=c("", " ", ""))
+        '''
 
-    return gsea_res
+        # need to write out the gmt to file
+        with tempfile.NamedTemporaryFile() as f :
+            gmt.write_file(f.name)
+            params = {
+                'gmt.fn': os.path.realpath(f.name),
+                'stat': stat.tolist(),
+                'id': stat.index.tolist(),
+                'minSize': minSize,
+                'maxSize': maxSize,
+                'nperm': nperm,
+                'rda.fn': rda_fn,
+                'nproc': nproc or 0
+            }
+            with wrapr(script,
+                    params=params,
+                    raise_on_error=True) as r :
+                gsea_res = r.output
+        
+        self.gsea_res = gsea_res
+
+    @property
+    def properties(self):
+        return {
+                'num_pathways': len(gsea_res),
+                }
+    @property
+    def output(self):
+        return self.gsea_res
 
 def main(argv=sys.argv) :
 
@@ -236,4 +259,14 @@ def main(argv=sys.argv) :
     fp = sys.stdout if args['--output']=='stdout' else args['--output']
     out_df.to_csv(fp)
 
-
+    with DetkReport(args['--report-dir']) as r :
+        r.add_module(
+                out_df,
+                in_file_path=args['<gmt_fn>'],
+                out_file_path=args['--output'],
+                column_data_path=args.get('--column-data'),
+                workdir=os.getcwd()
+            )
+    
+if __name__ == '__main__':
+    main()

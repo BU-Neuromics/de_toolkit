@@ -83,7 +83,6 @@ class GMT(OrderedDict):
             for k,v in self.items() :
                 out_f.writerow([k,k]+list(v.ids))
 
-@require_r('fgsea')
 def fgsea(
         gmt,
         stat,
@@ -92,10 +91,11 @@ def fgsea(
         nperm=10000,
         nproc=None,
         rda_fn=None) :
-    obj = fgseaRes(gmt, stat, minSize, maxSize, nperm, nproc, rda_fn)
+    obj = FGSEARes(gmt, stat, minSize, maxSize, nperm, nproc, rda_fn)
     return obj.output
 
-class fgseaRes(DetkModule) :
+class FGSEARes(DetkModule) :
+    @require_r('fgsea')
     def __init__(self, gmt, stat, minSize, maxSize, nperm, nproc, rda_fn) :
         self['params'] = {
                 'minSize': minSize,
@@ -164,7 +164,7 @@ class fgseaRes(DetkModule) :
     @property
     def properties(self):
         return {
-                'num_pathways': len(gsea_res),
+                'num_pathways': len(self.gsea_res),
                 }
     @property
     def output(self):
@@ -246,7 +246,7 @@ def main(argv=sys.argv) :
         if args['--ascending'] :
             stat = -stat
 
-        out_df = fgsea(
+        out_df = FGSEARes(
                 gmt,
                 stat,
                 minSize=int(args['--minSize']),
@@ -257,7 +257,7 @@ def main(argv=sys.argv) :
             )
 
     fp = sys.stdout if args['--output']=='stdout' else args['--output']
-    out_df.to_csv(fp)
+    out_df.output.to_csv(fp)
 
     with DetkReport(args['--report-dir']) as r :
         r.add_module(

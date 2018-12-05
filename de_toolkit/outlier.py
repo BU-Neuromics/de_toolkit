@@ -1,10 +1,10 @@
 r'''
 Usage:
     detk-outlier entropy <counts_fn> [options]
-    detk-transform shrink [options] <count_fn>
+    detk-outlier shrink [options] <counts_fn>
 '''
 TODO = '''
-    detk-transform trim [options] <count_fn>
+    detk-outlier trim [options] <counts_fn>
 '''
 
 cmd_opts = {
@@ -19,14 +19,14 @@ Options:
 ''',
     'shrink':r'''
 Usage:
-    detk-transform shrink [options] <count_fn>
+    detk-outlier shrink [options] <counts_fn>
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
 ''',
 }
 
-import csv
+import csv, os
 from docopt import docopt
 import matplotlib as plt
 import matplotlib.pyplot as plt
@@ -35,38 +35,55 @@ import pandas as pd
 import scipy.stats as sc
 import sys
 
-from .common import CountMatrixFile, _cli_doc
+from .common import CountMatrixFile, DetkModule, _cli_doc
+from .report import DetkReport
 from .util import stub
 
-def pmf_transform(x,shrink_factor=0.25,p_max=None,iters=1000) :
+def pmf_transform(x, shrink_factor=0.25, p_max=None, iters=1000):
+    obj = PMFTransform(x, shrink_factor=0.25, p_max=None, iters=1000)
+    return obj.output
 
-    x = x.copy()
-    p_max = p_max or np.sqrt(1./len(x))
+class PMFTransform(DetkModule):
+    def __init__(self, x, shrink_factor=0.25, p_max=None, iters=1000):
+        self['params'] = {
+                'shrink_factor': shrink_factor,
+                'p_max': p_max,
+                'iters': iters
+                }
+        x = x.copy()
+        p_max = p_max or np.sqrt(1./len(x))
 
-    for i in range(iters) :
-        p_x = x/x.sum()
+        for i in range(iters) :
+            p_x = x/x.sum()
 
-        if x.sum() == 0 :
-            print('all samples set to zero, returning')
-            break
+            if x.sum() == 0 :
+                print('all samples set to zero, returning')
+                break
 
-        p_x_outliers = p_x>p_max
+            p_x_outliers = p_x>p_max
 
-        if not p_x_outliers.any() :
-            break # done
+            if not p_x_outliers.any() :
+                break # done
 
-        max_non_outliers = max(x[~p_x_outliers])
+            max_non_outliers = max(x[~p_x_outliers])
 
-        x[p_x_outliers] = max_non_outliers+(x[p_x_outliers]-max_non_outliers)*shrink_factor
+            x[p_x_outliers] = max_non_outliers+(x[p_x_outliers]-max_non_outliers)*shrink_factor
+#        if i == iters :
+#            print('PMF transform did not converge')
+#            print(p_x)
+#            print(p_x_outliers)
+        
+        self.x = x
 
-    if i == iters :
-        print('PMF transform did not converge')
-        print(p_x)
-        print(p_x_outliers)
+    @property
+    def output(self):
+        return self.x
 
-    return x
+    @property
+    def properties(self):
+        return {'num_kept':len(self.x)}
 
-def shrink(count_obj,shrink_factor=0.25,p_max=None,iters=1000) :
+def shrink(count_obj, shrink_factor=0.25, p_max=None, iters=1000) :
     '''
     Outlier count shrinkage routine as described in Labadorf et al, PLOSONE (2015)
 
@@ -108,21 +125,37 @@ def shrink(count_obj,shrink_factor=0.25,p_max=None,iters=1000) :
         a sample may have before being considered an outlier, default is
         ``sqrt(1/num_samples)``
     '''
+    obj = ShrinkCounts(count_obj, shrink_factor=0.25, p_max=None, iters=1000)
+    return obj.output
 
-    shrunk_counts = count_obj.counts.apply(
-        pmf_transform,
-        shrink_factor=shrink_factor,
-        p_max=p_max,
-        iters=iters
-    )
-
-    shrunk_counts = pd.DataFrame(
-            shrunk_counts,
-            index=count_obj.counts.index,
-            columns=count_obj.counts.columns
+class ShrinkCounts(DetkModule):
+    def __init__(self, count_obj, shrink_factor=0.25, p_max=None, iters=1000):
+        self['params'] = {
+                'shrink_factor': shrink_factor,
+                'p_max': p_max,
+                'iters': iters
+                }
+        shrunk_counts = count_obj.counts.apply(
+            pmf_transform,
+            shrink_factor=shrink_factor,
+            p_max=p_max,
+            iters=iters
         )
+        shrunk_counts = pd.DataFrame(
+                shrunk_counts,
+                index=count_obj.counts.index,
+                columns=count_obj.counts.columns
+            )
 
-    return shrunk_counts
+        self.shrunk_counts = shrunk_counts
+
+    @property
+    def output(self):
+        return self.shrunk_counts
+
+    @property
+    def properties(self):
+        return {'num_kept': len(self.shrunk_counts)}
 
 @stub
 def trim(count_obj) :
@@ -169,38 +202,55 @@ def entropy(counts_obj, threshold):
           entropy value less than the 0.XX percentile; *XX* is the
           first two digits of the selected threshold
     '''
+    obj = EntropyCounts(counts_obj, threshold)
+    return obj.output
 
-    counts_transpose = counts_obj.counts.copy().transpose()
 
-    trshld_name = str(threshold).split('.')[1]
+class EntropyCounts(DetkModule):
+    def __init__(self, counts_obj, threshold):
+        self['params'] = {'threshold': threshold}
+        self.counts_obj = counts_obj
+        
+        counts_transpose = counts_obj.counts.copy().transpose()
+        trshld_name = str(threshold).split('.')[1]
 
-    # check that no features have a total of zero
-    all_features = counts_transpose.columns.tolist()
-    counts_transpose = counts_transpose.loc[:, (counts_transpose != 0).any(axis=0)]
-    nonzero_features = counts_transpose.columns.tolist()
-    dropped_features = set(all_features) - set(nonzero_features)
+        # check that no features have a total of zero
+        all_features = counts_transpose.columns.tolist()
+        counts_transpose = counts_transpose.loc[:, (counts_transpose != 0).any(axis=0)]
+        nonzero_features = counts_transpose.columns.tolist()
+        dropped_features = set(all_features) - set(nonzero_features)
 
-    # create a null results df for all of the dropped features
-    dropped_df = pd.DataFrame(columns=['entropy', 'entropy_p0_{}'.format(trshld_name)], index=dropped_features)
-    dropped_df.replace(dropped_df, 'Null')
+        # create a null results df for all of the dropped features
+        dropped_df = pd.DataFrame(columns=['entropy', 'entropy_p0_{}'.format(trshld_name)], index=dropped_features)
+        dropped_df.replace(dropped_df, 'Null')
 
-    # calculate the entropy over all of the features
-    entropy = counts_transpose.apply(func=sc.entropy, axis=0)
+        # calculate the entropy over all of the features
+        entropy = counts_transpose.apply(func=sc.entropy, axis=0)
 
-    # gathers the features and entropy values for the respective quantile groups
-    entropy_threshold = np.percentile(entropy, q=threshold)
+        # gathers the features and entropy values for the respective quantile groups
+        entropy_threshold = np.percentile(entropy, q=threshold)
 
-    # create the results of the entropy test
-    # column 1 is the entropy value
-    # column 2 is a boolean indication whether the value is under the user described threshold
-    results_df = pd.DataFrame(entropy, columns=['entropy'])
-    results_df['entropy_p0_{}'.format(trshld_name)] = entropy < entropy_threshold
-    frames = [results_df, dropped_df]
-    results_df = pd.concat(frames)
-    # set the results index to be in the same order as the counts index
-    results_df.index = counts_obj.counts.index
+        # create the results of the entropy test
+        # column 1 is the entropy value
+        # column 2 is a boolean indication whether the value is under the user described threshold
+        results_df = pd.DataFrame(entropy, columns=['entropy'])
+        results_df['entropy_p0_{}'.format(trshld_name)] = entropy < entropy_threshold
+        frames = [results_df, dropped_df]
+        results_df = pd.concat(frames)
+        # set the results index to be in the same order as the counts index
+        results_df.index = counts_obj.counts.index
+        
+        self.results_df = results_df
+    
+    @property
+    def output(self):
+        return self.results_df
 
-    return(results_df)
+    @property
+    def properties(self):
+        return {'num_kept': len(self.results_df)
+                }
+
 
 def plot_entropy(entropy_res, threshold, name=None, show=None):
     '''
@@ -254,14 +304,14 @@ def main(argv=sys.argv):
     if cmd == 'entropy' :
 
         args = docopt(cmd_opts_aug['vst'],argv)
-        count_obj = CountMatrixFile(args['<count_fn>'])
+        count_obj = CountMatrixFile(args['<counts_fn>'])
 
         data = CountMatrixFile(args['<counts_fn>'])
 
         pval = float(args['--percentile'])
 
         # run the entropy_calc function
-        out_df = entropy_calc(data.counts, pval)
+        out = EntropyCounts(data.counts, pval)
 
         if args['--plot-output'] :
             plot_entropy(out_df, pval, name=plot)
@@ -269,28 +319,39 @@ def main(argv=sys.argv):
     elif cmd == 'trim' :
         args = docopt(cmd_opts_aug['trim'],argv)
 
-        count_obj = CountMatrixFile(args['<count_fn>'])
+        count_obj = CountMatrixFile(args['<counts_fn>'])
 
-        out_df = trim(count_obj)
+        out = trim(count_obj)
 
     elif cmd == 'shrink' :
         args = docopt(cmd_opts_aug['shrink'],argv)
 
-        count_obj = CountMatrixFile(args['<count_fn>'])
+        count_obj = CountMatrixFile(args['<counts_fn>'])
 
-        out_df = shrink(count_obj)
+        out = ShrinkCounts(count_obj)
 
-    # return results to stdout
-    elif output == None and plot == None:
-        f = sys.stdout
-        results.to_csv(f, sep='\t')
+#    # return results to stdout
+#    elif output == None and plot == None:
+#        f = sys.stdout
+#        results.to_csv(f, sep='\t')
 
     if args['--output'] == 'stdout' :
         f = sys.stdout
     else :
         f = args['--output']
 
-    out_df.to_csv(f,sep='\t')
+    out.output.to_csv(f,sep='\t')
+
+
+    # write out the report json
+    with DetkReport(args['--report-dir']) as r :
+        r.add_module(
+                out,
+                in_file_path=args['<counts_fn>'],
+                out_file_path=args['--output'],
+                column_data_path=args.get('--column-data'),
+                workdir=os.getcwd()
+                )
 
 if __name__ == '__main__':
     main()

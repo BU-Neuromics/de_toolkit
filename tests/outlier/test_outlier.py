@@ -17,7 +17,7 @@ def test_shrink_cli(fake_counts_csv):
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        main(['detk-de','shrink',fake_counts_csv])
+        main(['detk-outlier','shrink',fake_counts_csv])
     #TODO need *actual* tests
 
 '''
@@ -32,7 +32,7 @@ def test_transform_trim_cli(fake_counts_csv):
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        main(['detk-de','trim',fake_counts_csv])
+        main(['detk-outlier','trim',fake_counts_csv])
 '''
 
 @pytest.fixture

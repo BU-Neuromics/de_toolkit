@@ -71,10 +71,6 @@ def plog(count_obj,pseudocount=1,base=10) :
     '''
     return numpy.log(count_obj.counts+pseudocount)/numpy.log(base)
 
-class VST(DetkModule) :
-    @require_r('DESeq2','SummarizedExperiment')
-    def __init__(self,...):
-
 @require_r('DESeq2','SummarizedExperiment')
 def vst(count_obj) :
     '''

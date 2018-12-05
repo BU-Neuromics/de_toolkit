@@ -23,7 +23,7 @@ Usage:
     detk-transform plog [options] <count_fn>
 
 Options:
-    -c N --pseudocount=N   The pseudocount to use when taking the log transform [default:1]
+    -c N --pseudocount=N   The pseudocount to use when taking the log transform [default: 1]
     -b B --base=B          The base of the log to use [default: 10]
     -o FILE --output=FILE  Destination of primary output [default: stdout]
 ''',
@@ -220,7 +220,12 @@ def main(argv=sys.argv) :
         args = docopt(cmd_opts_aug['plog'],argv)
         count_obj = CountMatrixFile(args['<count_fn>'])
 
-        out_df = plog(count_obj)
+        print(args)
+        out_df = plog(
+            count_obj,
+            pseudocount=float(args['--pseudocount']),
+            base=float(args['--base'])
+        )
     
     elif cmd == 'rlog' :
         args = docopt(cmd_opts_aug['rlog'],argv)

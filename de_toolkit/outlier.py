@@ -42,49 +42,49 @@ from .common import CountMatrixFile, DetkModule, _cli_doc
 from .report import DetkReport
 from .util import stub
 
-def pmf_transform(x, shrink_factor=0.25, p_max=None, iters=1000):
-    obj = PMFTransform(x, shrink_factor, p_max, iters)
+def pmf_transform(count_obj, shrink_factor=0.25, p_max=None, iters=1000):
+    obj = PMFTransform(count_obj, shrink_factor, p_max, iters)
     return obj.output
 
 class PMFTransform(DetkModule):
-    def __init__(self, x, shrink_factor=0.25, p_max=None, iters=1000):
+    def __init__(self, count_obj, shrink_factor=0.25, p_max=None, iters=1000):
         self['params'] = {
                 'shrink_factor': shrink_factor,
                 'p_max': p_max,
                 'iters': iters
                 }
-        x = x.copy()
-        p_max = p_max or np.sqrt(1./len(x))
+        count_obj = count_obj.copy()
+        p_max = p_max or np.sqrt(1./len(count_obj))
 
         for i in range(iters) :
-            p_x = x/x.sum()
+            p_count = count_obj/count_obj.sum()
 
-            if x.sum() == 0 :
+            if count_obj.sum() == 0 :
                 print('all samples set to zero, returning')
                 break
 
-            p_x_outliers = p_x>p_max
+            p_count_outliers = p_count>p_max
 
-            if not p_x_outliers.any() :
+            if not p_count_outliers.any() :
                 break # done
 
-            max_non_outliers = max(x[~p_x_outliers])
+            max_non_outliers = max(count_obj[~p_count_outliers])
 
-            x[p_x_outliers] = max_non_outliers+(x[p_x_outliers]-max_non_outliers)*shrink_factor
+            count_obj[p_count_outliers] = max_non_outliers+(count_obj[p_count_outliers]-max_non_outliers)*shrink_factor
 #        if i == iters :
 #            print('PMF transform did not converge')
 #            print(p_x)
 #            print(p_x_outliers)
         
-        self.x = x
+        self.count_obj = count_obj
 
     @property
     def output(self):
-        return self.x
+        return self.count_obj
 
     @property
     def properties(self):
-        return {'num_kept':len(self.x)}
+        return {'num_kept':len(self.count_obj)}
 
 def shrink(count_obj, shrink_factor=0.25, p_max=None, iters=1000) :
     '''
@@ -326,10 +326,6 @@ def main(argv=sys.argv):
         count_obj = CountMatrixFile(args['<counts_fn>'])
         if args['--p-max'] is None:
             args['--p-max'] = np.sqrt(1./count_obj.counts.shape[1])
-        print(args['--p-max'])
-        print(float(args['--p-max']))
-        print(args['--shrink-factor'])
-        print(float(args['--shrink-factor']))
         out = ShrinkCounts(count_obj,
                 shrink_factor=float(args['--shrink-factor']),
                 p_max=float(args['--p-max']),

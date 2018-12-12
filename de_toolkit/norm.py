@@ -57,10 +57,11 @@ Options:
 '''
 }
 from docopt import docopt
-import sys
+import sys, os
 import numpy as np
 import pandas
-from .common import CountMatrixFile, _cli_doc
+from .common import CountMatrixFile, DetkModule, _cli_doc
+from .report import DetkReport
 from .util import stub
 from .wrapr import require_r, wrapr
 
@@ -101,7 +102,7 @@ class NormalizationException(Exception) : pass
 #}
 
 
-def estimateSizeFactors(cnts) :
+def estimateSizeFactors(cnts):
 
     loggeomeans = np.log(cnts).mean(axis=1)
     if all(~np.isfinite(loggeomeans)) :
@@ -121,7 +122,7 @@ def estimateSizeFactors(cnts) :
     return sizeFactors
 
 @require_r('DESeq2')
-def estimateSizeFactors_wrapr(cnts) :
+def estimateSizeFactors_wrapr(cnts):
 
     script = '''\
     library(DESeq2)
@@ -142,25 +143,12 @@ def estimateSizeFactors_wrapr(cnts) :
 
     return list(deseq2_size_factors)
 
-def deseq2(count_obj) :
-
-    count_mat = count_obj.counts.values
-
-    sizeFactors = estimateSizeFactors(count_mat)
-    norm_cnts = count_mat/sizeFactors
-    
-
-    normalized = pandas.DataFrame(norm_cnts
-
-        ,index=count_obj.counts.index
-
-        ,columns=count_obj.counts.columns
-
-    )
-    return normalized
+def deseq2(count_obj):
+    obj = DESeq2Norm(count_obj)
+    return obj.output
 
 @require_r('DESeq2')
-def deseq2_wrapr(count_obj) :
+def deseq2_wrapr(count_obj):
 
     script = '''\
     library(DESeq2)
@@ -190,11 +178,46 @@ def deseq2_wrapr(count_obj) :
 
     return norm_counts
 
-def library_size(count_df,sizes=None) :
+class DESeq2Norm(DetkModule):
+    @require_r('DESeq2')
+    def __init__(self, count_obj):
+        count_mat = count_obj.counts.values
+        sizeFactors = estimateSizeFactors(count_mat)
+        norm_cnts = count_mat/sizeFactors
+        normalized = pandas.DataFrame(norm_cnts, 
+                index=count_obj.counts.index,
+                columns=count_obj.counts.columns
+                )
+        self.normalized = normalized
+
+    @property
+    def output(self):
+        return self.normalized
+    @property
+    def properties(self):
+        return {'num_kept': len(self.normalized)
+                }
+
+def library_size(count_df,sizes=None):
     '''
     Divide each count by column sum
     '''
-    return count_df / count_df.sum(axis=0)
+    obj = LibrarySize(count_df, sizes)
+    return obj.output
+
+class LibrarySize(DetkModule):
+    def __init__(self, count_df, sizes):
+        self['params'] = {'sizes': sizes}
+        self.count_df = count_df
+        self.librarysize = count_df / count_df.sum(axis=0)
+
+    @property
+    def output(self):
+        return self.librarysize
+
+    @property
+    def properties(self):
+        return {'num library size': len(self.librarysize)}
 
 def fpkm(count_df,lengths) :
     '''
@@ -204,19 +227,34 @@ def fpkm(count_df,lengths) :
     every row name in the counts matrix. If no length is found for a row in the
     counts matrix, an exception is raised.
     '''
+    obj = FPKMCounts(count_df, lengths)
+    return obj.output
 
-    missing_indices = count_df.index.difference(lengths.index)
-    if len(missing_indices) != 0 :
-        raise NormalizationException(
-            '{} indices in the counts matrix were '.format(len(missing_indices))+
-            'not found in the lengths parameters, here are a couple: \n'+
-            '\n'.join(_ for _ in list(missing_indices)[:5])
-        )
+class FPKMCounts(DetkModule):
+    def __init__(self, count_df, lengths):
+        self['params'] = {'lengths': lengths}
+        self.count_df = count_df
 
-    lens = lengths[count_df.index]
-    print(lens)
-    res = count_df.div(1e6*lens,axis=0)
-    return res
+        missing_indices = count_df.index.difference(lengths.index)
+        if len(missing_indices) != 0 :
+            raise NormalizationException(
+                    '{} indices in the counts matrix were '.format(len(missing_indices))+
+                    'not found in the lengths parameters, here are a couple: \n'+
+                    '\n'.join(_ for _ in list(missing_indices)[:5])
+                    )
+        lens = lengths[count_df.index]
+        print(lens)
+        res = count_df.div(1e6*lens,axis=0)
+        self.res = res
+    
+    @property
+    def output(self):
+        return self.res
+    @property
+    def properties(self):
+        return {'num_kept': len(self.res),
+                'lengths': lengths
+                }
 
 @stub
 def custom_norm(count_mat,factors) :
@@ -242,11 +280,11 @@ def main(argv=sys.argv) :
     if cmd == 'deseq2' :
         args = docopt(cmd_opts_aug['deseq2'],argv)
         count_obj = CountMatrixFile(args['<counts_fn>'])
-        out_df = deseq2(count_obj)
+        out = DESeq2Norm(count_obj)
     elif cmd == 'library' :
         args = docopt(cmd_opts_aug['library'],argv)
         count_obj = CountMatrixFile(args['<counts_fn>'])
-        out_df = library_size(count_obj)
+        out = LibrarySize(count_obj)
     elif cmd == 'fpkm' :
         args = docopt(cmd_opts_aug['fpkm'],argv)
         # the lengths_fn is assumed to be a file with two columns
@@ -254,11 +292,20 @@ def main(argv=sys.argv) :
         # providing the lengths that should be used for each ID in the counts
         # file
         lengths = pandas.read_table(args['<lengths_fn>'],sep=None)
-        out_df = fpkm(count_obj.counts,lengths)
+        out = FPKMCounts(count_obj.counts,lengths)
 
     fp = sys.stdout if args['--output']=='stdout' else args['--output']
-    out_df.to_csv(fp)
+    out.output.to_csv(fp)
+    
+    with DetkReport(args['--report-dir']) as r :
+        r.add_module(
+                out,
+                in_file_path=args['<counts_fn>'],
+                out_file_path=args['--output'],
+                column_data_path=args.get('--column-data'),
+                workdir=os.getcwd()
+                )
+
 
 if __name__ == '__main__' :
-
     main()

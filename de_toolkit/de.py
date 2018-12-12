@@ -51,287 +51,330 @@ Options:
 
 from docopt import docopt
 import pandas
-import sys
-from .common import CountMatrixFile, InvalidDesignException, _cli_doc
+import sys, os
+from .common import CountMatrixFile, InvalidDesignException, DetkModule, _cli_doc
 from .wrapr import (
         require_r, require_deseq2, wrapr, RExecutionError, RPackageMissing,
         require_r_package
     )
 from .util import stub
+from .report import DetkReport
 
-@require_r('DESeq2')
-def deseq2(
-        count_obj,
+def deseq2(count_obj,
         normalized=True,
         rda=None,
         all_coeff_results=True,
         gene_wise_disp_est=False,
-        cores=None) :
+        cores=None):
+    obj = DESeq2Counts(count_obj, normalized, rda, all_coeff_results, gene_wise_disp_est, cores)
+    print('obj.output')
+    print(obj.output)
+    return obj.output
 
-    # make a copy of count_obj, since we mutate it
-    count_obj = count_obj.copy()
+class DESeq2Counts(DetkModule):
+    @require_r('DESeq2')
+    def __init__(self, count_obj,
+            normalized=True,
+            rda=None,
+            all_coeff_results=True,
+            gene_wise_disp_est=False,
+            cores=None):
+        self.count_obj = count_obj
+        self['params'] = {'normalized': normalized,
+                'rda': rda,
+                'all_coeff_results': all_coeff_results,
+                'gene_wise_disp_est': gene_wise_disp_est,
+                'cores': cores
+                }
 
-    # validate the design matrix
-    if count_obj.design is None or count_obj.design_matrix is None :
-        raise InvalidDesignException('count_obj must have a design matrix to use'
-            ' DESeq2')
+        # make a copy of count_obj, since we mutate it
+        count_obj = count_obj.copy()
 
-    if 'counts' not in count_obj.design_matrix.lhs :
-        raise InvalidDesignException('The term "counts" must exist on the left '
-            ' hand side of the model in DESeq2')
+        # validate the design matrix
+        if count_obj.design is None or count_obj.design_matrix is None :
+            raise InvalidDesignException('count_obj must have a design matrix to use'
+                ' DESeq2')
 
-    # drop the counts from the left hand side since DESeq2 doesn't use it
-    count_obj.design_matrix.drop_from_lhs('counts',quiet=True)
+        if 'counts' not in count_obj.design_matrix.lhs :
+            raise InvalidDesignException('The term "counts" must exist on the left '
+                ' hand side of the model in DESeq2')
 
-    # make sure the rhs of the design matrix doesn't have an intercept
-    count_obj.design_matrix.drop_from_rhs('Intercept',quiet=True)
+        # drop the counts from the left hand side since DESeq2 doesn't use it
+        count_obj.design_matrix.drop_from_lhs('counts',quiet=True)
 
-    if cores is not None :
-        require_r_package('BiocParallel')
-        try :
-            cores = int(cores)
-        except ValueError :
-            raise Exception('The cores argument to DESeq2 '
-                    'must be an integer')
+        # make sure the rhs of the design matrix doesn't have an intercept
+        count_obj.design_matrix.drop_from_rhs('Intercept',quiet=True)
 
-    params = {
-        'design': count_obj.design,
-        'normalized': normalized,
-        'rda': rda,
-        'cores': cores,
-        'all.coeff.results': all_coeff_results,
-        'gene.wise.disp.est': gene_wise_disp_est
-    }
-    script = '''\
-        library(DESeq2)
-        cnts <- read.csv(counts.fn,header=T,as.is=T)
-        index.name <- names(cnts)[1]
-        rownames(cnts) <- cnts[[1]]
-        cnts <- cnts[c(-1)]
+        if cores is not None :
+            require_r_package('BiocParallel')
+            try :
+                cores = int(cores)
+            except ValueError :
+                raise Exception('The cores argument to DESeq2 '
+                        'must be an integer')
 
-        rnames <- rownames(cnts)
-
-        # DESeq2 whines when input counts aren't integers
-        # round the counts matrix
-        cnts <- data.frame(lapply(cnts,function(x) { round(as.numeric(x)) }))
-        rownames(cnts) <- rnames
-
-        # use parallelism if params$cores > 0
-        cores <- if(is.null(params$cores)) { 0 } else { as.numeric(params$cores) }
-        parallel <- FALSE
-        if(cores>0) {
-            library(BiocParallel)
-            register(MulticoreParam(cores))
-            parallel <- TRUE
+        params = {
+            'design': count_obj.design,
+            'normalized': normalized,
+            'rda': rda,
+            'cores': cores,
+            'all.coeff.results': all_coeff_results,
+            'gene.wise.disp.est': gene_wise_disp_est
         }
+        script = '''\
+            library(DESeq2)
+            cnts <- read.csv(counts.fn,header=T,as.is=T)
+            index.name <- names(cnts)[1]
+            rownames(cnts) <- cnts[[1]]
+            cnts <- cnts[c(-1)]
 
-        # design formula
-        form <- params$design
+            rnames <- rownames(cnts)
 
-        # load design matrix
-        design.mat <- read.csv(metadata.fn,header=T,as.is=T,row.names=1)
+            # DESeq2 whines when input counts aren't integers
+            # round the counts matrix
+            cnts <- data.frame(lapply(cnts,function(x) { round(as.numeric(x)) }))
+            rownames(cnts) <- rnames
 
-        dds <- DESeqDataSetFromMatrix(
-            countData = cnts,
-            colData = design.mat,
-            design = formula(form)
-        )
+            # use parallelism if params$cores > 0
+            cores <- if(is.null(params$cores)) { 0 } else { as.numeric(params$cores) }
+            parallel <- FALSE
+            if(cores>0) {
+                library(BiocParallel)
+                register(MulticoreParam(cores))
+                parallel <- TRUE
+            }
 
-        # if counts are already normalized, don't normalize them
-        if(params$normalized) {
-            sizeFactors(dds) <- rep(1,nrow(design.mat))
-        } else {
-            dds <- estimateSizeFactors(dds)
-        }
+            # design formula
+            form <- params$design
 
-        # in some cases R can throw this error:
-        if(params$gene.wise.disp.est) {
-            dds <- estimateDispersionsGeneEst(dds)
-            dispersions(dds) <- mcols(dds)$dispGeneEst
-        } else {
-            dds <- estimateDispersions(dds)
-        }
+            # load design matrix
+            design.mat <- read.csv(metadata.fn,header=T,as.is=T,row.names=1)
 
-        # turn off cooks distance outlier replacement
-        #dds <- DESeq(dds,minReplicatesForReplace=Inf,parallel=parallel)
-
-        dds <- nbinomWaldTest(dds)
-
-        result_from_dds <- function(name) {
-            res.df <- data.frame(
-                log2FoldChange=mcols(dds)[[name]],
-                lfcSE=mcols(dds)[[paste0('SE_',name)]],
-                stat=mcols(dds)[[paste0('WaldStatistic_',name)]],
-                pvalue=mcols(dds)[[paste0('WaldPvalue_',name)]],
-                padj=p.adjust(mcols(dds)[[paste0('WaldPvalue_',name)]],method='fdr')
+            dds <- DESeqDataSetFromMatrix(
+                countData = cnts,
+                colData = design.mat,
+                design = formula(form)
             )
-            colnames(res.df) <- paste(name,colnames(res.df),sep='__')
-            res.df
-        }
 
-        # organize output results
-        res.df <- if(params$all.coeff.results==TRUE) {
-            # report statistics and p-values on all model variables
-            # output columns are:
-            #   basemean
-            #   for each model variable:
-            #     <varname>__log2FoldChange (mcols(dds)[['<varname>']])
-            #     <varname>__lfcSE (mcols(dds)[['SE_<varname>']])
-            #     <varname>__stat (mcols(dds)[['WaldStatistic_<varname>']])
-            #     <varname>__pvalue (mcols(dds)[['WaldPvalue_<varname>']])
-            #     <varname>__padj (p.adjust(mcols(dds)[['WaldPvalue_<varname>']],method='fdr')
+            # if counts are already normalized, don't normalize them
+            if(params$normalized) {
+                sizeFactors(dds) <- rep(1,nrow(design.mat))
+            } else {
+                dds <- estimateSizeFactors(dds)
+            }
 
-            # example mcols(dds) names:
-            # Intercept
-            # category__case
-            # SE_Intercept
-            # SE_category__case
-            # WaldStatistic_Intercept
-            # WaldStatistic_category__case
-            # WaldPvalue_Intercept
-            # WaldPvalue_category__case
-            do.call(
-                cbind,
-                lapply(
-                    colnames(design.mat),
-                    result_from_dds
+            # in some cases R can throw this error:
+            if(params$gene.wise.disp.est) {
+                dds <- estimateDispersionsGeneEst(dds)
+                dispersions(dds) <- mcols(dds)$dispGeneEst
+            } else {
+                dds <- estimateDispersions(dds)
+            }
+
+            # turn off cooks distance outlier replacement
+            #dds <- DESeq(dds,minReplicatesForReplace=Inf,parallel=parallel)
+
+            dds <- nbinomWaldTest(dds)
+
+            result_from_dds <- function(name) {
+                res.df <- data.frame(
+                    log2FoldChange=mcols(dds)[[name]],
+                    lfcSE=mcols(dds)[[paste0('SE_',name)]],
+                    stat=mcols(dds)[[paste0('WaldStatistic_',name)]],
+                    pvalue=mcols(dds)[[paste0('WaldPvalue_',name)]],
+                    padj=p.adjust(mcols(dds)[[paste0('WaldPvalue_',name)]],method='fdr')
                 )
-            )
-        } else {
-            # just report the last column as is the DESeq2 default
-            result_from_dds(tail(colnames(design.mat),n=1))
-        }
+                colnames(res.df) <- paste(name,colnames(res.df),sep='__')
+                res.df
+            }
 
-        # add on the basemean
-        res.df <- cbind(mcols(dds)[['baseMean']],res.df)
-        colnames(res.df)[1] <- 'baseMean'
+            # organize output results
+            res.df <- if(params$all.coeff.results==TRUE) {
+                # report statistics and p-values on all model variables
+                # output columns are:
+                #   basemean
+                #   for each model variable:
+                #     <varname>__log2FoldChange (mcols(dds)[['<varname>']])
+                #     <varname>__lfcSE (mcols(dds)[['SE_<varname>']])
+                #     <varname>__stat (mcols(dds)[['WaldStatistic_<varname>']])
+                #     <varname>__pvalue (mcols(dds)[['WaldPvalue_<varname>']])
+                #     <varname>__padj (p.adjust(mcols(dds)[['WaldPvalue_<varname>']],method='fdr')
 
-        if(!is.null(params$rda)) {
-            saveRDS(dds,params$rda)
-        }
+                # example mcols(dds) names:
+                # Intercept
+                # category__case
+                # SE_Intercept
+                # SE_category__case
+                # WaldStatistic_Intercept
+                # WaldStatistic_category__case
+                # WaldPvalue_Intercept
+                # WaldPvalue_category__case
+                do.call(
+                    cbind,
+                    lapply(
+                        colnames(design.mat),
+                        result_from_dds
+                    )
+                )
+            } else {
+                # just report the last column as is the DESeq2 default
+                result_from_dds(tail(colnames(design.mat),n=1))
+            }
 
-        # because R is stupid and can't easily write out a column name for
-        # a row name
-        res.df.cols <- colnames(res.df)
-        res.df[[index.name]] <- rnames
-        res.df <- res.df[c(index.name,res.df.cols)]
+            # add on the basemean
+            res.df <- cbind(mcols(dds)[['baseMean']],res.df)
+            colnames(res.df)[1] <- 'baseMean'
 
-        write.csv(res.df,out.fn,row.names=F)
-    '''
-    with wrapr(script,
-            counts=count_obj.counts,
-            metadata=count_obj.design_matrix.full_matrix,
-            params=params) as wr :
-        return wr.output
+            if(!is.null(params$rda)) {
+                saveRDS(dds,params$rda)
+            }
 
-@require_r('logistf')
+            # because R is stupid and can't easily write out a column name for
+            # a row name
+            res.df.cols <- colnames(res.df)
+            res.df[[index.name]] <- rnames
+            res.df <- res.df[c(index.name,res.df.cols)]
+
+            write.csv(res.df,out.fn,row.names=F)
+        '''
+        with wrapr(script,
+                counts=count_obj.counts,
+                metadata=count_obj.design_matrix.full_matrix,
+                params=params) as wr :
+            self.wr_output = wr.output
+    @property
+    def output(self):
+        return self.wr_output
+    @property
+    def properties(self):
+        return {'num_length': len(self.wr_output)
+                }
+
 def firth_logistic_regression(
         count_obj,
         standardize=False,
         rda=None,
         cores=None) :
+    obj = FLGCounts(count_obj, standardize, rda, cores)
+    return obj.output
 
-    # make a copy of count_obj, since we mutate it
-    count_obj = count_obj.copy()
+class FLGCounts(DetkModule):
+    @require_r('logistf')
+    def __init__(self, count_obj,
+            standardize=False,
+            rda=None,
+            cores=None):
+        self.count_obj = count_obj
 
-    # validate the design matrix
-    if count_obj.design is None or count_obj.design_matrix is None :
-        raise InvalidDesignException('count_obj must have a design matrix in Firth'
-            ' logistic regression')
+        # make a copy of count_obj, since we mutate it
+        count_obj = count_obj.copy()
 
-    if 'counts' not in count_obj.design_matrix.rhs :
-        raise InvalidDesignException('The term "counts" must exist on the right hand'
-            'side of the model in Firth logistic regression')
+        # validate the design matrix
+        if count_obj.design is None or count_obj.design_matrix is None :
+            raise InvalidDesignException('count_obj must have a design matrix in Firth'
+                ' logistic regression')
 
-    # make sure the rhs of the design matrix doesn't have an intercept
-    count_obj.design_matrix.drop_from_rhs('Intercept',quiet=True)
+        if 'counts' not in count_obj.design_matrix.rhs :
+            raise InvalidDesignException('The term "counts" must exist on the right hand'
+                'side of the model in Firth logistic regression')
 
-    if cores is not None :
-        require_r_package('parallel')
-        try :
-            cores = int(cores)
-        except ValueError :
-            raise Exception('The cores argument to firth_logistic_regression '
-                    'must be an integer')
+        # make sure the rhs of the design matrix doesn't have an intercept
+        count_obj.design_matrix.drop_from_rhs('Intercept',quiet=True)
 
-    params = {
-        'design': count_obj.design,
-        'standardize': standardize,
-        'rda': rda,
-        'cores': cores
-    }
-    script = '''\
-        library(logistf)
-        cnts <- read.csv(counts.fn,header=T,as.is=T)
-        index.name <- names(cnts)[1]
-        rownames(cnts) <- cnts[[1]]
-        cnts <- cnts[c(-1)]
+        if cores is not None :
+            require_r_package('parallel')
+            try :
+                cores = int(cores)
+            except ValueError :
+                raise Exception('The cores argument to firth_logistic_regression '
+                        'must be an integer')
 
-        rnames <- rownames(cnts)
-        cnts <- data.frame(lapply(cnts,as.numeric))
-        rownames(cnts) <- rnames
-
-        # scale counts to obtain standardized beta estimates
-        if(params$standardize) {
-            cnts <- data.frame(t(scale(t(cnts))))
+        params = {
+            'design': count_obj.design,
+            'standardize': standardize,
+            'rda': rda,
+            'cores': cores
         }
+        script = '''\
+            library(logistf)
+            cnts <- read.csv(counts.fn,header=T,as.is=T)
+            index.name <- names(cnts)[1]
+            rownames(cnts) <- cnts[[1]]
+            cnts <- cnts[c(-1)]
 
-        # design formula
-        form <- params$design
+            rnames <- rownames(cnts)
+            cnts <- data.frame(lapply(cnts,as.numeric))
+            rownames(cnts) <- rnames
 
-        # load design matrix
-        design.mat <- read.csv(metadata.fn,header=T,as.is=T,row.names=1)
-
-        fit <- NULL
-
-        applyf <- lapply
-        if(!is.null(params$cores)) {
-            library(parallel)
-            applyf <- function(l,f) { mclapply(l,f,mc.cores=params$cores) }
-        }
-        res.orig <- applyf(rownames(cnts),
-            function(gene) {
-              x <- data.frame(design.mat)
-              x$counts <- unlist(cnts[gene,])
-              log.fit <- logistf(formula(form),data=x,pl=F)
-              fit <<- log.fit
-              out <- c(gene, 'OK')
-              names(out) <- c(index.name,'status')
-              coeffs <- log.fit$coeff
-              names(coeffs) <- paste0(names(coeffs),'__beta')
-              probs <- log.fit$prob
-              names(probs) <- paste0(names(probs),'__p')
-              padj <- rep(NA,length(probs))
-              names(padj) <- paste0(names(log.fit$prob),'__padj')
-              cp <- c(rbind(coeffs,probs,padj))
-              cp.names <- c(rbind(names(coeffs),names(probs),names(padj)))
-              cp.names <- gsub(".Intercept.","int",cp.names)
-              names(cp) <- cp.names
-              c(out,cp)
+            # scale counts to obtain standardized beta estimates
+            if(params$standardize) {
+                cnts <- data.frame(t(scale(t(cnts))))
             }
-        )
 
-        if(!is.null(params$rda)) {
-            saveRDS(fit,params$rda)
-        }
-        res <- do.call(rbind,res.orig)
-        res.df <- as.data.frame(res,stringsAsFactors=F)
-        for(c in colnames(res.df)[c(-1,-2)]) {
-            res.df[c] <- as.numeric(res.df[c][[1]])
-        }
-        # calculate p.adjust for each pvalue col
-        for(c in Filter(function(x) endsWith(x,'__p'),colnames(res.df))) {
-            res.df[paste0(c,'adj')] <- p.adjust(res.df[[c]],"fdr")
-        }
+            # design formula
+            form <- params$design
 
-        write.csv(res.df,out.fn,row.names=F)
-    '''
+            # load design matrix
+            design.mat <- read.csv(metadata.fn,header=T,as.is=T,row.names=1)
 
-    with wrapr(script,
-            counts=count_obj.counts,
-            metadata=count_obj.design_matrix.full_matrix,
-            params=params) as wr :
-        return wr.output
+            fit <- NULL
+
+            applyf <- lapply
+            if(!is.null(params$cores)) {
+                library(parallel)
+                applyf <- function(l,f) { mclapply(l,f,mc.cores=params$cores) }
+            }
+            res.orig <- applyf(rownames(cnts),
+                function(gene) {
+                  x <- data.frame(design.mat)
+                  x$counts <- unlist(cnts[gene,])
+                  log.fit <- logistf(formula(form),data=x,pl=F)
+                  fit <<- log.fit
+                  out <- c(gene, 'OK')
+                  names(out) <- c(index.name,'status')
+                  coeffs <- log.fit$coeff
+                  names(coeffs) <- paste0(names(coeffs),'__beta')
+                  probs <- log.fit$prob
+                  names(probs) <- paste0(names(probs),'__p')
+                  padj <- rep(NA,length(probs))
+                  names(padj) <- paste0(names(log.fit$prob),'__padj')
+                  cp <- c(rbind(coeffs,probs,padj))
+                  cp.names <- c(rbind(names(coeffs),names(probs),names(padj)))
+                  cp.names <- gsub(".Intercept.","int",cp.names)
+                  names(cp) <- cp.names
+                  c(out,cp)
+                }
+            )
+
+            if(!is.null(params$rda)) {
+                saveRDS(fit,params$rda)
+            }
+            res <- do.call(rbind,res.orig)
+            res.df <- as.data.frame(res,stringsAsFactors=F)
+            for(c in colnames(res.df)[c(-1,-2)]) {
+                res.df[c] <- as.numeric(res.df[c][[1]])
+            }
+            # calculate p.adjust for each pvalue col
+            for(c in Filter(function(x) endsWith(x,'__p'),colnames(res.df))) {
+                res.df[paste0(c,'adj')] <- p.adjust(res.df[[c]],"fdr")
+            }
+
+            write.csv(res.df,out.fn,row.names=F)
+        '''
+
+        with wrapr(script,
+                counts=count_obj.counts,
+                metadata=count_obj.design_matrix.full_matrix,
+                params=params) as wr :
+            self.wr_output = wr.output
+
+    @property
+    def output(self):
+        return self.wr_output
+    @property
+    def properties(self):
+        return {'num_length': len(self.wr_output)
+                }
 
 @stub
 def t_test(count_obj) :
@@ -357,42 +400,50 @@ def main(argv=sys.argv) :
     if cmd == 'deseq2' :
         args = docopt(cmd_opts_aug['deseq2'],argv)
         count_obj = CountMatrixFile(
-            args['<count_fn>']
-            ,args['<cov_fn>']
-            ,design=args['<design>']
-            ,strict=args.get('--strict',False)
+            args['<count_fn>'],
+            args['<cov_fn>'],
+            design=args['<design>'],
+            strict=args.get('--strict',False)
         )
 
-        out_df = deseq2(count_obj,
-               normalized=args.get('--norm-counts',False),
-               rda=args.get('--rda'),
-               all_coeff_results=not args.get('--last-term-only',False),
-               gene_wise_disp_est=args.get('--gene-wise-disp',False),
-               cores=int(args['--cores']) if args['--cores'] != 'none' else None
-        )
-
+        out = DESeq2Counts(count_obj,
+                normalized=args.get('--norm-counts',False),
+                rda=args.get('--rda'),
+                all_coeff_results=not args.get('--last-term-only',False),
+                gene_wise_disp_est=args.get('--gene-wise-disp',False),
+                cores=int(args['--cores']) if args['--cores'] != 'none' else None
+                )
+    
     elif cmd == 'firth' :
         args = docopt(cmd_opts_aug['firth'],argv)
         count_obj = CountMatrixFile(
-            args['<count_fn>']
-            ,args['<cov_fn>']
-            ,design=args['<design>']
-            ,strict=args.get('--strict',False)
+            args['<count_fn>'],
+            args['<cov_fn>'],
+            design=args['<design>'],
+            strict=args.get('--strict',False)
         )
 
-        out_df = firth_logistic_regression(count_obj,
+        out = FLGCounts(count_obj,
                 rda=args['--rda'],
                 standardize=args.get('--standardize',False),
                 cores=int(args['--cores']) if args['--cores'] != 'none' else None
-        )
+                )
 
     if args['--output'] == 'stdout' :
         f = sys.stdout
     else :
         f = args['--output']
 
-    out_df.to_csv(f,sep='\t')
+    out.output.to_csv(f,sep='\t')
+
+    with DetkReport(args['--report-dir']) as r :
+        r.add_module(
+                out,
+                in_file_path=args['<count_fn>'],
+                out_file_path=args['--output'],
+                column_data_path=args.get('--column-data'),
+                workdir=os.getcwd()
+                )
 
 if __name__ == '__main__' :
-
     main()

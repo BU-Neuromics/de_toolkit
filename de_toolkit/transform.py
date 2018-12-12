@@ -38,20 +38,22 @@ Options:
     --strict               Require that the sample order indicated by the column names in the
                            counts file are the same as, and in the same order as, the
                            sample order in the row names of the covariates file
+    --blind N              If False, count_obj is expected to have column_data
 ''',
 }
 
 from docopt import docopt
-import math
+import math, os
 import numpy
 import pandas
 import sys
-from .common import CountMatrixFile, _cli_doc
+from .common import CountMatrixFile, DetkModule, _cli_doc
 from .wrapr import (
                 require_r, require_deseq2, wrapr, RExecutionError, RPackageMissing,
                 require_r_package
         )
 from .util import stub
+from .report import DetkReport
 
 def plog(count_obj,pseudocount=1,base=10) :
     '''
@@ -69,9 +71,23 @@ def plog(count_obj,pseudocount=1,base=10) :
         counts
 
     '''
-    return numpy.log(count_obj.counts+pseudocount)/numpy.log(base)
+    obj = PlogCounts(count_obj, pseudocount, base)
+    return obj.output
 
-@require_r('DESeq2','SummarizedExperiment')
+class PlogCounts(DetkModule):
+    def __init__(self, count_obj, pseudocount=1, base=10):
+        self['params'] = {'pseudocount': pseudocount,
+                'base': base}
+        self.count_obj = count_obj
+        self.plog_counts = numpy.log(count_obj.counts+pseudocount)/numpy.log(base)
+    @property
+    def output(self):
+        return self.plog_counts
+    @property
+    def properties(self):
+        return {'num_length': len(self.plog_counts),
+                'params': self['params']}
+
 def vst(count_obj) :
     '''
     Variance Stabilizing Transformation implemented in the DESeq2 bioconductor
@@ -88,29 +104,41 @@ def vst(count_obj) :
         VST transformed counts dataframe with the same dimensionality as input
         counts
     '''
+    obj = VstCounts(count_obj)
+    return obj.output
 
-    script = '''\
-    library(DESeq2)
-    library(SummarizedExperiment)
+class VstCounts(DetkModule):
+    @require_r('DESeq2','SummarizedExperiment')
+    def __init__(self, count_obj):
+        self.count_obj = count_obj
+        script = '''\
+        library(DESeq2)
+        library(SummarizedExperiment)
 
-    cnts <- as.matrix(read.csv(counts.fn,row.names=1))
-    colData <- data.frame(name=seq(ncol(cnts)))
-    dds <- DESeqDataSetFromMatrix(countData = cnts,
-        colData = colData,
-        design = ~ 1)
-    dds <- varianceStabilizingTransformation(dds)
-    write.csv(assay(dds),out.fn)
-    '''
+        cnts <- as.matrix(read.csv(counts.fn,row.names=1))
+        colData <- data.frame(name=seq(ncol(cnts)))
+        dds <- DESeqDataSetFromMatrix(countData = cnts,
+            colData = colData,
+            design = ~ 1)
+        dds <- varianceStabilizingTransformation(dds)
+        write.csv(assay(dds),out.fn)
+        '''
 
-    with wrapr(script,
-            counts=count_obj.counts,
-            raise_on_error=True) as r :
-        vsd_values = r.output
+        with wrapr(script,
+                counts=count_obj.counts,
+                raise_on_error=True) as r :
+            vsd_values = r.output
+            self.vsd_values = vsd_values
 
-    return vsd_values
+    @property
+    def output(self):
+        return self.vsd_values
+    @property
+    def properties(self):
+        return {'num_length': len(self.vsd_values)
+            }
 
-@require_r('DESeq2','SummarizedExperiment')
-def rlog(count_obj,blind=True) :
+def rlog(count_obj, blind=True) :
     '''
     Regularized log (rlog) transformation implemented in the DESeq2 bioconductor
     package.
@@ -130,64 +158,79 @@ def rlog(count_obj,blind=True) :
         rlog transformed counts dataframe with the same dimensionality as input
         counts
     '''
+    obj = RlogCounts(count_obj, blind)
+    return obj.output
 
+class RlogCounts(DetkModule):
+    @require_r('DESeq2','SummarizedExperiment')
+    def __init__(self, count_obj, blind=True):
+        self['params'] = {'blind': blind
+                }
+        self.count_obj = count_obj
 
-    script = '''\
-    library(DESeq2)
-    library(SummarizedExperiment)
+        script = '''\
+        library(DESeq2)
+        library(SummarizedExperiment)
 
-    cnts <- as.matrix(read.csv(counts.fn,row.names=1))
+        cnts <- as.matrix(read.csv(counts.fn,row.names=1))
 
-    rnames <- rownames(cnts)
+        rnames <- rownames(cnts)
 
-    # DESeq2 whines when input counts aren't integers
-    # round the counts matrix
-    cnts <- data.frame(apply(cnts,2,function(x) { round(as.numeric(x)) }))
-    rownames(cnts) <- rnames
+        # DESeq2 whines when input counts aren't integers
+        # round the counts matrix
+        cnts <- data.frame(apply(cnts,2,function(x) { round(as.numeric(x)) }))
+        rownames(cnts) <- rnames
 
-    # load design matrix
-    if(file.info(metadata.fn)$size != 0) {
-        colData <- read.csv(metadata.fn,header=T,as.is=T,row.names=1)
-    } else {
-        # just to convince DESeq2 that everything is ok when we're doing a
-        # blind rlog
-        n.fake.class.1 <- floor(ncol(cnts)/2)
-        fake.classes <- factor(c(
-            rep(0,n.fake.class.1),
-            rep(1,ncol(cnts)-n.fake.class.1))
+        # load design matrix
+        if(file.info(metadata.fn)$size != 0) {
+            colData <- read.csv(metadata.fn,header=T,as.is=T,row.names=1)
+        } else {
+            # just to convince DESeq2 that everything is ok when we're doing a
+            # blind rlog
+            n.fake.class.1 <- floor(ncol(cnts)/2)
+            fake.classes <- factor(c(
+                rep(0,n.fake.class.1),
+                rep(1,ncol(cnts)-n.fake.class.1))
+            )
+            colData <- data.frame(name=fake.classes)
+        }
+
+        blind <- params$blind
+        form <- params$design
+
+        dds <- DESeqDataSetFromMatrix(countData = cnts,
+            colData = colData,
+            design = formula(form)
         )
-        colData <- data.frame(name=fake.classes)
-    }
 
-    blind <- params$blind
-    form <- params$design
+        dds <- rlog(dds,blind=blind)
+        write.csv(assay(dds),out.fn)
+        '''
 
-    dds <- DESeqDataSetFromMatrix(countData = cnts,
-        colData = colData,
-        design = formula(form)
-    )
+        column_data = None
+        if not blind and count_obj.column_data is not None :
+            column_data = count_obj.design_matrix.full_matrix
 
-    dds <- rlog(dds,blind=blind)
-    write.csv(assay(dds),out.fn)
-    '''
+        params = {
+            'design': '~ 1' if blind else count_obj.design,
+            'blind': blind
+        }
 
-    column_data = None
-    if not blind and count_obj.column_data is not None :
-        column_data = count_obj.design_matrix.full_matrix
+        with wrapr(script,
+                counts=count_obj.counts,
+                metadata=column_data,
+                params=params,
+                raise_on_error=True) as r :
+            vsd_values = r.output
+            self.vsd_values = vsd_values
 
-    params = {
-        'design': '~ 1' if blind else count_obj.design,
-        'blind': blind
-    }
-
-    with wrapr(script,
-            counts=count_obj.counts,
-            metadata=column_data,
-            params=params,
-            raise_on_error=True) as r :
-        vsd_values = r.output
-
-    return vsd_values
+    @property
+    def output(self):
+        return self.vsd_values
+    @property
+    def properties(self):
+        return {'num_length': len(self.vsd_values)
+                }
 
 @stub
 def ruvseq(count_obj) :
@@ -214,37 +257,49 @@ def main(argv=sys.argv) :
         args = docopt(cmd_opts_aug['vst'],argv)
         count_obj = CountMatrixFile(args['<count_fn>'])
 
-        out_df = vst(count_obj)
+        out = VstCounts(count_obj)
 
     if cmd == 'plog' :
         args = docopt(cmd_opts_aug['plog'],argv)
         count_obj = CountMatrixFile(args['<count_fn>'])
 
         print(args)
-        out_df = plog(
-            count_obj,
-            pseudocount=float(args['--pseudocount']),
-            base=float(args['--base'])
-        )
+        out = PlogCounts(
+                count_obj,
+                pseudocount=float(args['--pseudocount']),
+                base=float(args['--base'])
+                )
     
     elif cmd == 'rlog' :
         args = docopt(cmd_opts_aug['rlog'],argv)
 
         count_obj = CountMatrixFile(
-            args['<count_fn>']
-            ,args['<cov_fn>']
-            ,design=args['<design>']
-            ,strict=args.get('--strict',False)
+            args['<count_fn>'],
+            args['<cov_fn>'],
+            design=args['<design>'],
+            strict=args.get('--strict',False)
         )
 
-        out_df = rlog(count_obj)
+        if args['--blind'] is None:
+            args['--blind'] = True
+        out = RlogCounts(count_obj,
+                blind=args['--blind'])
 
     if args['--output'] == 'stdout' :
         f = sys.stdout
     else :
         f = args['--output']
 
-    out_df.to_csv(f,sep='\t')
+    out.output.to_csv(f,sep='\t')
+
+    with DetkReport(args['--report-dir']) as r :
+        r.add_module(
+                out,
+                in_file_path=args['<count_fn>'],
+                out_file_path=args['--output'],
+                column_data_path=args.get('--column-data'),
+                workdir=os.getcwd()
+                )
 
 if __name__ == '__main__' :
     main()

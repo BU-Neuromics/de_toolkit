@@ -73,8 +73,12 @@ def deseq2(count_obj,
 
 class DESeq2Counts(DetkModule):
     @require_r('DESeq2')
-    def __init__(self, count_obj, normalized, rda, 
-            all_coeff_results, gene_wise_disp_est, cores):
+    def __init__(self, count_obj,
+            normalized=True,
+            rda=None,
+            all_coeff_results=True,
+            gene_wise_disp_est=False,
+            cores=None):
         self.count_obj = count_obj
         self['params'] = {'normalized': normalized,
                 'rda': rda,
@@ -237,11 +241,7 @@ class DESeq2Counts(DetkModule):
                 counts=count_obj.counts,
                 metadata=count_obj.design_matrix.full_matrix,
                 params=params) as wr :
-            print(wr.output)
-            print(type(wr.output))
             self.wr_output = wr.output
-            print('self.wr_output')
-            print(self.wr_output)
     @property
     def output(self):
         return self.wr_output
@@ -260,9 +260,12 @@ def firth_logistic_regression(
 
 class FLGCounts(DetkModule):
     @require_r('logistf')
-    def __init__(self, count_obj, standardize=False, rda=None, cores=None):
+    def __init__(self, count_obj,
+            standardize=False,
+            rda=None,
+            cores=None):
         self.count_obj = count_obj
-        
+
         # make a copy of count_obj, since we mutate it
         count_obj = count_obj.copy()
 
@@ -397,45 +400,45 @@ def main(argv=sys.argv) :
     if cmd == 'deseq2' :
         args = docopt(cmd_opts_aug['deseq2'],argv)
         count_obj = CountMatrixFile(
-            args['<count_fn>']
-            ,args['<cov_fn>']
-            ,design=args['<design>']
-            ,strict=args.get('--strict',False)
+            args['<count_fn>'],
+            args['<cov_fn>'],
+            design=args['<design>'],
+            strict=args.get('--strict',False)
         )
 
-        out_df = DESeq2Counts(count_obj,
-               normalized=args.get('--norm-counts',False),
-               rda=args.get('--rda'),
-               all_coeff_results=not args.get('--last-term-only',False),
-               gene_wise_disp_est=args.get('--gene-wise-disp',False),
-               cores=int(args['--cores']) if args['--cores'] != 'none' else None
-        )
-        print(1, out_df)
+        out = DESeq2Counts(count_obj,
+                normalized=args.get('--norm-counts',False),
+                rda=args.get('--rda'),
+                all_coeff_results=not args.get('--last-term-only',False),
+                gene_wise_disp_est=args.get('--gene-wise-disp',False),
+                cores=int(args['--cores']) if args['--cores'] != 'none' else None
+                )
+    
     elif cmd == 'firth' :
         args = docopt(cmd_opts_aug['firth'],argv)
         count_obj = CountMatrixFile(
-            args['<count_fn>']
-            ,args['<cov_fn>']
-            ,design=args['<design>']
-            ,strict=args.get('--strict',False)
+            args['<count_fn>'],
+            args['<cov_fn>'],
+            design=args['<design>'],
+            strict=args.get('--strict',False)
         )
 
-        out_df = FLGCounts(count_obj,
+        out = FLGCounts(count_obj,
                 rda=args['--rda'],
                 standardize=args.get('--standardize',False),
                 cores=int(args['--cores']) if args['--cores'] != 'none' else None
-        )
+                )
 
     if args['--output'] == 'stdout' :
         f = sys.stdout
     else :
         f = args['--output']
 
-    out_df.output.to_csv(f,sep='\t')
+    out.output.to_csv(f,sep='\t')
 
     with DetkReport(args['--report-dir']) as r :
         r.add_module(
-                out_df,
+                out,
                 in_file_path=args['<count_fn>'],
                 out_file_path=args['--output'],
                 column_data_path=args.get('--column-data'),

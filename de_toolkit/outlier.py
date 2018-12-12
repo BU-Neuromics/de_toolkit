@@ -40,7 +40,7 @@ from .report import DetkReport
 from .util import stub
 
 def pmf_transform(x, shrink_factor=0.25, p_max=None, iters=1000):
-    obj = PMFTransform(x, shrink_factor=0.25, p_max=None, iters=1000)
+    obj = PMFTransform(x, shrink_factor, p_max, iters)
     return obj.output
 
 class PMFTransform(DetkModule):
@@ -125,7 +125,7 @@ def shrink(count_obj, shrink_factor=0.25, p_max=None, iters=1000) :
         a sample may have before being considered an outlier, default is
         ``sqrt(1/num_samples)``
     '''
-    obj = ShrinkCounts(count_obj, shrink_factor=0.25, p_max=None, iters=1000)
+    obj = ShrinkCounts(count_obj, shrink_factor, p_max, iters)
     return obj.output
 
 class ShrinkCounts(DetkModule):

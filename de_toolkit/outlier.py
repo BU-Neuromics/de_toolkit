@@ -22,7 +22,10 @@ Usage:
     detk-outlier shrink [options] <counts_fn>
 
 Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
+    -o FILE --output=FILE   Destination of primary output [default: stdout]
+    -f N --shrink-factor=N  Shrinkage factor number float between 0 and 1 [default: 0.25]
+    -p N --p-max=N          Percent counts of sample default is sqrt(1/num samples)
+    -i N --iters=N          Number of terations [default: 1000]
 ''',
 }
 
@@ -302,12 +305,9 @@ def main(argv=sys.argv):
     cmd = argv[0]
 
     if cmd == 'entropy' :
-
         args = docopt(cmd_opts_aug['vst'],argv)
         count_obj = CountMatrixFile(args['<counts_fn>'])
-
         data = CountMatrixFile(args['<counts_fn>'])
-
         pval = float(args['--percentile'])
 
         # run the entropy_calc function
@@ -318,30 +318,30 @@ def main(argv=sys.argv):
 
     elif cmd == 'trim' :
         args = docopt(cmd_opts_aug['trim'],argv)
-
         count_obj = CountMatrixFile(args['<counts_fn>'])
-
         out = trim(count_obj)
 
     elif cmd == 'shrink' :
         args = docopt(cmd_opts_aug['shrink'],argv)
-
         count_obj = CountMatrixFile(args['<counts_fn>'])
-
-        out = ShrinkCounts(count_obj)
-
-#    # return results to stdout
-#    elif output == None and plot == None:
-#        f = sys.stdout
-#        results.to_csv(f, sep='\t')
-
+        if args['--p-max'] is None:
+            args['--p-max'] = np.sqrt(1./count_obj.counts.shape[1])
+        print(args['--p-max'])
+        print(float(args['--p-max']))
+        print(args['--shrink-factor'])
+        print(float(args['--shrink-factor']))
+        out = ShrinkCounts(count_obj,
+                shrink_factor=float(args['--shrink-factor']),
+                p_max=float(args['--p-max']),
+                iters=int(args['--iters'])
+                )
+        
     if args['--output'] == 'stdout' :
         f = sys.stdout
     else :
         f = args['--output']
 
     out.output.to_csv(f,sep='\t')
-
 
     # write out the report json
     with DetkReport(args['--report-dir']) as r :

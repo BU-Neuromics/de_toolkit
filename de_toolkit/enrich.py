@@ -96,7 +96,7 @@ def fgsea(
 
 class FGSEARes(DetkModule) :
     @require_r('fgsea')
-    def __init__(self, gmt, stat, minSize, maxSize, nperm, nproc, rda_fn) :
+    def __init__(self, gmt, stat, minSize=15, maxSize=500, nperm=10000, nproc=None, rda_fn=None) :
         self['params'] = {
                 'minSize': minSize,
                 'maxSize': maxSize,
@@ -214,6 +214,7 @@ def main(argv=sys.argv) :
         if col is not None :
             # check that the provided column is either in the column names
             # of the results df, or else is a valid integer index into it
+
                 try :
                     col = get_col_or_idcol(res_df,col)
                 except ValueError :
@@ -246,7 +247,7 @@ def main(argv=sys.argv) :
         if args['--ascending'] :
             stat = -stat
 
-        out_df = FGSEARes(
+        out = FGSEARes(
                 gmt,
                 stat,
                 minSize=int(args['--minSize']),
@@ -257,11 +258,11 @@ def main(argv=sys.argv) :
             )
 
     fp = sys.stdout if args['--output']=='stdout' else args['--output']
-    out_df.output.to_csv(fp)
+    out.output.to_csv(fp)
 
     with DetkReport(args['--report-dir']) as r :
         r.add_module(
-                out_df,
+                out,
                 in_file_path=args['<gmt_fn>'],
                 out_file_path=args['--output'],
                 column_data_path=args.get('--column-data'),

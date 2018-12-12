@@ -38,6 +38,7 @@ Options:
     --strict               Require that the sample order indicated by the column names in the
                            counts file are the same as, and in the same order as, the
                            sample order in the row names of the covariates file
+    --blind N              If False, count_obj is expected to have column_data
 ''',
 }
 
@@ -163,7 +164,8 @@ def rlog(count_obj, blind=True) :
 class RlogCounts(DetkModule):
     @require_r('DESeq2','SummarizedExperiment')
     def __init__(self, count_obj, blind=True):
-        self['params'] = {'blind': blind }
+        self['params'] = {'blind': blind
+                }
         self.count_obj = count_obj
 
         script = '''\
@@ -272,13 +274,16 @@ def main(argv=sys.argv) :
         args = docopt(cmd_opts_aug['rlog'],argv)
 
         count_obj = CountMatrixFile(
-            args['<count_fn>']
-            ,args['<cov_fn>']
-            ,design=args['<design>']
-            ,strict=args.get('--strict',False)
+            args['<count_fn>'],
+            args['<cov_fn>'],
+            design=args['<design>'],
+            strict=args.get('--strict',False)
         )
 
-        out = RlogCounts(count_obj)
+        if args['--blind'] is None:
+            args['--blind'] = True
+        out = RlogCounts(count_obj,
+                blind=args['--blind'])
 
     if args['--output'] == 'stdout' :
         f = sys.stdout

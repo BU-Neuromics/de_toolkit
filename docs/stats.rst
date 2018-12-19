@@ -120,7 +120,7 @@ API Documentation
 ``base`` - Basic statistics
 +++++++++++++++++++++++++++
 .. autoclass:: de_toolkit.stats.BaseStats
-   :members: output, params, properties, json
+   :members: output
 
 Command line usage::
 
@@ -138,7 +138,7 @@ Command line usage::
 ``coldist`` - Column-wise counts distributions
 ++++++++++++++++++++++++++++++++++++++++++++++
 .. autoclass:: de_toolkit.stats.ColDist
-   :members: output, params, properties, json
+   :members: output, properties
 
 Command line usage::
 
@@ -164,7 +164,7 @@ Command line usage::
 ``rowdist`` - Row-wise counts distributions
 +++++++++++++++++++++++++++++++++++++++++++
 .. autoclass:: de_toolkit.stats.RowDist
-   :members: output, params, properties, json
+   :members: output
 
 Command line usage::
 
@@ -190,7 +190,7 @@ Command line usage::
 ``colzero`` - Column-wise statistics on zero counts
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 .. autoclass:: de_toolkit.stats.ColZero
-   :members: output, params, properties, json
+   :members: output, properties
 
 Command line usage::
 
@@ -208,7 +208,7 @@ Command line usage::
 ``rowzero`` - Row-wise statistics on zero counts
 ++++++++++++++++++++++++++++++++++++++++++++++++
 .. autoclass:: de_toolkit.stats.RowZero
-   :members: output, params, properties, json
+   :members: output, properties
 
 Command line usage::
 
@@ -227,7 +227,7 @@ Command line usage::
 ``entropy`` - Row-wise sample entropy calculation
 +++++++++++++++++++++++++++++++++++++++++++++++++
 .. autoclass:: de_toolkit.stats.Entropy
-   :members: output, params, properties, json
+   :members: output, properties
 
 Command line usage::
 
@@ -245,7 +245,7 @@ Command line usage::
 ``pca`` - Principal component analysis
 ++++++++++++++++++++++++++++++++++++++
 .. autoclass:: de_toolkit.stats.CountPCA
-   :members: output, params, properties, json
+   :members: output, properties
 
 Command line usage::
 

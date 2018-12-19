@@ -74,11 +74,12 @@ def test_detk_report(fake_module) :
 
         assert os.path.exists(os.path.join(d,'detk_report.html'))
 
-# decorator for skipping if Rscript is not installed
+# decorator for skipping if snakemake is not installed
 def check_snakemake() :
     p = subprocess.run("snakemake -v",shell=True)
     return p.returncode == 0
-snakemake_test = pytest.mark.skipif(not check_snakemake(),reason='Rscript executable not found, skipping test')
+
+snakemake_test = pytest.mark.skipif(not check_snakemake(),reason='snakemake executable not found, skipping test')
 @snakemake_test
 def test_report_generate():
     p = subprocess.run("snakemake",

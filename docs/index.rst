@@ -33,20 +33,18 @@ Module Documentation
    :maxdepth: 2
 
    workflow/workflow
-   norm
    de
-   patsy_lite
-   outlier
-   transform
+   enrich
    filter
+   norm
+   outlier
    stats
+   transform
+   patsy_lite
    wrapr
 
 Installation
 ------------
-
-conda package
-+++++++++++++
 
 We suggest installing this package using pip:
 
@@ -54,28 +52,33 @@ We suggest installing this package using pip:
 
   pip install de_toolkit
 
-Manual installation
-+++++++++++++++++++
+In development or if you want to use the bleeding edge, when you want to run
+the toolkit, use the ``setup.py`` script:
 
-If conda is not available, ensure the following packages are installed and
-available in your environment:
+.. code-block:: bash
 
-* python packages (python>=3.5)
-    - docopt
-    - pandas
-    - numpy
-* R packages (R>=3.2)
-    - R>=3.2
+  python setup.py install
+
+This should make the ``detk`` and its subtools available on the command line.
+Whenever you make changes to the code you will need to run this command again.
+
+R dependencies
+++++++++++++++
 
 The following packages are only required to use the corresponding submodule
 functions:
 
 * R packages
-    - DESeq2 (bioconductor)
-    - logistf (CRAN)
+    - DESeq2_ (``detk-de deseq2``, ``detk-transform rlog``, ``detk-transform vst``)
+    - fgsea_ (``detk-enrich fgsea``)
+    - logistf_ (``detk-de firth``)
 
-We suggest using anaconda_ to create an environment that contains the software
-necessary, e.g.:
+.. _fgsea: https://bioconductor.org/packages/release/bioc/html/fgsea.html
+.. _DESeq2: http://bioconductor.org/packages/release/bioc/html/DESeq2.html
+.. _logistf: https://cran.r-project.org/package=logistf
+
+We wearily suggest using anaconda_ to create an environment that contains the
+software necessary, e.g.:
 
 .. code-block:: bash
 
@@ -86,17 +89,6 @@ necessary, e.g.:
   # if you want to use the R functions (Firth, DESeq2, etc.)
   Rscript install_r_packages.sh 
 
-In development, when you want to run the toolkit, use the ``setup.py`` script:
-
-.. code-block:: bash
-
-  python setup.py install
-
-This should make the ``detk`` and its subtools available on the command line. Whenever you make changes
-to the code you will need to run this command again.
-
-.. _rpy2: https://rpy2.readthedocs.io/
-.. _DESeq2: http://bioconductor.org/packages/release/bioc/html/DESeq2.html
 .. _anaconda: http://anaconda.org
 
 Indices and tables

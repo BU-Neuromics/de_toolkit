@@ -13,6 +13,20 @@ cmd_opts = {
 Perform preranked Gene Set Enrichment Analysis using the fgsea bioconductor
 package on the given gmt gene set file.
 
+The GMT file must be tab delimited with set name in the first column, a
+description in the second column (ignored by detk), and an individual feature
+ID in each column after, one feature set per line. The result file can be any
+character delimited file, and is assumed to have column names in the first row.
+
+The feature IDs must be from the same system (e.g. gene symbols, ENSGIDs, etc)
+in both GMT and result files. The user will likely have to provide:
+
+- -i <col>: column name in the results file that contains feature IDs
+- -c <col>: column name in the results file that contains the statistics to
+  use when computing enrichment, e.g. log2FoldChange
+
+fgsea: https://bioconductor.org/packages/release/bioc/html/fgsea.html
+
 Usage:
     detk-enrich fgsea [options] <gmt_fn> <result_fn>
 
@@ -91,12 +105,41 @@ def fgsea(
         nperm=10000,
         nproc=None,
         rda_fn=None) :
+    '''
+    Perform pre-ranked Gene Set Enrichment Analysis using the fgsea Bioconductor
+    package
+
+    Compute GSEA enrichment using the provided gene sets in the GMT object *gmt*
+    using the statistics in the pandas.Series *stat*. The fgsea Bioconductor
+    package must be installed on your system for this function to work.
+
+    The output dataframe contains one result row per features set in the GMT
+    file, in the same order. Output columns include:
+
+    - name: name of feature set
+    - ES: GSEA enrichment score
+    - NES: GSEA normalized enrichment score
+    - pval: nominal p-value
+    - padj: Benjamini-Hochberg adjusted p-value
+    - nMoreExtreme: number of permutations with a more extreme NES than true
+    - size: number of features in the feature set
+    - leadingEdge: the leading edge features as defined by GSEA (string with
+      space-separated feature names)
+    '''
     obj = FGSEARes(gmt, stat, minSize, maxSize, nperm, nproc, rda_fn)
     return obj.output
 
 class FGSEARes(DetkModule) :
     @require_r('fgsea')
-    def __init__(self, gmt, stat, minSize=15, maxSize=500, nperm=10000, nproc=None, rda_fn=None) :
+    def __init__(self,
+            gmt,
+            stat,
+            minSize=15,
+            maxSize=500,
+            nperm=10000,
+            nproc=None,
+            rda_fn=None
+        ) :
         self['params'] = {
                 'minSize': minSize,
                 'maxSize': maxSize,

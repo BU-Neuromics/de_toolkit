@@ -243,7 +243,6 @@ class FPKMCounts(DetkModule):
                     '\n'.join(_ for _ in list(missing_indices)[:5])
                     )
         lens = lengths[count_df.index]
-        print(lens)
         res = count_df.div(1e6*lens,axis=0)
         self.res = res
     

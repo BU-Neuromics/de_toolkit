@@ -119,8 +119,8 @@ API Documentation
 
 ``base`` - Basic statistics
 +++++++++++++++++++++++++++
-.. autoclass:: de_toolkit.stats.Base
-   :members: tabular, json
+.. autoclass:: de_toolkit.stats.BaseStats
+   :members: output, params, properties, json
 
 Command line usage::
 
@@ -138,7 +138,7 @@ Command line usage::
 ``coldist`` - Column-wise counts distributions
 ++++++++++++++++++++++++++++++++++++++++++++++
 .. autoclass:: de_toolkit.stats.ColDist
-   :members: tabular, json
+   :members: output, params, properties, json
 
 Command line usage::
 
@@ -164,7 +164,7 @@ Command line usage::
 ``rowdist`` - Row-wise counts distributions
 +++++++++++++++++++++++++++++++++++++++++++
 .. autoclass:: de_toolkit.stats.RowDist
-   :members: tabular
+   :members: output, params, properties, json
 
 Command line usage::
 
@@ -190,7 +190,7 @@ Command line usage::
 ``colzero`` - Column-wise statistics on zero counts
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 .. autoclass:: de_toolkit.stats.ColZero
-   :members: tabular, json
+   :members: output, params, properties, json
 
 Command line usage::
 
@@ -208,7 +208,7 @@ Command line usage::
 ``rowzero`` - Row-wise statistics on zero counts
 ++++++++++++++++++++++++++++++++++++++++++++++++
 .. autoclass:: de_toolkit.stats.RowZero
-   :members: tabular
+   :members: output, params, properties, json
 
 Command line usage::
 
@@ -227,7 +227,7 @@ Command line usage::
 ``entropy`` - Row-wise sample entropy calculation
 +++++++++++++++++++++++++++++++++++++++++++++++++
 .. autoclass:: de_toolkit.stats.Entropy
-    :members: tabular, json
+   :members: output, params, properties, json
 
 Command line usage::
 
@@ -245,7 +245,7 @@ Command line usage::
 ``pca`` - Principal component analysis
 ++++++++++++++++++++++++++++++++++++++
 .. autoclass:: de_toolkit.stats.CountPCA
-   :members: tabular, json
+   :members: output, params, properties, json
 
 Command line usage::
 
@@ -286,7 +286,3 @@ Command line usage::
         -f FMT --format=FMT    Format of output, either csv or table [default: csv]
         --json=<json_fn>       Name of JSON output file
         --html=<html_fn>       Name of HTML output file
-
-
-.. autoclass:: de_toolkit.stats.CountStatistics
-    :members: tabular, json, html, name

@@ -285,17 +285,11 @@ import csv
 from docopt import docopt
 import json
 import math
-import matplotlib
-matplotlib.use('agg')
-import matplotlib.patches as ptches
-import matplotlib.pyplot as plt
-import mpld3
 import numpy as np
 import pandas
 import pkg_resources
 import os.path
 import scipy
-import seaborn as sns
 from sklearn.decomposition import PCA
 from string import Template
 from sklearn.decomposition import PCA
@@ -614,6 +608,7 @@ class RowDist(DetkModule):
         return res
     @property
     def properties(self) :
+        '''Same format as ColDist'''
         return {
                 'pct': self['pct'],
                 'dists': self['dists']
@@ -785,6 +780,7 @@ class RowZero(DetkModule):
         return res
     @property
     def properties(self) :
+        '''Identical to ColZero'''
         return {'zeros':self['zeros']}
 
 class Entropy(DetkModule) :
@@ -989,294 +985,6 @@ class CountPCA(DetkModule) :
                 'components': self['components']
                }
 
-def format_html(html_fn, json_fn, counts_obj, color_col):
-
-    #HTML template that will be filled in using the available JSON data
-    resource = pkg_resources.resource_string(__name__, 'html_template.html')
-    resource = resource.decode('utf-8')
-    s = Template(resource)
-
-    output_dict = OrderedDict()
-    with open(json_fn) as f:
-        for d in json.load(f) :
-            output_dict[d['name']] = d
-
-    #Format base HTML output (table)
-    if 'basestats' in output_dict:
-        base_hide=''
-        base_output = output_dict['basestats']
-        num_cols = base_output['stats']['num_cols']
-        num_rows = base_output['stats']['num_rows']
-    else:
-        base_hide='hidden'
-        num_cols=''
-        num_rows=''
-
-    #Format colzero HTML output (bar chart of samples and zero fractions)
-    if 'colzero' in output_dict:
-        colzero_hide=''
-        colzero_output = output_dict['colzero']
-        zeros_list = colzero_output['stats']['zeros']
-        zero_fracs = []
-        column_names = []
-        bar_names = []
-        for item in zeros_list:
-            zero_fracs.append(item['zero_frac'])
-            column_names.append(item['name'])
-            bar_names.append('Zero Fraction = {0:.3f}'.format(item['zero_frac']))
-
-        x = [i for i in range(1, len(zeros_list)+1)]
-        
-        fig = plt.figure()
-        fig.clf()
-        mpld3.plugins.clear(fig)
-        bars=plt.bar(x, zero_fracs, tick_label=column_names, color='red')
-        plt.title('Zero Fractions Bar Chart', fontsize=20)
-        plt.xlabel('Sample', fontsize=15)
-        plt.ylabel('Zero Fraction', fontsize=15)
-
-        for i, bar in enumerate(bars.get_children()):
-            tooltip = mpld3.plugins.LineLabelTooltip(bar, bar_names[i], hoffset=10)
-            mpld3.plugins.connect(fig, tooltip)
-
-        colzero = mpld3.fig_to_html(fig)
-
-    else:
-        colzero_hide='hidden'
-        colzero=''
-
-    #Format rowzero HTML output (scatterplot of zero fraction vs. nonzero mean and histogram of zero fracs)
-    if 'rowzero' in output_dict:
-        rowzero_hide=''
-        rowzero_output = output_dict['rowzero']
-        zeros_list = rowzero_output['stats']['zeros']
-        zero_fracs = []
-        nonzero_means = []
-        means = []
-        row_names = []
-        row_names2 = []
-        for item in zeros_list:
-            zero_fracs.append(item['zero_frac'])
-            nonzero_means.append(item['nonzero_mean'])
-            row_names.append('{0}: {1:.2f}, {2:.2f}'.format(item['name'], item['zero_frac'], item['nonzero_mean']))
-            means.append(item['mean'])
-            row_names2.append('{0}: {1:.2f}, {2:.2f}'.format(item['name'], item['zero_frac'], item['mean']))
-        
-        fig1 = plt.figure(1)
-        fig1.clf()
-        mpld3.plugins.clear(fig1)
-        points = plt.scatter(zero_fracs, nonzero_means)
-        plt.title('Zero Fractions vs. Nonzero Means', fontsize=20)
-        plt.xlabel('Zero Fraction', fontsize=15)
-        plt.ylabel('Nonzero Mean', fontsize=15)
-        tooltip1 = mpld3.plugins.PointHTMLTooltip(points, row_names, hoffset=10)
-        mpld3.plugins.connect(fig1, tooltip1)
-
-        #print(type(zero_fracs), type(nonzero_means), type(row_names))
-
-        fig2 = plt.figure(2)
-        fig2.clf()
-        mpld3.plugins.clear(fig2)
-        mean_points = plt.scatter(zero_fracs, means)
-        plt.title('Zero Fractions vs. Means', fontsize=20)
-        plt.xlabel('Zero Fraction', fontsize=15)
-        plt.ylabel('Mean', fontsize=15)
-        tooltip2 = mpld3.plugins.PointHTMLTooltip(mean_points, row_names2, hoffset=10)
-        mpld3.plugins.connect(fig2, tooltip2)
-
-        fig3 = plt.figure(3)
-        fig3.clf()
-        mpld3.plugins.clear(fig3)
-        n, bins, patches = plt.hist(zero_fracs, bins=10, range=(0.0, 1.0), color='green')
-        plt.title('Zero Fractions Histogram', fontsize=20)
-        plt.xlabel('Zero Fraction', fontsize=15)
-        plt.ylabel('Frequency', fontsize=15)
-        ticks = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-        plt.xticks(ticks)
-        bar_names = ['{}'.format(i) for i in n]
-
-        for i, patch in enumerate(patches):
-            tooltip3 = mpld3.plugins.LineLabelTooltip(patch, bar_names[i], hoffset=10)
-            mpld3.plugins.connect(fig3, tooltip3)
-        
-        rowzero_scatter = mpld3.fig_to_html(fig1)
-        rowzero_scatter2 = mpld3.fig_to_html(fig2)
-        rowzero_hist = mpld3.fig_to_html(fig3)
-
-    else:
-        rowzero_hide='hidden'
-        rowzero_scatter=''
-        rowzero_scatter2=''
-        rowzero_hist=''
-
-    #Format entropy HTML output (histogram)
-    if 'entropy' in output_dict:
-        entropy_hide=''
-        entropy_output = output_dict['entropy']
-        entropies = entropy_output['stats']['entropies']
-        entropy_list = []
-        for item in entropies:
-            entropy_list.append(item['entropy'])
-        fig = plt.figure()
-        fig.clf()
-        mpld3.plugins.clear(fig)
-        n, bins, patches = plt.hist(entropy_list, color='purple')
-        plt.title('Entropy Histogram', fontsize=20)
-        plt.xlabel('Entropy', fontsize=15)
-        plt.ylabel('Frequency', fontsize=15)
-        
-        bar_names = ['{}'.format(i) for i in n]
-        for i, patch in enumerate(patches):
-            tooltip = mpld3.plugins.LineLabelTooltip(patch, bar_names[i], hoffset=10)
-            mpld3.plugins.connect(fig, tooltip)
-
-        entropy = mpld3.fig_to_html(fig)
-    else:
-        entropy_hide='hidden'
-        entropy=''
-
-    #Format coldist HTML output (box plots for each column)
-    if 'coldist' in output_dict:
-        coldist_hide=''
-        cnts = counts_obj.counts.values
-        names = counts_obj.sample_names
-        row_names = counts_obj.feature_names
-        fig = plt.figure()
-        fig.clf()
-        mpld3.plugins.clear(fig)
-        box = plt.boxplot(cnts, labels=names)
-        
-        outliers = []
-        for item in box['fliers']:
-            outliers.append(list(item.get_data()[1]))
-
-        i=0
-        for points, name in zip(outliers, names):
-            gene_name = []
-            for point in points:
-                ind = list(cnts[:,i]).index(point)
-                gene_name.append(row_names[ind])
-            tooltip = mpld3.plugins.PointHTMLTooltip(box['fliers'][i], gene_name, hoffset=10)
-            mpld3.plugins.connect(fig, tooltip)
-            i+=1
-        
-        for item in box['medians']:
-            median = ['Median = {}'.format(item.get_data()[1][0])]
-            tooltip = mpld3.plugins.LineLabelTooltip(item, median, hoffset=10)
-            mpld3.plugins.connect(fig, tooltip)
-
-        for item in box['boxes']:
-            Q = ['Q1 = {}, Q3 = {}'.format(item.get_data()[1][0], item.get_data()[1][2])]
-            tooltip = mpld3.plugins.LineLabelTooltip(item, Q, hoffset=10)
-            mpld3.plugins.connect(fig, tooltip)
-        
-        for item in box['caps']:
-            cap = ['Cap = {}'.format(item.get_data()[1][0])]
-            tooltip = mpld3.plugins.LineLabelTooltip(item, cap, hoffset=10)
-            mpld3.plugins.connect(fig, tooltip)        
-
-        plt.title('Coldist Boxplot', fontsize=20)
-        plt.ylabel('Count', fontsize=15)
-        plt.xlabel('Sample Name', fontsize=15)
-        coldist_boxplot = mpld3.fig_to_html(fig)
-        plt.clf()
-    else:
-        coldist_hide = 'hidden'
-        coldist_boxplot = ''
-
-    #Format PCA HTML output (Scree plot and swarm plots for projections)
-    if 'pca' in output_dict:
-        pca_hide = ''
-        pca_output = output_dict['pca'].get('stats')
-        perc_variance = []
-        names = []
-        projections = []
-        components = pca_output.get('components')
-        for item in components:
-            perc_variance.append(item.get('perc_variance'))
-            names.append(item.get('name'))        
-            projections.append(item.get('projections'))
-
-        cumulative_variance = []
-        cumulative_variance.append(perc_variance[0])
-        for i in range(1, len(perc_variance)):
-            cumulative_variance.append(cumulative_variance[i-1]+perc_variance[i])
-
-        x = [i for i in range(0, len(perc_variance))]
-        fig = plt.figure(1)
-        fig.clf()
-        mpld3.plugins.clear(fig)
-        plt.plot(x, perc_variance, label='Variance')
-        var, = plt.plot(x, perc_variance, label='Variance')
-        cumulative, = plt.plot(x, cumulative_variance, label='Cumulative Variance')
-        plt.xticks(x, names, rotation='vertical')
-        plt.title('PCA Scree Plot')
-        plt.ylabel('Proportion of Variance')
-        plt.xlabel('Principle Components')
-        plt.legend(handles=[var,cumulative])
-        pca_scree=mpld3.fig_to_html(fig)    
-
-        column_variables = pca_output['column_variables']
-        if color_col is None :
-            if len(column_variables)!=0: 
-                color_col = list(column_variables)[0]
-            else :
-                color_col = 'data'
-       
-        sample_type = column_variables.get(color_col)
-        if sample_type is None:
-            sample_type = ['data' for i in range(len(projections))]
-
-        fig2 = plt.figure(2)    
-        fig2.clf()
-        mpld3.plugins.clear(fig2)
-        d = []
-        for name, projection, variance in zip(names, projections, perc_variance):
-            if variance >= 0.05:
-                for i in range(0, len(projection)):
-                    xlabel = name + ': ' + '{0:.3f}'.format(variance*100.0) + '%'
-                    d.append([xlabel, projection[i], sample_type[i]])
-
-        df = pandas.DataFrame(d, columns=['Principle Components', 'Projection', color_col])
-        sns.set_style('whitegrid')
-        palette_colors = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'black']
-        ax = sns.swarmplot(
-                x='Principle Components',
-                y='Projection',
-                data=df,
-                hue=color_col,
-                palette=sns.color_palette(palette_colors)
-        )
-        labels = []
-        for item in sample_type:
-            if item not in labels:
-                labels.append(item)
-        colors = sns.color_palette(palette_colors).as_hex()[:len(labels)]
-        handles = [ptches.Patch(color=col, label=lab) for col, lab in zip(colors, labels)]
-        plt.legend(handles=handles, title=color_col)
-        plt.title('PCA Swarmplot')
-        pca_swarm=mpld3.fig_to_html(fig2)
-
-    else:
-        pca_hide = 'hidden'
-        pca_scree = ''
-        pca_swarm = ''
-
-    #Write all outputs to HTML file
-    html_output = s.substitute(base_hide=base_hide, num_cols=num_cols, num_rows=num_rows,
-                               colzero_hide=colzero_hide, colzero=colzero,
-                               rowzero_hide=rowzero_hide, rowzero_scatter=rowzero_scatter, 
-                               rowzero_hist=rowzero_hist, rowzero_scatter2=rowzero_scatter2,
-                               entropy_hide=entropy_hide, entropy=entropy,
-                               coldist_hide=coldist_hide, coldist_boxplot=coldist_boxplot,
-                               pca_hide=pca_hide, pca_scree=pca_scree, pca_swarm=pca_swarm)
-    html_fn = open(html_fn, 'w')
-    html_fn.write(html_output)
-    html_fn.close()
-
-    # close matplotlib figures to free memory
-    plt.close('all')
-
 def main(argv=sys.argv) :
 
     if '--version' in argv :
@@ -1293,8 +1001,6 @@ def main(argv=sys.argv) :
         docopt(_cli_doc(__doc__))
     argv = argv[1:]
     cmd = argv[0]
-
-    # all modes have a counts file argument
 
     if cmd == 'pca' :
         args = docopt(cmd_opts_aug['pca'],argv)

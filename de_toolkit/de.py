@@ -67,8 +67,6 @@ def deseq2(count_obj,
         gene_wise_disp_est=False,
         cores=None):
     obj = DESeq2Counts(count_obj, normalized, rda, all_coeff_results, gene_wise_disp_est, cores)
-    print('obj.output')
-    print(obj.output)
     return obj.output
 
 class DESeq2Counts(DetkModule):

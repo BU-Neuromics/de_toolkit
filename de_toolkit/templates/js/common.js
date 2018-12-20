@@ -17,13 +17,21 @@
                         node.innerHTML = detk.templates["file_div"]({"id":id,"name":fn});
                         document.getElementById("modules").appendChild(node);
 
-                        _.sortBy(mods,'name').forEach(function(d) {
+                        mods = _.sortBy(mods,'name');
+
+                        // nav
+                        var node = document.createElement('div');
+                        node.innerHTML = detk.templates.navgroup({'name':fn,'mods':mods});
+                        document.getElementById('nav').appendChild(node);
+
+                        mods.forEach(function(d) {
+                            
 
                             // populate the 'body' value with the template
                             if(detk.templates.hasOwnProperty(d.name)) {
                                 d.body = detk.templates[d.name](d);
                                 var node = document.createElement('div');
-                                node.innerHTML = detk.templates.accordion(d);
+                                node.innerHTML = detk.templates.file_section(d);
                                 document.getElementById(id).appendChild(node);
                             }
 

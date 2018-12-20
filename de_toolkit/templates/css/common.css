@@ -1,0 +1,33 @@
+.parallel path.highcharts-point {
+                fill: rgba(11, 200, 200,0.3);
+            }
+            .parallel .highcharts-line-series path {
+                stroke: rgba(11, 200, 200,0.3);
+                stroke-width: 2px;
+            }
+            .parallel .highcharts-series-hover path {
+                stroke: rgb(248,33,23);
+                stroke-width: 2px;
+            }
+
+            #nav {
+                border-color: #999;
+                border-style: solid;
+                border-width: 0px 1px 0px 1px;
+            }
+            .navheading {
+                padding: 8px 3px 8px 8px;
+                border-color: #999;
+                border-style: solid;
+                border-width: 1px 0px 1px 0px;
+            }
+            li.navitem {
+                background: #ffffff;
+            }
+            .bg-bu-red {
+                background: #c00;
+            }
+            body {
+                font-family: "Droid Sans"
+            }
+

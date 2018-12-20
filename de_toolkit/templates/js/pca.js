@@ -1,6 +1,6 @@
 // component projection parallel coordinate plot
                 var data = d.properties.components.slice(0,10);
-                Highcharts.chart(elem.querySelector(".pca_parallel"), {
+                Highcharts.chart(elem.querySelector(".parallel"), {
                     chart: { parallelCoordinates: true },
                     title: { text: 'PCA Projections' },
                     xAxis: {
@@ -28,7 +28,6 @@
                             }
                         }
                     },
-                    colors: ['rgba(11, 200, 200, 0.3)'],
                     series: d.properties.column_names.map(
                         function(x,i) {
                             return {

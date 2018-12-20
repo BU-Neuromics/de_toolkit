@@ -1,25 +1,37 @@
         <template id="file_div">
             <div id="{{=it.id}}">
-                <h2>{{=it.name}}</h2>
+                <h2 class="text-center text-white p-2 m-0 bg-bu-red rounded">{{=it.name}}</h2>
             </div>
         </template>
 
-        <template id="accordion">
-          <div class="card">
-              <div class="card-header" id="{{=it.id}}">
-                  <h5 class="mb-0">
-                      <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse_{{=it.id}}" aria-expanded="true" aria-controls="collapse_{{=it.id}}">
-                          {{=it.name}} - {{=it.in_file_path}}
-                      </button>
-                  </h5>
-              </div>
-              <div id="collapse_{{=it.id}}" class="collapse show" aria-labelledby="{{=it.id}}" data-parent="#modules">
-                  <div id="body_{{=it.id}}" class="card-body">
-                      {{=it.body}}
-                  </div>
+        <template id="file_section">
+            <div id="{{=it.id}}" class="card my-2">
+                <div class="card-header"><h4 class="text-bold">{{=it.in_file_path}} | {{=it.name}}</h4></div>
+              <div id="body_{{=it.id}}" class="card-body">
+                  {{=it.body}}
               </div>
           </div>
         </template>
 
+        <template id="navgroup">
+            <div class="navheading bg-bu-red text-white font-weight-bold">{{=it.name}}</div>
+            <ul class="list-unstyled m-0 p-0 border">
+                {{~it.mods :value:index}}
+                <li class="navitem px-3 py-1">{{=value.name}}
+                {{~}}
+            </ul>
+        </template>
+
         <!-- main element -->
-        <div id="modules" class="accordion"></div>
+        <div id="main">
+            <div class="container-fluid wm-100">
+                <div class="row">
+                    <div id="nav" class="col-3 m-0 p-0 bg-light"></div>
+                    <div id="content" class="col-sm-9">
+                        <h1 class="text-center py-4">de_toolkit</h1>
+                        <div id="modules" class="container-fluid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+

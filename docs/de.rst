@@ -12,7 +12,7 @@ must be formatted as with any other tool in detk.
 Command line interface to a canonical DESeq2_ analysis. To run a DESeq2
 analysis on a counts matrix and accompanying column data file::
 
-    detk-de deseq2 "counts ~ AgeOfDeath + Status" norm_counts.csv column_data.csv > deseq2_results.csv
+    detk-de deseq2 "counts ~ AgeOfDeath + Status" raw_counts.csv column_data.csv > deseq2_results.csv
 
 .. _DESeq2: https://bioconductor.org/packages/release/bioc/html/DESeq2.html
 
@@ -22,7 +22,7 @@ This is roughly equivalent to the following R:
 
     library(DESeq2)
 
-    counts <- read.csv("norm_counts.csv",rownames=1)
+    counts <- read.csv("raw_counts.csv",rownames=1)
 
     design.mat <- read.csv("column_data.csv")
 

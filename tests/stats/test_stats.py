@@ -142,13 +142,13 @@ def test_stats_coldist_names(fake_count_coldist_obj):
 def test_stats_coldist_pct(fake_count_coldist_obj):
     output = ColDist(fake_count_coldist_obj, 20, False, False)
     col_pct = output['pct']
-    assert col_pct == list((_+1)/.2 for _ in range(20))
+    assert all(col_pct == list(_/20 for _ in range(20)))
 
 #test that coldist function gets correct column dist
 def test_stats_coldist_dist(fake_count_coldist_obj):
     output = ColDist(fake_count_coldist_obj, bins=10)
     col_dists = output['dists']
-    col_dist_func = [d['dist'] for d in col_dists]
+    col_dist_func = [[_[1] for _ in d['dist']] for d in col_dists]
     col_dist_true = [[10.0 for i in range(10)] for j in range(3)]
     assert col_dist_func == col_dist_true
 
@@ -156,7 +156,7 @@ def test_stats_coldist_dist(fake_count_coldist_obj):
 def test_stats_coldist_density(fake_count_coldist_obj):
     output = ColDist(fake_count_coldist_obj, 99, density=True)
     col_dists = output['dists']
-    col_dist_sums = [sum(d['dist']) for d in col_dists]
+    col_dist_sums = [sum(_[1] for _ in d['dist']) for d in col_dists]
 
     col_dist_true = [1.0 for i in range(3)]
 
@@ -166,7 +166,7 @@ def test_stats_coldist_density(fake_count_coldist_obj):
 def test_stats_coldist_bins(fake_count_coldist_obj):
     output = ColDist(fake_count_coldist_obj, bins=5)
     col_dists = output['dists']
-    col_dist_bins = [d['bins'] for d in col_dists]
+    col_dist_bins = [[_[0] for _ in d['dist']] for d in col_dists]
     num_bins = [len(b) for b in col_dist_bins]
     true_bins = [5, 5, 5]
 
@@ -179,9 +179,9 @@ def test_stats_coldist_log_bins(fake_count_coldist_obj):
     fake_count_coldist_obj.counts = fake_count_coldist_obj.counts+1
     output = ColDist(fake_count_coldist_obj, bins=2, log=True)
     col_dists = output['dists']
-    col_dist_bins = [d['bins'] for d in col_dists]
-    col_dist_func = [d['dist'] for d in col_dists]
-    true_bins = [[1.0, 2.0]]*3
+    col_dist_bins = [[_[0] for _ in d['dist']] for d in col_dists]
+    col_dist_func = [[_[1] for _ in d['dist']] for d in col_dists]
+    true_bins = [[0.0, 1.0]]*3
     true_dists = [[9,91]]*3
     assert col_dist_bins==true_bins
     assert col_dist_func==true_dists
@@ -193,8 +193,7 @@ def test_stats_coldist_json(fake_count_coldist_obj):
     json_output = output.json
 
     name = json_output.get('name')
-    pct = json_output.get('properties', {}).get('pct')
-    dists = json_output.get('properties', {}).get('dists')    
+    dists = json_output.get('properties', {}).get('dists')
 
     true_pct = [10*x for x in range(1, 11)]
 
@@ -206,11 +205,10 @@ def test_stats_coldist_json(fake_count_coldist_obj):
         col_names.append(col_name)
 
     col_dists = json_output.get('properties').get('dists')
-    col_dist_func = [d['dist'] for d in col_dists]
+    col_dist_func = [[_[1] for _ in d['dist']] for d in col_dists]
     col_dist_true = [[10.0 for i in range(10)] for j in range(3)]
 
     assert name=='coldist'
-    assert pct==true_pct
     assert true_col_names==col_names
     assert col_dist_func==col_dist_true
 
@@ -220,8 +218,11 @@ def test_stats_coldist_output(fake_count_coldist_obj):
     fake_count_coldist_obj.counts = fake_count_coldist_obj.counts+1
     output = ColDist(fake_count_coldist_obj, bins=2)
 
-    assert output.output[0] == ['colname','bin_50.0','bin_100.0','dist_50.0','dist_100.0']
-    assert output.output[1] == ['a', 50.5, 100, 50, 50]
+    colnames = []
+    for col in fake_count_coldist_obj.counts.columns :
+        for colstat in ('binstart','bincount','pct','pctVal') :
+            colnames.append('{}__{}'.format(col,colstat))
+    assert output.output[0] == colnames
 
 ################################################################################
 # rowdist tests

@@ -413,11 +413,14 @@ class ColDist(DetkModule) :
                 'density': density
         }
 
-        self['pct'] = list(100*(_+1)/bins for _ in range(bins))
+        self['pct'] = pct = np.arange(bins)/bins
 
         self['dists'] = []
 
+        self.stats = stats = OrderedDict()
+
         for col in count_mat.counts:
+
             #to access the data in each column
             data = count_mat.counts[col]
 
@@ -425,53 +428,51 @@ class ColDist(DetkModule) :
             if log :
                 data = np.log10(data)
 
-            #for the upper and lower outliers
-            Q1 = np.percentile(data, 25)
-            Q3 = np.percentile(data, 75)
-            IQR =  np.percentile(data, 75) - np.percentile(data, 25)
-
             #for the histogram bin edges and count numbers
             n, dist_bins = np.histogram(data,bins=bins,density=density)
 
+            binstart=list(dist_bins[:-1])
+            bincount=list(n)
+            pct=list(pct)
+            pctVal=list(np.percentile(data,pct))
+
+            stats[col] = OrderedDict(
+                binstart=binstart,
+                bincount=bincount,
+                pct=pct,
+                pctVal=pctVal
+            )
+
             #make the dict for each sample
             self['dists'].append(
-                    {
-                        'name':col,
-                        'dist':list(n),
-                        'bins':list(dist_bins)[1:],
-                        'extrema': {
-                            'lower':[i for i in data if i < Q1-1.5*IQR],
-                            'upper':[i for i in data if i > Q3+1.5*IQR]
-                        }
-                    }
-                )
+                {
+                    'name':col,
+                    'dist':list(zip(binstart,bincount)),
+                    'percentiles':list(zip(pct,pctVal))
+                }
+            )
 
     @property
     def output(self) :
         '''
-        Tabular output is a table where each row corresponds to a column
-        with column name as the first column. The next columns are broken
-        into two parts:
+        Tabular output is a table with four columns per input counts column:
 
-          - the bin start values, named like bin_N, where N is the percentile
-          - the bin count values, named like dist_N, where N is the percentile
+          - bin start value (column name: sampleA__binstart)
+          - number of features with counts or density in bin (sampleA__bincount)
+          - percentile increment (i.e. 0, 1, etc) (sampleA__pct)
+          - percentile value for corresponding percentile (sampleA__pctVal)
+
         '''
-        colnames = ['colname']+\
-                ['bin_{:.1f}'.format(_) for _ in self['pct']]+\
-                ['dist_{:.1f}'.format(_) for _ in self['pct']]
-        res = [colnames]
-        for dist in self['dists'] :
-            res.append([dist['name']]+dist['bins']+dist['dist'])
-        return res
+        res = []
+        for col in self.stats :
+            for colstat in self.stats[col] :
+                res.append(['{}__{}'.format(col,colstat)]+list(self.stats[col][colstat]))
+        return list(list(_) for _ in zip(*res))
     @property
     def properties(self) :
         '''
         In the properties object, the fields are defined as follows
 
-        pct
-            The percentiles of the distributions in the range 0 < pct <
-            100, by default in increments of 5. This defines the length of
-            the dist and bins arrays in each of the objects for each sample.
         dists
             Array of objects containing one object for each column,
             described below.
@@ -481,50 +482,29 @@ class ColDist(DetkModule) :
         name
             Column name from original file
         dist
-            Array of raw or normalized counts in each bin according to
-            the percentiles from pct
-        bins
-            Array of the bin boundary values for the distribution.
-            Should be of length len(counts)+1. These are what would be
-            the x-axis labels if this was plotted as a histogram.
-        extrema
-            Object with two keys, lower and upper, that contain the
-            literal count values for counts that have a value larger or
-            smaller than 1.5*(inner quartile length) of the
-            distribution. These could be marked as outliers in a
-            boxplot, for example.
+            Array of (bin start, count) pairs defining the counts histogram
+        percentile
+            Array of (percentile, count) pairs defining the counts
+            percentiles
 
         Example JSON properties output::
 
             {
-                'pct' : [ 5, 10, 20, ..., 95 ],
-                'dists' : [
-                  {
-                    'name': 'H_0001',
-                    'dist': [ 129, 317, 900, 1325, ...],
-                    'bins': [ 100, 200, 300, 400, ...],
-                    'extrema': {
-                      'lower': [1, 2, 5],
-                      'upper': [19325, 5233]
-                      }
-                    ]
-                  },
-                  {
-                    'name': 'H_0002',
-                    'dist': [ 502, 127, 222, 591, ...],
-                    'bins': [ 6000, 6200, 6400, 6600, ...],
-                    'extrema': {
-                      'lower': [419, 2, 20],
-                      'upper': [21999,74381]
-                      }
-                    ]
-                  }
-                ]
-              }
+              'dists' : [
+                {
+                  'name': 'H_0001',
+                  'dist': [ [5, 129], [103, 317], ...],
+                  'percentiles': [ [0, 193], [1, 362], ...],
+                },
+                {
+                  'name': 'H_0002',
+                  'dist': [ [6, 502], [122, 127], ...],
+                  'bins': [ [0, 6000], [1, 6200], ...],
+                }
+              ]
             }
         '''
         return {
-                'pct': self['pct'],
                 'dists': self['dists']
                }
 
@@ -670,6 +650,7 @@ class ColZero(DetkModule) :
         for col in self['zeros'] :
             res.append([col[_] for _ in res[0]])
         return res
+
     @property
     def properties(self):
         '''

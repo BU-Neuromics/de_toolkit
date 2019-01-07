@@ -17,7 +17,7 @@ rule stats:
     output:
         temp('{type}_summary_stats.csv')
     shell:
-        'detk-stats summary {input} -o {output}'
+        'detk-stats summary --log {input} -o {output}'
 
 rule filter:
     input:

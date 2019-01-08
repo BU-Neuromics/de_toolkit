@@ -31,6 +31,12 @@ import pkg_resources
 import shutil
 import sys
 import time
+import de_toolkit
+
+# for some reason, pkg_resources can't find assets in de_toolkit
+# unless I access __path__???!?
+de_toolkit.__path__
+
 from .common import _cli_doc
 from .version import __version__
 
@@ -313,7 +319,7 @@ class DetkReportDev(DetkReport) :
             template_data['assets'][asset] = {}
             asset_dir = 'templates/{}/assets/'.format(asset)
 
-            if pkg_resources.resource_exists('de_toolkit',asset_dir) :
+            if pkg_resources.resource_isdir('de_toolkit',asset_dir) :
 
                 for tmpl_path in walk(asset_dir) :
                     dest_path_str = tmpl_path.replace('templates/','')

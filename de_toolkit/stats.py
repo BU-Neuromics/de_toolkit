@@ -431,10 +431,9 @@ class ColDist(DetkModule) :
             #for the histogram bin edges and count numbers
             n, dist_bins = np.histogram(data,bins=bins,density=density)
 
-            binstart=list(dist_bins[:-1])
-            bincount=list(n)
-            pct=list(pct)
-            pctVal=list(np.percentile(data,pct))
+            binstart=dist_bins[:-1]
+            bincount=n
+            pctVal=np.percentile(data,100*pct)
 
             stats[col] = OrderedDict(
                 binstart=binstart,

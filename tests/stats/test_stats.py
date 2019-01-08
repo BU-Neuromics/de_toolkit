@@ -152,6 +152,33 @@ def test_stats_coldist_dist(fake_count_coldist_obj):
     col_dist_true = [[10.0 for i in range(10)] for j in range(3)]
     assert col_dist_func == col_dist_true
 
+#test that coldist function gets correct column dist
+def test_stats_coldist_pctVal(fake_count_coldist_obj):
+    output = ColDist(fake_count_coldist_obj, bins=10)
+    col_dists = [_['percentiles'] for _ in output['dists']]
+
+    coldist_pct = [_[0] for _ in col_dists[0]]
+    assert coldist_pct == [_/10. for _ in range(10)]
+
+    coldist_pctVal = [_[1] for _ in col_dists[0]]
+    coldist_true = [(i*(10-0.1)) for i in range(10)]
+    assert np.allclose(coldist_pctVal,coldist_true)
+
+#test that coldist function gets correct column dist
+def test_stats_coldist_log_pctVal(fake_count_coldist_obj):
+    output = ColDist(fake_count_coldist_obj, bins=10, log=True)
+    col_dists = [_['percentiles'] for _ in output['dists']]
+
+    coldist_pct = [_[0] for _ in col_dists[0]]
+    assert coldist_pct == [_/10. for _ in range(10)]
+
+    coldist_pctVal = [_[1] for _ in col_dists[0]]
+    coldist_true = np.percentile(
+            np.log10(fake_count_coldist_obj.counts.a+1),
+            np.arange(10)*10
+    )
+    assert np.allclose(coldist_pctVal,coldist_true)
+
 #test that coldist function with density option gets correct dists
 def test_stats_coldist_density(fake_count_coldist_obj):
     output = ColDist(fake_count_coldist_obj, 99, density=True)
@@ -179,11 +206,15 @@ def test_stats_coldist_log_bins(fake_count_coldist_obj):
     fake_count_coldist_obj.counts = fake_count_coldist_obj.counts+1
     output = ColDist(fake_count_coldist_obj, bins=2, log=True)
     col_dists = output['dists']
-    col_dist_bins = [[_[0] for _ in d['dist']] for d in col_dists]
+    col_dist_bins = [_[0] for _ in col_dists[0]['dist']]
+    true_dists, true_bins = np.histogram(
+            np.log10(fake_count_coldist_obj.counts.a+1),
+            bins=2
+    )
+    assert np.allclose(col_dist_bins,true_bins[:-1])
+
     col_dist_func = [[_[1] for _ in d['dist']] for d in col_dists]
-    true_bins = [[0.0, 1.0]]*3
-    true_dists = [[9,91]]*3
-    assert col_dist_bins==true_bins
+    true_dists = [[13,100-13]]*3
     assert col_dist_func==true_dists
 
 #test that json output for coldist function is correct
@@ -211,6 +242,13 @@ def test_stats_coldist_json(fake_count_coldist_obj):
     assert name=='coldist'
     assert true_col_names==col_names
     assert col_dist_func==col_dist_true
+
+    coldist_pctVal = [_[1] for _ in col_dists[0]['percentiles']]
+    coldist_true = np.percentile(
+            fake_count_coldist_obj.counts.a,
+            np.arange(10)*10
+    )
+    assert np.allclose(coldist_pctVal,coldist_true)
 
 def test_stats_coldist_output(fake_count_coldist_obj):
     # the counts go from 0 to 99, make them go from 1 to 100 to make testing

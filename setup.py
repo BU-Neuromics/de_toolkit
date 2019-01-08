@@ -40,7 +40,7 @@ setup(name='de_toolkit',
           'terminaltables'
           ]
       ,packages=find_packages()
-      ,package_data={'de_toolkit':['html_template.html']}
+      ,package_data={'de_toolkit':['templates']}
       ,include_package_data=True
       ,entry_points={
         'console_scripts': [

@@ -383,12 +383,9 @@ def make_counts_obj(
 
   return counts_obj
 
-def pytest_namespace():
-    return {
-      'temp_csv_wrap': temp_csv_wrap
-      ,'make_counts_obj': make_counts_obj
-    }
-
+def pytest_configure():
+    pytest.temp_csv_wrap = temp_csv_wrap
+    pytest.make_counts_obj = make_counts_obj
 
 @pytest.fixture()
 def fake_counts_gene_lengths(request,fake_counts_obj):

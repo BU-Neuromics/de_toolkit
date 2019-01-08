@@ -10,6 +10,16 @@
                 stroke-width: 2px;
             }
 
+            .histogram .highcharts-series-hover path {
+                stroke: rgb(248,33,23);
+                stroke-width: 4px;
+            }
+
+            .percentile .highcharts-series-hover path {
+                stroke: rgb(248,33,23);
+                stroke-width: 4px;
+            }
+
             #nav {
                 border-color: #999;
                 border-style: solid;

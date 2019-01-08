@@ -399,7 +399,7 @@ class ColDist(DetkModule) :
         bins : int
             number of bins to use when computing distribution
         log : bool
-            take the log10 of counts prior to computing distribution
+            take the log10 of counts+1 prior to computing distribution
         density : bool
             return densities rather than absolute bin counts for the
             distribution, densities sum to 1
@@ -426,7 +426,7 @@ class ColDist(DetkModule) :
 
             #Take the log10 of each count if log option is specified
             if log :
-                data = np.log10(data)
+                data = np.log10(data+1)
 
             #for the histogram bin edges and count numbers
             n, dist_bins = np.histogram(data,bins=bins,density=density)

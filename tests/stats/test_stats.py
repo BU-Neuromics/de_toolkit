@@ -547,192 +547,92 @@ def test_stats_colzero_output(fake_counts_obj_with_zeros):
 ################################################################################
 # rowzero tests
 @pytest.fixture
-def fake_count_list_data_rowzero() :
+def fake_counts_list_data_rowzero() :
   data = [
   [ 'gene', 'a', 'b', 'c', 'd', 'e'],
-  [ 'gene1', 1, 3, 5, 7, 9],
-  [ 'gene2', 2, 4, 6, 8, 10],
-  [ 'gene3', 0, 0, 0, 0, 0]
+  [ 'gene1', 1, 1, 1, 1, 1],
+  [ 'gene2', 1, 1, 1, 1, 0],
+  [ 'gene3', 1, 1, 1, 0, 0],
+  [ 'gene4', 1, 1, 0, 0, 0],
+  [ 'gene5', 1, 0, 0, 0, 0],
+  [ 'gene6', 0, 0, 0, 0, 0]
   ]
   return data
 
 
 #convert to csv from 2-D list
 @pytest.fixture
-def fake_count_rowzero_csv(request,fake_count_list_data_rowzero) :
-  with pytest.temp_csv_wrap(fake_count_list_data_rowzero,',') as f :
+def fake_counts_rowzero_csv(request,fake_counts_list_data_rowzero) :
+  with pytest.temp_csv_wrap(fake_counts_list_data_rowzero,',') as f :
     yield f.name
 
-
 @pytest.fixture
-def fake_count_rowzero_obj(
-  fake_count_rowzero_csv
+def fake_counts_rowzero_obj(
+  fake_counts_rowzero_csv
   ,fake_column_data_csv
   ,fake_design) :
 
   return pytest.make_counts_obj(
-    fake_count_rowzero_csv
+    fake_counts_rowzero_csv
     ,fake_column_data_csv
     ,fake_design
   )
 
 #test that rowzero function gets correct row names
-def test_stats_rowzero_names(fake_counts_obj_with_zeros):
-    output = RowZero(fake_counts_obj_with_zeros)
+def test_stats_rowzero_numzero(fake_counts_rowzero_obj):
+    from collections import defaultdict
+    output = RowZero(fake_counts_rowzero_obj)
     zeros = output['zeros']
 
-    true_row_names = ['gene1', 'gene2', 'gene3', 'gene4', 'gene5']
-
-    row_names = []
+    stats = defaultdict(list)
     for i in range(0, len(zeros)):
-        row = zeros[i]
-        row_name = row.get('name')
-        row_names.append(row_name)
+        for k,v in zeros[i].items() :
+            stats[k].append(v)
 
-    assert true_row_names == row_names
-
-#test that rowzero function gets correct zero counts
-def test_stats_rowzero_zero_counts(fake_counts_obj_with_zeros):
-    output = RowZero(fake_counts_obj_with_zeros)
-    zeros = output['zeros']
-
-    true_zero_counts = [1, 2, 2, 1, 0]
-
-    zero_counts = []
-    for i in range(0, len(zeros)):
-        row = zeros[i]
-        zero_count = row.get('zero_count')
-        zero_counts.append(zero_count)
-
-    assert true_zero_counts == zero_counts
-
-#test that rowzero function gets correct zero fractions
-def test_stats_rowzero_zero_fracs(fake_counts_obj_with_zeros):
-    output = RowZero(fake_counts_obj_with_zeros)
-    zeros = output['zeros']
-
-    true_zero_fracs = [1/3, 2/3, 2/3, 1/3, 0]
-
-    zero_fracs = []
-    for i in range(0, len(zeros)):
-        row = zeros[i]
-        zero_frac = row.get('zero_frac')
-        zero_fracs.append(zero_frac)
-
-    assert true_zero_fracs == zero_fracs
-
-#test that rowzero function gets correct row means
-def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
-    output = RowZero(fake_counts_obj_with_zeros)
-    zeros = output['zeros']
-
-    true_row_means = [(2+4)/3, 9/3, 4/3, (5+125)/3, (6+36+216)/3]
-
-    row_means = []
-    for i in range(0, len(zeros)):
-        row = zeros[i]
-        row_mean = row.get('mean')
-        row_means.append(row_mean)
-
-    assert true_row_means == row_means
-
-#test that rowzero function gets correct nonzero row means
-def test_stats_rowzero_row_means(fake_counts_obj_with_zeros):
-    output = RowZero(fake_counts_obj_with_zeros)
-    zeros = output['zeros']
-
-    true_nonzero_row_means = [(2+4)/2, 9, 4, (5+125)/2, (6+36+216)/3]
-
-    nonzero_row_means = []
-    for i in range(0, len(zeros)):
-        row = zeros[i]
-        nonzero_row_mean = row.get('nonzero_mean')
-        nonzero_row_means.append(nonzero_row_mean)
-
-    assert true_nonzero_row_means == nonzero_row_means
-
-#test that rowzero gets correct nonzero row means with an all zero row
-def test_stats_rowzero_all_zeros(fake_count_rowzero_obj):
-    output = RowZero(fake_count_rowzero_obj)
-    zeros = output['zeros']
-
-    true_nonzero_row_means = [5, 6, 0]
-    nonzero_row_means = []
-    for i in range(0, len(zeros)):
-        row = zeros[i]
-        nonzero_row_mean = row.get('nonzero_mean')
-        nonzero_row_means.append(nonzero_row_mean)
-
-    assert true_nonzero_row_means == nonzero_row_means
+    assert stats['num_zeros'] == [0,1,2,3,4,5]
+    assert stats['num_features'] == [1]*6
+    assert np.allclose(stats['feature_frac'], [1/6]*6)
+    assert np.allclose(stats['cum_feature_frac'], [(_+1)/6 for _ in range(6)])
+    assert stats['mean'] == [1,.8,.6,.4,.2,0]
+    assert stats['nonzero_mean'] == [1]*5+[0]
+    assert stats['median'] == [1,1,1,0,0,0]
+    assert stats['nonzero_median'] == [1,1,1,1,1,0]
 
 #test that json output for rowzero function is correct
-def test_stats_rowzero_json(fake_count_rowzero_obj):
+def test_stats_rowzero_json(fake_counts_rowzero_obj):
 
-    output = RowZero(fake_count_rowzero_obj)
+    from collections import defaultdict
+    output = RowZero(fake_counts_rowzero_obj)
 
-    json_output = output.json
+    zeros = output.json['properties']['zeros']
 
-    name = json_output.get('name')
-    zeros = json_output.get('properties', {}).get('zeros')
-
-    true_row_names = ['gene1', 'gene2', 'gene3']
-
-    row_names = []
+    stats = defaultdict(list)
     for i in range(0, len(zeros)):
-        row = zeros[i]
-        row_name = row.get('name')
-        row_names.append(row_name)
-    
-    true_zero_counts = [0, 0, 5]
+        for k,v in zeros[i].items() :
+            stats[k].append(v)
 
-    zero_counts = []
-    for i in range(0, len(zeros)):
-        row = zeros[i]
-        zero_count = row.get('zero_count')
-        zero_counts.append(zero_count)
-    
-    true_zero_fracs = [0, 0, 1]
+    assert stats['num_zeros'] == [0,1,2,3,4,5]
+    assert stats['num_features'] == [1]*6
+    assert np.allclose(stats['feature_frac'], [1/6]*6)
+    assert np.allclose(stats['cum_feature_frac'], [(_+1)/6 for _ in range(6)])
+    assert stats['mean'] == [1,.8,.6,.4,.2,0]
+    assert stats['nonzero_mean'] == [1]*5+[0]
+    assert stats['median'] == [1,1,1,0,0,0]
+    assert stats['nonzero_median'] == [1,1,1,1,1,0]
 
-    zero_fracs = []
-    for i in range(0, len(zeros)):
-        row = zeros[i]
-        zero_frac = row.get('zero_frac')
-        zero_fracs.append(zero_frac)
 
-    true_row_means = [5, 6, 0]
-    
-    row_means = []
-    for i in range(0, len(zeros)):
-        row = zeros[i]
-        row_mean = row.get('mean')
-        row_means.append(row_mean)
-
-    true_nonzero_row_means = [5, 6, 0]
-
-    nonzero_row_means = []
-    for i in range(0, len(zeros)):
-        row = zeros[i]
-        nonzero_row_mean = row.get('nonzero_mean')
-        nonzero_row_means.append(nonzero_row_mean)
-
-    assert name=='rowzero'
-    assert true_row_names==row_names
-    assert true_zero_counts==zero_counts
-    assert true_zero_fracs == zero_fracs
-    assert true_row_means==row_means
-    assert true_nonzero_row_means==nonzero_row_means
-
-def test_stats_rowzero_output(fake_counts_obj_with_zeros):
-    output = RowZero(fake_counts_obj_with_zeros)
+def test_stats_rowzero_output(fake_counts_rowzero_obj):
+    output = RowZero(fake_counts_rowzero_obj)
     assert output.output[0] == [
-            'name','zero_count','zero_frac',
-            'mean','median','nonzero_mean','nonzero_median'
+            'num_zeros','num_features','feature_frac','cum_feature_frac',
+            'mean','nonzero_mean','median','nonzero_median'
         ]
-    assert output.output[1] == ['gene1', 1, 1/3, 2, 2, 3, 3]
-    assert output.output[2][:2] == ['gene2', 2]
-    assert output.output[3][:2] == ['gene3', 2]
-    assert output.output[4][:2] == ['gene4', 1]
-    assert output.output[5][:2] == ['gene5', 0]
+    assert output.output[1] == [0, 1, 1/6, 1/6, 1, 1, 1, 1]
+    assert output.output[2][:2] == [1, 1]
+    assert output.output[3][:2] == [2, 1]
+    assert output.output[4][:2] == [3, 1]
+    assert output.output[5][:2] == [4, 1]
+    assert output.output[6][:2] == [5, 1]
 
 ################################################################################
 # entropy tests
@@ -796,30 +696,27 @@ def test_stats_entropies_with_zeros(fake_counts_obj_with_zeros):
     assert true_entropies == row_entropies
 
 #test that entropy gets correct values with an all zero row
-def test_stats_entropy_all_zeros(fake_count_rowzero_obj):
+def test_stats_entropy_all_zeros(fake_counts_rowzero_obj):
     from math import log
-    output = Entropy(fake_count_rowzero_obj)
+    output = Entropy(fake_counts_rowzero_obj)
     entropies = output['entropies']
 
-    H1 = -((1/25)*log(1/25) + (3/25)*log(3/25) + (5/25)*log(5/25)
-               + (7/25)*log(7/25) + (9/25)*log(9/25))
-    H2 = -((2/30)*log(2/30) + (4/30)*log(4/30) + (6/30)*log(6/30)
-               + (8/30)*log(8/30) + (10/30)*log(10/30))
-    H3 = 0
-    true_entropies = [H1, H2, H3]
+    true_entropies = []
+    for i in range(5,0,-1) :
+        true_entropies.append(-(1/i)*log(1/i)*i)
+    true_entropies.append(0)
     
     row_entropies = []
-    for i in range(0, len(entropies)):
-        row = entropies[i]
+    for row in entropies :
         row_entropy = row.get('entropy')
         row_entropies.append(row_entropy)
 
     assert true_entropies == row_entropies
 
 #test that json output for entropy function is correct
-def test_stats_entropy_json(fake_count_rowzero_obj):
+def test_stats_entropy_json(fake_counts_rowzero_obj):
 
-    output = Entropy(fake_count_rowzero_obj)
+    output = Entropy(fake_counts_rowzero_obj)
     entropies = output['entropies']
     json_output = output.json
 
@@ -841,18 +738,17 @@ def test_stats_entropy_json(fake_count_rowzero_obj):
     assert name=='entropy'
     assert true_row_entropies==row_entropies
 
-def test_stats_entropy_output(fake_count_rowzero_obj):
+def test_stats_entropy_output(fake_counts_rowzero_obj):
     from math import log
-    output = Entropy(fake_count_rowzero_obj)
+    output = Entropy(fake_counts_rowzero_obj)
 
-    H1 = -((1/25)*log(1/25) + (3/25)*log(3/25) + (5/25)*log(5/25)
-               + (7/25)*log(7/25) + (9/25)*log(9/25))
-    H2 = -((2/30)*log(2/30) + (4/30)*log(4/30) + (6/30)*log(6/30)
-               + (8/30)*log(8/30) + (10/30)*log(10/30))
-    H3 = 0
-
+    true_entropies = []
+    for i in range(5,0,-1) :
+        true_entropies.append(['gene{}'.format(6-i),-(1/i)*log(1/i)*i])
+    true_entropies.append(['gene6',0])
+ 
     assert output.output[0] == ['name','entropy']
-    assert output.output[1:] == [['gene1',H1],['gene2',H2],['gene3',H3]]
+    assert output.output[1:] == true_entropies
  
 ################################################################################
 # PCA tests

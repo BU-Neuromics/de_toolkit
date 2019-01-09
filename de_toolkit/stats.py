@@ -701,67 +701,116 @@ class RowZero(DetkModule):
     '''
         Row-wise distribution of zero counts
     
-        Identical to colzero, only computed across rows instead of columns. The name 
-        key is rowzero, and the name key of the items in dists is the row name from 
-        the counts file.
+        Computes statistics about the mean and median counts of rows by the
+        number of zeros.
     '''
     def __init__(self,count_mat):
 
         #Get counts, number of columns, number of rows, and gene names
-        cnts = count_mat.counts.values
-        num_cols=len(cnts[0])
-        num_rows=len(cnts)
-        row_names = count_mat.feature_names
-
-        #Calculate zero counts, zero fractions, means, and nonzero means for each row
-        # Calculate zero counts, zero fractions, means, and nonzero means for
-        # each column
-        # the mean and median function raise warnings when a row/col is all zero
-        # ignore
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            zero_counts = (count_mat.counts==0).sum(axis=1).fillna(0)
-            zero_fracs = zero_counts/num_cols
-            row_means = count_mat.counts.mean(axis=1).fillna(0)
-            row_medians = count_mat.counts.median(axis=1).fillna(0)
-            nonzero_row_means = count_mat.counts[count_mat.counts!=0].mean(axis=1).fillna(0)
-            nonzero_row_medians = count_mat.counts[count_mat.counts!=0].median(axis=1).fillna(0)
+        cnts = count_mat.counts
+        num_cols = cnts.shape[1]
 
         self['zeros'] = []
 
-        for i in range(0, num_rows):
-            row = {}
-            row['name'] = row_names[i]
-            row['zero_count'] = zero_counts[i]
-            row['zero_frac'] = zero_fracs[i]
-            row['mean'] = row_means[i]
-            row['median'] = row_medians[i]
-            row['nonzero_mean'] = nonzero_row_means[i]
-            row['nonzero_median'] = nonzero_row_medians[i]
-            self['zeros'].append(row)
+        num_zeros = (cnts==0).sum(axis=1)
+        cum_frac = 0
+        for i in range(0, num_cols+1) :
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                cnts_subset = cnts[num_zeros==i]
+                frac = cnts_subset.shape[0]/cnts.shape[0]
+                cum_frac += frac
+
+                num_zero = {
+                    'num_zeros': i,
+                    'num_features': (num_zeros==i).sum(),
+                    'feature_frac': frac,
+                    'cum_feature_frac': cum_frac,
+                    'mean': cnts_subset.mean(axis=1).fillna(0).mean(),
+                    'nonzero_mean': cnts_subset[cnts_subset!=0].mean(axis=1).fillna(0).mean(),
+                    'median': cnts_subset.median(axis=1).fillna(0).median(),
+                    'nonzero_median': cnts_subset[cnts_subset!=0].median(axis=1).fillna(0).median()
+                }
+
+            self['zeros'].append(num_zero)
 
     @property
     def output(self) :
         '''
-            Tabular output is a table where each row corresponds to a row
-            with the following fields:
+            Tabular output is a table where each row corresponds to rows
+            having a given number of zero columns with the following fields:
 
-              - name: Row name
-              - zero_count: Number of zero counts
-              - zero_frac: Fraction of zero counts
-              - mean: Overall mean count
-              - median: Overall median count
-              - nonzero_mean: Mean of non-zero counts only
-              - nonzero_median: Mean of non-zero counts only
+              - num_zero: the number of zeros for this row
+              - num_features: the number of features with this number of zeros
+              - feature_frac: the fraction of features with this number of zeros
+              - cum_feature_frac: cumulative fraction of features remeaning with
+                this number of zeros or fewer
+              - mean: the mean count mean of genes with this number of zeros
+              - nonzero_mean: the mean count mean of genes with this number of
+                zeros not including zero counts
+              - median: the median count median of genes with this number of zeros
+              - nonzero_median: the median count median of genes with this number
+                of zeros, not including zero counts
+
         '''
-        res = [['name','zero_count','zero_frac','mean','median','nonzero_mean','nonzero_median']]
+        res = [['num_zeros','num_features','feature_frac','cum_feature_frac','mean','nonzero_mean','median','nonzero_median']]
         for col in self['zeros'] :
             res.append([col[_] for _ in res[0]])
         return res
     @property
     def properties(self) :
-        '''Identical to ColZero'''
-        return {'zeros':self['zeros']}
+        '''
+            The stats value is an array containing one object per number of zeros
+            as follows:
+
+            num_zero
+                the number of zeros for this group of features
+            num_features
+                the number of features with this number of zeros
+            feature_frac
+                the fraction of features with this number of zeros
+            cum_feature_frac
+                cumulative fraction of features remeaning with this number of zeros
+                or fewer
+            mean
+                the mean count mean of genes with this number of zeros
+            nonzero_mean
+                the mean count mean of genes with this number of zeros not
+                including zero counts
+            median
+                the median count mean of genes with this number of zeros
+            nonzero_median
+                the median count mean of genes with this number of zeros, not
+                including zero counts
+
+            Example JSON output::
+
+                {
+                  'zeros' : [
+                    {
+                        'num_zeros': 0,
+                        'num_features': 14031,
+                        'feature_frac': .61,
+                        'cum_feature_frac': .61,
+                        'mean': 3351.13,
+                        'nonzero_mean': 3351.13,
+                        'median': 2125.9,
+                        'nonzero_median': 2125.9
+                    },
+                    {
+                        'num_zeros': 1,
+                        'num_features': 5031,
+                        'feature_frac': .21,
+                        'cum_feature_frac': .82,
+                        'mean': 3125.91,
+                        'nonzero_mean': 3295.4,
+                        'median': 1825.8,
+                        'nonzero_median': 1976.1
+                    },
+                  ]
+                }
+        '''
+        return { 'zeros':self['zeros'] }
 
 class Entropy(DetkModule) :
     '''

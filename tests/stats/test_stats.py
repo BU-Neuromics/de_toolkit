@@ -700,7 +700,6 @@ def test_stats_entropy_output(fake_counts_entropy_obj):
     output = Entropy(fake_counts_entropy_obj)
     true_entropies = [0]+[-i*(1/i)*np.log(1/i) for i in range(1,101)]
     output = output.output
-    print(output)
 
     assert output[0][:4] == ['pct','pctVal','num_features','frac_features']
     assert output[1][:4] == (0, 0, 2, 2/101)

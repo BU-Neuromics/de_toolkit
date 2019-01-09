@@ -855,7 +855,7 @@ class Entropy(DetkModule) :
         # - the unique number of distinct entropy values
         # - the number of features
         # - 100
-        pct = list(np.linspace(0,100,min(len(set(entropies)),cnts.shape[0],100)))
+        pct = list(np.linspace(0,100,min(len(set(entropies)),cnts.shape[0],101)))
         pctVal = np.percentile(entropies,pct,interpolation='higher')
 
         #Format output

@@ -17,15 +17,18 @@ deseq2_test = pytest.mark.skipif(
         reason='DESeq2 R package not found, skipping test'
 )
 
+@deseq2_test
 def test_norm_cli():
     from de_toolkit.norm import main
     with pytest.raises(docopt.DocoptExit) :
         main()
 
+@deseq2_test
 def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
     from de_toolkit.norm import main
     main(['detk-norm','deseq2',fake_counts_csv])
 
+@deseq2_test
 def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
 
     from de_toolkit import CountMatrixFile
@@ -103,6 +106,7 @@ def test_estimateSizeFactors_somezero(fake_counts_numpy_matrix) :
     assert np.allclose(size_factors, true_size_factors)
     assert np.allclose(size_factors, deseq2_size_factors)
 
+@deseq2_test
 def test_deseq2(fake_counts_obj) :
 
     from de_toolkit.norm import deseq2

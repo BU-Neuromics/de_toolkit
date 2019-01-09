@@ -173,7 +173,7 @@ def test_stats_coldist_log_pctVal(fake_count_coldist_obj):
     assert coldist_pct == [_/10. for _ in range(10)]
 
     coldist_pctVal = [_[1] for _ in col_dists[0]]
-    coldist_true = np.percentile(
+    coldist_true = 10**np.percentile(
             np.log10(fake_count_coldist_obj.counts.a+1),
             np.arange(10)*10
     )
@@ -211,7 +211,7 @@ def test_stats_coldist_log_bins(fake_count_coldist_obj):
             np.log10(fake_count_coldist_obj.counts.a+1),
             bins=2
     )
-    assert np.allclose(col_dist_bins,true_bins[:-1])
+    assert np.allclose(col_dist_bins,10**true_bins[:-1])
 
     col_dist_func = [[_[1] for _ in d['dist']] for d in col_dists]
     true_dists = [[13,100-13]]*3

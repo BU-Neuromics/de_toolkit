@@ -15,6 +15,8 @@ Usage:
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
+    --routput-dir=DIR      Path to output directory for R stuffs, useful for
+                           debuggin out
     --rda=RDA              Filename passed to saveRDS() R function of the result
                            objects from the analysis
     --strict               Require that the sample order indicated by the column names in the
@@ -36,6 +38,8 @@ Usage:
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
+    --routput-dir=DIR      Path to output directory for R stuffs, useful for
+                           debuggin out
     --rda=RDA              Filename passed to saveRDS() R function of the result
                            objects from the analysis
     --strict               Require that the sample order indicated by the column names in the
@@ -65,8 +69,16 @@ def deseq2(count_obj,
         rda=None,
         all_coeff_results=True,
         gene_wise_disp_est=False,
-        cores=None):
-    obj = DESeq2Counts(count_obj, normalized, rda, all_coeff_results, gene_wise_disp_est, cores)
+        cores=None,
+        routput_dir=None):
+    obj = DESeq2Counts(
+            count_obj,
+            normalized,
+            rda,
+            all_coeff_results,
+            gene_wise_disp_est,
+            cores
+    )
     return obj.output
 
 class DESeq2Counts(DetkModule):
@@ -76,7 +88,8 @@ class DESeq2Counts(DetkModule):
             rda=None,
             all_coeff_results=True,
             gene_wise_disp_est=False,
-            cores=None):
+            cores=None,
+            routput_dir=None):
         self.count_obj = count_obj
         self['params'] = {'normalized': normalized,
                 'rda': rda,
@@ -238,7 +251,8 @@ class DESeq2Counts(DetkModule):
         with wrapr(script,
                 counts=count_obj.counts,
                 metadata=count_obj.design_matrix.full_matrix,
-                params=params) as wr :
+                params=params,
+                routput_dir=routput_dir) as wr :
             self.wr_output = wr.output
     @property
     def output(self):
@@ -252,7 +266,8 @@ def firth_logistic_regression(
         count_obj,
         standardize=False,
         rda=None,
-        cores=None) :
+        cores=None,
+        routput_dir=None) :
     obj = FLGCounts(count_obj, standardize, rda, cores)
     return obj.output
 
@@ -261,7 +276,8 @@ class FLGCounts(DetkModule):
     def __init__(self, count_obj,
             standardize=False,
             rda=None,
-            cores=None):
+            cores=None,
+            routput_dir=None):
         self.count_obj = count_obj
 
         # make a copy of count_obj, since we mutate it
@@ -363,7 +379,8 @@ class FLGCounts(DetkModule):
         with wrapr(script,
                 counts=count_obj.counts,
                 metadata=count_obj.design_matrix.full_matrix,
-                params=params) as wr :
+                params=params,
+                routput_dir=routput_dir) as wr :
             self.wr_output = wr.output
 
     @property
@@ -409,7 +426,8 @@ def main(argv=sys.argv) :
                 rda=args.get('--rda'),
                 all_coeff_results=not args.get('--last-term-only',False),
                 gene_wise_disp_est=args.get('--gene-wise-disp',False),
-                cores=int(args['--cores']) if args['--cores'] != 'none' else None
+                cores=int(args['--cores']) if args['--cores'] != 'none' else None,
+                routput_dir=args['--routput-dir']
                 )
     
     elif cmd == 'firth' :
@@ -424,7 +442,8 @@ def main(argv=sys.argv) :
         out = FLGCounts(count_obj,
                 rda=args['--rda'],
                 standardize=args.get('--standardize',False),
-                cores=int(args['--cores']) if args['--cores'] != 'none' else None
+                cores=int(args['--cores']) if args['--cores'] != 'none' else None,
+                routput_dir=args['--routput-dir']
                 )
 
     if args['--output'] == 'stdout' :

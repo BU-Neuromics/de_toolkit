@@ -57,6 +57,10 @@ There are four different filter functions available:
             is the fraction of samples that must be nonzero. If the number is 1
             or greater (1 <= number < # of samples) or the number is equal to 0,
             then it is the number of samples that must be nonzero.
+- ``max``:
+            Filter data based on the maximum value of the row or column spec.
+- ``min``:
+            Filter data based on the minimum value of the row or column spec.
 
 The column spec value can take one of three forms:
 

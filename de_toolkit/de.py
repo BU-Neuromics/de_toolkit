@@ -161,6 +161,13 @@ class DESeq2Counts(DetkModule):
             # load design matrix
             design.mat <- read.csv(metadata.fn,header=T,as.is=T,row.names=1)
 
+            # make sure the counts and design matrix samples line up
+            common <- intersect(rownames(design.mat),colnames(cnts))
+            cnts <- cnts[common]
+            design.mat <- design.mat[common,]
+
+            stopifnot(colnames(cnts) == rownames(design.mat))
+
             dds <- DESeqDataSetFromMatrix(
                 countData = cnts,
                 colData = design.mat,

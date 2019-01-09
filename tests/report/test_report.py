@@ -82,7 +82,7 @@ def check_snakemake() :
 snakemake_test = pytest.mark.skipif(not check_snakemake(),reason='snakemake executable not found, skipping test')
 @snakemake_test
 def test_report_generate():
-    p = subprocess.run("snakemake",
+    p = subprocess.run("snakemake --forceall",
             shell=True,
             cwd=os.path.dirname(__file__)
     )

@@ -1,30 +1,37 @@
 r'''
 Usage:
     detk-wrapr check
-    detk-wrapr run [options] <rscript> <counts_in> <out>
+    detk-wrapr run [options] <rscript> [<counts_in>] [<out>]
 
 Options:
-    --rpath=PATH       Path to Rscript executable, inferred from the environment
-                       by default
-    --meta-in=PATH     Path to metadata file corresponding to columns in counts,
-                       same as is passed to other detk functions
-    --meta-out=PATH    Path to metadata file corresponding to columns in counts,
-                       same as is passed to other detk functions
-    --params-in=PATH   Path to JSON formatted file containing parameters needed
-                       by R script
-    --params-out=PATH  Path to JSON formatted file to be created with output
-                       from the R script
-    --strict           Ensure counts column names and the first row of the
-                       metadata file provided (if any) match, otherwise fail
+    --rpath=PATH        Path to Rscript executable, inferred from the environment
+                        by default
+    --routput-dir=PATH  A directory name to write all of the relevant files to
+                        when running this wrapr, useful for debugging an R
+                        script if things go wrong, by default the directory
+                        and files created are temporary and deleted after
+                        execution
+    --meta-in=PATH      Path to metadata file corresponding to columns in counts,
+                        same as is passed to other detk functions
+    --meta-out=PATH     Path to metadata file corresponding to columns in counts,
+                        same as is passed to other detk functions
+    --params-in=PATH    Path to JSON formatted file containing parameters needed
+                        by R script
+    --params-out=PATH   Path to JSON formatted file to be created with output
+                        from the R script
+    --strict            Ensure counts column names and the first row of the
+                        metadata file provided (if any) match, otherwise fail
 '''
 from collections import defaultdict
 from docopt import docopt
 import json
 import os
 import pandas as pd
+import pathlib
+import shutil
 import subprocess
 import sys
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from .common import CountMatrixFile, _cli_doc
 from .util import which
 
@@ -243,12 +250,12 @@ class WrapR(object) :
     The standard output of the R script can be accessed with the *stdout*
     attribute:
 
-        >>> with open('euler.R','wt') as f :
-                f.write('exp(complex(real=0,imag=pi))+1')
-        >>> with WrapR('euler.R','wt') as r :
-                r.execute()
-                print(r.stdout)
-        [1] 0+1.224647e-16i
+    >>> with open('euler.R','wt') as f :
+            f.write('exp(complex(real=0,imag=pi))+1')
+    >>> with WrapR('euler.R','wt') as r :
+            r.execute()
+            print(r.stdout)
+    [1] 0+1.224647e-16i
 
 
     '''
@@ -262,7 +269,8 @@ class WrapR(object) :
             metadata_out_fn=None,
             params_out_fn=None,
             rpath=None,
-            raise_on_error=True
+            raise_on_error=True,
+            routput_dir=None
             ) :
 
         self._files = {}
@@ -271,9 +279,19 @@ class WrapR(object) :
         # custom rpath
         self._paths['rpath'] = rpath or get_r_path()
 
+        # if routput_dir is specified, create the directory if necessary and
+        # write all of the temporary files to it
+        self.routput_dir = routput_dir
+        self._tempdir = None
+        if routput_dir is not None :
+            pathlib.Path(routput_dir).mkdir(parents=True,exist_ok=True)
+        else :
+            self._tempdir = TemporaryDirectory()
+            self.routput_dir = self._tempdir.name
+
         # load script code and put into the template that defines convenience
         # in/out filename variables
-        with NamedTemporaryFile('wt',delete=False) as f :
+        with open(os.path.join(self.routput_dir,'script.R'),'wt') as f :
             self._files['rscript'] = f
             self._paths['rscript'] = f.name
             with open(os.path.realpath(rscript_path),'rt') as f_in :
@@ -281,7 +299,7 @@ class WrapR(object) :
             f.flush()
 
         # write counts to tempfile
-        with NamedTemporaryFile('wt',delete=False) as f :
+        with open(os.path.join(self.routput_dir,'counts.csv'),'wt') as f :
             self._files['counts_in'] = f
             self._paths['counts_in'] = f.name
             if counts is not None :
@@ -291,11 +309,14 @@ class WrapR(object) :
         # set counts output file if provided, otherwise create temp file
         self._paths['output'] = output_fn
         if output_fn is None :
-            self._files['output'] = NamedTemporaryFile('wt',delete=False)
+            self._files['output'] = open(
+                    os.path.join(self.routput_dir,'counts_out.csv'),
+                    'wt'
+            )
             self._paths['output'] = self._files['output'].name
 
         # write metadata to tempfile if provided
-        with NamedTemporaryFile('wt',delete=False) as f :
+        with open(os.path.join(self.routput_dir,'meta_in.csv'),'wt') as f :
             self._files['meta_in'] = f
             self._paths['meta_in'] = f.name
             if metadata is not None :
@@ -305,11 +326,15 @@ class WrapR(object) :
         # set metadata output file if provided, otherwise create temp file
         self._paths['meta_out'] = metadata_out_fn
         if metadata_out_fn is None :
-            self._files['meta_out'] = NamedTemporaryFile('wt',delete=False)
+
+            self._files['meta_out'] = open(
+                    os.path.join(self.routput_dir,'meta_out.csv'),
+                    'wt'
+            )
             self._paths['meta_out'] = self._files['meta_out'].name
 
         # write out params json if provided
-        with NamedTemporaryFile('wt',delete=False) as f :
+        with open(os.path.join(self.routput_dir,'params_in.json'),'wt') as f :
             self._files['params_in'] = f
             self._paths['params_in'] = f.name
             if params is not None :
@@ -318,7 +343,7 @@ class WrapR(object) :
 
         self._paths['params_out'] = params_out_fn
         if params_out_fn is None :
-            self._files['params_out'] = NamedTemporaryFile('wt',delete=False)
+            self._files['params_out'] = open(os.path.join(self.routput_dir,'params_out.json'),'wt')
             self._paths['params_out'] = self._files['params_out'].name
 
         # initialize output members
@@ -402,9 +427,9 @@ class WrapR(object) :
     def __enter__(self) :
         return self
     def __exit__(self,*args)  :
-        # clean up the temp files
-        for k,f in self._files.items() :
-            os.remove(f.name)
+        # clean up the temp files if no r output directory was supplied
+        if self._tempdir is not None :
+            self._tempdir.cleanup()
 
 def wrapr(Rcode,**kwargs) :
     '''Convenience wrapper for WrapR object. Writes *Rcode* to a temporary file
@@ -461,26 +486,33 @@ def main(argv=sys.argv) :
 
     if args['run'] :
 
-        counts_obj = CountMatrixFile(
-              args['<counts_in>'],
-              args['--meta-in'],
-              strict=args.get('--strict',False)
-        )
+        counts = None
+        column_data = None
+
+        if args['<counts_in>'] is not None :
+            counts_obj = CountMatrixFile(
+                  args['<counts_in>'],
+                  args['--meta-in'],
+                  strict=args.get('--strict',False)
+            )
+            counts = counts_obj.counts
+            column_data = counts_obj.column_data
 
         params = None
-        if os.path.exists(args['--params-in']) :
+        if args['--params-in'] is not None and os.path.exists(args['--params-in']) :
             with open(args['--params-in'],'rt') as f :
                 params = json.load(f)
 
         with WrapR(
             args['<rscript>'],
-            counts_obj.counts,
-            counts_obj.column_data,
+            counts,
+            column_data,
             params=params,
             output_fn=args['<out>'],
             metadata_out_fn=args['--meta-out'],
             params_out_fn=args['--params-out'],
-            rpath=args['--rpath']
+            rpath=args['--rpath'],
+            routput_dir=args['--routput-dir']
             ) as wr :
             wr.execute()
 

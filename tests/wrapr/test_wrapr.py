@@ -1,13 +1,30 @@
 import docopt
 import pytest
 from de_toolkit import wrapr
+import os
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 # decorator for skipping if Rscript is not installed
 r_test = pytest.mark.skipif(not wrapr.check_r(),reason='Rscript executable not found, skipping test')
 
 def test_wrapr_cli_check(monkeypatch) :
 
-    from de_toolkit import wrapr
+    # check default run mode
+    with NamedTemporaryFile('wt') as f :
+        f.write('library(base)')
+        wrapr.main(['detk-wrapr','run',f.name])
+
+    # check run mode with specified routput dir
+    with NamedTemporaryFile('wt') as f :
+        with TemporaryDirectory() as d :
+            f.write('library(base)')
+            wrapr.main([
+                'detk-wrapr',
+                'run',
+                '--routput-dir={}'.format(d),
+                f.name
+            ])
+            assert os.path.exists(os.path.join(d,'script.R'))
 
     with pytest.raises(docopt.DocoptExit) :
         wrapr.main()
@@ -109,6 +126,7 @@ def test_WrapR(fake_counts_obj):
 @r_test
 def test_wrapr(fake_counts_obj):
     from de_toolkit import wrapr
+    import os
 
     script = 'library(base)'
     with wrapr.wrapr(script) as wr :
@@ -142,6 +160,12 @@ def test_wrapr(fake_counts_obj):
 
     with wrapr.wrapr('write_json(list(y=5),params.out.fn)') as wr :
         assert wr.params_out['y'] == 5
+
+    # check for custom r output dir
+    with TemporaryDirectory() as d :
+        with wrapr.wrapr('library(base)',routput_dir=d) as wr :
+            assert wr.success
+        assert os.path.exists(os.path.join(d,'script.R'))
 
 def test_wrapr_fail() :
     from de_toolkit import wrapr

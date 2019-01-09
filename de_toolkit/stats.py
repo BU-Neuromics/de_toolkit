@@ -280,7 +280,7 @@ Options:
     --html=<html_fn>            Name of HTML output file
 '''
 }
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 import csv
 from docopt import docopt
 import json
@@ -846,62 +846,125 @@ class Entropy(DetkModule) :
         cnts = count_mat.counts.values
         num_cols=len(cnts[0])
         num_rows=len(cnts)
-        row_names = count_mat.feature_names
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             entropies = count_mat.counts.apply(scipy.stats.entropy,axis=1).fillna(0)
 
-        #Format output
-        self['entropies'] = []
+        # the number of percentile bins is the minimum of:
+        # - the unique number of distinct entropy values
+        # - the number of features
+        # - 100
+        pct = list(np.linspace(0,100,min(len(set(entropies)),cnts.shape[0],100)))
+        pctVal = np.percentile(entropies,pct,interpolation='higher')
 
-        for i in range(0, num_rows):
-            row = {}
-            row['name'] = row_names[i]
-            row['entropy'] = entropies[i]
-            self['entropies'].append(row)
+        #Format output
+        self['entropies'] = res = defaultdict(list)
+        res.update({
+            'pct':pct,
+            'pctVal':pctVal
+        })
+
+        for p1, p2 in zip(pctVal.tolist(),pctVal[1:].tolist()+[1e6]) :
+            pct_features = entropies.index[(entropies>=p1) & (entropies<p2)]
+            min_feature = entropies[pct_features].idxmin()
+
+            res['num_features'].append(pct_features.size)
+            res['frac_features'].append(pct_features.size/entropies.size)
+            res['cum_frac_features'].append(sum(res['frac_features']))
+            res['exemplar_features'].append({
+                'name': min_feature,
+                'entropy': entropies[min_feature],
+                'counts': list(zip(
+                    count_mat.counts.columns,
+                    count_mat.counts.loc[min_feature].tolist()
+                    )
+                )
+            })
 
     @property
     def output(self) :
         '''
-        Tabular output is a table where each row corresponds to a row
-        with the following fields:
+        Tabular output is a table where each row corresponds to a percentile
+        with the following columns:
 
-          - name: Row name
-          - entropy: sample entropy for the row
+        pct
+            percentile of entropy distribution
+        pctVal
+            the entropy value for each percentile
+        num_features
+            the number of features with entropy in the corresponding
+            percentile
+        frac_features
+            the fraction of features with entropy in the corresponding
+            percentile
+        cum_frac_features
+            the cumulative fraction of features with entropy in the
+            corresponding percentile, i.e. the fraction of features
+            with pctVal entropy or higher
+        exemplar_feature
+            the name of a feature with an entropy in the given percentile
+
         '''
-        res = [['name','entropy']]
-        for col in self['entropies'] :
-            res.append([col[_] for _ in res[0]])
+        res = [['pct','pctVal','num_features','frac_features','cum_frac_features','exemplar_feature']]
+
+        fields = [self['entropies'][_] for _ in res[0][:-1]]
+        exemplar_names = [[_['name'] for _ in self['entropies']['exemplar_features']]]
+        res.extend(list(zip(*fields+exemplar_names)))
+
         return res
     @property
     def properties(self) :
         '''
-        The key entropies is an array containing one object per row with the
-        following keys:
+        The key entropies contains a single object with following keys:
 
-        name
-            row name from counts file
-        entropy
-            the value of H calculated as above for that row
+        pct
+            percentile of entropy distribution
+        pctVal
+            the entropy value for each percentile
+        num_features
+            the number of features with entropy in the corresponding
+            percentile
+        frac_features
+            the fraction of features with entropy in the corresponding
+            percentile
+        cum_frac_features
+            the cumulative fraction of features with entropy in the
+            corresponding percentile, i.e. the fraction of features
+            with pctVal entropy or higher
+        exemplar_features
+            an array of objects with an exemplar feature for each percentile
+            with the following fields:
+
+            name
+                the name of the feature
+            entropy
+                the sample entropy of the feature
+            counts
+                array of [column name, count] pairs sorted by count
+                ascending
 
         Example JSON output::
 
-            [
-              'name': 'entropy',
-              'stats': {
-                'entropies': [
-                  {
-                    'name': 'gene1',
-                    'entropy': 1.013
-                  },
-                  {
-                    'name': 'gene2',
-                    'entropy': 0.001
-                  }
+            {
+                'pct': [0, 1, 2, 3, ...],
+                'pctVal': [0, 0.1, 0.5, 0.9, ...],
+                'num_features': [10, 12, 23, 100, ...],
+                'frac_features': [0.001, 0.0012, 0.0023, 0.01, ...],
+                'cum_frac_features': [0.001, 0.0022, 0.0045, 0.0145, ...],
+                'exemplar_features': [
+                    {
+                        'name': 'ENSG0000055095.1',
+                        'entropy': 0,
+                        'counts': [ ['sampleA', 0], ['sampleB',0], ..., ['sampleN',1]]
+                    },
+                    {
+                        'name': 'ENSG0000398715.1',
+                        'entropy': 0.11,
+                        'counts': [ ['sampleA', 0], ['sampleB',0], ..., ['sampleM',5]]
+                    }
                 ]
-              }
-            ]
+            }
         '''
         return {'entropies': self['entropies']}
 

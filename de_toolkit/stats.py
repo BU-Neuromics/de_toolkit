@@ -442,6 +442,11 @@ class ColDist(DetkModule) :
                 pctVal=pctVal
             )
 
+            # unlog binstarts and pctVals
+            if log :
+                binstart = 10**binstart
+                pctVal = 10**pctVal
+
             #make the dict for each sample
             self['dists'].append(
                 {

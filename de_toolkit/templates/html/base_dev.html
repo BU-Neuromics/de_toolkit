@@ -3,9 +3,14 @@
     <head>
     <!-- asset css -->
     <link rel="stylesheet" type="text/css" href="css/assets/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/assets/jquery-ui/jquery-ui.min.css">
+    <link rel="stylesheet" type="text/css" href="css/assets/jquery-ui/jquery-ui.theme.min.css">
+    <link rel="stylesheet" type="text/css" href="css/assets/jquery-ui/jquery-ui.structure.min.css">
+
     <link href='https://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
 
-    <script type="text/javascript" src="js/assets/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="js/assets/jquery/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="js/assets/jquery/jquery-ui.min.js"></script>
     <script type="text/javascript" src="js/assets/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="js/assets/underscore-min.js"></script>
     <script type="text/javascript" src="js/assets/doT.min.js"></script>
@@ -16,22 +21,6 @@
     <script type="text/javascript" src="js/assets/highcharts/modules/exporting.js"></script>
     <script type="text/javascript" src="js/assets/highcharts/modules/offline-exporting.js"></script>
 
-    <script type="text/javascript">
-        // top level namespace
-        var detk = detk || {};
-
-        // dynamically loaded JS
-        detk.functions = {
-        {% for name, code in templates['js'].items() %}
-            "{{name}}": function(elem,d) {
-                {{ code }}
-            },
-        {% endfor %}
-        }
-
-        {{ common['js'] }}
-    </script>
-    <script type="text/javascript" src="{{ data_path }}"></script>
     <style>
         {{ common['css'] }}
 
@@ -49,6 +38,23 @@
         {% endfor %}
 
         {{ common['html'] }}
+
+        <script type="text/javascript">
+            // top level namespace
+            var detk = detk || {};
+
+            // dynamically loaded JS
+            detk.functions = {
+            {% for name, code in templates['js'].items() %}
+                "{{name}}": function(elem,d) {
+                    {{ code }}
+                },
+            {% endfor %}
+            }
+
+            {{ common['js'] }}
+        </script>
+        <script type="text/javascript" src="{{ data_path }}"></script>
 
     </body>
 </html>

@@ -19,11 +19,6 @@
 
                         mods = _.sortBy(mods,'name');
 
-                        // nav
-                        var node = document.createElement('div');
-                        node.innerHTML = detk.templates.navgroup({'name':fn,'mods':mods});
-                        document.getElementById('nav').appendChild(node);
-
                         mods.forEach(function(d) {
                             
 
@@ -45,6 +40,10 @@
                         });
                     }
             );
+
+            // remove the blinds
+            $("#blind").addClass("invisible");
+            $(".loader").css("animation","none");
 
         });
 

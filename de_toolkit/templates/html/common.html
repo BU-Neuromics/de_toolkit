@@ -13,21 +13,17 @@
           </div>
         </template>
 
-        <template id="navgroup">
-            <div class="navheading bg-bu-red text-white font-weight-bold">{{=it.name}}</div>
-            <ul class="list-unstyled m-0 p-0 border">
-                {{~it.mods :value:index}}
-                <li class="navitem px-3 py-1">{{=value.name}}
-                {{~}}
-            </ul>
-        </template>
-
         <!-- main element -->
+        <div id="blind" class="d-flex justify-content-center fixed-top h-100 w-100 bg-light">
+            <div class="d-flex" style="margin: auto">
+                <div class="loader"></div>
+            </div>
+        </div>
+
         <div id="main">
-            <div class="container-fluid wm-100">
+            <div class="d-flex justify-content-center wm-500">
                 <div class="row">
-                    <div id="nav" class="col-3 m-0 p-0 bg-light"></div>
-                    <div id="content" class="col-sm-9">
+                    <div id="content">
                         <h1 class="text-center py-4">de_toolkit</h1>
                         <div id="modules" class="container-fluid"></div>
                     </div>

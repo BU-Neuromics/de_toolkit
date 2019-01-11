@@ -1,5 +1,5 @@
 var data = d.properties.entropies,
-                    slider = $(elem).find("#percentile_slider"),
+                    slider = $(elem).find(".percentile_slider"),
                     entropy_chart,
                     counts_chart,
                     update_counts,

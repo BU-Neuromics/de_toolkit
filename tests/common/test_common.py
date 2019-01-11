@@ -108,7 +108,20 @@ def test_CountMatrix(
     with pytest.raises(InvalidDesignException) :
         mat.design = 'category ~ cont_covx + counts'
 
-    
+    # test warning when the design matrix samples get truncated due
+    # to missing data
+    fake_coldata_with_na = fake_column_data_pandas_dataframe.copy()
+    fake_coldata_with_na.loc['a','cont_cov'] = None
+    with pytest.warns(UserWarning) :
+        mat = CountMatrix(
+                fake_counts_pandas_dataframe
+                ,fake_coldata_with_na
+                ,design='category ~ cont_cov + counts'
+        )
+        assert (mat.counts.columns == mat.column_data.index).all()
+        assert (mat.counts.columns == mat.design_matrix.full_matrix.index).all()
+        assert (mat.column_data.index == mat.design_matrix.full_matrix.index).all()
+
 def test_CountMatrixFile(
     fake_counts_csv
     ,fake_column_data_csv

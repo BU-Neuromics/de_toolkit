@@ -15,6 +15,7 @@ from docopt import docopt
 import pandas
 import re
 import sys
+import warnings
 from .patsy_lite import DesignMatrix, PatsyLiteParseError
 from .version import __version__
 
@@ -43,6 +44,8 @@ class CountMatrix(object) :
             ,design=None
             ,strict=False
          ) :
+
+        self.strict = strict
 
         if column_data is not None :
             # line up the sample names from the column_data and counts matrices
@@ -119,6 +122,25 @@ class CountMatrix(object) :
             except PatsyLiteParseError as e :
                 raise InvalidDesignException('Invalid design, patsy lite could not parse '
                     '{}'.format(e.args))
+
+            # check if the full design matrix has lost any rows due to
+            # missing data
+            if self.design_matrix.full_matrix.index.size != self.column_data.index.size :
+                msg = ('The full design matrix rows do not match the input column '
+                       'data matrix, likely due to some missing fields. '
+                       '# design matrix rows: {}, # column data rows: {}. '.format(
+                           self.design_matrix.full_matrix.index.size,
+                           self.column_data.shape[0]
+                       ))
+
+                if self.strict :
+                    raise SampleMismatchException(msg+'Aborting.')
+                else :
+                    warnings.warn(msg+'Adjusting the counts matrix and column '
+                                      'data to fit.')
+                    self.counts = self.counts[self.design_matrix.full_matrix.index]
+                    self._column_data = self.column_data.loc[self.design_matrix.full_matrix.index]
+
         elif design is not None and self.column_data is None :
             raise InvalidDesignException('There must be column data associated with a '
             'CountMatrix object before specifying a design')

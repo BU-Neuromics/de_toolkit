@@ -44,13 +44,17 @@
 
                 var pairwise_component_series = function(i,j) {
                     var series = [];
+                    console.log(i,j);
                     
                     if (i != j) {
                         series = [{
                             name: 'PC'+(i+1)+' vs PC'+(j+1),
                             type: 'scatter',
                             data: _.map(
-                                _.zip(d.properties.column_names, data[i].projections,data[j].projections),
+                                _.zip(
+                                    d.properties.column_names,
+                                    data[i].projections,data[j].projections
+                                ),
                                 function(sxy) {
                                     return {
                                         name: sxy[0],
@@ -82,48 +86,37 @@
                     chart: { },
                     series: pairwise_component_series(0,1)
                 });
-                Highcharts.chart(elem.querySelector(".component_grid"), {
-                    chart: {
-                        type: 'heatmap',
-                        marginTop: 15
-                    },
-                    xAxis: { visible: false },
-                    yAxis: { visible: false },
-                    legend: { enabled: false },
-                    title: { text: 'Compare PCs', fontsize: 9 },
-                    plotOptions: {
-                        series: { }
-                    },
-                    tooltip: {
-                        formatter: function() {
-                            if(this.point.x == this.point.y) {
-                                return pcs[this.point.x];
-                            } else {
-                                return pcs[this.point.x] + ' vs ' + pcs[this.point.y];
-                            }
-                        }
-                    },
-                    series: [{
-                        name: 'Comparisons',
-                        label: { enabled: false },
-                        pointPadding: 1,
-                        events: {
-                            click: function(event) {
-                                //pairwise.series[0].setData([0].data);
-                                var series = pairwise_component_series(event.point.x,event.point.y);
-                                pairwise.update({
-                                    title: { text: series[0].name },
-                                    series: series
-                                });
-                            }
-                        },
-                        data: _.flatten(
-                            pcs.map(function(pc1,i) {
-                                return pcs.map(function(pc2,j) {
-                                    return [i, j, 0];
-                                })
-                            }),
-                            shallow=true
-                        )
-                    }]
-                });
+                var controls = elem.querySelector(".controls"),
+                    updateComponents;
+
+                updateComponents = function() {
+                    var pc1 = $(controls).find(".pc1_slider"),
+                        pc2 = $(controls).find(".pc2_slider"),
+                        series;
+                    series = pairwise_component_series(
+                        pc1.slider("option","value"),
+                        pc2.slider("option","value")
+                    );
+                    pairwise.update({
+                        title: { text: series[0].name },
+                        series: series
+                    });
+                    pc1.find(".handle").text(pc1.slider("value")+1);
+                    pc2.find(".handle").text(pc2.slider("value")+1);
+                }
+
+                    var updateSlider = function() {
+                        };
+                    $(controls).find(".pc1_slider").slider({
+                        min:0,
+                        value:0,
+                        max:9,
+                        change: updateComponents,
+                    });
+                    $(controls).find(".pc2_slider").slider({
+                        min:0,
+                        value:1,
+                        max:9,
+                        change: updateComponents
+                    });
+

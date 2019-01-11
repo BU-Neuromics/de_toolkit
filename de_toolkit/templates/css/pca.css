@@ -3,4 +3,13 @@
                 stroke-width: 2px;
             }
 
+            .handle {
+                color: black;
+                width: 3em;
+                height: 1.6em;
+                top: 50%;
+                text-align: center;
+                line-height: 1.2em;
+            }
+
 

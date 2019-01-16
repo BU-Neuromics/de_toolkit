@@ -1,6 +1,6 @@
 # Changelog
 
-## unreleased
+## [ 0.9.0 ]
 ### Added
 - modular report functionality
 ### Changed
@@ -8,6 +8,7 @@
 - updated all CLI docs to have common options
 - significant stats module performance improvements
 - fixed incorrect ascending/descending text in enrich fgsea CLI
+- fixed bug with missing column data in detk-de deseq2
 
 ## [ 0.8.2 ]
 ### Changed

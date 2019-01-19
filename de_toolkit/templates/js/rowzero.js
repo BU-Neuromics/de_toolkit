@@ -1,5 +1,6 @@
-var data = d.properties.zeros;
-                Highcharts.chart(elem.querySelector(".zeros"), {
+var data = d.properties.zeros,
+                        rowzero;
+                rowzero = Highcharts.chart(elem.querySelector(".zeros"), {
                     chart: {
                         zoomType: 'xy'
                     },
@@ -78,4 +79,10 @@ var data = d.properties.zeros;
                         },
                     ]
                 });
+
+                addFullscreenButton(
+                    elem.querySelector("#rowzero-card-fullscreen"),
+                    rowzero
+                );
+
 

@@ -91,6 +91,11 @@ var data = d.properties.entropies,
                         }
                     ],
                 });
+                addFullscreenButton(
+                    elem.querySelector("#entropy-card-fullscreen"),
+                    entropy_chart
+                );
+
                 counts_chart = Highcharts.chart(elem.querySelector(".entropy_counts"), {
                     chart: { },
                     title: { text: 'Exemplar Entropy Counts'},
@@ -120,4 +125,9 @@ var data = d.properties.entropies,
                     updateCounts: function(i) {
                     }
                 });
+
+                addFullscreenButton(
+                    elem.querySelector("#exemplar-card-fullscreen"),
+                    counts_chart
+                );
 

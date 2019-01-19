@@ -1,14 +1,16 @@
-var data = d.properties.dists;
-                Highcharts.chart(elem.querySelector(".histogram"), {
+var data = d.properties.dists,
+                        histogram,
+                        percentile;
+                histogram = Highcharts.chart(elem.querySelector(".histogram"), {
                     chart: {
                         events: {
                             click: function(e) {
                                 if(this.xAxis[0].userOptions.type == 'linear') {
-                                    this.xAxis[0].update({ type: 'logarithmic' });
-                                    this.xAxis[0].userOptions.type == 'logarithmic';
+                                   this.xAxis[0].update({ type: 'logarithmic' });
+                                   this.xAxis[0].userOptions.type == 'logarithmic';
                                 } else {
-                                    this.xAxis[0].update({ type: 'linear' });
-                                    this.xAxis[0].userOptions.type == 'linear';
+                                   this.xAxis[0].update({ type: 'linear' });
+                                   this.xAxis[0].userOptions.type == 'linear';
                                 }
                             }
                         }
@@ -49,8 +51,12 @@ var data = d.properties.dists;
                     }
 
                 });
+                addFullscreenButton(
+                    elem.querySelector("#histogram-card-fullscreen"),
+                    histogram
+                );
 
-                Highcharts.chart(elem.querySelector(".percentile"), {
+                percentile = Highcharts.chart(elem.querySelector(".percentile"), {
                     chart: {
                         events: {
                             click: function(e) {
@@ -103,5 +109,9 @@ var data = d.properties.dists;
                     }
 
                 });
+                addFullscreenButton(
+                    elem.querySelector("#percentile-card-fullscreen"),
+                    percentile
+                );
 
 

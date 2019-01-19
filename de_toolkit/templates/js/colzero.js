@@ -1,7 +1,14 @@
-                var bounds = {
-                    mean_max: 0, mean_min: Number.MAX_SAFE_INTEGER,
-                    median_max: 0, median_min: Number.MAX_SAFE_INTEGER
-                };
+var bounds = {
+                            mean_max: 0, mean_min: Number.MAX_SAFE_INTEGER,
+                            median_max: 0, median_min: Number.MAX_SAFE_INTEGER
+                        },
+                        colzero;
+
+                addFullscreenButton(
+                    elem.querySelector("#rowzero-card-fullscreen"),
+                    rowzero
+                );
+
                 d.properties.zeros.map(
                     function(x) {
                         bounds.mean_max = Math.max(x.mean, x.nonzero_mean, bounds.mean_max);
@@ -10,7 +17,7 @@
                         bounds.median_min = Math.min(x.median, x.nonzero_median, bounds.median_min);
                     }
                 )
-                Highcharts.chart(elem.querySelector(".parallel"), {
+                colzero = Highcharts.chart(elem.querySelector(".parallel"), {
                     chart: { parallelCoordinates: true },
                     title: { text: 'Column Zeros' },
                     xAxis: {
@@ -71,4 +78,9 @@
                         }
                     )
                 });
+
+                addFullscreenButton(
+                    elem.querySelector("#colzero-card-fullscreen"),
+                    colzero
+                );
 

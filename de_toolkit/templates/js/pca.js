@@ -1,6 +1,8 @@
 // component projection parallel coordinate plot
-                var data = d.properties.components.slice(0,10);
-                Highcharts.chart(elem.querySelector(".parallel"), {
+                var data = d.properties.components.slice(0,10),
+                        parallel,
+                        pairwise;
+                parallel = Highcharts.chart(elem.querySelector(".parallel"), {
                     chart: { parallelCoordinates: true },
                     title: { text: 'PCA Projections' },
                     xAxis: {
@@ -41,11 +43,13 @@
                         }
                     )
                 });
+                addFullscreenButton(
+                    elem.querySelector("#parallel-card-fullscreen"),
+                    parallel
+                );
 
                 var pairwise_component_series = function(i,j) {
                     var series = [];
-                    console.log(i,j);
-                    
                     if (i != j) {
                         series = [{
                             name: 'PC'+(i+1)+' vs PC'+(j+1),
@@ -82,7 +86,7 @@
                     return series;
                 };
                 var pcs = _.pluck(data,'name');
-                var pairwise = Highcharts.chart(elem.querySelector(".pca_pairwise"),{
+                pairwise = Highcharts.chart(elem.querySelector(".pca_pairwise"),{
                     chart: { },
                     series: pairwise_component_series(0,1)
                 });
@@ -119,4 +123,10 @@
                         max:9,
                         change: updateComponents
                     });
+
+                addFullscreenButton(
+                    elem.querySelector("#pairwise-card-fullscreen"),
+                    pairwise
+                );
+
 

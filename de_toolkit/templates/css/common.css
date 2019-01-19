@@ -55,4 +55,35 @@
               100% { transform: rotate(360deg); }
             }
             
- 
+            .card-actions {
+                margin-top: -20px;
+                margin-bottom: 0;
+                text-align: right;
+            }
+            .card-actions a {
+                color:#333;
+            }
+            .card-fullscreen {
+                display: block;
+                z-index: 9999;
+                position: fixed;
+                width: 100%;
+                height: 100vh;
+                top: 0;
+                right: 0;
+                left: 0;
+                bottom: 0;
+                overflow: auto;
+            }
+            .fullscreen-button {
+                font-style: italics;
+            }
+            .fullscreen-button:hover {
+                cursor: pointer;
+                text-decoration: underline;
+            }
+            .card-body {
+                height: 90%;
+            }
+
+

@@ -179,7 +179,6 @@ def deseq2_wrapr(count_obj):
     return norm_counts
 
 class DESeq2Norm(DetkModule):
-    @require_r('DESeq2')
     def __init__(self, count_obj):
         count_mat = count_obj.counts.values
         sizeFactors = estimateSizeFactors(count_mat)

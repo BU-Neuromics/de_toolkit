@@ -1,6 +1,12 @@
 ``de`` - Differential Expression
 ================================
 
+.. important::
+
+    The model formulas in this module use the :doc:`patsy_lite` mini-language.
+
+    Be sure to read that first before writing your models!
+
 Differential expression tools. Each of these mthods accepts a design formula, a
 counts matrix file, and a column data file. The design formula is specified
 using the :doc:`patsy_lite` mini-language. The counts and column data matrices

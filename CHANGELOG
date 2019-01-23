@@ -1,5 +1,13 @@
 # Changelog
 
+## [ unreleased ]
+### Added
+- added attention admonition for patsy-lite in de module docs
+- fullscreen mode for all plots
+### Changed
+- reduced test report counts
+- removed DESeq2 require in norm class
+
 ## [ 0.9.0 ]
 ### Added
 - modular report functionality

@@ -10,6 +10,16 @@ file extension as the input, so *counts.csv* will produce *counts_filtered.csv*.
 The default output filename can be changed using the optional command line
 argument '--output=<out_fn>'.
 
+Quick start
+-----------
+
+Here is an example command that takes a normalized count matrix and retain those 
+genes that only have a mean count greater than 10.
+
+::
+
+    detk-filter  -o counts_gt10.csv 'mean(all) > 10' norm_counts.csv
+
 How to run the filter module
 ----------------------------
 

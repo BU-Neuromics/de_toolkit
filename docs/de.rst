@@ -3,9 +3,10 @@
 
 .. important::
 
-    The model formulas in this module use the :doc:`patsy_lite` mini-language.
-
-    Be sure to read that first before writing your models!
+    The model formulas in this module use the :doc:`patsy_lite` mini-language. Be sure to read that first before writing your models!
+    
+    Also remember to filter prior to differential expression analysis. The number of genes provided for hypothesis testing may affect the results.
+    You may need to filter out genes that have zero expression in all of the samples you are interested in.
 
 Differential expression tools. Each of these mthods accepts a design formula, a
 counts matrix file, and a column data file. The design formula is specified
@@ -14,6 +15,11 @@ must be formatted as with any other tool in detk.
 
 ``deseq2``
 ----------
+
+.. sidebar:: Note
+
+    If you are only interested in a subset of the samples, you can still provide the whole raw count matrix and a 
+    column data table with the samples you care about.
 
 Command line interface to a canonical DESeq2_ analysis. To run a DESeq2
 analysis on a counts matrix and accompanying column data file::

@@ -30,10 +30,7 @@ analysis on a counts matrix and accompanying column data file::
 
 .. _DESeq2: https://bioconductor.org/packages/release/bioc/html/DESeq2.html
 
-.. sidebar:: Tips
-    
-    Add brackets with the name of the reference group to specify what you are comparing against. 
-    For example, "counts ~ Status[control]" 
+
 
 This is roughly equivalent to the following R:
 
@@ -56,7 +53,10 @@ This is roughly equivalent to the following R:
     write.csv(results(dds,cooksCutoff=Inf),de.out.fn)
     
     
-
+.. sidebar:: Tips
+    
+    Add brackets with the name of the reference group to specify what you are comparing against. 
+    For example, "counts ~ Status[control]" 
 
 **The analysis implemented here differs from the default DESeq2 analysis** in
 the following ways:

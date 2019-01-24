@@ -20,6 +20,11 @@ must be formatted as with any other tool in detk.
 
     If you are only interested in a subset of the samples, you can still provide the whole raw count matrix and a 
     column data table with the samples you care about.
+    
+.. sidebar:: Tips
+    
+    Add brackets with the name of the reference group to specify what you are comparing against. 
+    For example, "counts ~ Status[control]" 
 
 Command line interface to a canonical DESeq2_ analysis. To run a DESeq2
 analysis on a counts matrix and accompanying column data file::

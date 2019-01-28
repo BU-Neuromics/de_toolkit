@@ -4,15 +4,20 @@
 .. contents::
     :local:
 
-Functions for performing statistical set enrichment methods, e.g.
-Gene Set Enrichment Analysis
+Functions for tidying up counts and column data files. Mostly this means
+subsetting one or the other so that the column IDs and order match.
+Combined with ``csvgrep`` from the csvkit_ package, this is useful for
+extracting subsets of samples for downstream differential expression
+analysis.
+
+.. _csvkit: https://csvkit.readthedocs.io
 
 ``tidy``
 --------
 
 Subset both the counts columns and column data rows by intersection, returning
 new outputs for both. Note the tidied column data is not output by default, and
-the user must specify the -p argument to obtain it.
+the user must specify the ``-p`` argument to obtain it.
 
 Command line usage::
 

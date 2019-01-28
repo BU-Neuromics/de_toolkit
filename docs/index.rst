@@ -40,6 +40,7 @@ Module Documentation
    outlier
    stats
    transform
+   util
    patsy_lite
    wrapr
 

@@ -13,6 +13,10 @@ Introduction
 expression analysis and other high-throughput sequencing count-based workflows.
 The tools are implemented either through direct implementation in python or as
 a convenience wrapper around R packages using a :doc:`custom wrapr<wrapr>`.
+The documentation is convivial, free range, and complete-protein, and the
+package has very `high test coverage`_.
+
+.. _high test coverage: https://makeameme.org/meme/test-coverage-now
 
 The toolkit is both a python module and a command line interface that wraps
 primary module functions to facilitate easy integration into workflows. For
@@ -21,17 +25,20 @@ file ``counts_matrix.tsv``, you could run on the command line:
 
 .. code-block:: bash
 
-  detk-norm deseq counts_matrix.tsv > norm_counts_matrix.tsv
+  detk-norm deseq2 counts_matrix.tsv > norm_counts_matrix.tsv
 
 The counts in the counts matrix file will be normalized using the DESeq2 method
 and output to the ``norm_counts_matrix.tsv`` file.
 
-Module Documentation
---------------------
+Check out the :doc:`quickstart` to get quickstarted.
+
+Documentation
+-------------
 
 .. toctree::
    :maxdepth: 2
 
+   quickstart
    workflow/workflow
    de
    enrich

@@ -716,12 +716,21 @@ def pca_counts_obj(request) :
     # add a little noise to avoid invalid component variance
     X += 0.01*np.random.random(size=X.shape)
 
-    return CountMatrix(
-            pandas.DataFrame(
+    counts = pandas.DataFrame(
                 X,
                 columns=('a','b'),
                 index=['gene{}'.format(_) for _ in range(X.shape[0])]
             )
+    col_data = pandas.DataFrame({
+        'cond': ['c1','c2'],
+        'cov': [0,1]
+        },
+        index=counts.columns
+    )
+
+    return CountMatrix(
+            counts,
+            col_data
         )
 
 def test_stats_countPCA(pca_counts_obj):
@@ -817,6 +826,16 @@ def test_stats_PCA_output(pca_counts_obj):
     assert b_proj == 'b'
     assert np.isclose(abs(pc1),0.99,atol=0.1)
     assert np.isclose(abs(pc2),0.0,atol=0.1)
+
+def test_stats_PCA_coldata(pca_counts_obj) :
+
+    output = CountPCA(pca_counts_obj)
+
+    colvar = output.json['properties']['column_variables']
+    assert colvar['sample_names'] == ['a','b']
+    assert len(colvar['columns']) == 2
+    assert colvar['columns'][0]['column'] == 'cond'
+    assert colvar['columns'][0]['values'] == ['c1','c2']
 
 ################################################################################
 # summary tests

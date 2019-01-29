@@ -991,10 +991,6 @@ class CountPCA(DetkModule) :
         # since PCA expects n_samples x n_features
         cnts = scale(count_mat.counts.values.astype(float).T)
 
-        # sanity check, column mean==0
-        assert np.allclose(cnts.mean(axis=0),0)
-        assert cnts.shape[0] == count_mat.counts.shape[1]
-
         # perform PCA and fit to the data
         pca = PCA(n_components=min(*cnts.shape))
         pca.fit(cnts)
@@ -1009,7 +1005,14 @@ class CountPCA(DetkModule) :
 
         # if metadata option is given, get column variables
         if count_mat.column_data is not None :
-            self['column_variables'] = {k:list(v) for k,v in count_mat.column_data.iterrows()}
+            columns = []
+            for k,v in count_mat.column_data.iteritems() :
+                if k != 'counts' :
+                    columns.append({'column':k,'values':v.tolist()})
+            self['column_variables'] = {
+                'sample_names': count_mat.column_data.index.tolist(),
+                'columns': columns
+            }
 
         self['components'] = []
         for i in range(0, pca.n_components_):
@@ -1056,8 +1059,16 @@ class CountPCA(DetkModule) :
                 'stats': {
                     'column_names': ['sample1','sample2',...],
                     'column_variables': {
-                        'sample_type':['HD','HD','C',...],
-                        'sample_batch':['Batch1','Batch2','Batch2',...]
+                        'sample_names': ['sample1','sample2',...],
+                        'columns': [
+                            {
+                                'column':'status',
+                                'values':['disease','control',...]
+                            },
+                            {
+                                'column':'batch',
+                                'values':['b1','b1',...]
+                            },
                     },
                     'components': [
                         {

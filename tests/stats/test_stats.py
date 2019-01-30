@@ -853,6 +853,14 @@ def test_stats_summary_json(fake_counts_obj):
     assert true_funcs==names
 
 #test that all functions were written to json output when summary is called
+def test_stats_summary_sparse_json():
+
+    with tempfile.TemporaryDirectory() as d :
+
+        main(['detk-stats','summary','--report-dir={}'.format(d),
+            '-o','/dev/null','tests/stats/sparse_counts.csv'])
+
+#test that all functions were written to json output when summary is called
 def test_stats_cli_json(fake_count_rowdist_obj, fake_count_rowdist_csv):
 
     output = summary(fake_count_rowdist_obj)

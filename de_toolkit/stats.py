@@ -867,20 +867,29 @@ class Entropy(DetkModule) :
 
         for p1, p2 in zip(pctVal.tolist(),pctVal[1:].tolist()+[1e6]) :
             pct_features = entropies.index[(entropies>=p1) & (entropies<p2)]
-            min_feature = entropies[pct_features].idxmin()
 
             res['num_features'].append(pct_features.size)
             res['frac_features'].append(pct_features.size/entropies.size)
             res['cum_frac_features'].append(sum(res['frac_features']))
-            res['exemplar_features'].append({
-                'name': min_feature,
-                'entropy': entropies[min_feature],
-                'counts': list(zip(
-                    count_mat.counts.columns,
-                    count_mat.counts.loc[min_feature].tolist()
+
+            if entropies[pct_features].size != 0 :
+                min_feature = entropies[pct_features].idxmin()
+                res['exemplar_features'].append({
+                    'name': min_feature,
+                    'entropy': entropies[min_feature],
+                    'counts': list(zip(
+                        count_mat.counts.columns,
+                        count_mat.counts.loc[min_feature].tolist()
+                        )
                     )
-                )
-            })
+                })
+            else :
+                res['exemplar_features'].append({
+                    'name': 'No genes in bin',
+                    'entropy': [],
+                    'counts': []
+                })
+
 
     @property
     def output(self) :

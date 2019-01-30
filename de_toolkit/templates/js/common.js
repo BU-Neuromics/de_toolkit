@@ -1,14 +1,14 @@
 // report gen code
             function addFullscreenButton(elem,chart) {
-                var origWidth = chart.chartWidth,
-                    origHeight = chart.chartHeight;
+                var origHeight = chart.chartHeight;
                 $(elem).click(function() {
                     var card = $(this).closest('.card');
                     card.toggleClass('card-fullscreen');
                     if(card.hasClass('card-fullscreen')) {
                         chart.setSize(null,null);
                     } else {
-                        chart.setSize(origWidth, origHeight);
+                        chart.setSize(null, origHeight);
+                        chart.reflow();
                     }
                 });
             }

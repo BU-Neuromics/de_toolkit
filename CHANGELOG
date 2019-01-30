@@ -1,6 +1,6 @@
 # Changelog
 
-## [ unreleased ]
+## [ 0.9.1 ]
 ### Added
 - added attention admonition for patsy-lite in de module docs
 - fullscreen mode for all plots

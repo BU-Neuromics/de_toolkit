@@ -218,7 +218,7 @@ class DetkReport(object):
             asset_dir = 'templates/{}/assets/'.format(asset)
             if pkg_resources.resource_exists('de_toolkit',asset_dir) :
                 for tmpl_path in walk(asset_dir) :
-                    template_data['assets'][asset][tmpl_path] =  \
+                    template_data['assets'][asset][os.path.basename(tmpl_path)] =  \
                         pkg_resources.resource_string('de_toolkit', tmpl_path).decode()
 
         return template_data

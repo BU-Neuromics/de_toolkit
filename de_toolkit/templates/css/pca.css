@@ -1,9 +1,4 @@
- .pca_parallel .highcharts-series-hover path {
-                stroke: rgb(255,66,66);
-                stroke-width: 2px;
-            }
-
-            .handle {
+             .handle {
                 color: black;
                 width: 3em;
                 height: 1.6em;

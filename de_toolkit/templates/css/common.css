@@ -1,16 +1,4 @@
-.parallel path.highcharts-point {
-                fill: rgba(11, 200, 200,0.3);
-            }
-            .parallel .highcharts-line-series path {
-                stroke: rgba(11, 200, 200,0.3);
-                stroke-width: 2px;
-            }
-            .parallel .highcharts-series-hover path {
-                stroke: rgb(248,33,23);
-                stroke-width: 2px;
-            }
-
-            .histogram .highcharts-series-hover path {
+.histogram .highcharts-series-hover path {
                 stroke: rgb(248,33,23);
                 stroke-width: 4px;
             }

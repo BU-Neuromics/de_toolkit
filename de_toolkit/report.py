@@ -328,7 +328,7 @@ class DetkReportDev(DetkReport) :
                     # copy the asset
                     shutil.copy(
                         pkg_resources.resource_filename('de_toolkit',tmpl_path),
-                        dest_path
+                        str(dest_path)
                     )
                     # give the relative path to the asset
                     #rel_path = tmpl_path.replace('assets/','')

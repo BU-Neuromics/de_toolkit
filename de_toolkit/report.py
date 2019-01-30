@@ -18,7 +18,7 @@ Usage:
 '''
 }
 
-from collections import OrderedDict
+from collections import OrderedDict, Mapping
 from docopt import docopt
 from glob import glob
 import hashlib
@@ -53,6 +53,17 @@ class NumpyEncoder(json.JSONEncoder):
         elif isinstance(obj,(np.ndarray,)): #### This is the fix
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
+    def encode(self, obj) :
+        if isinstance(obj, float) :
+            return format(obj, '.3f').replace('nan','NaN')
+        elif isinstance(obj, (list, tuple)) :
+            return '['+', '.join(list(map(self.encode, obj)))+']'
+        elif isinstance(obj, Mapping) :
+            vals = []
+            for k in sorted(obj) :
+                vals.append('"{}": {}'.format(k,self.encode(obj[k])))
+            return '{' + ', '.join(vals) + '}'
+        return json.JSONEncoder.encode(self, obj)
 
 def hash_str(st) :
     return hashlib.md5(st.encode()).hexdigest()
@@ -177,7 +188,7 @@ class DetkReport(object):
 
         # loading the whole json object on a single long line is hard on text
         # editors
-        template_data['data'] = json.dumps(json_str)
+        template_data['data'] = json.dumps(json_str,cls=NumpyEncoder)
 
         # format the report
         # do a scan through the json directory to pick up all the existing
@@ -272,7 +283,7 @@ class DetkReportDev(DetkReport) :
         with open(data_path,'w') as f :
             f.write('var detk = detk || {};')
             f.write('detk.data = {};'.format(
-                        json.dumps(json_str,indent=2)
+                        json.dumps(json_str,indent=2,cls=NumpyEncoder)
                     )
             )
 

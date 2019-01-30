@@ -43,6 +43,21 @@ def test_report_cli(fake_module):
     with pytest.raises(docopt.DocoptExit) :
         main(['detk-report','clean','oogabooga'])
 
+def test_numpyencoder() :
+    from de_toolkit.report import NumpyEncoder
+    from functools import partial
+    from json import dumps
+
+    d = partial(json.dumps, cls=NumpyEncoder)
+
+    assert d(1) == '1'
+    assert d(1.2039820493842) == '1.204'
+    assert d(120398.20493842) == '120398.205'
+    assert d([1,1.2039820493842]) == '[1, 1.204]'
+    assert d({'a':1,'b':1.2039820493842}) == '{"a": 1, "b": 1.204}'
+    assert d({'c':{'a':1,'b':1.2039820493842}}) == '{"c": {"a": 1, "b": 1.204}}'
+    assert d([{'a': 1, 'b':[{'c': 1.024}]}]) == '[{"a": 1, "b": [{"c": 1.024}]}]'
+
 def test_detk_module_json(fake_module):
     from de_toolkit.report import DetkModuleJSON, hash_str
 
@@ -50,6 +65,7 @@ def test_detk_module_json(fake_module):
         j = DetkModuleJSON(fake_module,json_dir=d).write()
         # hashed filename should be
         fn = hash_str('fakemodule{"a": 1}-'+__version__)+'.json'
+        print(fn)
         assert os.path.exists(os.path.join(d,fn))
 
         j = DetkModuleJSON(

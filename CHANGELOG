@@ -10,6 +10,7 @@
 - removed DESeq2 require in norm class
 - added interactivity to PCA report plots
 - fixed but in report shutil.copy path in python 3.5
+- reduced precision in JSON output, reducing file output by 80%
 
 ## [ 0.9.0 ]
 ### Added

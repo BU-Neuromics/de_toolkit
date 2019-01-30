@@ -5,6 +5,7 @@
 - added attention admonition for patsy-lite in de module docs
 - fullscreen mode for all plots
 - detk-util tidy modules for tidying counts and column data
+- standalone report generation
 ### Changed
 - reduced test report counts
 - removed DESeq2 require in norm class

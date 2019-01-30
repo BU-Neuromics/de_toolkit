@@ -13,11 +13,12 @@ rule gunzip:
 
 rule stats:
     input:
-        'all_mRNA_nonzero_{type}_counts_trim.csv'
+        counts='all_mRNA_nonzero_{type}_counts_trim.csv',
+        info='sample_info.csv'
     output:
         temp('{type}_summary_stats.csv')
     shell:
-        'detk-stats summary --log {input} -o {output}'
+        'detk-stats summary --log {input.counts} -o {output} --column-data={input.info}'
 
 rule filter:
     input:

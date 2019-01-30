@@ -9,6 +9,7 @@
 - reduced test report counts
 - removed DESeq2 require in norm class
 - added interactivity to PCA report plots
+- fixed but in report shutil.copy path in python 3.5
 
 ## [ 0.9.0 ]
 ### Added

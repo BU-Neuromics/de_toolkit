@@ -9,16 +9,16 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="99.621964"
-   height="38.75"
-   viewBox="0 0 99.62196 38.749998"
+   width="102.62109"
+   height="41.75"
+   viewBox="0 0 102.62109 41.749998"
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="logo.svg"
-   inkscape:export-filename="detk_logo_highres.png"
-   inkscape:export-xdpi="299.61292"
-   inkscape:export-ydpi="299.61292">
+   sodipodi:docname="detk_logo.svg"
+   inkscape:export-filename="detk_logo_lowres.png"
+   inkscape:export-xdpi="72"
+   inkscape:export-ydpi="72">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -28,21 +28,21 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="14.223772"
-     inkscape:cx="49.389151"
-     inkscape:cy="19.23439"
+     inkscape:zoom="3.555943"
+     inkscape:cx="32.56886"
+     inkscape:cy="17.128868"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g4161"
      showgrid="false"
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
      fit-margin-bottom="0"
      units="px"
-     inkscape:window-width="1920"
-     inkscape:window-height="1080"
-     inkscape:window-x="1600"
-     inkscape:window-y="0"
+     inkscape:window-width="956"
+     inkscape:window-height="1041"
+     inkscape:window-x="2560"
+     inkscape:window-y="18"
      inkscape:window-maximized="0" />
   <metadata
      id="metadata7">
@@ -60,7 +60,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-90.17349,-450.41179)">
+     transform="translate(-88.673828,-448.91211)">
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:45px;line-height:100%;font-family:Montserrat;-inkscape-font-specification:Montserrat;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -76,9 +76,9 @@
     <g
        id="g4161">
       <path
-         style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:#cc0000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-         d="m 90.67349,452.91179 c 0,11.91666 0,23.83333 0,35.75 32.87399,0 65.74797,0 98.62196,0 0,-12.58334 0,-25.16667 0,-37.75 -32.87399,0 -65.74797,0 -98.62196,0 l 0,1 0,1 z"
-         id="rect4177"
+         style="opacity:1;fill:none;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         d="m 88.673828,490.66211 c 34.207032,0 68.414062,0 102.621092,0 0,-13.91667 0,-27.83333 0,-41.75 -34.20703,0 -68.41406,0 -102.621092,0 0,13.91667 0,27.83333 0,41.75 z"
+         id="path4141"
          inkscape:connector-curvature="0" />
       <text
          sodipodi:linespacing="100%"

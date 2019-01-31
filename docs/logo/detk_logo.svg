@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="99.621964"
+   height="38.75"
+   viewBox="0 0 99.62196 38.749998"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="logo.svg"
+   inkscape:export-filename="detk_logo_highres.png"
+   inkscape:export-xdpi="299.61292"
+   inkscape:export-ydpi="299.61292">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="14.223772"
+     inkscape:cx="49.389151"
+     inkscape:cy="19.23439"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     units="px"
+     inkscape:window-width="1920"
+     inkscape:window-height="1080"
+     inkscape:window-x="1600"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-90.17349,-450.41179)">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:45px;line-height:100%;font-family:Montserrat;-inkscape-font-specification:Montserrat;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="191.42857"
+       y="483.79077"
+       id="text4140"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         x="191.42857"
+         y="483.79077"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Montserrat;-inkscape-font-specification:Montserrat"
+         id="tspan4144" /></text>
+    <g
+       id="g4161">
+      <path
+         style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:#cc0000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         d="m 90.67349,452.91179 c 0,11.91666 0,23.83333 0,35.75 32.87399,0 65.74797,0 98.62196,0 0,-12.58334 0,-25.16667 0,-37.75 -32.87399,0 -65.74797,0 -98.62196,0 l 0,1 0,1 z"
+         id="rect4177"
+         inkscape:connector-curvature="0" />
+      <text
+         sodipodi:linespacing="100%"
+         id="text4136"
+         y="486.46793"
+         x="91.428574"
+         style="font-style:normal;font-weight:normal;font-size:45px;line-height:100%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#cc0000;fill-opacity:1;stroke:#cc0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0"
+         xml:space="preserve"><tspan
+           dx="0 -2.3199999"
+           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:Montserrat;-inkscape-font-specification:'Montserrat Bold';fill:#cc0000;fill-opacity:1;stroke:#cc0000;stroke-opacity:0"
+           y="486.46793"
+           x="91.428574"
+           id="tspan4138"
+           sodipodi:role="line">de</tspan></text>
+      <text
+         sodipodi:linespacing="100%"
+         id="text4148"
+         y="486.64792"
+         x="146.29182"
+         style="font-style:normal;font-weight:normal;font-size:45px;line-height:100%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#333333;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         xml:space="preserve"><tspan
+           dx="0 -2.8299994"
+           style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-family:Montserrat;-inkscape-font-specification:'Montserrat Light';fill:#333333;fill-opacity:1"
+           y="486.64792"
+           x="146.29182"
+           id="tspan4150"
+           sodipodi:role="line">tk</tspan></text>
+    </g>
+  </g>
+</svg>

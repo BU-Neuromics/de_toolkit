@@ -51,6 +51,7 @@ setup(name='de_toolkit',
           ,'detk-outlier=de_toolkit.outlier:main'
           ,'detk-wrapr=de_toolkit.wrapr:main'
           ,'detk-report=de_toolkit.report:main'
+          ,'detk-util=de_toolkit.util:main'
         ]
       }
       ,setup_requires=[

@@ -113,13 +113,13 @@ def main(argv=sys.argv) :
         args = docopt(cmd_opts_aug[cmd],argv)
 
         # read in the counts and covs so we can compare
-        counts = pandas.read_table(
+        counts = pandas.read_csv(
                 args['<count_fn>'],
                 index_col=0,
                 sep=None,
                 engine='python'
         )
-        covs = pandas.read_table(
+        covs = pandas.read_csv(
                 args['<cov_fn>'],
                 index_col=0,
                 sep=None,

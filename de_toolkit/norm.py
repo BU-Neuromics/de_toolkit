@@ -289,7 +289,7 @@ def main(argv=sys.argv) :
         # ID<delim>int
         # providing the lengths that should be used for each ID in the counts
         # file
-        lengths = pandas.read_table(args['<lengths_fn>'],sep=None)
+        lengths = pandas.read_csv(args['<lengths_fn>'],sep=None,engine='python')
         out = FPKMCounts(count_obj.counts,lengths)
 
     fp = sys.stdout if args['--output']=='stdout' else args['--output']

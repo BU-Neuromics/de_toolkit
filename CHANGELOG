@@ -1,5 +1,9 @@
 # Changelog
 
+## unreleased
+### Changed
+- removed deprecated pandas.read_table calls
+
 ## [ 0.9.2 ]
 ### Added
 - added detk-util CLI entry points that were left out in 0.9.1

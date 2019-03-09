@@ -29,7 +29,7 @@ def test_de_cli() :
 
 @pytest.fixture
 def deseq2_test_counts_obj() :
-  N = 200
+  N = 50
   N1 = int(N/2)
   N2 = N-N1
   # NB mean = pr/(1-p)
@@ -69,6 +69,7 @@ def deseq2_test_counts_obj() :
   column_data = pandas.DataFrame({
       'category': ['control']*(N1)+['case']*(N2)
       ,'cov': [next(cov_cycle) for _ in range(N)]
+      ,'cont_cov': [10*numpy.random.random() for _ in range(N)]
     }
     ,index=counts.columns
   )
@@ -86,7 +87,7 @@ def test_deseq2_cli(fake_counts_csv,fake_column_data_csv) :
     main(['detk-de','deseq2','--gene-wise-disp','counts ~ category',fake_counts_csv,fake_column_data_csv,'-o',out_fn])
 
     orig_res = pandas.read_csv(fake_counts_csv)
-    res = pandas.read_table(out_fn)
+    res = pandas.read_csv(out_fn,sep='\t')
     assert all(res.gene == orig_res.gene)
 
     assert all(res.columns == [
@@ -103,39 +104,42 @@ def test_deseq2_cli(fake_counts_csv,fake_column_data_csv) :
 
 @r_test
 @deseq2_test
-def test_deseq2_cli_w_cov(fake_counts_csv,fake_column_data_csv) :
+def test_deseq2_cli_w_cov(deseq2_test_counts_obj) :
 
     with NamedTemporaryFile() as f :
         out_fn = f.name
 
-    mat = CountMatrixFile(
-              fake_counts_csv,
-              fake_column_data_csv,
-              'counts ~ cont_cov + category'
-          )
-    print(mat.design)
+        with NamedTemporaryFile() as counts_f :
 
-    main(['detk-de','deseq2','counts ~ cont_cov + category',fake_counts_csv,fake_column_data_csv,'-o',out_fn])
+            print(deseq2_test_counts_obj.counts)
+            fake_counts_csv = counts_f.name
+            deseq2_test_counts_obj.counts.to_csv(fake_counts_csv,index_label='gene')
 
-    orig_res = pandas.read_csv(fake_counts_csv)
-    res = pandas.read_table(out_fn)
-    assert all(res.gene == orig_res.gene)
-    assert all(res.columns == [
-                                'gene',
-                                'baseMean',
-                                'cont_cov__log2FoldChange',
-                                'cont_cov__lfcSE',
-                                'cont_cov__stat',
-                                'cont_cov__pvalue',
-                                'cont_cov__padj',
-                                'category__cont__log2FoldChange',
-                                'category__cont__lfcSE',
-                                'category__cont__stat',
-                                'category__cont__pvalue',
-                                'category__cont__padj'
-                                ])
+            with NamedTemporaryFile() as covs_f :
 
-    os.remove(out_fn)
+                fake_column_data_csv = covs_f.name
+                deseq2_test_counts_obj.column_data.to_csv(fake_column_data_csv,index_label='sample')
+
+                main(['detk-de','deseq2','counts ~ cont_cov + category[control]',fake_counts_csv,fake_column_data_csv,'-o',out_fn])
+
+                orig_res = pandas.read_csv(fake_counts_csv)
+                res = pandas.read_csv(out_fn,sep='\t')
+                assert all(res.gene == orig_res.gene)
+                assert all(res.columns == [
+                                            'gene',
+                                            'baseMean',
+                                            'cont_cov__log2FoldChange',
+                                            'cont_cov__lfcSE',
+                                            'cont_cov__stat',
+                                            'cont_cov__pvalue',
+                                            'cont_cov__padj',
+                                            'category__case__log2FoldChange',
+                                            'category__case__lfcSE',
+                                            'category__case__stat',
+                                            'category__case__pvalue',
+                                            'category__case__padj'
+                                            ])
+
 
 
 @r_test
@@ -356,3 +360,5 @@ def test_firth_w_huge_data_cov(fake_huge_counts_obj) :
   fake_huge_counts_obj.add_design('category ~ cont_cov')
 
   firth_out = firth_logistic_regression(fake_huge_counts_obj)
+
+

@@ -849,7 +849,8 @@ class Entropy(DetkModule) :
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            entropies = count_mat.counts.apply(scipy.stats.entropy,axis=1).fillna(0)
+            entropies = count_mat.counts.apply(scipy.stats.entropy,axis=1)
+            entropies = entropies.replace([-np.inf],0)
 
         # the number of percentile bins is the minimum of:
         # - the unique number of distinct entropy values

@@ -197,14 +197,14 @@ class DesignMatrix(object) :
     def drop_from_lhs(self,column,quiet=False) :
         try :
             self.lhs.drop(column,axis=1,inplace=True)
-        except KeyError as e :
+        except ValueError as e :
             if not quiet :
                 raise ModelError('Cannot drop {} from lhs, does not exist'.format(column))
 
     def drop_from_rhs(self,column,quiet=False) :
         try :
             self.rhs.drop(column,axis=1,inplace=True)
-        except KeyError as e :
+        except ValueError as e :
             if not quiet :
                 raise ModelError('Cannot drop {} from rhs, does not exist'.format(column))
 

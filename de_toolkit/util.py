@@ -1,4 +1,4 @@
-r'''\
+r'''
 Usage:
     detk-util tidy [options] <count_fn> <cov_fn>
     detk-util tidy-counts [options] <count_fn> <cov_fn>
@@ -6,7 +6,7 @@ Usage:
 '''
 
 cmd_opts = {
-        'tidy':r'''\
+        'tidy':r'''
 
 Subset both the counts columns and column data rows by intersection, returning
 new outputs for both. Note the tidied column data is not output by default, and
@@ -20,7 +20,7 @@ Options:
     -p FILE --column-data-output=FILE  Destination of tidied column data
 ''',
 
-        'tidy-counts':r'''\
+        'tidy-counts':r'''
 
 Subset and order the provided counts file columns according to the rows of the
 provided column data file. Operation will fail if there are rows in the column
@@ -32,7 +32,7 @@ Usage:
 Options:
     -o FILE --output=FILE  Destination of tidied counts data [default: stdout]
 ''',
-        'tidy-covs':r'''\
+        'tidy-covs':r'''
 
 Subset and order the provided column data file rows according to the columns of
 the provided ccounts data file. Operation will fail if there are columns in the
@@ -47,7 +47,7 @@ Options:
 '''
 }
 
-from .common import CountMatrix, CountMatrixFile, _cli_doc
+from .common import CountMatrix, CountMatrixFile, _cli_version
 from .patsy_lite import ModelError
 from contextlib import contextmanager
 from docopt import docopt
@@ -86,12 +86,17 @@ def main(argv=sys.argv) :
         return
 
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
-        docopt(__doc__)
+        docopt(_cli_version+__doc__)
     argv = argv[1:]
     cmd = argv[0]
 
+    # add the common opts to the docopt strings
+    cmd_opts_aug = {}
+    for k,v in cmd_opts.items() :
+        cmd_opts_aug[k] = _cli_version+v
+
     if cmd == 'tidy' :
-        args = docopt(cmd_opts[cmd],argv)
+        args = docopt(cmd_opts_aug[cmd],argv)
         count_obj = CountMatrixFile(
             args['<count_fn>'],
             args['<cov_fn>']
@@ -105,7 +110,7 @@ def main(argv=sys.argv) :
             )
 
     elif cmd in ('tidy-counts','tidy-covs') :
-        args = docopt(cmd_opts[cmd],argv)
+        args = docopt(cmd_opts_aug[cmd],argv)
 
         # read in the counts and covs so we can compare
         counts = pandas.read_table(

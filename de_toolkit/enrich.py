@@ -5,7 +5,7 @@ Options:
     -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
 '''
 
-todo = r'''\
+todo = r'''
     detk-enrich fisher [options] <gmt_fn> <result_fn>
 '''
 cmd_opts = {

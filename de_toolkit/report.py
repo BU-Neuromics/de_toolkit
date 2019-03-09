@@ -1,18 +1,18 @@
-r'''\
+r'''
 Usage:
     detk-report generate [options]
     detk-report clean [options]
 '''
 
 cmd_opts = {
-        'generate':r'''\
+        'generate':r'''
 Usage:
     detk-report generate [options]
 
 Options:
     --dev  Format html for development (larger file size)
 ''',
-        'clean':r'''\
+        'clean':r'''
 Usage:
     detk-report clean [options]
 '''

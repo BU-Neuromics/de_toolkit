@@ -1,4 +1,4 @@
-r'''\
+r'''
 Usage:
     detk-de deseq2 [options] <design> <count_fn> <cov_fn>
     detk-de firth [options] <design> <count_fn> <cov_fn>
@@ -9,7 +9,7 @@ TODO = r'''
 '''
 
 cmd_opts = {
-        'deseq2':r'''\
+        'deseq2':r'''
 Usage:
     detk-de deseq2 [options] <design> <count_fn> <cov_fn>
 
@@ -32,7 +32,7 @@ Options:
     --cores=N              Tell DESeq2 to use N cores when running, requires the
                            BiocParallel Bioconductor package to be installed [default: none]
 ''',
-        'firth':r'''\
+        'firth':r'''
 Usage:
     detk-de firth [options] <design> <count_fn> <cov_fn>
 

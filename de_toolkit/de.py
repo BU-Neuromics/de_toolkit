@@ -77,7 +77,8 @@ def deseq2(count_obj,
             rda,
             all_coeff_results,
             gene_wise_disp_est,
-            cores
+            cores,
+            routput_dir=routput_dir
     )
     return obj.output
 

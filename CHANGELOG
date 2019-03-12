@@ -1,8 +1,10 @@
 # Changelog
 
-## unreleased
+## [ 0.9.3 ]
 ### Changed
 - removed deprecated pandas.read_table calls
+- fixed bug where R stupidly renames columns
+- fixed bug where report generation through ascii encoding errors
 
 ## [ 0.9.2 ]
 ### Added

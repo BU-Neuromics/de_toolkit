@@ -127,8 +127,8 @@ def estimateSizeFactors_wrapr(cnts):
     script = '''\
     library(DESeq2)
 
-    cnts <- as.matrix(read.csv(counts.fn,row.names=1))
-    colData <- data.frame(name=seq(ncol(cnts)))
+    cnts <- as.matrix(read.csv(counts.fn,row.names=1,check.names=FALSE))
+    colData <- data.frame(name=seq(ncol(cnts)),check.names=FALSE)
     dds <- DESeqDataSetFromMatrix(countData = cnts,
         colData = colData,
         design = ~ 1)
@@ -153,8 +153,8 @@ def deseq2_wrapr(count_obj):
     script = '''\
     library(DESeq2)
 
-    cnts <- as.matrix(read.csv(counts.fn,row.names=1))
-    colData <- read.csv(metadata.fn,row.names=1)
+    cnts <- as.matrix(read.csv(counts.fn,row.names=1,check.names=FALSE))
+    colData <- read.csv(metadata.fn,row.names=1,check.names=FALSE)
     str(params$design)
     dds <- DESeqDataSetFromMatrix(countData = cnts,
         colData = colData,

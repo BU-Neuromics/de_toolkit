@@ -134,8 +134,15 @@ class DESeq2Counts(DetkModule):
         }
         script = '''\
             library(DESeq2)
-            cnts <- read.csv(counts.fn,header=T,as.is=T)
+            cnts <- read.csv(counts.fn,header=T,as.is=T,check.names=FALSE)
             index.name <- names(cnts)[1]
+
+            # first column name is blank
+            orig.index.name <- index.name
+            if(index.name == '') {
+                index.name <- 'feature'
+                colnames(cnts)[1] <- index.name
+            }
             rownames(cnts) <- cnts[[1]]
             cnts <- cnts[c(-1)]
 
@@ -143,7 +150,9 @@ class DESeq2Counts(DetkModule):
 
             # DESeq2 whines when input counts aren't integers
             # round the counts matrix
-            cnts <- data.frame(lapply(cnts,function(x) { round(as.numeric(x)) }))
+            cnts <- data.frame(lapply(cnts,function(x) { round(as.numeric(x)) }),
+                check.names=FALSE
+            )
             rownames(cnts) <- rnames
 
             # use parallelism if params$cores > 0
@@ -159,7 +168,13 @@ class DESeq2Counts(DetkModule):
             form <- params$design
 
             # load design matrix
-            design.mat <- read.csv(metadata.fn,header=T,as.is=T,row.names=1)
+            design.mat <- read.csv(
+                metadata.fn,
+                header=T,
+                as.is=T,
+                row.names=1,
+                check.names=FALSE
+            )
 
             # make sure the counts and design matrix samples line up
             stopifnot(colnames(cnts) == rownames(design.mat))
@@ -249,6 +264,9 @@ class DESeq2Counts(DetkModule):
             res.df[[index.name]] <- rnames
             res.df <- res.df[c(index.name,res.df.cols)]
 
+            # put the original first column name back
+            colnames(res.df)[1] <- orig.index.name
+
             write.csv(res.df,out.fn,row.names=F)
         '''
         with wrapr(script,
@@ -314,25 +332,33 @@ class FLGCounts(DetkModule):
         }
         script = '''\
             library(logistf)
-            cnts <- read.csv(counts.fn,header=T,as.is=T)
+            cnts <- read.csv(counts.fn,header=T,as.is=T,check.names=FALSE)
             index.name <- names(cnts)[1]
+
+            # first column name is blank
+            orig.index.name <- index.name
+            if(index.name == '') {
+                index.name <- 'feature'
+                colnames(cnts)[1] <- index.name
+            }
+
             rownames(cnts) <- cnts[[1]]
             cnts <- cnts[c(-1)]
 
             rnames <- rownames(cnts)
-            cnts <- data.frame(lapply(cnts,as.numeric))
+            cnts <- data.frame(lapply(cnts,as.numeric),check.names=FALSE)
             rownames(cnts) <- rnames
 
             # scale counts to obtain standardized beta estimates
             if(params$standardize) {
-                cnts <- data.frame(t(scale(t(cnts))))
+                cnts <- data.frame(t(scale(t(cnts))),check.names=FALSE)
             }
 
             # design formula
             form <- params$design
 
             # load design matrix
-            design.mat <- read.csv(metadata.fn,header=T,as.is=T,row.names=1)
+            design.mat <- read.csv(metadata.fn,header=T,as.is=T,row.names=1,check.names=FALSE)
 
             fit <- NULL
 
@@ -343,7 +369,7 @@ class FLGCounts(DetkModule):
             }
             res.orig <- applyf(rownames(cnts),
                 function(gene) {
-                  x <- data.frame(design.mat)
+                  x <- data.frame(design.mat,check.names=FALSE)
                   x$counts <- unlist(cnts[gene,])
                   log.fit <- logistf(formula(form),data=x,pl=F)
                   fit <<- log.fit
@@ -367,7 +393,7 @@ class FLGCounts(DetkModule):
                 saveRDS(fit,params$rda)
             }
             res <- do.call(rbind,res.orig)
-            res.df <- as.data.frame(res,stringsAsFactors=F)
+            res.df <- as.data.frame(res,stringsAsFactors=F,check.names=FALSE)
             for(c in colnames(res.df)[c(-1,-2)]) {
                 res.df[c] <- as.numeric(res.df[c][[1]])
             }
@@ -375,6 +401,9 @@ class FLGCounts(DetkModule):
             for(c in Filter(function(x) endsWith(x,'__p'),colnames(res.df))) {
                 res.df[paste0(c,'adj')] <- p.adjust(res.df[[c]],"fdr")
             }
+
+            # put the original first column name back
+            colnames(res.df)[1] <- orig.index.name
 
             write.csv(res.df,out.fn,row.names=F)
         '''

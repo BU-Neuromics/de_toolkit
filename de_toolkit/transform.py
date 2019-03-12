@@ -115,8 +115,8 @@ class VstCounts(DetkModule):
         library(DESeq2)
         library(SummarizedExperiment)
 
-        cnts <- as.matrix(read.csv(counts.fn,row.names=1))
-        colData <- data.frame(name=seq(ncol(cnts)))
+        cnts <- as.matrix(read.csv(counts.fn,row.names=1,check.names=FALSE))
+        colData <- data.frame(name=seq(ncol(cnts)),check.names=FALSE)
         dds <- DESeqDataSetFromMatrix(countData = cnts,
             colData = colData,
             design = ~ 1)
@@ -172,18 +172,20 @@ class RlogCounts(DetkModule):
         library(DESeq2)
         library(SummarizedExperiment)
 
-        cnts <- as.matrix(read.csv(counts.fn,row.names=1))
+        cnts <- as.matrix(read.csv(counts.fn,row.names=1,check.names=FALSE))
 
         rnames <- rownames(cnts)
 
         # DESeq2 whines when input counts aren't integers
         # round the counts matrix
-        cnts <- data.frame(apply(cnts,2,function(x) { round(as.numeric(x)) }))
+        cnts <- data.frame(apply(cnts,2,function(x) { round(as.numeric(x)) }),
+            check.names=FALSE
+        )
         rownames(cnts) <- rnames
 
         # load design matrix
         if(file.info(metadata.fn)$size != 0) {
-            colData <- read.csv(metadata.fn,header=T,as.is=T,row.names=1)
+            colData <- read.csv(metadata.fn,header=T,as.is=T,row.names=1,check.names=FALSE)
         } else {
             # just to convince DESeq2 that everything is ok when we're doing a
             # blind rlog

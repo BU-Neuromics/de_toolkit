@@ -257,7 +257,7 @@ class DetkReport(object):
         )
 
         with open(self.report_path,'w') as f :
-            f.write(template.render(**self.template_data).decode('utf-8'))
+            f.write(template.render(**self.template_data))
 
     def __enter__(self) :
         return self

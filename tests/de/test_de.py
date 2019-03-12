@@ -23,6 +23,47 @@ deseq2_test = pytest.mark.skipif(not check_r_package('DESeq2'),
         reason='DESeq2 package not installed, skipping test'
 )
 
+def test_R_check_names_nonsense(deseq2_test_counts_obj) :
+
+    with NamedTemporaryFile() as f :
+        out_fn = f.name
+
+    main(['detk-de','deseq2','counts ~ RIN + Status[CNT]',
+          'tests/de/R_check_names_counts.csv',
+          'tests/de/R_check_names_meta.csv','-o',out_fn])
+
+    from de_toolkit.de import deseq2
+
+    # standard R functions like read.csv and data.frame call
+    # check.names() on their rows and column names so that they are
+    # "syntactically correct", which renames things with 'invalid'
+    # characters in R, like '-', and probably '$'
+
+    # the R scripts in detk need to be able to handle this
+    # add invalid R characters to columns and rows
+    cnts = deseq2_test_counts_obj.counts.copy()
+    cnts.columns = ['$-{}'.format(_) for _ in cnts.columns]
+
+    covs = deseq2_test_counts_obj.column_data.copy()
+    covs.index = ['$-{}'.format(_) for _ in covs.index]
+
+    counts_obj = CountMatrix(
+            cnts,
+            covs,
+            'counts ~ cov[low] + category[control]'
+    )
+
+    # full model results
+    res = deseq2(
+            counts_obj,
+            normalized=True,
+            all_coeff_results=True,
+            routput_dir='tmp_output'
+        )
+
+    # these counts have true lfc in range(-4,5)
+    assert all(res.index == counts_obj.counts.index)
+
 def test_de_cli() :
   with pytest.raises(docopt.DocoptExit) :
     main()

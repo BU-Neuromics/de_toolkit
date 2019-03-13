@@ -1,5 +1,9 @@
 # Changelog
 
+## [ 0.9.4 ]
+### Changed
+- reverted bad ascii encoding error in report fix
+
 ## [ 0.9.3 ]
 ### Changed
 - removed deprecated pandas.read_table calls

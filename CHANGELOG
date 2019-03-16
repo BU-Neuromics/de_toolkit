@@ -1,5 +1,9 @@
 # Changelog
 
+## [ 0.9.6 ]
+### Changed
+- yup, maybe reporting is actually fixed now
+
 ## [ 0.9.5 ]
 ### Changed
 - working fix for ascii encoding error on report write

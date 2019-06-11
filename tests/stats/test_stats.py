@@ -50,7 +50,8 @@ def test_stats_cli(fake_counts_csv) :
       for cmd in ('summary','basestats','coldist','rowdist','colzero','rowzero','entropy') :
           with pytest.raises(DocoptExit) :
               main(['detk-stats',cmd])
-          main(['detk-stats',cmd,fake_counts_csv,'--report-dir={}'.format(d)])
+          print(['detk-stats',cmd,'--report-dir={}'.format(d),fake_counts_csv])
+          main(['detk-stats',cmd,'--report-dir={}'.format(d),fake_counts_csv])
 
 ################################################################################
 # base tests
@@ -638,62 +639,72 @@ def test_stats_rowzero_output(fake_counts_rowzero_obj):
 # entropy tests
 @pytest.fixture
 def fake_counts_list_data_entropy() :
-  data = [['gene']+['s{}'.format(_+1) for _ in range(100)]]
-  for i in range(101) :
-      data.append(['gene{}'.format(i+1)]+[1]*i+[0]*(100-i))
-  return data
+    # this counts matrix is a 100x99 lower diagonal of 1s
+    data = [['gene']+['s{}'.format(_+1) for _ in range(99)]]
+    for i in range(100) :
+        data.append(['gene{}'.format(i+1)]+[1]*i+[0]*(99-i))
+    return data
 
 #convert to csv from 2-D list
 @pytest.fixture
 def fake_counts_entropy_csv(request,fake_counts_list_data_entropy) :
-  with pytest.temp_csv_wrap(fake_counts_list_data_entropy,',') as f :
-    yield f.name
+    with pytest.temp_csv_wrap(fake_counts_list_data_entropy,',') as f :
+        yield f.name
 
 @pytest.fixture
 def fake_counts_entropy_obj(fake_counts_entropy_csv) :
 
-  return pytest.make_counts_obj(fake_counts_entropy_csv,None,None)
+    return pytest.make_counts_obj(fake_counts_entropy_csv,None,None)
 
 #test that entropy function calculates correct entropy values
 def test_stats_entropies(fake_counts_entropy_obj):
     from math import log
     output = Entropy(fake_counts_entropy_obj)
     entropies = output['entropies']
-    true_pct = np.linspace(0,100,100)
-    true_entropies = [0]+[-i*(1/i)*np.log(1/i) for i in range(1,101)]
 
+    true_pct = list(range(100))
     assert np.allclose(entropies['pct'],true_pct)
+
+    true_entropies = [0]+[-i*(1/i)*np.log(1/i) for i in range(1,100)]
+    #assert np.allclose(entropies['entropies'],true_entropies)
+
+    pctVal = np.percentile(true_entropies,true_pct,interpolation='higher')
+
     assert np.allclose(
-            entropies['pctVal'],
-            np.percentile(true_entropies,true_pct,interpolation='higher')
+        entropies['pctVal'],
+        np.percentile(true_entropies,true_pct,interpolation='higher')
     )
-    assert np.allclose(entropies['num_features'], [2]+[1]*99)
-    assert np.allclose(entropies['frac_features'], [2/101]+[1/101]*99)
-    assert np.allclose(entropies['cum_frac_features'], [i/101 for i in range(2,102)])
-    assert entropies['exemplar_features'][0]['name'] == 'gene1'
-    assert entropies['exemplar_features'][0]['entropy'] == 0
-    assert entropies['exemplar_features'][0]['counts'][0] == ('s1',0)
+    assert np.allclose(entropies['num_features'], [0,2]+[1]*98)
+    assert np.allclose(entropies['frac_features'], [0,2/100]+[1/100]*98)
+    assert np.allclose(entropies['cum_frac_features'], [0]+[i/100 for i in range(2,101)])
+    assert entropies['exemplar_features'][1]['name'] == 'gene1'
+    assert entropies['exemplar_features'][1]['entropy'] == 0
+    assert entropies['exemplar_features'][1]['counts'][0] == ('s1',0)
 
 #test that json output for entropy function is correct
 def test_stats_entropy_json(fake_counts_entropy_obj):
 
     output = Entropy(fake_counts_entropy_obj)
-    entropies = output['entropies']
-    json_output = output.json['properties']
-    true_pct = np.linspace(0,100,100)
-    true_entropies = [0]+[-i*(1/i)*np.log(1/i) for i in range(1,101)]
+    entropies = output.json['properties']['entropies']
 
+    true_pct = list(range(100))
     assert np.allclose(entropies['pct'],true_pct)
+
+    true_entropies = [0]+[-i*(1/i)*np.log(1/i) for i in range(1,100)]
+    #assert np.allclose(entropies['entropies'],true_entropies)
+
+    pctVal = np.percentile(true_entropies,true_pct,interpolation='higher')
+
     assert np.allclose(
-            entropies['pctVal'],
-            np.percentile(true_entropies,true_pct,interpolation='higher')
+        entropies['pctVal'],
+        np.percentile(true_entropies,true_pct,interpolation='higher')
     )
-    assert np.allclose(entropies['num_features'], [2]+[1]*99)
-    assert np.allclose(entropies['frac_features'], [2/101]+[1/101]*99)
-    assert np.allclose(entropies['cum_frac_features'], [i/101 for i in range(2,102)])
-    assert entropies['exemplar_features'][0]['name'] == 'gene1'
-    assert entropies['exemplar_features'][0]['entropy'] == 0
-    assert entropies['exemplar_features'][0]['counts'][0] == ('s1',0)
+    assert np.allclose(entropies['num_features'], [0,2]+[1]*98)
+    assert np.allclose(entropies['frac_features'], [0,2/100]+[1/100]*98)
+    assert np.allclose(entropies['cum_frac_features'], [0]+[i/100 for i in range(2,101)])
+    assert entropies['exemplar_features'][1]['name'] == 'gene1'
+    assert entropies['exemplar_features'][1]['entropy'] == 0
+    assert entropies['exemplar_features'][1]['counts'][0] == ('s1',0)
 
 def test_stats_entropy_output(fake_counts_entropy_obj):
     from math import log
@@ -702,7 +713,8 @@ def test_stats_entropy_output(fake_counts_entropy_obj):
     output = output.output
 
     assert output[0][:4] == ['pct','pctVal','num_features','frac_features']
-    assert output[1][:4] == (0, 0, 2, 2/101)
+    assert output[1][:4] == (0, 0, 0, 0)
+    assert output[2][:4] == (1, 0, 2, 2/100)
  
 ################################################################################
 # PCA tests

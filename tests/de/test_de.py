@@ -128,7 +128,9 @@ def test_deseq2_cli(fake_counts_csv,fake_column_data_csv) :
     main(['detk-de','deseq2','--gene-wise-disp','counts ~ category',fake_counts_csv,fake_column_data_csv,'-o',out_fn])
 
     orig_res = pandas.read_csv(fake_counts_csv)
-    res = pandas.read_csv(out_fn,sep='\t')
+    print(orig_res)
+    res = pandas.read_csv(out_fn)
+    print(res)
     assert all(res.gene == orig_res.gene)
 
     assert all(res.columns == [
@@ -164,7 +166,7 @@ def test_deseq2_cli_w_cov(deseq2_test_counts_obj) :
                 main(['detk-de','deseq2','counts ~ cont_cov + category[control]',fake_counts_csv,fake_column_data_csv,'-o',out_fn])
 
                 orig_res = pandas.read_csv(fake_counts_csv)
-                res = pandas.read_csv(out_fn,sep='\t')
+                res = pandas.read_csv(out_fn)
                 assert all(res.gene == orig_res.gene)
                 assert all(res.columns == [
                                             'gene',

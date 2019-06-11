@@ -32,7 +32,7 @@ def test_transform_vst_cli(fake_counts_csv):
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        main(['detk-de','vst',fake_counts_csv])
+        main(['detk-transform','vst',fake_counts_csv])
 
 @r_test
 @deseq2_test
@@ -49,11 +49,11 @@ def test_transform_rlog_cli(fake_counts_csv,fake_column_data_csv):
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        main(['detk-de','rlog',fake_counts_csv])
+        main(['detk-transform','rlog',fake_counts_csv])
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        main(['detk-de','rlog',fake_counts_csv,"counts ~ category[cont]",fake_column_data_csv])
+        main(['detk-transform','rlog',fake_counts_csv,"counts ~ category[cont]",fake_column_data_csv])
 
 def test_transform_plog(fake_counts_obj):
     from de_toolkit.transform import plog
@@ -66,4 +66,4 @@ def test_transform_plog_cli(fake_counts_csv):
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        main(['detk-de','plog',fake_counts_csv])
+        main(['detk-transform','plog',fake_counts_csv])

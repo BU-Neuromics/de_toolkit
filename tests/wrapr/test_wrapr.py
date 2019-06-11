@@ -31,12 +31,12 @@ def test_wrapr_cli_check(monkeypatch) :
 
     monkeypatch.setattr(wrapr,'check_r',lambda: False)
     monkeypatch.setattr(wrapr,'check_r_package',lambda x: True)
-    with pytest.raises(wrapr.RscriptExecutableNotFound) :
+    with pytest.raises(SystemExit) :
         wrapr.main(['detk-wrapr','check'])
 
     monkeypatch.setattr(wrapr,'check_r',lambda: True)
     monkeypatch.setattr(wrapr,'check_r_package',lambda x: False)
-    with pytest.raises(wrapr.RPackageMissing) :
+    with pytest.raises(SystemExit) :
         wrapr.main(['detk-wrapr','check'])
 
 def test_get_r_path(monkeypatch) :

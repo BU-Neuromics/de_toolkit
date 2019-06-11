@@ -13,12 +13,18 @@ Usage:
 from collections import OrderedDict
 from copy import deepcopy
 from docopt import docopt
+import logging
 import pandas
+from pprint import pformat
 import re
 import sys
 import warnings
 from .patsy_lite import DesignMatrix, PatsyLiteParseError
 from .version import __version__
+
+# setup logging, null on the library level
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 _cli_version = '''\
 detk version: {}\n
@@ -27,13 +33,80 @@ detk version: {}\n
 _cli_common_opts = '''\
 
 Common options:
-    --report-dir=DIR  Specify the report directory [default: ./detk_report]
-    --version         Print out detk version and exit
+    -d CHAR --out-delim=CHAR  Delimiter to use for output file [default: ,]
+    --report-dir=DIR          Specify the report directory [default: ./detk_report]
+    --no-report               Do not generate the HTML report
+    --version                 Print out detk version and exit
+    -v --verbose              Make log output verbose
+    -q --quiet                Turn off all logging except warnings and errors
+    --shut-up                 Turn off ALL logging
 '''
 
 def _cli_doc(src) :
     'Add the common command line arguments to the given *src* docopt string'
     return _cli_version+src+_cli_common_opts
+
+banner = r'''
+===========================
+        _      _   _    
+       | |    | | | |   
+     __| | ___| |_| | __
+    / _` |/ _ \ __| |/ /
+   | (_| |  __/ |_|   < 
+    \__,_|\___|\__|_|\_\
+                        
+ de-toolkit.readthedocs.io
+ Version: {}
+==========================='''.format(__version__)
+def set_logging(opts) :
+    if not opts['--shut-up'] :
+        if opts['--quiet'] :
+            level = logging.WARNING
+        elif opts['--verbose'] :
+            level = logging.DEBUG
+        else :
+            level = logging.INFO
+
+        logging.basicConfig(
+                format='[%(asctime)s] %(levelname)s:%(name)s: %(message)s',
+                level=level
+        )
+
+        logger.debug('Set logging level to %d',level)
+        logger.info(banner)
+        logger.info('detk version: %s',__version__)
+
+def make_cli_count_obj(args) :
+    logger.info('constructing counts matrix from %s and %s',
+            args.get('<counts_fn>'),args.get('<cov_fn>'))
+    logger.info('design is %s',args.get('<design>'))
+    try :
+        count_obj = CountMatrixFile(
+            args.get('<counts_fn>'),
+            args.get('<cov_fn>'),
+            design=args.get('<design>'),
+            strict=args.get('--strict',False)
+        )
+    except Exception as e :
+        logger.error(e)
+        sys.exit(1)
+
+    logger.info('counts matrix created successfully')
+
+    return count_obj
+
+def write_output(df,args) :
+
+    if args['--output'] == 'stdout' :
+        f = sys.stdout
+        logging.info('writing result to stdout')
+    else :
+        f = args['--output']
+        logging.info('writing result to %s',f)
+
+    df.to_csv(f,sep=args.get('--out-delim',','))
+
+    logging.info('finished writing output')
 
 class InvalidDesignException(Exception): pass
 class SampleMismatchException(Exception): pass
@@ -60,6 +133,8 @@ class CountMatrix(object) :
             else :
                 common_names = counts.columns.intersection(column_data.index)
 
+                logger.debug('common names between counts and column data:\n %s', pformat(common_names))
+
                 # fix to "no memory available" bitbucket issue #4 when matrices are
                 # empty
                 if len(common_names) < 2 :
@@ -79,11 +154,19 @@ class CountMatrix(object) :
 
         # set the things
         self.counts = counts
+        logger.info('counts matrix has shape: %s',self.counts.shape)
+
         self.column_data = column_data
+        if column_data is not None:
+            logger.info('column data matrix has shape: %s',self.column_data.shape)
+        else :
+            logger.info('column data was not provided')
 
         # set the design no matta wat
         self._design_matrix = None
         self.design = self._original_design = design
+        logger.info('design: %s',design)
+        logger.debug('full design:\n %s',pformat(self.design_matrix))
 
         #TODO this is not yet implemented or thought out
         # members to keep track of count mutations
@@ -139,8 +222,15 @@ class CountMatrix(object) :
                 else :
                     warnings.warn(msg+'Adjusting the counts matrix and column '
                                       'data to fit.')
+                    logger.warn(msg+'Adjusting the counts matrix and column '
+                                      'data to fit.')
+                    logger.warn('counts shape prior to fit: %s', self.counts.shape)
+                    logger.warn('column data prior to fit: %s', self.column_data.shape)
                     self.counts = self.counts[self.design_matrix.full_matrix.index]
                     self._column_data = self.column_data.loc[self.design_matrix.full_matrix.index]
+
+                    logger.warn('counts shape after fit: %s', self.counts.shape)
+                    logger.warn('column data after fit: %s', self._column_data.shape)
 
         elif design is not None and self.column_data is None :
             raise InvalidDesignException('There must be column data associated with a '

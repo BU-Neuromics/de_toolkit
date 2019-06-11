@@ -57,13 +57,21 @@ Options:
 '''
 }
 from docopt import docopt
-import sys, os
+import logging
 import numpy as np
 import pandas
-from .common import CountMatrixFile, DetkModule, _cli_doc
+from pprint import pformat
+import sys, os
+from .common import (CountMatrixFile, DetkModule, _cli_doc, set_logging,
+        make_cli_count_obj, write_output
+    )
 from .report import DetkReport
 from .util import stub
 from .wrapr import require_r, wrapr
+
+# setup logging, null on the library level
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 class NormalizationException(Exception) : pass
 
@@ -104,7 +112,11 @@ class NormalizationException(Exception) : pass
 
 def estimateSizeFactors(cnts):
 
+    logger.debug('computing geometric means')
     loggeomeans = np.log(cnts).mean(axis=1)
+
+    logger.info('features usable in geometric mean calculation: %d',np.isfinite(loggeomeans).sum())
+
     if all(~np.isfinite(loggeomeans)) :
         raise NormalizationException(
          'every gene contains at least one zero, cannot compute log geometric means'
@@ -118,6 +130,7 @@ def estimateSizeFactors(cnts):
             ,divFact
         )
     )
+    logger.debug('size factors:\n%s',pformat(sizeFactors))
 
     return sizeFactors
 
@@ -180,14 +193,16 @@ def deseq2_wrapr(count_obj):
 
 class DESeq2Norm(DetkModule):
     def __init__(self, count_obj):
+        logger.info('running DESeq2 normalization')
         count_mat = count_obj.counts.values
         sizeFactors = estimateSizeFactors(count_mat)
         norm_cnts = count_mat/sizeFactors
-        normalized = pandas.DataFrame(norm_cnts, 
+        normalized = pandas.DataFrame(norm_cnts,
                 index=count_obj.counts.index,
                 columns=count_obj.counts.columns
                 )
         self.normalized = normalized
+        logger.info('DESeq2 normalization done')
 
     @property
     def output(self):
@@ -197,26 +212,30 @@ class DESeq2Norm(DetkModule):
         return {'num_kept': len(self.normalized)
                 }
 
-def library_size(count_df,sizes=None):
+def library_size(count_df):
     '''
     Divide each count by column sum
     '''
-    obj = LibrarySize(count_df, sizes)
+    obj = LibrarySize(count_df)
     return obj.output
 
 class LibrarySize(DetkModule):
-    def __init__(self, count_df, sizes):
-        self['params'] = {'sizes': sizes}
+    def __init__(self, count_df):
+        logger.info('running library size normalization')
+        sizes = count_df.sum(axis=0)
+        logger.info('min/max library size: %d/%d',sizes.min(),sizes.max())
+        self['params'] = {'sizes': sizes.tolist()}
         self.count_df = count_df
-        self.librarysize = count_df / count_df.sum(axis=0)
+        self.normalized = count_df / sizes
 
+        logger.info('library size normalization done')
     @property
     def output(self):
-        return self.librarysize
+        return self.normalized
 
     @property
     def properties(self):
-        return {'num library size': len(self.librarysize)}
+        return {'num_features': self.normalized.shape[0]}
 
 def fpkm(count_df,lengths) :
     '''
@@ -231,6 +250,9 @@ def fpkm(count_df,lengths) :
 
 class FPKMCounts(DetkModule):
     def __init__(self, count_df, lengths):
+        logger.info('running FPKM normalization')
+        logger.info('number of feature lengths provided: %d',lengths.size)
+
         self['params'] = {'lengths': lengths}
         self.count_df = count_df
 
@@ -245,6 +267,8 @@ class FPKMCounts(DetkModule):
         res = count_df.div(1e6*lens,axis=0)
         self.res = res
     
+        logger.info('running FPKM normalization')
+
     @property
     def output(self):
         return self.res
@@ -275,34 +299,62 @@ def main(argv=sys.argv) :
     argv = argv[1:]
     cmd = argv[0]
 
+    args = docopt(cmd_opts_aug[cmd],argv)
+    count_obj = make_cli_count_obj(args)
+    set_logging(args)
+    logger.info('cmd: %s',' '.join(argv))
+
     if cmd == 'deseq2' :
-        args = docopt(cmd_opts_aug['deseq2'],argv)
-        count_obj = CountMatrixFile(args['<counts_fn>'])
-        out = DESeq2Norm(count_obj)
+
+        try :
+            out = DESeq2Norm(count_obj)
+        except Exception as e :
+            logger.error(e)
+            sys.exit(1)
+
     elif cmd == 'library' :
-        args = docopt(cmd_opts_aug['library'],argv)
-        count_obj = CountMatrixFile(args['<counts_fn>'])
-        out = LibrarySize(count_obj)
+
+        try :
+            out = LibrarySize(count_obj)
+        except Exception as e :
+            logger.error(e)
+            sys.exit(1)
+
     elif cmd == 'fpkm' :
-        args = docopt(cmd_opts_aug['fpkm'],argv)
+
         # the lengths_fn is assumed to be a file with two columns
         # ID<delim>int
         # providing the lengths that should be used for each ID in the counts
         # file
-        lengths = pandas.read_csv(args['<lengths_fn>'],sep=None,engine='python')
-        out = FPKMCounts(count_obj.counts,lengths)
+        try :
+            lengths = pandas.read_csv(args['<lengths_fn>'],sep=None,engine='python')
+        except Exception as e :
+            logger.error(e)
+            sys.exit(1)
 
-    fp = sys.stdout if args['--output']=='stdout' else args['--output']
-    out.output.to_csv(fp)
-    
-    with DetkReport(args['--report-dir']) as r :
-        r.add_module(
+        try :
+            out = FPKMCounts(count_obj.counts,lengths)
+        except Exception as e :
+            logger.error(e)
+            sys.exit(1)
+
+    write_output(out.output,args)
+
+    if not args['--no-report'] :
+        logging.info('writing report to %s',args['--report-dir'])
+        with DetkReport(args['--report-dir']) as r :
+            r.add_module(
                 out,
                 in_file_path=args['<counts_fn>'],
                 out_file_path=args['--output'],
                 column_data_path=args.get('--column-data'),
                 workdir=os.getcwd()
-                )
+            )
+
+    else :
+        logging.info('not generating report due to --no-report')
+
+    logging.info('done')
 
 
 if __name__ == '__main__' :

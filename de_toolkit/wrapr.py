@@ -1,6 +1,6 @@
 r'''
 Usage:
-    detk-wrapr check
+    detk-wrapr check [options]
     detk-wrapr run [options] <rscript> [<counts_in>] [<out>]
 
 Options:
@@ -25,15 +25,21 @@ Options:
 from collections import defaultdict
 from docopt import docopt
 import json
+import logging
 import os
 import pandas as pd
 import pathlib
+from pprint import pformat
 import shutil
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from .common import CountMatrixFile, _cli_doc
+from .common import CountMatrixFile, _cli_doc, set_logging
 from .util import which
+
+# setup logging, null on the library level
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 class RscriptExecutableNotFound(Exception) : pass
 class RPackageMissing(Exception) : pass
@@ -49,14 +55,20 @@ def check_r() :
 
 def check_r_package(pkg) :
     'Tests whether the R package *pkg* is installed.'
-    p = subprocess.run(' '.join([
+    cmd = ' '.join([
         get_r_path(),
         '-e',
         '"library({})"'.format(pkg)
-        ]),
+        ])
+    logger.debug('check_r_package cmd: %s',cmd)
+    p = subprocess.run(cmd,
         shell=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE
+    )
+    logger.debug('check_r_package stdout:\n%s',pformat(p.stdout.decode('utf-8')))
+    logger.debug('check_r_package stderr:\n%s',pformat(p.stderr.decode('utf-8')))
+
     return p.returncode == 0
 
 def require_r_package(pkg) :
@@ -279,6 +291,8 @@ class WrapR(object) :
         # custom rpath
         self._paths['rpath'] = rpath or get_r_path()
 
+        logger.debug('rpath: %s',self._paths['rpath'])
+
         # if routput_dir is specified, create the directory if necessary and
         # write all of the temporary files to it
         self.routput_dir = routput_dir
@@ -288,6 +302,7 @@ class WrapR(object) :
         else :
             self._tempdir = TemporaryDirectory()
             self.routput_dir = self._tempdir.name
+        logger.debug('R output dir: %s',self.routput_dir)
 
         # load script code and put into the template that defines convenience
         # in/out filename variables
@@ -346,6 +361,8 @@ class WrapR(object) :
             self._files['params_out'] = open(os.path.join(self.routput_dir,'params_out.json'),'wt')
             self._paths['params_out'] = self._files['params_out'].name
 
+        logger.debug('wrapr paths:\n %s',pformat(self._paths))
+
         # initialize output members
         self.output = None
         self.metadata_out = None
@@ -364,6 +381,8 @@ class WrapR(object) :
                '{output} {meta_out} {params_out}').format(
                     **self._paths
                ).split(' ')
+        logger.info('executing Rscript: %s', self._paths['rscript'])
+        logger.debug(cmd)
 
         # run the R script
         p = subprocess.run(
@@ -374,8 +393,11 @@ class WrapR(object) :
 
         self.process = p
         self.stdout = p.stdout.decode()
+        logger.debug('R script stdout:\n %s',pformat(self.stdout))
         self.stderr = p.stderr.decode()
+        logger.debug('R script stderr:\n %s',pformat(self.stderr))
         self.returncode = p.returncode
+        logger.debug('R script return code: %d',self.returncode)
         self.success = p.returncode == 0
 
         if self.raise_on_error and not self.success :
@@ -392,6 +414,7 @@ class WrapR(object) :
                     index_col=0
                 )
             except pd.errors.EmptyDataError :
+                logger.debug('No output was found, continuing')
                 pass
 
         if os.path.exists(self._paths['meta_out']) :
@@ -401,9 +424,11 @@ class WrapR(object) :
                     index_col=0
                 )
             except pd.errors.EmptyDataError :
+                logger.debug('No metadata output was found, continuing')
                 pass
 
         if os.path.exists(self._paths['params_out']) :
+            logger.info('writing out R script params json to %s', self._paths['params_out'])
             with open(self._paths['params_out'],'rt') as f :
                 json_str = f.read()
                 if len(json_str) > 0 :
@@ -424,9 +449,13 @@ class WrapR(object) :
                             return e
                     self.params_out = flat(self.params_out)
 
+        logger.info('R script done executing')
+
     def __enter__(self) :
+        logger.debug('entered WrapR context manager')
         return self
     def __exit__(self,*args)  :
+        logger.debug('exitred WrapR context manager')
         # clean up the temp files if no r output directory was supplied
         if self._tempdir is not None :
             self._tempdir.cleanup()
@@ -460,7 +489,10 @@ def wrapr(Rcode,**kwargs) :
 
     '''
 
+    logger.info('wrapr() executing')
     with NamedTemporaryFile('wt') as f :
+        logger.debug('writing R code to %s',f.name)
+        logger.debug('R code:\n%s',pformat(Rcode))
         f.write(Rcode)
         f.flush()
         wr = WrapR(
@@ -477,24 +509,39 @@ def main(argv=sys.argv) :
         print(__version__)
         return
 
+    doc = _cli_doc(__doc__)
+
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in ('check','run')) :
-        docopt(__doc__,argv=argv)
+        docopt(doc,argv=argv)
     argv = argv[1:]
     cmd = argv[0]
 
-    args = docopt(__doc__,argv=argv)
+    args = docopt(doc,argv=argv)
+
+    set_logging(args)
+    logger.info('cmd: %s',' '.join(argv))
 
     if args['run'] :
+
+        logger.info('Executing standalone R script')
 
         counts = None
         column_data = None
 
         if args['<counts_in>'] is not None :
-            counts_obj = CountMatrixFile(
-                  args['<counts_in>'],
-                  args['--meta-in'],
-                  strict=args.get('--strict',False)
-            )
+            
+            try :
+                counts_obj = CountMatrixFile(
+                      args['<counts_in>'],
+                      args['--meta-in'],
+                      strict=args.get('--strict',False)
+                )
+            except Exception as e :
+                logger.error(e)
+                sys.exit(1)
+
+            logger.info('counts matrix created successfully')
+
             counts = counts_obj.counts
             column_data = counts_obj.column_data
 
@@ -519,23 +566,25 @@ def main(argv=sys.argv) :
     elif args['check'] :
 
         r = check_r()
-        print('R found:',r,file=sys.stderr)
 
         if not r :
-            raise RscriptExecutableNotFound(
+            logger.error(RscriptExecutableNotFound(
                     'Rscript executable not found, wrapr interface and '
                     'functions will not work'
-            )
+                ))
+            sys.exit(1)
 
-        print('R path: {}'.format(get_r_path()),file=sys.stderr)
+        logger.info('R found: %s',r)
+        logger.info('R path: %s',get_r_path())
 
         jsonlite = check_r_package('jsonlite')
-        print('jsonlite found:',jsonlite,file=sys.stderr)
+        logger.info('jsonlite found: %s',jsonlite)
 
         if not jsonlite :
-            raise RPackageMissing('ERROR: R package jsonlite must be installed, '
+            logger.error(RPackageMissing('ERROR: R package jsonlite must be installed, '
                   'wrapr interface and functions will not work'
-            )
+            ))
+            sys.exit(1)
 
 
 if __name__ == '__main__' :

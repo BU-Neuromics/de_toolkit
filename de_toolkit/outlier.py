@@ -31,16 +31,22 @@ Options:
 
 import csv, os
 from docopt import docopt
+import logging
 import matplotlib as plt
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pprint import pformat
 import scipy.stats as sc
 import sys
 
-from .common import CountMatrixFile, DetkModule, _cli_doc
+from .common import CountMatrixFile, DetkModule, _cli_doc, make_cli_count_obj, set_logging, write_output
 from .report import DetkReport
 from .util import stub
+
+# setup logging, null on the library level
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 def pmf_transform(count_obj, shrink_factor=0.25, p_max=None, iters=1000):
     obj = PMFTransform(count_obj, shrink_factor, p_max, iters)
@@ -138,6 +144,7 @@ class ShrinkCounts(DetkModule):
                 'p_max': p_max,
                 'iters': iters
                 }
+        logger.info('PMF shrink params: %s',pformat(self['params']))
         shrunk_counts = count_obj.counts.apply(
             pmf_transform,
             shrink_factor=shrink_factor,
@@ -150,7 +157,10 @@ class ShrinkCounts(DetkModule):
                 columns=count_obj.counts.columns
             )
 
+        logger.info('counts removed by shrinking: %.2f',shrunk_counts.sum().sum()-count_obj.counts.sum().sum())
         self.shrunk_counts = shrunk_counts
+
+        logger.info('PMF shrink done')
 
     @property
     def output(self):
@@ -213,7 +223,8 @@ class EntropyCounts(DetkModule):
     def __init__(self, counts_obj, threshold):
         self['params'] = {'threshold': threshold}
         self.counts_obj = counts_obj
-        
+        logger.info('entropy thresholding')
+
         counts_transpose = counts_obj.counts.copy().transpose()
         trshld_name = str(threshold).split('.')[1]
 
@@ -238,13 +249,16 @@ class EntropyCounts(DetkModule):
         # column 2 is a boolean indication whether the value is under the user described threshold
         results_df = pd.DataFrame(entropy, columns=['entropy'])
         results_df['entropy_p0_{}'.format(trshld_name)] = entropy < entropy_threshold
+        logger.info('number of flagged features: %d',(entropy<entropy_threshold).sum())
+
         frames = [results_df, dropped_df]
         results_df = pd.concat(frames)
         # set the results index to be in the same order as the counts index
         results_df.index = counts_obj.counts.index
-        
+
         self.results_df = results_df
-    
+        logger.info('entropy threshold done')
+
     @property
     def output(self):
         return self.results_df
@@ -305,49 +319,71 @@ def main(argv=sys.argv):
     cmd = argv[0]
 
     if cmd == 'entropy' :
-        args = docopt(cmd_opts_aug['vst'],argv)
-        count_obj = CountMatrixFile(args['<counts_fn>'])
-        data = CountMatrixFile(args['<counts_fn>'])
+        args = docopt(cmd_opts_aug['entropy'],argv)
+
+        set_logging(args)
+        logger.info('cmd: %s',' '.join(argv))
+
+        count_obj = make_cli_count_obj(args)
         pval = float(args['--percentile'])
 
         # run the entropy_calc function
-        out = EntropyCounts(data.counts, pval)
+        try :
+            out = EntropyCounts(count_obj.counts, pval)
+        except Exception as e :
+            logger.error(e)
+            sys.exit(1)
 
         if args['--plot-output'] :
+            logger.info('plotting entropy threshold to %s',args['--plot-output'])
             plot_entropy(out_df, pval, name=plot)
 
     elif cmd == 'trim' :
         args = docopt(cmd_opts_aug['trim'],argv)
+
+        set_logging(args)
+        logger.info('cmd: %s',' '.join(argv))
+
         count_obj = CountMatrixFile(args['<counts_fn>'])
         out = trim(count_obj)
 
     elif cmd == 'shrink' :
         args = docopt(cmd_opts_aug['shrink'],argv)
+
+        set_logging(args)
+        logger.info('cmd: %s',' '.join(argv))
+
         count_obj = CountMatrixFile(args['<counts_fn>'])
         if args['--p-max'] is None:
             args['--p-max'] = np.sqrt(1./count_obj.counts.shape[1])
-        out = ShrinkCounts(count_obj,
-                shrink_factor=float(args['--shrink-factor']),
-                p_max=float(args['--p-max']),
-                iters=int(args['--iters'])
-                )
-        
-    if args['--output'] == 'stdout' :
-        f = sys.stdout
-    else :
-        f = args['--output']
 
-    out.output.to_csv(f,sep='\t')
+        try :
+            out = ShrinkCounts(count_obj,
+                    shrink_factor=float(args['--shrink-factor']),
+                    p_max=float(args['--p-max']),
+                    iters=int(args['--iters'])
+                )
+        except Exception as e :
+            logger.error(e)
+            sys.exit(1)
+
+    write_output(out.output,args)
 
     # write out the report json
-    with DetkReport(args['--report-dir']) as r :
-        r.add_module(
-                out,
-                in_file_path=args['<counts_fn>'],
-                out_file_path=args['--output'],
-                column_data_path=args.get('--column-data'),
-                workdir=os.getcwd()
-                )
+    if not args['--no-report'] :
+        logging.info('writing report to %s',args['--report-dir'])
+        with DetkReport(args['--report-dir']) as r :
+            r.add_module(
+                    out,
+                    in_file_path=args['<counts_fn>'],
+                    out_file_path=args['--output'],
+                    column_data_path=args.get('--column-data'),
+                    workdir=os.getcwd()
+                    )
+    else :
+        logging.info('not generating report due to --no-report')
+
+    logging.info('done')
 
 if __name__ == '__main__':
     main()

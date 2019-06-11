@@ -10,6 +10,7 @@ Options:
 
 import csv
 from docopt import docopt
+import logging
 import numpy as np
 import pandas as pd
 import os.path
@@ -19,8 +20,12 @@ import sys
 from tempfile import TemporaryDirectory
 from warnings import warn
 
-from .common import CountMatrixFile, DetkModule, _cli_doc
+from .common import CountMatrixFile, DetkModule, _cli_doc, set_logging, make_cli_count_obj, write_output
 from .report import DetkReport
+
+# setup logging, null on the library level
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 #Available tokens for mini language
 reserved = ('ALL','OR','AND','MEDIAN','MEAN','ZERO','NONZERO','MAX','MIN')
@@ -176,6 +181,15 @@ class ColSpec(Expr) :
                                 mat.column_data[self.field].unique()
                                 )
                             )
+                    warn(('Specified group value {}=="{}" was not found in '
+                          'column values ({}). This is probably not what you '
+                          'want to do, give that filter command a good look.').format(
+                                self.field,
+                                self.group,
+                                mat.column_data[self.field].unique()
+                                )
+                            )
+
                 return [mat.counts[cols]]
             else :
                 # return a list of dataframe slices, one per
@@ -262,9 +276,21 @@ def filter_counts(counts_obj, command) :
 class FilterCounts(DetkModule) :
     def __init__(self, counts_obj, command) :
         self['params'] = {'command': command}
+        logger.info('filtering counts with command: %s',command)
+
+        logger.debug('constructing parser from command')
         parser = parse_filter_command(command)
+
+        logger.debug('constructing parser from command')
         self.counts_obj = counts_obj
+
+        logger.debug('filtering counts')
+
         self.kept = parser(counts_obj)
+
+        logger.info('features filtered: %d',self.counts_obj.counts.shape[0]-len(self.kept))
+        logger.info('features kept after filtering: %d',len(self.kept))
+
     @property
     def output(self):
         return self.counts_obj.counts.loc[self.counts_obj.counts.index.isin(self.kept)]
@@ -290,41 +316,45 @@ def main(argv=sys.argv):
     #Create command line arguments to pass in data and filter command
     args = docopt(_cli_doc(__doc__), argv=argv)
 
-    #Create CountMatrixFile object from given data
-    count_fn = args.get('<counts_fn>')
+    set_logging(args)
+    logger.info('cmd: %s',' '.join(argv))
 
     #Get column data, if provided
-    cov_fn = None
     if args['--column-data'] is not None :
-        warn('The --column-data command line argument is deprecated. '
-                'Use the optional [<cov_fn>] positional argument instead.'
-            )
-        cov_fn = args['--column-data']
+        if args['<cov_fn>'] is not None :
+            logger.warn('Both positional <cov_fn> argument and --column-data '
+                'are provided, ignoring the --column-data argument.'
+                )
+        else :
+            logger.warn('The --column-data command line argument is deprecated. '
+                    'Use the optional [<cov_fn>] positional argument instead.'
+                )
 
-    # cov_fn might have been initialized with --column-data before
-    # only override the value if <cov_fn> was provided on the CLI
-    cov_fn = args.get('<cov_fn>',cov_fn)
+            args['<cov_fn>'] = args['--column-data']
 
-    counts_obj = CountMatrixFile(args['<counts_fn>'],column_data_f=cov_fn)
+    count_obj = make_cli_count_obj(args)
 
-    filtered = FilterCounts(counts_obj, args['<command>'])
+    try :
+        filtered = FilterCounts(count_obj, args['<command>'])
+    except Exception as e :
+        logger.error(e)
+        sys.exit(1)
 
-    outf = sys.stdout
-    if args['--output'] != 'stdout' :
-        outf = open(args['--output'],'wt')
+    write_output(filtered.output,args)
 
-    filtered.output.to_csv(outf)
+    if not args['--no-report'] :
+        logging.info('writing report to %s',args['--report-dir'])
+        # write out the report json
+        with DetkReport(args['--report-dir']) as r :
+            r.add_module(
+                    filtered,
+                    in_file_path=args['<counts_fn>'],
+                    out_file_path=args['--output'],
+                    column_data_path=args.get('--column-data'),
+                    workdir=os.getcwd()
+                )
 
-    # write out the report json
-    with DetkReport(args['--report-dir']) as r :
-        r.add_module(
-                filtered,
-                in_file_path=args['<counts_fn>'],
-                out_file_path=args['--output'],
-                column_data_path=args.get('--column-data'),
-                workdir=os.getcwd()
-            )
-
+    logging.info('done')
 
 if __name__ == '__main__':
     main()

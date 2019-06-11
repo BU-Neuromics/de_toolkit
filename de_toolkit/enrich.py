@@ -57,16 +57,22 @@ Options:
 from collections import namedtuple, OrderedDict
 import csv
 from docopt import docopt
-import sys
+import logging
 import numpy as np
 import os
 import pandas
+from pprint import pformat
 import tempfile
+import sys
 import warnings
-from .common import CountMatrixFile, DetkModule, _cli_doc
+from .common import CountMatrixFile, DetkModule, _cli_doc, set_logging, write_output
 from .util import stub
 from .wrapr import require_r, wrapr, require_r_package, RPackageMissing
 from .report import DetkReport
+
+# setup logging, null on the library level
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 GeneSet = namedtuple('GeneSet',('name','desc','ids'))
 class GMT(OrderedDict):
@@ -153,6 +159,7 @@ class FGSEARes(DetkModule) :
         if stat.isnull().any() :
             nas = stat[stat.isnull()]
             warnings.warn('The following statistics were NaN and were filtered prior to fgsea:\n{}'.format(nas))
+            logger.warn('The following statistics were NaN and were filtered prior to fgsea:\n{}'.format(nas))
             stat = stat[~stat.isnull()]
 
         script = '''\
@@ -183,6 +190,7 @@ class FGSEARes(DetkModule) :
         }
         fwrite(fgseaRes,file=out.fn,sep=",",sep2=c("", " ", ""))
         '''
+        logger.debug('fgsea R script:\n%s',script)
 
         # need to write out the gmt to file
         with tempfile.NamedTemporaryFile() as f :
@@ -197,12 +205,16 @@ class FGSEARes(DetkModule) :
                 'rda.fn': rda_fn,
                 'nproc': nproc or 0
             }
+            logger.debug('fgsea wrapr params:\n%s',pformat(params))
             with wrapr(script,
                     params=params,
                     raise_on_error=True) as r :
                 gsea_res = r.output
         
         self.gsea_res = gsea_res
+        logger.info('shape of fgsea result dataframe: %s',gsea_res.shape)
+
+        logger.info('fgsea done')
 
     @property
     def properties(self):
@@ -232,18 +244,48 @@ def main(argv=sys.argv) :
 
     if cmd == 'fgsea' :
         args = docopt(cmd_opts_aug['fgsea'],argv)
-        gmt = GMT()
-        gmt.load_file(args['<gmt_fn>'])
-        res_df = pandas.read_csv(
-                args['<result_fn>'],
-                sep=None,
-                engine='python'
-        )
 
-        # first check if BiocParallel is available if --cores supplied
+        set_logging(args)
+        logger.info('cmd: %s',' '.join(argv))
+
+        logger.info('reading in GMT file %s',args['<gmt_fn>'])
+        gmt = GMT()
+        try :
+            gmt.load_file(args['<gmt_fn>'])
+        except Exception as e :
+            logger.error(e)
+            sys.exit(1)
+
+        logger.info('reading in results file %s',args['<result_fn>'])
+        try :
+            res_df = pandas.read_csv(
+                    args['<result_fn>'],
+                    sep=None,
+                    engine='python'
+            )
+        except Exception as e :
+            logger.error(e)
+            sys.exit(1)
+
+        logger.info('result data frame shape: %s',res_df.shape)
+
         cores = args['--cores']
         if cores is not None :
-            cores = int(cores)
+
+            logging.debug('Enabling parallelism with BiocParallel')
+
+            try:
+                require_r_package('BiocParallel')
+            except Exception as e :
+                logger.error(e)
+                sys.exit(1)
+
+            try :
+                cores = int(cores)
+            except ValueError :
+                logger.error(Exception('The cores argument to fgsea '
+                        'must be an integer'))
+                sys.exit(1)
 
         def get_col_or_idcol(res_df,col) :
             if col not in res_df.columns :
@@ -261,17 +303,20 @@ def main(argv=sys.argv) :
                 try :
                     col = get_col_or_idcol(res_df,col)
                 except ValueError :
-                    raise Exception((
+                    logger.error(Exception((
                         'Stat column {} could not be found in results result '
                         'or interpreted as an integer index, aborting'
                         ).format(col)
-                    )
+                    ))
+                    sys.exit(1)
         else :
             # pick the last numeric column
             col = res_df.columns[res_df.dtypes.apply(lambda x: np.issubdtype(x,np.number))][-1]
+        logger.info('using % as statistic column',col)
 
         stat = res_df[col]
         if args['--abs'] :
+            logger.info('taking absolute value of statistic column due to --abs')
             stat = stat.abs()
 
         idcol = args['--idcol']
@@ -279,38 +324,50 @@ def main(argv=sys.argv) :
             try :
                 idcol = get_col_or_idcol(res_df,idcol)
             except ValueError :
-                raise Exception((
+                logger.error(Exception((
                     'ID column {} could not be found in results result '
                     'or interpreted as an integer index, aborting'
                     ).format(col)
-                )
+                ))
+                sys.exit(1)
 
             stat.index = res_df[idcol]
+        logger.info('using % as identifier column',col)
 
         if args['--ascending'] :
+            logger.info('sorting statistic into ascending order due to --ascending')
             stat = -stat
 
-        out = FGSEARes(
-                gmt,
-                stat,
-                minSize=int(args['--minSize']),
-                maxSize=int(args['--maxSize']),
-                nperm=int(args['--nperm']),
-                nproc=cores,
-                rda_fn=args['--rda']
-            )
+        try :
+            out = FGSEARes(
+                    gmt,
+                    stat,
+                    minSize=int(args['--minSize']),
+                    maxSize=int(args['--maxSize']),
+                    nperm=int(args['--nperm']),
+                    nproc=cores,
+                    rda_fn=args['--rda']
+                )
+        except Exception as e :
+            logger.error(e)
+            sys.exit(1)
 
-    fp = sys.stdout if args['--output']=='stdout' else args['--output']
-    out.output.to_csv(fp)
+    write_output(out.output,args)
 
-    with DetkReport(args['--report-dir']) as r :
-        r.add_module(
-                out,
-                in_file_path=args['<gmt_fn>'],
-                out_file_path=args['--output'],
-                column_data_path=args.get('--column-data'),
-                workdir=os.getcwd()
-            )
-    
+    if not args['--no-report'] :
+        logging.info('writing report to %s',args['--report-dir'])
+        with DetkReport(args['--report-dir']) as r :
+            r.add_module(
+                    out,
+                    in_file_path=args['<gmt_fn>'],
+                    out_file_path=args['--output'],
+                    column_data_path=args.get('--column-data'),
+                    workdir=os.getcwd()
+                )
+    else :
+        logging.info('not generating report due to --no-report')
+
+    logging.info('done')
+
 if __name__ == '__main__':
     main()

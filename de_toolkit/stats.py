@@ -16,18 +16,23 @@ can be changed using optional command line arguments --json=<json fn> and
 or specified, already exists, it is read in, parsed, and added to. The HTML
 report is overwritten on every invocation using the contents of the JSON file.
 
+Some subcommands have specialize options. Examine the help messages for each
+command individually to view, e.g. detk-stats summary -h.
+
 Usage:
-    detk-stats summary [options] <counts_fn>
+    detk-stats summary [options] <counts_fn> [<cov_fn>]
     detk-stats basestats [options] <counts_fn>
     detk-stats coldist [options] <counts_fn>
     detk-stats rowdist [options] <counts_fn>
     detk-stats colzero [options] <counts_fn>
     detk-stats rowzero [options] <counts_fn>
     detk-stats entropy [options] <counts_fn>
-    detk-stats pca [options] <counts_fn>
+    detk-stats pca [options] <counts_fn> [<cov_fn>]
 
-Options:
-    -h --help       Access detailed help for individual commands
+Common Stats Options:
+    -h --help              Access detailed help for individual commands
+    -o FILE --output FILE  Destination of primary output [default: stdout]
+    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
 '''
 
 cmd_opts = {
@@ -44,11 +49,12 @@ This is equivalent to running each of these tools separately:
 - pca
 
 Usage:
-    detk-stats summary [options] <counts_fn>
+    detk-stats summary [options] <counts_fn> [<cov_fn>]
 
 Options:
     -h --help
-    --column-data=FN       Use column data provided in FN, only used in PCA
+    --column-data=FN       DEPRECATED: pass cov_fn as positional command line
+                           argument instead
     --color-col=COLNAME    Use column data column COLNAME for coloring output plots
     --bins=BINS            Number of bins to use for the calculated
                            distributions [default: 20]
@@ -57,10 +63,6 @@ Options:
                            by the appropriate sum
     -o FILE --output=FILE  Destination of primary output [default: stdout]
     -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-    --json=<json_fn>       Name of JSON output file
-    --html=<html_fn>       Name of HTML output file
-
-
 ''',
     'basestats':r'''
 Calculate basic statistics of the counts file, including:
@@ -73,8 +75,6 @@ Usage:
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
     -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-    --json=<json_fn>       Name of JSON output file
-    --html=<html_fn>       Name of HTML output file
 ''',
     'coldist':r'''
 Column-wise distribution of counts
@@ -119,8 +119,6 @@ Options:
                            column approximately sum to 1.
     -o FILE --output=FILE  Destination of primary output [default: stdout]
     -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-    --json=<json_fn>       Name of JSON output file
-    --html=<html_fn>       Name of HTML output file
 ''',
     'rowdist':r'''
 Row-wise distribution of counts
@@ -166,8 +164,6 @@ Options:
                            sum to 1.
     -o FILE --output=FILE  Destination of primary output [default: stdout]
     -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-    --json=<json_fn>       Name of JSON output file
-    --html=<html_fn>       Name of HTML output file
 ''',
     'colzero':r'''
 Column-wise distribution of zero counts
@@ -191,8 +187,6 @@ Usage:
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
     -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-    --json=<json_fn>       Name of JSON output file
-    --html=<html_fn>       Name of HTML output file
             ''',
     'rowzero':r'''
 Row-wise distribution of zero counts
@@ -216,8 +210,6 @@ Usage:
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
     -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-    --json=<json_fn>       Name of JSON output file
-    --html=<html_fn>       Name of HTML output file
 ''',
     'entropy':r'''
 Row-wise sample entropy calculation
@@ -248,8 +240,6 @@ Usage:
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
     -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-    --json=<json_fn>       Name of JSON output file
-    --html=<html_fn>       Name of HTML output file
 ''',
     'pca':r'''
 Principal common analysis of the counts matrix.
@@ -267,23 +257,21 @@ separations in the data can be more easily observed when projections are
 plotted.
 
 Usage:
-    detk-stats pca [options] <counts_fn>
+    detk-stats pca [options] <counts_fn> [<cov_fn>]
 
 Options:
-    -m FN --column-data=FN      Column data for annotating PCA results and
-                                plots (experimental)
-    -f NAME --column-name=NAME  Column name from provided column data for
-                                annotation PCA results and plots (experimental)
-    -o FILE --output=FILE       Destination of primary output [default: stdout]
+    --column-data=FN       DEPRECATED: pass cov_fn as positional command line
+                           argument instead
+    -o FILE --output=FILE  Destination of primary output [default: stdout]
     -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-    --json=<json_fn>            Name of JSON output file
-    --html=<html_fn>            Name of HTML output file
 '''
 }
 from collections import OrderedDict, defaultdict
 import csv
 from docopt import docopt
 import json
+import logging
+from pprint import pformat
 import math
 import numpy as np
 import pandas
@@ -297,8 +285,13 @@ from sklearn.preprocessing import scale
 import sys
 import warnings
 
-from .common import CountMatrixFile, DetkModule, _cli_doc
+from .common import (CountMatrixFile, DetkModule, _cli_doc, set_logging,
+        make_cli_count_obj, write_output)
 from .report import DetkReport
+
+# setup logging, null on the library level
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 def summary(count_mat,
         bins=20,
@@ -850,23 +843,22 @@ class Entropy(DetkModule) :
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             entropies = count_mat.counts.apply(scipy.stats.entropy,axis=1)
-            entropies = entropies.replace([-np.inf],0)
+            entropies[entropies.isnull()] = 0
 
-        # the number of percentile bins is the minimum of:
-        # - the unique number of distinct entropy values
-        # - the number of features
-        # - 100
-        pct = list(np.linspace(0,100,min(len(set(entropies)),cnts.shape[0],101)))
-        pctVal = np.percentile(entropies,pct,interpolation='higher')
+        # there are 100 evenly spaced bins between [0,max_entropy]
+        max_entropy = -np.log(1/num_cols)
+        pct = list(range(100))
+        pctVal = np.percentile(entropies,pct,interpolation='higher').tolist()
 
         #Format output
         self['entropies'] = res = defaultdict(list)
         res.update({
             'pct':pct,
-            'pctVal':pctVal
+            'pctVal':pctVal,
+            #'entropies': entropies.tolist()
         })
 
-        for p1, p2 in zip(pctVal.tolist(),pctVal[1:].tolist()+[1e6]) :
+        for p1, p2 in zip(pctVal,pctVal[1:]+[1e6]) :
             pct_features = entropies.index[(entropies>=p1) & (entropies<p2)]
 
             res['num_features'].append(pct_features.size)
@@ -1116,59 +1108,69 @@ def main(argv=sys.argv) :
         cmd_opts_aug[k] = _cli_doc(v)
 
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
-        docopt(_cli_doc(__doc__))
+        docopt(_cli_doc(__doc__),argv)
     argv = argv[1:]
     cmd = argv[0]
 
+    args = docopt(cmd_opts_aug[cmd],argv)
+    counts_obj = make_cli_count_obj(args)
+    set_logging(args)
+    logger.info('cmd: %s',' '.join(argv))
+
     if cmd == 'pca' :
-        args = docopt(cmd_opts_aug['pca'],argv)
-        counts_obj = CountMatrixFile(
-                args['<counts_fn>'],
-                column_data_f=args['--column-data']
-            )
+        if args['--column-data'] is not None :
+            if args['<cov_fn>'] is not None :
+                logger.warn('Both positional <cov_fn> argument and --column-data '
+                    'are provided, ignoring the --column-data argument.'
+                    )
+            else :
+                logger.warn('The --column-data command line argument is deprecated. '
+                        'Use the optional [<cov_fn>] positional argument instead.'
+                    )
+
+                args['<cov_fn>'] = args['--column-data']
+
+        counts_obj = make_cli_count_obj(args)
         output = CountPCA(counts_obj)
+
     elif cmd == 'summary' :
-        args = docopt(cmd_opts_aug['summary'],argv)
-        counts_obj = CountMatrixFile(
-                args['<counts_fn>'],
-                column_data_f=args['--column-data']
-            )
+        if args['--column-data'] is not None :
+            if args['<cov_fn>'] is not None :
+                logger.warn('Both positional <cov_fn> argument and --column-data '
+                    'are provided, ignoring the --column-data argument.'
+                    )
+            else :
+                logger.warn('The --column-data command line argument is deprecated. '
+                        'Use the optional [<cov_fn>] positional argument instead.'
+                    )
+
+                args['<cov_fn>'] = args['--column-data']
+
+        counts_obj = make_cli_count_obj(args)
         output = summary(counts_obj
           ,int(args['--bins'])
           ,args['--log']
           ,args['--density']
         )
     elif cmd == 'coldist' :
-        args = docopt(cmd_opts_aug['coldist'],argv)
-        counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = ColDist(counts_obj
           ,bins=int(args['--bins'])
           ,log=args['--log']
           ,density=args['--density']
         )
     elif cmd == 'rowdist' :
-        args = docopt(cmd_opts_aug['rowdist'],argv)
-        counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = RowDist(counts_obj
           ,bins=int(args['--bins'])
           ,log=args['--log']
           ,density=args['--density']
         )
     elif cmd == 'colzero' :
-        args = docopt(cmd_opts_aug['colzero'],argv)
-        counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = ColZero(counts_obj)
     elif cmd == 'rowzero' :
-        args = docopt(cmd_opts_aug['rowzero'],argv)
-        counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = RowZero(counts_obj)
     elif cmd == 'entropy' :
-        args = docopt(cmd_opts_aug['entropy'],argv)
-        counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = Entropy(counts_obj)
     elif cmd == 'basestats' :
-        args = docopt(cmd_opts_aug['basestats'],argv)
-        counts_obj = CountMatrixFile(args['<counts_fn>'])
         output = BaseStats(counts_obj)
 
     # make output a list if it is a singleton
@@ -1201,15 +1203,21 @@ def main(argv=sys.argv) :
                 out_writer.writerows(out.output)
 
     # write out the report json
-    with DetkReport(args['--report-dir']) as r :
-        for out in output :
-            r.add_module(
-                    out,
-                    in_file_path=args['<counts_fn>'],
-                    out_file_path=args['--output'],
-                    column_data_path=args.get('--column-data'),
-                    workdir=os.getcwd()
-                )
+    if not args['--no-report'] :
+        logging.info('writing report to %s',args['--report-dir'])
+        with DetkReport(args['--report-dir']) as r :
+            for out in output :
+                r.add_module(
+                        out,
+                        in_file_path=args['<counts_fn>'],
+                        out_file_path=args['--output'],
+                        column_data_path=args.get('--column-data'),
+                        workdir=os.getcwd()
+                    )
+    else :
+        logging.info('not generating report due to --no-report')
+
+    logging.info('done')
 
 if __name__ == '__main__':
     main()

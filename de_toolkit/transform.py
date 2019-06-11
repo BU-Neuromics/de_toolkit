@@ -1,17 +1,20 @@
 r'''
 Usage:
-    detk-transform plog [options] <count_fn>
-    detk-transform vst [options] <count_fn>
-    detk-transform rlog [options] <count_fn> [<design> <cov_fn>]
+    detk-transform plog [options] <counts_fn>
+    detk-transform vst [options] <counts_fn>
+    detk-transform rlog [options] <counts_fn> [<design> <cov_fn>]
+
+Options:
+    -h --help   This helpful helping of help
 '''
 TODO = '''
-    detk-transform ruvseq <count_fn>
+    detk-transform ruvseq <counts_fn>
 '''
 
 cmd_opts = {
     'vst':r'''
 Usage:
-    detk-transform vst [options] <count_fn>
+    detk-transform vst [options] <counts_fn>
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
@@ -20,7 +23,7 @@ Options:
 ''',
     'plog':r'''
 Usage:
-    detk-transform plog [options] <count_fn>
+    detk-transform plog [options] <counts_fn>
 
 Options:
     -c N --pseudocount=N   The pseudocount to use when taking the log transform [default: 1]
@@ -29,7 +32,7 @@ Options:
 ''',
     'rlog':r'''
 Usage:
-    detk-transform rlog [options] <count_fn> [<design> <cov_fn>]
+    detk-transform rlog [options] <counts_fn> [<design> <cov_fn>]
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
@@ -43,17 +46,23 @@ Options:
 }
 
 from docopt import docopt
+import logging
 import math, os
 import numpy
 import pandas
+from pprint import pformat
 import sys
-from .common import CountMatrixFile, DetkModule, _cli_doc
+from .common import CountMatrixFile, DetkModule, _cli_doc, make_cli_count_obj, set_logging, write_output
 from .wrapr import (
                 require_r, require_deseq2, wrapr, RExecutionError, RPackageMissing,
                 require_r_package
         )
 from .util import stub
 from .report import DetkReport
+
+# setup logging, null on the library level
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 def plog(count_obj,pseudocount=1,base=10) :
     '''
@@ -78,8 +87,10 @@ class PlogCounts(DetkModule):
     def __init__(self, count_obj, pseudocount=1, base=10):
         self['params'] = {'pseudocount': pseudocount,
                 'base': base}
+        logger.debug('plog params: %s',pformat(self['params']))
         self.count_obj = count_obj
         self.plog_counts = numpy.log(count_obj.counts+pseudocount)/numpy.log(base)
+        logger.info('done plog transform')
     @property
     def output(self):
         return self.plog_counts
@@ -123,12 +134,15 @@ class VstCounts(DetkModule):
         dds <- varianceStabilizingTransformation(dds)
         write.csv(assay(dds),out.fn)
         '''
+        logger.debug('VST R script:\n%s',pformat(script))
 
         with wrapr(script,
                 counts=count_obj.counts,
                 raise_on_error=True) as r :
             vsd_values = r.output
             self.vsd_values = vsd_values
+
+        logger.info('done VST transform')
 
     @property
     def output(self):
@@ -166,6 +180,8 @@ class RlogCounts(DetkModule):
     def __init__(self, count_obj, blind=True):
         self['params'] = {'blind': blind
                 }
+        logger.debug('rlog params:\n%s',pformat(self['params']))
+
         self.count_obj = count_obj
 
         script = '''\
@@ -208,7 +224,7 @@ class RlogCounts(DetkModule):
         dds <- rlog(dds,blind=blind)
         write.csv(assay(dds),out.fn)
         '''
-
+        logger.debug('VST R script:\n%s',script)
         column_data = None
         if not blind and count_obj.column_data is not None :
             column_data = count_obj.design_matrix.full_matrix
@@ -217,6 +233,7 @@ class RlogCounts(DetkModule):
             'design': '~ 1' if blind else count_obj.design,
             'blind': blind
         }
+        logger.debug('VST R script params:\n%s',pformat(params))
 
         with wrapr(script,
                 counts=count_obj.counts,
@@ -226,6 +243,7 @@ class RlogCounts(DetkModule):
             vsd_values = r.output
             self.vsd_values = vsd_values
 
+        logger.info('done rlog transform')
     @property
     def output(self):
         return self.vsd_values
@@ -250,6 +268,12 @@ def main(argv=sys.argv) :
     for k,v in cmd_opts.items() :
         cmd_opts_aug[k] = _cli_doc(v)
 
+    args = docopt(_cli_doc(__doc__), argv=argv[1:])
+    set_logging(args)
+    logger.info('cmd: %s',' '.join(argv))
+
+    count_obj = make_cli_count_obj(args)
+
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
         docopt(_cli_doc(__doc__))
     argv = argv[1:]
@@ -257,51 +281,49 @@ def main(argv=sys.argv) :
 
     if cmd == 'vst' :
         args = docopt(cmd_opts_aug['vst'],argv)
-        count_obj = CountMatrixFile(args['<count_fn>'])
 
         out = VstCounts(count_obj)
 
     if cmd == 'plog' :
         args = docopt(cmd_opts_aug['plog'],argv)
-        count_obj = CountMatrixFile(args['<count_fn>'])
 
-        print(args)
-        out = PlogCounts(
-                count_obj,
-                pseudocount=float(args['--pseudocount']),
-                base=float(args['--base'])
-                )
+        try :
+            out = PlogCounts(
+                    count_obj,
+                    pseudocount=float(args['--pseudocount']),
+                    base=float(args['--base'])
+                    )
+        except Exception as e :
+            logger.error(e)
+            sys.exit(1)
     
     elif cmd == 'rlog' :
         args = docopt(cmd_opts_aug['rlog'],argv)
 
-        count_obj = CountMatrixFile(
-            args['<count_fn>'],
-            args['<cov_fn>'],
-            design=args['<design>'],
-            strict=args.get('--strict',False)
-        )
-
         if args['--blind'] is None:
             args['--blind'] = True
-        out = RlogCounts(count_obj,
-                blind=args['--blind'])
 
-    if args['--output'] == 'stdout' :
-        f = sys.stdout
-    else :
-        f = args['--output']
+        try :
+            out = RlogCounts(count_obj,
+                    blind=args['--blind'])
+        except Exception as e :
+            logger.error(e)
+            sys.exit(1)
 
-    out.output.to_csv(f,sep='\t')
+    write_output(out.output,args)
 
-    with DetkReport(args['--report-dir']) as r :
-        r.add_module(
-                out,
-                in_file_path=args['<count_fn>'],
-                out_file_path=args['--output'],
-                column_data_path=args.get('--column-data'),
-                workdir=os.getcwd()
-                )
+    if not args['--no-report'] :
+        logging.info('writing report to %s',args['--report-dir'])
+        with DetkReport(args['--report-dir']) as r :
+            r.add_module(
+                    out,
+                    in_file_path=args['<counts_fn>'],
+                    out_file_path=args['--output'],
+                    column_data_path=args.get('--column-data'),
+                    workdir=os.getcwd()
+                    )
+
+    logging.info('done')
 
 if __name__ == '__main__' :
     main()

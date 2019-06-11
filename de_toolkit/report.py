@@ -24,6 +24,8 @@ from glob import glob
 import hashlib
 import jinja2
 import json
+import logging
+from pprint import pformat
 import numpy as np
 import os
 import pathlib
@@ -37,8 +39,12 @@ import de_toolkit
 # unless I access __path__???!?
 de_toolkit.__path__
 
-from .common import _cli_doc
+from .common import _cli_doc, set_logging
 from .version import __version__
+
+# setup logging, null on the library level
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 class NumpyEncoder(json.JSONEncoder):
     """ Special json encoder for numpy types """
@@ -85,8 +91,10 @@ class DetkModuleJSON(object):
         # since the parameters is a dictionary, convert to a json string
         # to calculate the hash
         param_str = json.dumps(module.params, sort_keys=True, cls=NumpyEncoder)
+        logger.debug('report param string:\n%s',pformat(param_str))
 
         module_id = hash_str(module.name+param_str+repl_file_path+__version__)
+        logger.debug('writing module for module_id: %s',module_id)
 
         filename = '{}.json'.format(module_id)
 
@@ -94,6 +102,7 @@ class DetkModuleJSON(object):
             self.filepath = json_path
         else :
             self.filepath = os.path.realpath(os.path.join(json_dir,filename))
+        logger.debug('writing module JSON to: %s',self.filepath)
 
         if workdir is None :
             workdir = os.getcwd()
@@ -128,6 +137,8 @@ class DetkModuleJSON(object):
         - ``column_data_path``: path to the column data file used, if available
         '''
 
+        logger.debug('writing out module JSON for module %s (id: %s)',self.out_d['name'],self.out_d['id'])
+
         with open(self.filepath,'wt') as f :
             json.dump(self.out_d,f,indent=indent,cls=NumpyEncoder)
 
@@ -144,9 +155,14 @@ def walk(path) :
 class DetkReport(object):
     def __init__(self, report_dir='./detk_report') :
         self.report_dir = os.path.realpath(report_dir)
+        logger.debug('creating DetkReport at report dir: %s',self.report_dir)
+
         self.json_dir = os.path.join(self.report_dir,'json')
+        logger.debug('json dir: %s',self.json_dir)
+
         pathlib.Path(self.json_dir).mkdir(parents=True, exist_ok=True)
         self.report_path = os.path.join(self.report_dir,'detk_report.html')
+        logger.debug('report path: %s',self.report_path)
 
         self.modules = []
 
@@ -173,6 +189,7 @@ class DetkReport(object):
                 workdir=workdir,
                 json_dir=self.json_dir
         )
+        logger.debug('adding detk module json for module %s',module.name)
         self.modules.append(module_json)
 
     @property
@@ -181,6 +198,8 @@ class DetkReport(object):
 
     @property
     def template_data(self) :
+
+        logger.debug('loading report templates')
 
         template_data = self._template_data
 
@@ -210,14 +229,18 @@ class DetkReport(object):
             for name in module_names :
                 tmpl_path = 'templates/{}/{}.{}'.format(asset,name,asset)
                 if pkg_resources.resource_exists('de_toolkit',tmpl_path) :
+                    logger.debug('found template, loading: %s',tmpl_path)
                     template_data['templates'][asset][name] = \
                         pkg_resources.resource_string('de_toolkit',tmpl_path).decode()
+                else :
+                    logger.debug('no template found, skipping: %s',tmpl_path)
 
             # third party assets
             template_data['assets'][asset] = {}
             asset_dir = 'templates/{}/assets/'.format(asset)
             if pkg_resources.resource_exists('de_toolkit',asset_dir) :
                 for tmpl_path in walk(asset_dir) :
+                    logger.debug('loading asset: %s',tmpl_path)
                     template_data['assets'][asset][os.path.basename(tmpl_path)] =  \
                         pkg_resources.resource_string('de_toolkit', tmpl_path).decode()
 
@@ -226,8 +249,11 @@ class DetkReport(object):
     @property
     def json(self) :
 
+        logger.debug('collecting report json')
+
         # write all the module JSON
         for module in self.modules :
+            logger.debug('writing module JSON: %s',module.out_d.get('name'))
             module.write()
 
         # format the report
@@ -235,6 +261,7 @@ class DetkReport(object):
         # reports
         json_str = []
         for fn in glob(os.path.join(self.json_dir,'*.json')) :
+            logger.debug('found module json: %s',fn)
             with open(fn) as f :
                 j = f.read().strip()
                 json_str.append(json.loads(j))
@@ -243,11 +270,15 @@ class DetkReport(object):
 
     def write(self) :
 
+        logger.debug('writing out report')
+
         # write all the module JSON for this report
         for module in self.modules :
+            logger.debug('writing module JSON: %s',module.out_d.get('name'))
             module.write()
 
         # create and render the template
+        logger.debug('rendering report template')
         template = jinja2.Template(
             pkg_resources.resource_string(
                 'de_toolkit','templates/html/{}'.format(
@@ -257,10 +288,12 @@ class DetkReport(object):
         )
 
         with open(self.report_path,'wb') as f :
+            logger.debug('writing out template')
             f.write(template.render(**self.template_data).encode())
 
     def __enter__(self) :
         return self
+
     def __exit__(self,type,value,traceback):
         self.write()
 
@@ -297,12 +330,16 @@ class DetkReportDev(DetkReport) :
         # load the module templates for the modules found in the report dir
         for asset in ('js','css','html') :
 
+            logger.debug('preparing %s templates',asset)
+
             dest_dir = pathlib.Path(os.path.join(self.report_dir,asset))
             dest_dir.mkdir(parents=True, exist_ok=True)
 
             # common assets
             common_path = 'templates/{}/common.{}'.format(asset,asset)
+            logger.debug('looking for common %s template: %s',asset, common_path)
             if pkg_resources.resource_exists('de_toolkit',common_path) :
+                logger.debug('found common asset, loading')
                 template_data['common'][asset] = \
                     pkg_resources.resource_string('de_toolkit',common_path).decode()
                 # copy the asset
@@ -335,6 +372,7 @@ class DetkReportDev(DetkReport) :
                 for tmpl_path in walk(asset_dir) :
                     dest_path_str = tmpl_path.replace('templates/','')
                     dest_path = pathlib.Path(os.path.join(self.report_dir,dest_path_str))
+                    logger.debug('copying asset: %s -> %s',tmpl_path,dest_path)
                     dest_path.parent.mkdir(parents=True, exist_ok=True)
                     # copy the asset
                     shutil.copy(
@@ -367,16 +405,29 @@ def main(argv=sys.argv) :
     if cmd == 'generate' :
         args = docopt(cmd_opts_aug['generate'],argv)
 
+        set_logging(args)
+        logger.info('cmd: %s',' '.join(argv))
+
         report_class = DetkReport
         if args['--dev'] :
+            logger.info('generating development repot due to --dev')
             report_class = DetkReportDev
 
         # the context manager loads and writes, do nothing inside
         with report_class(args['--report-dir']) :
             pass
+
     elif cmd == 'clean' :
         args = docopt(cmd_opts_aug['clean'],argv)
+
+        set_logging(args)
+        logger.info('cmd: %s',' '.join(argv))
+
+        logger.info('cleaning report dir: %s',args['--report-dir'])
+
         shutil.rmtree(args['--report-dir'],ignore_errors=True)
+
+    logger.info('done')
 
 if __name__ == '__main__' :
 

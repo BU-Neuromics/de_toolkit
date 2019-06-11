@@ -1,17 +1,17 @@
 r'''
 Usage:
-    detk-de deseq2 [options] <design> <count_fn> <cov_fn>
-    detk-de firth [options] <design> <count_fn> <cov_fn>
+    detk-de deseq2 [options] <design> <counts_fn> <cov_fn>
+    detk-de firth [options] <design> <counts_fn> <cov_fn>
 '''
 
 TODO = r'''
-    detk-de t-test ( help | [options] <count_fn> <cov_fn> )
+    detk-de t-test ( help | [options] <counts_fn> <cov_fn> )
 '''
 
 cmd_opts = {
         'deseq2':r'''
 Usage:
-    detk-de deseq2 [options] <design> <count_fn> <cov_fn>
+    detk-de deseq2 [options] <design> <counts_fn> <cov_fn>
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
@@ -34,7 +34,7 @@ Options:
 ''',
         'firth':r'''
 Usage:
-    detk-de firth [options] <design> <count_fn> <cov_fn>
+    detk-de firth [options] <design> <counts_fn> <cov_fn>
 
 Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
@@ -54,15 +54,23 @@ Options:
 }
 
 from docopt import docopt
+import logging
 import pandas
+from pprint import pformat
 import sys, os
-from .common import CountMatrixFile, InvalidDesignException, DetkModule, _cli_doc
+from .common import (CountMatrixFile, InvalidDesignException, DetkModule,
+        _cli_doc, set_logging, make_cli_count_obj, write_output
+    )
 from .wrapr import (
         require_r, require_deseq2, wrapr, RExecutionError, RPackageMissing,
         require_r_package
     )
 from .util import stub
 from .report import DetkReport
+
+# setup logging, null on the library level
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 def deseq2(count_obj,
         normalized=True,
@@ -118,6 +126,7 @@ class DESeq2Counts(DetkModule):
         count_obj.design_matrix.drop_from_rhs('Intercept',quiet=True)
 
         if cores is not None :
+            logging.debug('Enabling parallelism with BiocParallel')
             require_r_package('BiocParallel')
             try :
                 cores = int(cores)
@@ -133,6 +142,7 @@ class DESeq2Counts(DetkModule):
             'all.coeff.results': all_coeff_results,
             'gene.wise.disp.est': gene_wise_disp_est
         }
+        logger.debug('DESeq2 wrapr params:\n %s', pformat(params))
         script = '''\
             library(DESeq2)
             cnts <- read.csv(counts.fn,header=T,as.is=T,check.names=FALSE)
@@ -270,12 +280,15 @@ class DESeq2Counts(DetkModule):
 
             write.csv(res.df,out.fn,row.names=F)
         '''
+        logging.info('Executing DESeq2 in wrapr')
         with wrapr(script,
                 counts=count_obj.counts,
                 metadata=count_obj.design_matrix.full_matrix,
                 params=params,
                 routput_dir=routput_dir) as wr :
             self.wr_output = wr.output
+
+        logging.info('Done executing DESeq2 in wrapr')
     @property
     def output(self):
         return self.wr_output
@@ -331,6 +344,7 @@ class FLGCounts(DetkModule):
             'rda': rda,
             'cores': cores
         }
+        logger.debug('logistf wrapr params:\n %s', pformat(params))
         script = '''\
             library(logistf)
             cnts <- read.csv(counts.fn,header=T,as.is=T,check.names=FALSE)
@@ -408,7 +422,7 @@ class FLGCounts(DetkModule):
 
             write.csv(res.df,out.fn,row.names=F)
         '''
-
+        logging.info('Executing logistf in wrapr')
         with wrapr(script,
                 counts=count_obj.counts,
                 metadata=count_obj.design_matrix.full_matrix,
@@ -416,6 +430,7 @@ class FLGCounts(DetkModule):
                 routput_dir=routput_dir) as wr :
             self.wr_output = wr.output
 
+        logging.info('Done executing logistf in wrapr')
     @property
     def output(self):
         return self.wr_output
@@ -447,53 +462,62 @@ def main(argv=sys.argv) :
 
     if cmd == 'deseq2' :
         args = docopt(cmd_opts_aug['deseq2'],argv)
-        count_obj = CountMatrixFile(
-            args['<count_fn>'],
-            args['<cov_fn>'],
-            design=args['<design>'],
-            strict=args.get('--strict',False)
-        )
 
-        out = DESeq2Counts(count_obj,
-                normalized=args.get('--norm-counts',False),
-                rda=args.get('--rda'),
-                all_coeff_results=not args.get('--last-term-only',False),
-                gene_wise_disp_est=args.get('--gene-wise-disp',False),
-                cores=int(args['--cores']) if args['--cores'] != 'none' else None,
-                routput_dir=args['--routput-dir']
-                )
-    
+        set_logging(args)
+        logger.info('cmd: %s',' '.join(argv))
+
+        count_obj = make_cli_count_obj(args)
+
+        try :
+            logger.info('running DESeq2')
+            out = DESeq2Counts(count_obj,
+                    normalized=args.get('--norm-counts',False),
+                    rda=args.get('--rda'),
+                    all_coeff_results=not args.get('--last-term-only',False),
+                    gene_wise_disp_est=args.get('--gene-wise-disp',False),
+                    cores=int(args['--cores']) if args['--cores'] != 'none' else None,
+                    routput_dir=args['--routput-dir']
+            )
+        except Exception as e :
+            logger.error(e)
+            sys.exit(1)
+
     elif cmd == 'firth' :
         args = docopt(cmd_opts_aug['firth'],argv)
-        count_obj = CountMatrixFile(
-            args['<count_fn>'],
-            args['<cov_fn>'],
-            design=args['<design>'],
-            strict=args.get('--strict',False)
-        )
 
-        out = FLGCounts(count_obj,
-                rda=args['--rda'],
-                standardize=args.get('--standardize',False),
-                cores=int(args['--cores']) if args['--cores'] != 'none' else None,
-                routput_dir=args['--routput-dir']
-                )
+        set_logging(args)
+        logger.info('cmd: %s',' '.join(argv))
 
-    if args['--output'] == 'stdout' :
-        f = sys.stdout
+        count_obj = make_cli_count_obj(args)
+
+        try :
+            logger.info('running Firth logistic regression')
+            out = FLGCounts(count_obj,
+                    rda=args['--rda'],
+                    standardize=args.get('--standardize',False),
+                    cores=int(args['--cores']) if args['--cores'] != 'none' else None,
+                    routput_dir=args['--routput-dir']
+            )
+        except Exception as e :
+            logger.error(e)
+            sys.exit(1)
+
+    write_output(out.output,args)
+
+    if not args['--no-report'] :
+        logging.info('writing report to %s',args['--report-dir'])
+        with DetkReport(args['--report-dir']) as r :
+            r.add_module(
+                    out,
+                    in_file_path=args['<counts_fn>'],
+                    out_file_path=args['--output'],
+                    column_data_path=args.get('--column-data'),
+                    workdir=os.getcwd()
+                    )
     else :
-        f = args['--output']
+        logging.info('not generating report due to --no-report')
 
-    out.output.to_csv(f,sep='\t')
-
-    with DetkReport(args['--report-dir']) as r :
-        r.add_module(
-                out,
-                in_file_path=args['<count_fn>'],
-                out_file_path=args['--output'],
-                column_data_path=args.get('--column-data'),
-                workdir=os.getcwd()
-                )
+    logging.info('done')
 
 if __name__ == '__main__' :
     main()

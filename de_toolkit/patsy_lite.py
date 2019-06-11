@@ -1,9 +1,14 @@
+import logging
 import numpy
 import pandas
 from patsy import EvalFactor, ModelDesc, design_matrix_builders, dmatrices, PatsyError
 from ply import lex
 from pprint import pprint
 import re
+
+# setup logging, null on the library level
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 class PatsyLiteParseError(Exception): pass
 
@@ -124,6 +129,7 @@ class DesignMatrix(object) :
     def __init__(self,formula,model_data) :
 
         self._formula = formula
+        logger.debug('DesignMatrix formula: %s',formula)
         self._model_data = model_data
 
         # when there is a categorical veriable on the lhs, the vector
@@ -140,6 +146,8 @@ class DesignMatrix(object) :
             formula = '1 + {}'.format(formula)
 
         model = patsy_lite_to_patsy(formula)
+        logger.debug('transpiled patsy formula: %s',model.describe())
+
         try :
             self.lhs, self.rhs = dmatrices(
                 model.describe()
@@ -180,6 +188,8 @@ class DesignMatrix(object) :
 
         # remove the Intercept term from the lhs that we added at the beginning
         self.drop_from_lhs('Intercept')
+
+        logger.debug('final design: %s', self.design)
 
     @property
     def design(self) :

@@ -1,5 +1,11 @@
 # Changelog
 
+## [ 0.9.7 ]
+### Added
+- it's better than bad, it's good! logging
+### Changed
+- fixed entropy testing bug
+
 ## [ 0.9.6 ]
 ### Changed
 - yup, maybe reporting is actually fixed now

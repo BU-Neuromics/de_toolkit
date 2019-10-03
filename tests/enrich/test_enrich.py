@@ -71,6 +71,7 @@ def result_csv(request,stat) :
 @fgsea_test
 def test_fgsea(gmt_obj,stat) :
     from de_toolkit.enrich import fgsea
+    import numpy
 
     # this way has set1, set2, and set3 negative NES,
     # set4 and set5 positive
@@ -79,7 +80,7 @@ def test_fgsea(gmt_obj,stat) :
     assert all(res.loc[['set4','set5'],'NES'] > 0)
 
     # this is the opposite direction
-    res = fgsea(gmt_obj,(-stat).sort_values(),minSize=1)
+    res = fgsea(gmt_obj,-stat,minSize=1)
     assert all(res.loc[['set1','set2','set3'],'NES'] > 0)
     assert all(res.loc[['set4','set5'],'NES'] < 0)
 
@@ -88,7 +89,16 @@ def test_fgsea(gmt_obj,stat) :
     na_stat = stat.copy().astype(float)
     na_stat[0] = np.nan
     with pytest.warns(UserWarning) :
-        res = fgsea(gmt_obj,na_stat.sort_values(),minSize=1)
+        res = fgsea(gmt_obj,na_stat,minSize=1)
+
+    # if some of the gene names are None detk should handle gracefully
+    # and warn user
+    null_stat = stat.copy().astype(float)
+    null_stat.rename(index={'gene1':None},inplace=True)
+    null_stat.rename(index={'gene2':numpy.nan},inplace=True)
+    null_stat.rename(index={'gene3':('a','tuple')},inplace=True)
+    with pytest.warns(UserWarning) :
+        res = fgsea(gmt_obj,null_stat,minSize=1)
 
 @r_test
 @fgsea_test

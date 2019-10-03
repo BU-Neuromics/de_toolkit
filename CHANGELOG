@@ -1,5 +1,9 @@
 # Changelog
 
+## [ unreleased ]
+### Changed
+- fixed null statistic name json error in fgsea R deserialization
+
 ## [ 0.9.7 ]
 ### Added
 - it's better than bad, it's good! logging

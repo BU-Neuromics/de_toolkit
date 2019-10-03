@@ -158,9 +158,18 @@ class FGSEARes(DetkModule) :
         # check for NAs in the stat
         if stat.isnull().any() :
             nas = stat[stat.isnull()]
-            warnings.warn('The following statistics were NaN and were filtered prior to fgsea:\n{}'.format(nas))
-            logger.warn('The following statistics were NaN and were filtered prior to fgsea:\n{}'.format(nas))
+            msg = 'The following statistics were NaN and were filtered prior to fgsea:\n{}'.format(nas)
+            warnings.warn(msg)
+            logger.warn(msg)
             stat = stat[~stat.isnull()]
+
+        # check for anything that isn't a string in the stat names
+        if stat.index.isnull().any() :
+            nas = stat[stat.index.isnull()]
+            msg = 'The following statistic names were NaN and cast as the string "null" prior to fgsea:\n{}'.format(nas)
+            warnings.warn(msg)
+            logger.warn(msg)
+            stat.rename(index={_:'null' for _ in nas.index},inplace=True)
 
         script = '''\
         library(fgsea)

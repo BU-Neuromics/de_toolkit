@@ -341,7 +341,7 @@ def main(argv=sys.argv) :
                 sys.exit(1)
 
             stat.index = res_df[idcol]
-        logger.info('using % as identifier column',col)
+        logger.info('using % as identifier column',idcol)
 
         if args['--ascending'] :
             logger.info('sorting statistic into ascending order due to --ascending')

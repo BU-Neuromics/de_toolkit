@@ -1,5 +1,9 @@
 # Changelog
 
+## [ unreleased ]
+### Changed
+- fixed improper identifier column name output in enrich.py
+
 ## [ 0.9.8 ]
 ### Changed
 - fixed null statistic name json error in fgsea R deserialization

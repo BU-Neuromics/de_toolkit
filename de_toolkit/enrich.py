@@ -50,6 +50,9 @@ Options:
     --minSize=INT             minSize argument to fgsea [default: 15]
     --maxSize=INT             maxSize argument to fgsea [default: 500]
     --nperm=INT               nperm argument to fgsea [default: 10000]
+    --multilevel              Use the fgseaMultilevel function, instead of fgsea
+    --routput-dir=DIR         Path to output directory for R stuffs, useful for
+                              debuggin out
     --rda=FILE                write out the fgsea result to the provide file
                               using saveRDS() in R
 ''',
@@ -143,13 +146,16 @@ class FGSEARes(DetkModule) :
             minSize=15,
             maxSize=500,
             nperm=10000,
+            multilevel=True,
             nproc=None,
-            rda_fn=None
+            rda_fn=None,
+            routput_dir=None
         ) :
         self['params'] = {
                 'minSize': minSize,
                 'maxSize': maxSize,
                 'nperm': nperm,
+                'multilevel': multilevel,
                 'nproc': nproc,
                 'rda_fn': rda_fn
                 }
@@ -178,14 +184,25 @@ class FGSEARes(DetkModule) :
         ranks <- setNames(params$stat,params$id)
         pathways <- gmtPathways(params$gmt.fn)
 
-        fgseaRes <- fgsea(
-            pathways,
-            ranks,
-            minSize=params$minSize,
-            maxSize=params$maxSize,
-            nperm=params$nperm,
-            nproc=params$nproc
-        )
+        if(!is.null(params$multilevel)) {
+            fgseaRes <- fgseaMultilevel(
+                pathways,
+                ranks,
+                minSize=params$minSize,
+                maxSize=params$maxSize,
+                sampleSize=params$nperm,
+                nproc=params$nproc
+            )
+        } else {
+            fgseaRes <- fgsea(
+                pathways,
+                ranks,
+                minSize=params$minSize,
+                maxSize=params$maxSize,
+                nperm=params$nperm,
+                nproc=params$nproc
+            )
+        }
         if(!is.null(params$rda.fn)) {
             saveRDS(
                 list(
@@ -210,6 +227,7 @@ class FGSEARes(DetkModule) :
                 'id': stat.index.tolist(),
                 'minSize': minSize,
                 'maxSize': maxSize,
+                'multilevel': multilevel,
                 'nperm': nperm,
                 'rda.fn': rda_fn,
                 'nproc': nproc or 0
@@ -217,7 +235,8 @@ class FGSEARes(DetkModule) :
             logger.debug('fgsea wrapr params:\n%s',pformat(params))
             with wrapr(script,
                     params=params,
-                    raise_on_error=True) as r :
+                    raise_on_error=True,
+                    routput_dir=routput_dir) as r :
                 gsea_res = r.output
         
         self.gsea_res = gsea_res
@@ -354,8 +373,10 @@ def main(argv=sys.argv) :
                     minSize=int(args['--minSize']),
                     maxSize=int(args['--maxSize']),
                     nperm=int(args['--nperm']),
+                    multilevel=args['--multilevel'],
                     nproc=cores,
-                    rda_fn=args['--rda']
+                    rda_fn=args['--rda'],
+                    routput_dir=args['--routput-dir']
                 )
         except Exception as e :
             logger.error(e)

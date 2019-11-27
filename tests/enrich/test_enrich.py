@@ -116,6 +116,24 @@ def test_fgsea_cli(gmt_file,result_csv) :
 
     with tempfile.NamedTemporaryFile('wt') as f:
 
+        # test multilevel flag
+        main(['detk-enrich','fgsea','--multilevel','--minSize=1',gmt_file,result_csv,'-o',f.name])
+        res = pandas.read_csv(f.name,index_col=0)
+        assert all(res.loc[['set1','set2','set3'],'NES'] < 0)
+        assert all(res.loc[['set4','set5'],'NES'] > 0)
+
+    with tempfile.NamedTemporaryFile('wt') as f:
+        with tempfile.TemporaryDirectory() as d :
+
+            # test multilevel flag
+            main(['detk-enrich','fgsea','--routput-dir={}'.format(d),'--minSize=1',gmt_file,result_csv,'-o',f.name])
+            res = pandas.read_csv(f.name,index_col=0)
+            assert all(res.loc[['set1','set2','set3'],'NES'] < 0)
+            assert all(res.loc[['set4','set5'],'NES'] > 0)
+            assert os.path.exists(os.path.join(d,'script.R'))
+
+    with tempfile.NamedTemporaryFile('wt') as f:
+
         # different column as statistic
         main(['detk-enrich','fgsea','--minSize=1','--statcol=negstat',gmt_file,
             result_csv,'-o',f.name])

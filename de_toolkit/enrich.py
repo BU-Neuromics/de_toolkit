@@ -96,12 +96,13 @@ class GMT(OrderedDict):
 
     def load_file(self,fn) :
         self.fn = fn
-        with open(fn) as f :
+        with open(fn,encoding='utf-8') as f :
             for r in csv.reader(f,delimiter='\t') :
-                self[r[0]] = [_.strip() for _ in r[2:]]
+                self.add(r[0],r[2:],desc=r[1])
+                #self[r[0]] = [_.strip() for _ in r[2:]]
 
     def write_file(self,out_fn) :
-        with open(out_fn,'wt') as f :
+        with open(out_fn,'wt',encoding='utf-8') as f :
             out_f = csv.writer(f,delimiter='\t')
             for k,v in self.items() :
                 out_f.writerow([k,k]+list(v.ids))

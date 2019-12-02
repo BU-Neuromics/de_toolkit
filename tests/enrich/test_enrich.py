@@ -38,6 +38,18 @@ def gmt_file(request,gset_dict) :
   os.remove(f.name)
 
 @pytest.fixture()
+def gmt_file_w_unicode(request) :
+  with tempfile.NamedTemporaryFile('wt',delete=False) as f :
+    tmp_f = csv.writer(f,delimiter='\t')
+    tmp_f.writerow(['set1','tgf\u03b1','gene1','gene2'])
+
+  yield f.name
+
+  # cleanup the csv
+  os.remove(f.name)
+
+
+@pytest.fixture()
 def gmt_obj(request,gset_dict) :
     from de_toolkit.enrich import GMT
     return GMT(gset_dict)
@@ -224,4 +236,12 @@ def test_gmt_file(gset_dict, gmt_file) :
             assert line[1] == 'set1'
             assert line[2:] == ['gene1','gene2','gene3']
 
+def test_gmt_file(gset_dict, gmt_file_w_unicode) :
+    from de_toolkit.enrich import GMT
+
+    gmt = GMT()
+    gmt.load_file(gmt_file_w_unicode)
+
+    assert gmt['set1'].name == 'set1'
+    assert gmt['set1'].desc == 'tgf\u03b1'
 

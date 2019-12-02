@@ -1,5 +1,9 @@
 # Changelog
 
+## [ 0.9.10 ]
+### Changed
+- fixed ascii decode error when GMT file contains non-ascii characters
+
 ## [ 0.9.9 ]
 ### Added
 - fgseaMultilevel support in enrich.fgsea

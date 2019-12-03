@@ -32,8 +32,6 @@ Options:
 import csv, os
 from docopt import docopt
 import logging
-import matplotlib as plt
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pprint import pformat
@@ -276,6 +274,9 @@ def plot_entropy(entropy_res, threshold, name=None, show=None):
     between 0 and 1. If a name (in the the form of *.png) is given, the figure will be saved with
     the specified name. If show is set to 'show', the plot will be shown.
     '''
+
+    import matplotlib as plt
+    import matplotlib.pyplot as plt
 
     entropy = entropy_res['entropy']
 

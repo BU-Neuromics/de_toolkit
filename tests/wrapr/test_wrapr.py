@@ -166,6 +166,12 @@ def test_wrapr(fake_counts_obj):
         with wrapr.wrapr('library(base)',routput_dir=d) as wr :
             assert wr.success
         assert os.path.exists(os.path.join(d,'script.R'))
+        assert os.path.exists(os.path.join(d,'counts.csv'))
+        assert os.path.exists(os.path.join(d,'counts_out.csv'))
+        assert os.path.exists(os.path.join(d,'meta_in.csv'))
+        assert os.path.exists(os.path.join(d,'meta_out.csv'))
+        assert os.path.exists(os.path.join(d,'stdout'))
+        assert os.path.exists(os.path.join(d,'stderr'))
 
 def test_wrapr_fail() :
     from de_toolkit import wrapr

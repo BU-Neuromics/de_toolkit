@@ -394,8 +394,18 @@ class WrapR(object) :
         self.process = p
         self.stdout = p.stdout.decode()
         logger.debug('R script stdout:\n %s',pformat(self.stdout))
+
+        # write stdout to file in the r output directory
+        with open(os.path.join(self.routput_dir,'stdout'),'w') as f :
+            f.write(self.stdout)
+
         self.stderr = p.stderr.decode()
         logger.debug('R script stderr:\n %s',pformat(self.stderr))
+
+        # write stderr to file in the r output directory
+        with open(os.path.join(self.routput_dir,'stderr'),'w') as f :
+            f.write(self.stderr)
+
         self.returncode = p.returncode
         logger.debug('R script return code: %d',self.returncode)
         self.success = p.returncode == 0

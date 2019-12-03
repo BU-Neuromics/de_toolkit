@@ -14,7 +14,7 @@ def is_windows() :
 @pytest.mark.skipif(is_windows(), reason='not sure how to test which() on Windows')
 def test_which() :
     from de_toolkit.util import which
-    assert which('sh') == '/bin/sh'
+    assert which('sh').endswith('/bin/sh')
 
 @pytest.fixture
 def fake_tidy_counts_csv(request) :

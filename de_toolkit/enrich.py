@@ -113,6 +113,7 @@ def fgsea(
         minSize=15,
         maxSize=500,
         nperm=10000,
+        multilevel=False,
         nproc=None,
         rda_fn=None) :
     '''
@@ -136,7 +137,7 @@ def fgsea(
     - leadingEdge: the leading edge features as defined by GSEA (string with
       space-separated feature names)
     '''
-    obj = FGSEARes(gmt, stat, minSize, maxSize, nperm, nproc, rda_fn)
+    obj = FGSEARes(gmt, stat, minSize, maxSize, nperm, multilevel, nproc, rda_fn)
     return obj.output
 
 class FGSEARes(DetkModule) :
@@ -181,30 +182,47 @@ class FGSEARes(DetkModule) :
         script = '''\
         library(fgsea)
         library(data.table)
+        library(BiocParallel)
+        register(SerialParam())
+
+        # ensure that execution is set to serial if no cores are specified
+        # overrides potentially default behavior of bpparam() returning
+        # registered parallel backend using all available cores, which is stupid
+        if(params$nproc != 0) {
+            bp.param <- fgsea:::setUpBPPARAM(nproc=params$nproc)
+        } else {
+            bp.param <- SerialParam()
+        }
 
         ranks <- setNames(params$stat,params$id)
         pathways <- gmtPathways(params$gmt.fn)
 
-        if(!is.null(params$multilevel)) {
+        cat('relevant params:')
+        str(params[c('minSize','maxSize','sampleSize','nproc','multilevel')])
+
+        if(!is.null(params$multilevel) && params$multilevel==TRUE) {
+            cat('running in multilevel mode')
             fgseaRes <- fgseaMultilevel(
                 pathways,
                 ranks,
                 minSize=params$minSize,
                 maxSize=params$maxSize,
                 sampleSize=params$nperm,
-                nproc=params$nproc
+                BPPARAM=bp.param
             )
         } else {
+            cat('running in normal mode')
             fgseaRes <- fgsea(
                 pathways,
                 ranks,
                 minSize=params$minSize,
                 maxSize=params$maxSize,
                 nperm=params$nperm,
-                nproc=params$nproc
+                BPPARAM=bp.param
             )
         }
         if(!is.null(params$rda.fn)) {
+            cat('saving fgsea output to RDS file')
             saveRDS(
                 list(
                     fgseaRes=fgseaRes,
@@ -300,14 +318,6 @@ def main(argv=sys.argv) :
 
         cores = args['--cores']
         if cores is not None :
-
-            logging.debug('Enabling parallelism with BiocParallel')
-
-            try:
-                require_r_package('BiocParallel')
-            except Exception as e :
-                logger.error(e)
-                sys.exit(1)
 
             try :
                 cores = int(cores)

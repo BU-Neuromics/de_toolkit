@@ -1,5 +1,12 @@
 # Changelog
 
+## [ 0.9.11 ]
+### Changed
+- ensure fgsea execution only uses SerialParam when no additional cores are provided
+### Added
+- WrapR objects now capture stdout and stderr from R scripts to files of the same name
+  in the r output directory
+
 ## [ 0.9.10 ]
 ### Changed
 - fixed ascii decode error when GMT file contains non-ascii characters

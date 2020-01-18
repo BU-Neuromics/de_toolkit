@@ -47,6 +47,9 @@ Options:
                               scores
     --abs                     Take the absolute value of the column before
                               passing to fgsea
+    --filter-unannotated      Remove any genes from the result matrix that have
+                              identifiers that don't exist in any gene set of
+                              the GMT
     --minSize=INT             minSize argument to fgsea [default: 15]
     --maxSize=INT             maxSize argument to fgsea [default: 500]
     --nperm=INT               nperm argument to fgsea [default: 10000]
@@ -60,6 +63,7 @@ Options:
 from collections import namedtuple, OrderedDict
 import csv
 from docopt import docopt
+from functools import reduce
 import logging
 import numpy as np
 import os
@@ -150,6 +154,7 @@ class FGSEARes(DetkModule) :
             nperm=10000,
             multilevel=True,
             nproc=None,
+            filter_unannotated=False,
             rda_fn=None,
             routput_dir=None
         ) :
@@ -162,6 +167,7 @@ class FGSEARes(DetkModule) :
                 'rda_fn': rda_fn
                 }
         self.gmt = gmt
+        gmt_ids = reduce(lambda a,b: set(a).union(set(b)), (_.ids for _ in gmt.values()))
 
         # check for NAs in the stat
         if stat.isnull().any() :
@@ -178,6 +184,26 @@ class FGSEARes(DetkModule) :
             warnings.warn(msg)
             logger.warn(msg)
             stat.rename(index={_:'null' for _ in nas.index},inplace=True)
+
+        if filter_unannotated :
+            logger.info('filtering out features without annotation in GMT')
+            logger.info('{} unique IDs found in GMT'.format(len(gmt_ids)))
+            annotated_ids = stat.index.intersection(gmt_ids)
+            logger.info('{}/{} ({:.2f}%) of features retained'.format(
+                len(annotated_ids),
+                stat.index.size,
+                100*len(annotated_ids)/stat.index.size
+                )
+            )
+
+            stat = stat.loc[annotated_ids]
+
+        # make sure at least some IDs match
+        if not any(_ in gmt_ids for _ in stat.index) :
+            err = ('No features map between GMT file and results. Check that the '
+                   'feature ID types match between your results and GMT.')
+            logger.error(err)
+            raise Exception(err)
 
         script = '''\
         library(fgsea)
@@ -386,6 +412,7 @@ def main(argv=sys.argv) :
                     nperm=int(args['--nperm']),
                     multilevel=args['--multilevel'],
                     nproc=cores,
+                    filter_unannotated=args['--filter-unannotated'],
                     rda_fn=args['--rda'],
                     routput_dir=args['--routput-dir']
                 )

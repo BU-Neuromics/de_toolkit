@@ -79,6 +79,58 @@ def result_csv(request,stat) :
   # cleanup the csv
   os.remove(f.name)
 
+@pytest.fixture
+def result_w_unannotated_csv(request,stat) :
+  with tempfile.NamedTemporaryFile('wt',delete=False) as f :
+      new_stat = stat.copy()
+      new_stat.loc['gene11'] = 0
+      new_stat.loc['gene12'] = 0
+      new_stat.loc['gene13'] = 0
+      print(new_stat)
+
+      df = pandas.DataFrame({
+          'negnew_stat':-new_stat.values,
+          'nonsense':np.random.random(size=new_stat.size),
+          'new_stat':new_stat.values,
+          'gene':new_stat.index.tolist()
+          },
+          index=new_stat.index
+      )
+      df.to_csv(f.name,index_label='id')
+
+  yield f.name
+
+  # cleanup the csv
+  os.remove(f.name)
+
+@r_test
+@fgsea_test
+def test_fgsea_id_type_mismatch(gmt_obj,stat) :
+    from de_toolkit.enrich import fgsea
+
+    # rename the stat index so there are no matches
+    stat.index = ['X'+_ for _ in stat.index]
+    with pytest.raises(Exception) :
+        res = fgsea(gmt_obj,stat,minSize=1)
+
+@r_test
+@fgsea_test
+def test_fgsea_filter_unannot_cli(gmt_file,result_w_unannotated_csv) :
+    from de_toolkit.enrich import main
+    from de_toolkit.wrapr import wrapr
+
+    #TODO I WAS TESTING --filter-unannotated
+    with tempfile.NamedTemporaryFile('wt') as f:
+
+        # test multilevel flag
+        main([
+            'detk-enrich','fgsea','--nperm=100',
+            '--filter-unannotated','--minSize=1',
+            gmt_file,result_w_unannotated_csv,'-o',f.name
+        ])
+        res = pandas.read_csv(f.name,index_col=0)
+        assert all(res.loc[['set1','set2','set3'],'NES'] < 0)
+        assert all(res.loc[['set4','set5'],'NES'] > 0)
 @r_test
 @fgsea_test
 def test_fgsea(gmt_obj,stat) :
@@ -142,6 +194,13 @@ def test_fgsea_cli(gmt_file,result_csv) :
         assert all(res.loc[['set1','set2','set3'],'NES'] < 0)
         assert all(res.loc[['set4','set5'],'NES'] > 0)
 
+@r_test
+@fgsea_test
+def test_fgsea_cli_cores(gmt_file,result_csv) :
+    from de_toolkit.enrich import main
+    from de_toolkit.wrapr import wrapr
+
+
     with tempfile.NamedTemporaryFile('wt') as f:
 
         # normal operation, with two cores
@@ -150,10 +209,14 @@ def test_fgsea_cli(gmt_file,result_csv) :
         assert all(res.loc[['set1','set2','set3'],'NES'] < 0)
         assert all(res.loc[['set4','set5'],'NES'] > 0)
 
+@r_test
+@fgsea_test
+def test_fgsea_cli_routput(gmt_file,result_csv) :
+    from de_toolkit.enrich import main
+    from de_toolkit.wrapr import wrapr
+
     with tempfile.NamedTemporaryFile('wt') as f:
         with tempfile.TemporaryDirectory() as d :
-
-            # test multilevel flag
             main(['detk-enrich','fgsea','--routput-dir={}'.format(d),'--minSize=1',gmt_file,result_csv,'-o',f.name])
             res = pandas.read_csv(f.name,index_col=0)
             assert all(res.loc[['set1','set2','set3'],'NES'] < 0)
@@ -161,9 +224,13 @@ def test_fgsea_cli(gmt_file,result_csv) :
             assert os.path.exists(os.path.join(d,'script.R'))
 
             with open(os.path.join(d,'stdout')) as f :
-                print(f.read())
-
-            alkasdfa
+                out = f.read()
+                assert len(out) != 0
+@r_test
+@fgsea_test
+def test_fgsea_cli_alt_statcol(gmt_file,result_csv) :
+    from de_toolkit.enrich import main
+    from de_toolkit.wrapr import wrapr
 
     with tempfile.NamedTemporaryFile('wt') as f:
 
@@ -173,6 +240,12 @@ def test_fgsea_cli(gmt_file,result_csv) :
         res = pandas.read_csv(f.name,index_col=0)
         assert all(res.loc[['set1','set2','set3'],'NES'] > 0)
         assert all(res.loc[['set4','set5'],'NES'] < 0)
+
+@r_test
+@fgsea_test
+def test_fgsea_cli_abs_statcol(gmt_file,result_csv) :
+    from de_toolkit.enrich import main
+    from de_toolkit.wrapr import wrapr
 
     with tempfile.NamedTemporaryFile('wt') as f:
 
@@ -184,23 +257,41 @@ def test_fgsea_cli(gmt_file,result_csv) :
         assert all(res.loc[['set1','set2','set3'],'NES'] < 0)
         assert all(res.loc[['set4','set5'],'NES'] > 0)
 
+@r_test
+@fgsea_test
+def test_fgsea_cli_ascending(gmt_file,result_csv) :
+    from de_toolkit.enrich import main
+    from de_toolkit.wrapr import wrapr
+
     with tempfile.NamedTemporaryFile('wt') as f:
 
-        # sort descending operation on last numerical column
+        # sort ascending operation on last numerical column
         main(['detk-enrich','fgsea','--minSize=1','-a',gmt_file,result_csv,
             '-o',f.name])
         res = pandas.read_csv(f.name,index_col=0)
         assert all(res.loc[['set1','set2','set3'],'NES'] > 0)
         assert all(res.loc[['set4','set5'],'NES'] < 0)
 
+@r_test
+@fgsea_test
+def test_fgsea_cli_idcol(gmt_file,result_csv) :
+    from de_toolkit.enrich import main
+    from de_toolkit.wrapr import wrapr
+
     with tempfile.NamedTemporaryFile('wt') as f:
 
-        # sort descending operation on last numerical column
+        # speficy idcol
         main(['detk-enrich','fgsea','--minSize=1','--idcol=gene',gmt_file,
             result_csv,'-o',f.name])
         res = pandas.read_csv(f.name,index_col=0)
         assert all(res.loc[['set1','set2','set3'],'NES'] < 0)
         assert all(res.loc[['set4','set5'],'NES'] > 0)
+
+@r_test
+@fgsea_test
+def test_fgsea_cli_wrapr_cores(gmt_file,result_csv) :
+    from de_toolkit.enrich import main
+    from de_toolkit.wrapr import wrapr
 
     with tempfile.NamedTemporaryFile('wt') as f:
         with tempfile.NamedTemporaryFile('rt') as r_f :
@@ -215,10 +306,9 @@ def test_fgsea_cli(gmt_file,result_csv) :
 
             with wrapr('cat(readRDS("{}")$params$nproc)'.format(r_f.name)) as r :
                 assert r.stdout == '2'
-
 @r_test
 @fgsea_test
-def test_fgsea_cli(gmt_file,result_csv) :
+def test_fgsea_multilevel_cli(gmt_file,result_csv) :
     from de_toolkit.enrich import main
     from de_toolkit.wrapr import wrapr
 

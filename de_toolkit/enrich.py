@@ -390,9 +390,9 @@ def main(argv=sys.argv) :
                 idcol = get_col_or_idcol(res_df,idcol)
             except ValueError :
                 logger.error(Exception((
-                    'ID column {} could not be found in results result '
+                    'ID column {} could not be found in results dataframe '
                     'or interpreted as an integer index, aborting'
-                    ).format(col)
+                    ).format(idcol)
                 ))
                 sys.exit(1)
 

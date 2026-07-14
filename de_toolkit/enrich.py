@@ -377,7 +377,7 @@ def main(argv=sys.argv) :
         else :
             # pick the last numeric column
             col = res_df.columns[res_df.dtypes.apply(lambda x: np.issubdtype(x,np.number))][-1]
-        logger.info('using % as statistic column',col)
+        logger.info('using %s as statistic column',col)
 
         stat = res_df[col]
         if args['--abs'] :
@@ -397,7 +397,7 @@ def main(argv=sys.argv) :
                 sys.exit(1)
 
             stat.index = res_df[idcol]
-        logger.info('using % as identifier column',idcol)
+        logger.info('using %s as identifier column',idcol)
 
         if args['--ascending'] :
             logger.info('sorting statistic into ascending order due to --ascending')

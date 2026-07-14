@@ -19,37 +19,48 @@ pip install de_toolkit
 
 ## Installing R and packages
 
-Certain functions in detk, particularly the `de` module, interface with R and
-bioconductor packages. You must have a version of R installed and the following
-packages to use the corresponding submodule functions:
+Certain functions in detk, particularly the `de`, `enrich`, and `transform`
+modules, interface with R and Bioconductor packages. You must have a version of
+R installed along with the following packages to use the corresponding
+submodule functions:
 
   - [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
+  - [fgsea](https://bioconductor.org/packages/release/bioc/html/fgsea.html)
   - [logistf](https://cran.r-project.org/web/packages/logistf/index.html)
+
+The Bioconductor packages can be installed from within R with:
+
+```r
+install.packages("BiocManager")
+BiocManager::install(c("DESeq2", "fgsea"))
+install.packages("logistf")
+```
 
 # Development
 
-First clone or fork and clone this repo:
+detk requires Python 3.10 or newer. First fork and/or clone this repo:
 
 ```
-git clone https://bitbucket.org/bubioinformaticshub/de_toolkit.git
+git clone https://github.com/BU-Neuromics/de_toolkit.git
 ```
 
-We suggest using [anaconda](http://anaconda.org) to create an environment that
-contains the software necessary, e.g.:
+We suggest working in a virtual environment, then installing the package in
+editable mode with its test dependencies:
 
 ```
 cd de_toolkit
-conda create -n de_toolkit python=3.5
-source activate de_toolkit
-./install_conda_packages.sh
-Rscript install_r_packages.R
+python -m venv .venv
+source .venv/bin/activate
+pip install -e '.[test]'
 ```
 
-In development, when you want to run the toolkit, use the `setup.py` script:
+This makes `detk` and its subtools available on the command line. Because the
+install is editable, code changes take effect without reinstalling. Run the
+test suite with:
 
 ```
-python setup.py install
+pytest
 ```
 
-This should make the `detk` and its subtools available on the command line. Whenever you make changes
-to the code you will need to run this command again.
+Tests that require R (DESeq2, fgsea, logistf) are skipped automatically when R
+is not available.

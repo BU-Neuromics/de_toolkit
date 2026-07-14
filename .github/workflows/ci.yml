@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, "phase0-modernize" ]
+    branches: [ main, "phase1-tooling" ]
   pull_request:
     branches: [ main ]
 
@@ -23,18 +23,54 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-          cache-dependency-path: setup.py
+          cache-dependency-path: pyproject.toml
 
       - name: Install package and test dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e .
-          python -m pip install pytest pytest-cov
+          python -m pip install -e '.[test]'
 
       # R and Bioconductor are not installed in this job, so the R-backed tests
       # (DESeq2, fgsea, logistf) and the Snakemake report end-to-end test skip
-      # automatically. A separate R-enabled job is planned (see ROADMAP Phase 1).
+      # automatically. The test-r job below exercises the R integration.
       - name: Run non-R test suite
         run: |
           pytest tests -o addopts="" -p no:cacheprovider \
             --cov=de_toolkit --cov-report=term-missing
+
+  test-r:
+    name: test with R (bioconda)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install R + Bioconductor packages as prebuilt bioconda binaries, which
+      # is far faster than compiling DESeq2/fgsea from source.
+      - name: Set up micromamba with R packages
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          condarc: |
+            channels:
+              - conda-forge
+              - bioconda
+          environment-name: detk-r
+          create-args: >-
+            python=3.12
+            r-base
+            r-jsonlite
+            r-data.table
+            bioconductor-deseq2
+            bioconductor-fgsea
+            r-logistf
+
+      - name: Install package and test dependencies
+        shell: bash -el {0}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[test]'
+
+      - name: Run full test suite (including R)
+        shell: bash -el {0}
+        run: |
+          Rscript --version
+          pytest tests -o addopts="" -p no:cacheprovider

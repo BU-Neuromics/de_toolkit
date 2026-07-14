@@ -255,6 +255,7 @@ class FPKMCounts(DetkModule):
 
         self['params'] = {'lengths': lengths}
         self.count_df = count_df
+        self.lengths = lengths
 
         missing_indices = count_df.index.difference(lengths.index)
         if len(missing_indices) != 0 :
@@ -275,7 +276,7 @@ class FPKMCounts(DetkModule):
     @property
     def properties(self):
         return {'num_kept': len(self.res),
-                'lengths': lengths
+                'lengths': self.lengths
                 }
 
 @stub

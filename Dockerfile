@@ -1,55 +1,44 @@
 #
-# Ubuntu Dockerfile
+# de_toolkit (detk) container image
 #
-# https://github.com/dockerfile/ubuntu
+# Ubuntu base with R + Bioconductor (DESeq2, fgsea, logistf) and detk installed
+# from the build context.
 #
 
-# Pull base image.
-FROM ubuntu:18.04
-
-# Install.
-RUN \
-  sed -i 's/# \(.*multiverse$\)/\1/g' /etc/apt/sources.list && \
-  apt-get update && \
-  apt-get -y upgrade && \
-  apt-get install -y build-essential && \
-  apt-get install -y software-properties-common && \
-  apt-get install -y byobu curl git htop man unzip wget && \
-  rm -rf /var/lib/apt/lists/*
+FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
-# install R
-RUN \
-  apt update -q && \
-  echo "America/New_York" > /etc/timezone && \
-  echo 12 | apt-get -qy install r-base r-base-dev libcurl4-openssl-dev libxml2-dev
 
-RUN Rscript -e "source('http://bioconductor.org/biocLite.R'); biocLite(c('DESeq2','fgsea'))"
-RUN Rscript -e "install.packages('logistf')"
+# System packages: build tooling, R, and the dev headers R packages need.
+RUN apt-get update && \
+    apt-get -y upgrade && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      ca-certificates \
+      curl \
+      git \
+      r-base \
+      r-base-dev \
+      libcurl4-openssl-dev \
+      libxml2-dev \
+      libssl-dev \
+      python3 \
+      python3-pip \
+      python3-venv && \
+    rm -rf /var/lib/apt/lists/*
 
-# install python 3 things
-RUN \
-  apt-get -y install python3 python3-pip python3-dev && \
-  pip3 install --upgrade pip setuptools && \
-  rm $(which pip) && \
-  ln -s $(which pip3) /usr/bin/pip
+# R / Bioconductor packages. biocLite was removed from Bioconductor in 2019;
+# BiocManager is the supported installer.
+RUN Rscript -e "install.packages('BiocManager', repos='https://cloud.r-project.org'); BiocManager::install(c('DESeq2','fgsea'), update=FALSE, ask=FALSE)" && \
+    Rscript -e "install.packages('logistf', repos='https://cloud.r-project.org')"
 
-# Add files.
-#ADD root/.bashrc /root/.bashrc
-#ADD root/.gitconfig /root/.gitconfig
-#ADD root/.scripts /root/.scripts
+ENV HOME=/root
+WORKDIR /opt/de_toolkit
 
-# Set environment variables.
-ENV HOME /root
+# Install detk from the build context (rather than re-cloning) for reproducible
+# images that match the checked-out source.
+COPY . /opt/de_toolkit
+RUN pip install --no-cache-dir --break-system-packages .
 
-# Define working directory.
 WORKDIR /root
-
-# install current detk
-RUN \
-    git clone https://bitbucket.org/bubioinformaticshub/de_toolkit.git && \
-    cd de_toolkit && \
-    python3 setup.py install
-
-# Define default command.
 CMD ["bash"]

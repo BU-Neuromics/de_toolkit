@@ -205,3 +205,13 @@ def test_fpkm(fake_counts_obj,fake_counts_gene_lengths) :
     assert np.allclose(res['c'],list(np.arange(2,res.shape[0]+2)**2/1e6))
 
 
+def test_fpkm_properties(fake_counts_obj,fake_counts_gene_lengths) :
+    # regression: FPKMCounts.properties used to reference an undefined name
+    from de_toolkit.norm import FPKMCounts
+
+    obj = FPKMCounts(fake_counts_obj.counts, fake_counts_gene_lengths)
+    props = obj.properties
+    assert props['num_kept'] == len(obj.output)
+    assert len(props['lengths']) == len(fake_counts_gene_lengths)
+
+

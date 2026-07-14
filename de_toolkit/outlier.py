@@ -275,7 +275,6 @@ def plot_entropy(entropy_res, threshold, name=None, show=None):
     the specified name. If show is set to 'show', the plot will be shown.
     '''
 
-    import matplotlib as plt
     import matplotlib.pyplot as plt
 
     entropy = entropy_res['entropy']
@@ -294,13 +293,10 @@ def plot_entropy(entropy_res, threshold, name=None, show=None):
     plt.legend(['P < {}'.format(threshold), 'Data'])
     fig.set_size_inches(10,10)
 
-    if name == None and show != None:
-        plot.show()
-    elif name != None:
+    if name is not None:
         fig.savefig(name, dpi=100)
-    elif name != None and show != None:
-        fig.savefig(name, dpi=100)
-        plot.show()
+    if show is not None:
+        plt.show()
 
 def main(argv=sys.argv):
 
@@ -337,7 +333,7 @@ def main(argv=sys.argv):
 
         if args['--plot-output'] :
             logger.info('plotting entropy threshold to %s',args['--plot-output'])
-            plot_entropy(out_df, pval, name=plot)
+            plot_entropy(out.output, pval, name=args['--plot-output'])
 
     elif cmd == 'trim' :
         args = docopt(cmd_opts_aug['trim'],argv)

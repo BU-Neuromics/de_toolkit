@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "de_toolkit"
+description = "Suite of tools for working with count data"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Adam Labadorf and the BU Bioinformatics Hub Team", email = "labadorf@bu.edu" },
+]
+requires-python = ">=3.10"
+dynamic = ["version"]
+dependencies = [
+    "docopt-ng",
+    "jinja2",
+    "numpy",
+    "pandas",
+    "patsy>=1.0",
+    "ply",
+    "scipy",
+    "scikit-learn",
+    "statsmodels>=0.14",
+    "terminaltables",
+]
+keywords = ["bioinformatics", "biology", "sequencing", "NGS"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Environment :: Console",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+[project.urls]
+Homepage = "https://github.com/BU-Neuromics/de_toolkit"
+Repository = "https://github.com/BU-Neuromics/de_toolkit"
+Documentation = "http://de-toolkit.readthedocs.io/en/latest/"
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
+
+[project.scripts]
+detk = "de_toolkit.common:main"
+detk-norm = "de_toolkit.norm:main"
+detk-de = "de_toolkit.de:main"
+detk-enrich = "de_toolkit.enrich:main"
+detk-transform = "de_toolkit.transform:main"
+detk-filter = "de_toolkit.filter:main"
+detk-stats = "de_toolkit.stats:main"
+detk-outlier = "de_toolkit.outlier:main"
+detk-wrapr = "de_toolkit.wrapr:main"
+detk-report = "de_toolkit.report:main"
+detk-util = "de_toolkit.util:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = { attr = "de_toolkit.version.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["de_toolkit*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

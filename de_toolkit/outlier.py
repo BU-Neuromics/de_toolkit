@@ -233,7 +233,7 @@ class EntropyCounts(DetkModule):
         dropped_features = set(all_features) - set(nonzero_features)
 
         # create a null results df for all of the dropped features
-        dropped_df = pd.DataFrame(columns=['entropy', 'entropy_p0_{}'.format(trshld_name)], index=dropped_features)
+        dropped_df = pd.DataFrame(columns=['entropy', 'entropy_p0_{}'.format(trshld_name)], index=sorted(dropped_features))
         dropped_df.replace(dropped_df, 'Null')
 
         # calculate the entropy over all of the features

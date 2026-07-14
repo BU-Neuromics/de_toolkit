@@ -1,17 +1,6 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
-import pkg_resources
-import sys
-
-try :
-  import numpy, scipy
-except ImportError :
-  print('Software is irritating sometimes.\n\n'
-        'Because of annoying but I suppose good reasons, numpy and scipy \n'
-        'both have to be installed prior to installing this package. Please \n'
-        'install them first and then try again.')
-  sys.exit(1)
 
 # https://packaging.python.org/guides/single-sourcing-package-version/
 with open('de_toolkit/version.py') as f :

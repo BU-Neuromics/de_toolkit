@@ -55,14 +55,18 @@ def check_r() :
 
 def check_r_package(pkg) :
     'Tests whether the R package *pkg* is installed.'
-    cmd = ' '.join([
-        get_r_path(),
+    r_path = get_r_path()
+    if r_path is None :
+        # Rscript is not installed, so no R package can be available
+        return False
+    cmd = [
+        r_path,
         '-e',
-        '"library({})"'.format(pkg)
-        ])
+        'library({})'.format(pkg)
+        ]
     logger.debug('check_r_package cmd: %s',cmd)
     p = subprocess.run(cmd,
-        shell=True,
+        shell=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )

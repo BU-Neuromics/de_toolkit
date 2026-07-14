@@ -174,7 +174,7 @@ class FGSEARes(DetkModule) :
             nas = stat[stat.isnull()]
             msg = 'The following statistics were NaN and were filtered prior to fgsea:\n{}'.format(nas)
             warnings.warn(msg)
-            logger.warn(msg)
+            logger.warning(msg)
             stat = stat[~stat.isnull()]
 
         # check for anything that isn't a string in the stat names
@@ -182,7 +182,7 @@ class FGSEARes(DetkModule) :
             nas = stat[stat.index.isnull()]
             msg = 'The following statistic names were NaN and cast as the string "null" prior to fgsea:\n{}'.format(nas)
             warnings.warn(msg)
-            logger.warn(msg)
+            logger.warning(msg)
             stat.rename(index={_:'null' for _ in nas.index},inplace=True)
 
         if filter_unannotated :

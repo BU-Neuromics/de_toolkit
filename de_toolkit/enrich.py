@@ -179,11 +179,21 @@ class FGSEARes(DetkModule) :
 
         # check for anything that isn't a string in the stat names
         if stat.index.isnull().any() :
-            nas = stat[stat.index.isnull()]
-            msg = 'The following statistic names were NaN and cast as the string "null" prior to fgsea:\n{}'.format(nas)
+            null_mask = stat.index.isnull()
+            nas = stat[null_mask]
+            msg = 'The following statistic names were NaN and cast to unique "null_N" names prior to fgsea:\n{}'.format(nas)
             warnings.warn(msg)
             logger.warning(msg)
-            stat.rename(index={_:'null' for _ in nas.index},inplace=True)
+            # each null name must be given a unique placeholder: fgsea rejects
+            # duplicate names(stats), so a single "null" for every NaN name would
+            # crash on >1 NaN. Rebuild positionally because None/NaN index labels
+            # cannot be reliably remapped via a dict (NaN keys collapse).
+            new_index = list(stat.index)
+            for i, is_null in enumerate(null_mask) :
+                if is_null :
+                    new_index[i] = 'null_{}'.format(i)
+            stat = stat.copy()
+            stat.index = new_index
 
         if filter_unannotated :
             logger.info('filtering out features without annotation in GMT')

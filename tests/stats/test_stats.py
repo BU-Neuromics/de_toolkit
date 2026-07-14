@@ -668,11 +668,11 @@ def test_stats_entropies(fake_counts_entropy_obj):
     true_entropies = [0]+[-i*(1/i)*np.log(1/i) for i in range(1,100)]
     #assert np.allclose(entropies['entropies'],true_entropies)
 
-    pctVal = np.percentile(true_entropies,true_pct,interpolation='higher')
+    pctVal = np.percentile(true_entropies,true_pct,method='higher')
 
     assert np.allclose(
         entropies['pctVal'],
-        np.percentile(true_entropies,true_pct,interpolation='higher')
+        np.percentile(true_entropies,true_pct,method='higher')
     )
     assert np.allclose(entropies['num_features'], [0,2]+[1]*98)
     assert np.allclose(entropies['frac_features'], [0,2/100]+[1/100]*98)
@@ -693,11 +693,11 @@ def test_stats_entropy_json(fake_counts_entropy_obj):
     true_entropies = [0]+[-i*(1/i)*np.log(1/i) for i in range(1,100)]
     #assert np.allclose(entropies['entropies'],true_entropies)
 
-    pctVal = np.percentile(true_entropies,true_pct,interpolation='higher')
+    pctVal = np.percentile(true_entropies,true_pct,method='higher')
 
     assert np.allclose(
         entropies['pctVal'],
-        np.percentile(true_entropies,true_pct,interpolation='higher')
+        np.percentile(true_entropies,true_pct,method='higher')
     )
     assert np.allclose(entropies['num_features'], [0,2]+[1]*98)
     assert np.allclose(entropies['frac_features'], [0,2/100]+[1/100]*98)
@@ -804,7 +804,9 @@ def test_stats_PCA_scores(pca_counts_obj):
     components = output['components']
     for item in components:
         scores.append(item.get('scores'))
-    assert np.allclose(true_scores, scores, atol=0.1)
+    # PCA component signs are arbitrary (eigenvector orientation is not
+    # determined and varies by sklearn/LAPACK version), so compare magnitudes
+    assert np.allclose(np.abs(true_scores), np.abs(scores), atol=0.1)
 
 def test_stats_PCA_projections(pca_counts_obj):
     output = CountPCA(pca_counts_obj)

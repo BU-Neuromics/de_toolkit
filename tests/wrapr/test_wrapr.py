@@ -7,6 +7,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 # decorator for skipping if Rscript is not installed
 r_test = pytest.mark.skipif(not wrapr.check_r(),reason='Rscript executable not found, skipping test')
 
+@r_test
 def test_wrapr_cli_check(monkeypatch) :
 
     # check default run mode
@@ -173,6 +174,7 @@ def test_wrapr(fake_counts_obj):
         assert os.path.exists(os.path.join(d,'stdout'))
         assert os.path.exists(os.path.join(d,'stderr'))
 
+@r_test
 def test_wrapr_fail() :
     from de_toolkit import wrapr
 

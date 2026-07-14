@@ -18,7 +18,8 @@ Usage:
 '''
 }
 
-from collections import OrderedDict, Mapping
+from collections import OrderedDict
+from collections.abc import Mapping
 from docopt import docopt
 from glob import glob
 import hashlib
@@ -29,15 +30,46 @@ from pprint import pformat
 import numpy as np
 import os
 import pathlib
-import pkg_resources
+from importlib.resources import files as _pkg_files
 import shutil
 import sys
 import time
 import de_toolkit
 
-# for some reason, pkg_resources can't find assets in de_toolkit
-# unless I access __path__???!?
-de_toolkit.__path__
+
+class _ResourceCompat(object):
+    '''Minimal drop-in replacement for the handful of ``pkg_resources``
+    resource accessors this module used, backed by ``importlib.resources``.
+    ``pkg_resources`` was removed from setuptools in v80+, so the legacy API is
+    no longer importable on modern installs. The ``package`` argument is kept
+    for call-site compatibility but ignored (always ``de_toolkit``).'''
+
+    @staticmethod
+    def _res(path):
+        t = _pkg_files('de_toolkit')
+        for part in str(path).strip('/').split('/'):
+            if part:
+                t = t / part
+        return t
+
+    def resource_exists(self, package, path):
+        r = self._res(path)
+        return r.is_file() or r.is_dir()
+
+    def resource_isdir(self, package, path):
+        return self._res(path).is_dir()
+
+    def resource_listdir(self, package, path):
+        return [p.name for p in self._res(path).iterdir()]
+
+    def resource_string(self, package, path):
+        return self._res(path).read_bytes()
+
+    def resource_filename(self, package, path):
+        return str(self._res(path))
+
+
+pkg_resources = _ResourceCompat()
 
 from .common import _cli_doc, set_logging
 from .version import __version__
@@ -53,7 +85,7 @@ class NumpyEncoder(json.JSONEncoder):
             np.int16, np.int32, np.int64, np.uint8,
             np.uint16,np.uint32, np.uint64)):
             return int(obj)
-        elif isinstance(obj, (np.float_, np.float16, np.float32, 
+        elif isinstance(obj, (np.float16, np.float32,
             np.float64)):
             return float(obj)
         elif isinstance(obj,(np.ndarray,)): #### This is the fix

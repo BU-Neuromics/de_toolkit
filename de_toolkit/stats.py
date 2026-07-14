@@ -275,7 +275,6 @@ from pprint import pformat
 import math
 import numpy as np
 import pandas
-import pkg_resources
 import os.path
 import scipy
 from sklearn.decomposition import PCA
@@ -621,12 +620,12 @@ class ColZero(DetkModule) :
         for i in range(0, num_cols):
             col = {}
             col['name'] = col_names[i]
-            col['zero_count'] = zero_counts[i]
-            col['zero_frac'] = zero_fracs[i]
-            col['mean'] = col_means[i]
-            col['median'] = col_medians[i]
-            col['nonzero_mean'] = nonzero_col_means[i]
-            col['nonzero_median'] = nonzero_col_medians[i]
+            col['zero_count'] = zero_counts.iloc[i]
+            col['zero_frac'] = zero_fracs.iloc[i]
+            col['mean'] = col_means.iloc[i]
+            col['median'] = col_medians.iloc[i]
+            col['nonzero_mean'] = nonzero_col_means.iloc[i]
+            col['nonzero_median'] = nonzero_col_medians.iloc[i]
             self['zeros'].append(col)
 
     @property
@@ -848,7 +847,7 @@ class Entropy(DetkModule) :
         # there are 100 evenly spaced bins between [0,max_entropy]
         max_entropy = -np.log(1/num_cols)
         pct = list(range(100))
-        pctVal = np.percentile(entropies,pct,interpolation='higher').tolist()
+        pctVal = np.percentile(entropies,pct,method='higher').tolist()
 
         #Format output
         self['entropies'] = res = defaultdict(list)
@@ -1008,7 +1007,7 @@ class CountPCA(DetkModule) :
         # if metadata option is given, get column variables
         if count_mat.column_data is not None :
             columns = []
-            for k,v in count_mat.column_data.iteritems() :
+            for k,v in count_mat.column_data.items() :
                 if k != 'counts' :
                     columns.append({'column':k,'values':v.tolist()})
             self['column_variables'] = {
@@ -1120,11 +1119,11 @@ def main(argv=sys.argv) :
     if cmd == 'pca' :
         if args['--column-data'] is not None :
             if args['<cov_fn>'] is not None :
-                logger.warn('Both positional <cov_fn> argument and --column-data '
+                logger.warning('Both positional <cov_fn> argument and --column-data '
                     'are provided, ignoring the --column-data argument.'
                     )
             else :
-                logger.warn('The --column-data command line argument is deprecated. '
+                logger.warning('The --column-data command line argument is deprecated. '
                         'Use the optional [<cov_fn>] positional argument instead.'
                     )
 
@@ -1136,11 +1135,11 @@ def main(argv=sys.argv) :
     elif cmd == 'summary' :
         if args['--column-data'] is not None :
             if args['<cov_fn>'] is not None :
-                logger.warn('Both positional <cov_fn> argument and --column-data '
+                logger.warning('Both positional <cov_fn> argument and --column-data '
                     'are provided, ignoring the --column-data argument.'
                     )
             else :
-                logger.warn('The --column-data command line argument is deprecated. '
+                logger.warning('The --column-data command line argument is deprecated. '
                         'Use the optional [<cov_fn>] positional argument instead.'
                     )
 

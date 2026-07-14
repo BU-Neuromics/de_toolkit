@@ -322,11 +322,11 @@ def main(argv=sys.argv):
     #Get column data, if provided
     if args['--column-data'] is not None :
         if args['<cov_fn>'] is not None :
-            logger.warn('Both positional <cov_fn> argument and --column-data '
+            logger.warning('Both positional <cov_fn> argument and --column-data '
                 'are provided, ignoring the --column-data argument.'
                 )
         else :
-            logger.warn('The --column-data command line argument is deprecated. '
+            logger.warning('The --column-data command line argument is deprecated. '
                     'Use the optional [<cov_fn>] positional argument instead.'
                 )
 

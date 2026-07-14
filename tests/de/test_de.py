@@ -23,6 +23,7 @@ deseq2_test = pytest.mark.skipif(not check_r_package('DESeq2'),
         reason='DESeq2 package not installed, skipping test'
 )
 
+@deseq2_test
 def test_R_check_names_nonsense(deseq2_test_counts_obj) :
 
     with NamedTemporaryFile() as f :

@@ -222,15 +222,15 @@ class CountMatrix(object) :
                 else :
                     warnings.warn(msg+'Adjusting the counts matrix and column '
                                       'data to fit.')
-                    logger.warn(msg+'Adjusting the counts matrix and column '
+                    logger.warning(msg+'Adjusting the counts matrix and column '
                                       'data to fit.')
-                    logger.warn('counts shape prior to fit: %s', self.counts.shape)
-                    logger.warn('column data prior to fit: %s', self.column_data.shape)
+                    logger.warning('counts shape prior to fit: %s', self.counts.shape)
+                    logger.warning('column data prior to fit: %s', self.column_data.shape)
                     self.counts = self.counts[self.design_matrix.full_matrix.index]
                     self._column_data = self.column_data.loc[self.design_matrix.full_matrix.index]
 
-                    logger.warn('counts shape after fit: %s', self.counts.shape)
-                    logger.warn('column data after fit: %s', self._column_data.shape)
+                    logger.warning('counts shape after fit: %s', self.counts.shape)
+                    logger.warning('column data after fit: %s', self._column_data.shape)
 
         elif design is not None and self.column_data is None :
             raise InvalidDesignException('There must be column data associated with a '

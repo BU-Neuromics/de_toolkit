@@ -57,6 +57,8 @@ jobs:
           create-args: >-
             python=3.12
             r-base
+            r-jsonlite
+            r-data.table
             bioconductor-deseq2
             bioconductor-fgsea
             r-logistf

@@ -376,7 +376,7 @@ def main(argv=sys.argv) :
                     sys.exit(1)
         else :
             # pick the last numeric column
-            col = res_df.columns[res_df.dtypes.apply(lambda x: np.issubdtype(x,np.number))][-1]
+            col = res_df.columns[res_df.dtypes.apply(pandas.api.types.is_numeric_dtype)][-1]
         logger.info('using %s as statistic column',col)
 
         stat = res_df[col]

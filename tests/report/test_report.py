@@ -1,9 +1,13 @@
 import docopt
+import gzip
 import json
 import os
-import pytest
+import shutil
 import subprocess
+import sys
 from tempfile import TemporaryDirectory
+
+import pytest
 
 from de_toolkit.common import DetkModule
 from de_toolkit.version import __version__
@@ -90,16 +94,48 @@ def test_detk_report(fake_module) :
 
         assert os.path.exists(os.path.join(d,'detk_report.html'))
 
-# decorator for skipping if snakemake is not installed
-def check_snakemake() :
-    p = subprocess.run("snakemake -v",shell=True)
-    return p.returncode == 0
-
-snakemake_test = pytest.mark.skipif(not check_snakemake(),reason='snakemake executable not found, skipping test')
-@snakemake_test
-def test_report_generate():
-    p = subprocess.run("snakemake --forceall",
-            shell=True,
-            cwd=os.path.dirname(__file__)
+def _run_detk(args, cwd):
+    '''Run a detk console script as a real subprocess, as a user would.'''
+    env = dict(os.environ)
+    # make sure the console scripts of the running interpreter's environment
+    # win, wherever pytest was launched from
+    env['PATH'] = os.path.dirname(sys.executable) + os.pathsep + env.get('PATH', '')
+    p = subprocess.run(args, cwd=cwd, env=env, capture_output=True, text=True)
+    assert p.returncode == 0, (
+        f'{" ".join(args)} failed with code {p.returncode}\n'
+        f'stdout:\n{p.stdout}\nstderr:\n{p.stderr}'
     )
-    assert p.returncode == 0
+
+
+def test_report_generate(tmp_path):
+    '''End-to-end: chain detk CLI tools and generate a report, no workflow
+    manager involved (this replaced the old Snakemake-driven test).'''
+    fixture_dir = os.path.dirname(__file__)
+
+    # stage the count matrices and sample info into a scratch dir
+    for gz in ('all_mRNA_nonzero_raw_counts_trim.csv.gz',
+               'all_mRNA_nonzero_norm_counts_trim.csv.gz'):
+        with gzip.open(os.path.join(fixture_dir, gz), 'rb') as f_in, \
+                open(tmp_path / gz[:-3], 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    shutil.copy(os.path.join(fixture_dir, 'sample_info.csv'), tmp_path)
+
+    cwd = str(tmp_path)
+    for kind in ('raw', 'norm'):
+        _run_detk(['detk-stats', 'summary', '--log',
+                   f'all_mRNA_nonzero_{kind}_counts_trim.csv',
+                   '-o', f'{kind}_summary_stats.csv',
+                   '--column-data=sample_info.csv'], cwd)
+    _run_detk(['detk-filter', 'mean(all) > 10',
+               '-o', 'norm_filtered.csv',
+               'all_mRNA_nonzero_norm_counts_trim.csv'], cwd)
+    _run_detk(['detk-report', 'generate'], cwd)
+
+    report = tmp_path / 'detk_report' / 'detk_report.html'
+    assert report.exists()
+    # the emitted module JSON should have accumulated across invocations
+    json_files = list((tmp_path / 'detk_report' / 'json').glob('*.json'))
+    assert len(json_files) >= 3
+    html = report.read_text()
+    for module in ('basestats', 'coldist', 'filtercounts'):
+        assert module in html

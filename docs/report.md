@@ -8,6 +8,9 @@ detk's reporting layer gives every analysis two artifacts for free:
    rendering all recorded results as interactive charts. No network access,
    no external files; you can email it, archive it, or attach it to a paper.
 
+**See one now:** a [live example report](example/detk_report.html) generated
+from the public airway RNA-seq dataset by the [worked example](example.md).
+
 ## How it works
 
 Unless `--no-report` is passed, each detk tool serializes a JSON document into

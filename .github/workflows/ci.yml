@@ -101,6 +101,8 @@ jobs:
             r-data.table
             bioconductor-deseq2
             bioconductor-fgsea
+            bioconductor-airway
+            bioconductor-org.hs.eg.db
             r-logistf
 
       - name: Install package and test dependencies

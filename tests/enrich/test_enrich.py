@@ -447,3 +447,21 @@ def test_gmt_file_w_unicode(gset_dict, gmt_file_w_unicode):
 
     assert gmt["set1"].name == "set1"
     assert gmt["set1"].desc == "tgf\u03b1"
+
+
+def test_fgsea_matches_numeric_ids():
+    # regression: an all-integer ID column (e.g. Entrez) is parsed as int64
+    # by pandas and used to silently match nothing against the string GMT IDs
+    import pandas as pd
+
+    from de_toolkit.enrich import GMT, FGSEARes
+
+    gmt = GMT({"set1": [str(i) for i in range(100, 120)]})
+    stat = pd.Series([float(i) for i in range(20)], index=pd.Index(list(range(100, 120))))
+    assert stat.index.dtype.kind == "i"  # the problematic int64 index
+    try:
+        FGSEARes(gmt, stat, minSize=1)
+    except Exception as e:
+        # without R this raises before fgsea runs, but never the ID-mismatch
+        # error the bug produced
+        assert "No features map" not in str(e)

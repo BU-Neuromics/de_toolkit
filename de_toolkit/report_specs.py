@@ -297,6 +297,137 @@ def build_rowdist(mod):
 
 
 # ---------------------------------------------------------------------------
+# de module builders
+# ---------------------------------------------------------------------------
+
+_SIG_SCALE = {"domain": ["down", "ns", "up"], "range": [_CAT[0], "#b0b0b0", _CAT[3]]}
+
+
+def _volcano_unit(effect_title):
+    return {
+        "mark": {"type": "point", "filled": True, "size": 26, "opacity": 0.65},
+        "encoding": {
+            "x": {"field": "effect", "type": "quantitative", "title": effect_title},
+            "y": {"field": "nlp", "type": "quantitative", "title": "-log10 p-value"},
+            "color": {
+                "field": "sig",
+                "type": "nominal",
+                "title": "significance",
+                "scale": _SIG_SCALE,
+            },
+            "tooltip": [
+                {"field": "feature"},
+                {"field": "effect", "type": "quantitative", "format": ".3f"},
+                {"field": "nlp", "type": "quantitative", "format": ".2f", "title": "-log10 p"},
+                {"field": "sig"},
+            ],
+        },
+        "width": "container",
+        "height": 330,
+    }
+
+
+def _ma_unit(effect_title):
+    return {
+        "mark": {"type": "point", "filled": True, "size": 26, "opacity": 0.65},
+        "encoding": {
+            "x": {
+                "field": "lmean",
+                "type": "quantitative",
+                "title": "log10 mean of normalized counts",
+            },
+            "y": {"field": "effect", "type": "quantitative", "title": effect_title},
+            "color": {
+                "field": "sig",
+                "type": "nominal",
+                "title": "significance",
+                "scale": _SIG_SCALE,
+            },
+            "tooltip": [
+                {"field": "feature"},
+                {"field": "lmean", "type": "quantitative", "format": ".2f", "title": "log10 mean"},
+                {"field": "effect", "type": "quantitative", "format": ".3f"},
+                {"field": "sig"},
+            ],
+        },
+        "width": "container",
+        "height": 300,
+    }
+
+
+def _build_de(mod, effect_title):
+    de = mod["properties"].get("de") or {}
+    terms = de.get("terms") or []
+    if not terms:
+        return {"type": "raw"}
+
+    rows, term_names, capped = [], [], []
+    for t in terms:
+        term_names.append(t["term"])
+        if t.get("shown", 0) < t.get("total", 0):
+            capped.append(f"{t['term']}: {t['shown']:,} of {t['total']:,}")
+        for p in t["points"]:
+            rows.append({**p, "term": t["term"]})
+
+    has_mean = any("lmean" in r for r in rows)
+
+    # very large point sets are rendered statically (#5); the dropdown is
+    # lost but the page stays responsive
+    from .static_plots import MAX_INTERACTIVE_POINTS, svg_view
+
+    if len(rows) > MAX_INTERACTIVE_POINTS:
+        t0 = terms[0]
+        first = [r for r in rows if r["term"] == t0["term"]]
+        note = (
+            f"Rendered statically ({len(first):,} points). "
+            f"Terms other than {t0['term']!r} are in the raw data."
+        )
+        return svg_view(
+            first,
+            "effect",
+            "nlp",
+            effect_title,
+            "-log10 p-value",
+            note=note,
+            title=f"volcano: {t0['term']}",
+        )
+
+    charts = [_volcano_unit(effect_title)]
+    if has_mean:
+        charts.append(_ma_unit(effect_title))
+
+    spec = {
+        "$schema": VEGA_LITE_SCHEMA,
+        "data": {"values": rows},
+        "params": [
+            {
+                "name": "sel_term",
+                "value": term_names[0],
+                "bind": {"input": "select", "options": term_names, "name": "model term: "},
+            }
+        ],
+        "transform": [{"filter": "datum.term === sel_term"}],
+        "vconcat": charts,
+    }
+    view = {"type": "vega", "spec": spec}
+    if capped:
+        view["note"] = (
+            "Showing all significant features plus a density-preserving sample "
+            "of the rest (" + "; ".join(capped) + "). Full results are in the "
+            "tool's output file."
+        )
+    return view
+
+
+def build_deseq2counts(mod):
+    return _build_de(mod, "log2 fold change")
+
+
+def build_flgcounts(mod):
+    return _build_de(mod, "Firth logistic beta")
+
+
+# ---------------------------------------------------------------------------
 # outlier module builders
 # ---------------------------------------------------------------------------
 
@@ -417,6 +548,19 @@ REGISTRY = {
         "Samples on the first two principal components, coloured by a covariate.",
         build_pca,
     ),
+    # de family
+    "deseq2counts": (
+        "de",
+        "DESeq2 differential expression",
+        "Volcano and MA views per model term; all significant features shown.",
+        build_deseq2counts,
+    ),
+    "flgcounts": (
+        "de",
+        "Firth logistic differential expression",
+        "Volcano view per model term; all significant features shown.",
+        build_flgcounts,
+    ),
     # outlier family
     "entropycounts": (
         "outlier",
@@ -441,8 +585,6 @@ REGISTRY = {
 # families for non-stats modules so nav grouping works and they are not dropped;
 # builders are added in later phases (they fall back to a raw-JSON view for now).
 _FALLBACK_FAMILIES = {
-    "deseq2counts": ("de", "DESeq2 differential expression"),
-    "flgcounts": ("de", "Firth logistic differential expression"),
     "deseq2norm": ("norm", "DESeq2 normalization"),
     "librarysize": ("norm", "Library-size normalization"),
     "fpkmcounts": ("norm", "FPKM normalization"),

@@ -223,3 +223,124 @@ def test_report_is_self_contained(tmp_path):
     # raw provenance payload parses too
     raw = re.search(r'id="detk-raw">(.*?)</script>', html, re.S).group(1)
     json.loads(raw)
+
+
+# --------------------------------------------------------------------------
+# de family (#4/#5)
+# --------------------------------------------------------------------------
+
+
+def de_mod(n_ns=50, n_sig=10, with_mean=True, name="deseq2counts"):
+    pts = []
+    for i in range(n_sig):
+        p = {"feature": f"g{i}", "effect": 2.5, "nlp": 8.0, "sig": "up"}
+        if with_mean:
+            p["lmean"] = 2.0
+        pts.append(p)
+    for i in range(n_ns):
+        p = {"feature": f"n{i}", "effect": 0.01 * i - 0.25, "nlp": 0.5, "sig": "ns"}
+        if with_mean:
+            p["lmean"] = 1.5
+        pts.append(p)
+    return mod(
+        name,
+        {
+            "num_length": n_ns + n_sig,
+            "de": {
+                "feature_col": "gene",
+                "kind": "deseq2" if name == "deseq2counts" else "firth",
+                "terms": [
+                    {
+                        "term": "cond__case",
+                        "total": n_ns + n_sig,
+                        "shown": n_ns + n_sig,
+                        "num_sig": n_sig,
+                        "sig_threshold": 0.05,
+                        "points": pts,
+                    },
+                    {
+                        "term": "age",
+                        "total": n_ns + n_sig,
+                        "shown": n_ns + n_sig,
+                        "num_sig": 0,
+                        "sig_threshold": 0.05,
+                        "points": pts[:5],
+                    },
+                ],
+            },
+        },
+    )
+
+
+def test_deseq2_view_is_volcano_plus_ma_with_term_dropdown():
+    fam, _, _, view = view_for(de_mod())
+    assert fam == "de" and view["type"] == "vega"
+    spec = view["spec"]
+    assert len(spec["vconcat"]) == 2  # volcano + MA
+    assert spec["params"][0]["bind"]["options"] == ["cond__case", "age"]
+    assert any(r["term"] == "age" for r in spec["data"]["values"])
+
+
+def test_firth_view_is_volcano_only_without_mean():
+    fam, _, _, view = view_for(de_mod(with_mean=False, name="flgcounts"))
+    assert fam == "de" and view["type"] == "vega"
+    assert len(view["spec"]["vconcat"]) == 1  # no MA without baseMean
+
+
+def test_de_spec_compiles():
+    vlc = pytest.importorskip("vl_convert")
+    _, _, _, view = view_for(de_mod())
+    svg = vlc.vegalite_to_svg(json.dumps(clean(view["spec"])))
+    assert "<svg" in svg[:300]
+
+
+def test_de_sampling_note_shown_when_capped():
+    m = de_mod()
+    m["properties"]["de"]["terms"][0]["shown"] = 40
+    m["properties"]["de"]["terms"][0]["total"] = 60000
+    _, _, _, view = view_for(m)
+    assert "density-preserving sample" in view["note"]
+    assert "60,000" in view["note"]
+
+
+def test_de_large_point_set_renders_static_svg():
+    from de_toolkit.static_plots import MAX_INTERACTIVE_POINTS
+
+    pytest.importorskip("matplotlib")
+    n = MAX_INTERACTIVE_POINTS + 1
+    m = de_mod(n_ns=n, n_sig=0)
+    _, _, _, view = view_for(m)
+    assert view["type"] == "svg"
+    assert view["svg"].lstrip().startswith("<?xml") or "<svg" in view["svg"][:500]
+    assert "Rendered statically" in view["note"]
+
+
+def test_de_report_data_caps_and_classifies():
+    import pandas as pd
+
+    from de_toolkit.de import DE_POINT_BUDGET, _de_report_data
+
+    n = DE_POINT_BUDGET + 3000
+    df = pd.DataFrame(
+        {
+            "gene": [f"g{i}" for i in range(n)],
+            "baseMean": [10.0] * n,
+            "cond__log2FoldChange": [2.0 if i < 100 else 0.1 for i in range(n)],
+            "cond__pvalue": [1e-10 if i < 100 else 0.5 for i in range(n)],
+            "cond__padj": [1e-8 if i < 100 else 0.9 for i in range(n)],
+            "Intercept__log2FoldChange": [1.0] * n,
+            "Intercept__pvalue": [0.5] * n,
+            "Intercept__padj": [0.9] * n,
+        }
+    )
+    de = _de_report_data(df, "deseq2")
+    assert de["feature_col"] == "gene"
+    assert [t["term"] for t in de["terms"]] == ["cond"]  # Intercept excluded
+    t = de["terms"][0]
+    assert t["total"] == n and t["num_sig"] == 100
+    assert t["shown"] <= DE_POINT_BUDGET
+    sigs = [p for p in t["points"] if p["sig"] == "up"]
+    assert len(sigs) == 100  # every significant feature survives the cap
+    assert all("lmean" in p and "nlp" in p for p in t["points"])
+    # deterministic
+    assert _de_report_data(df, "deseq2") == de

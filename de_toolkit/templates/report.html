@@ -60,6 +60,7 @@
   .card h2 { margin:0 0 4px; font-size:16px; }
   .card .desc { color:var(--muted-solid); font-size:13px; margin:0 0 16px; max-width:72ch; }
   .chart { width:100%; }
+  .chart-static svg { max-width:100%; height:auto; }
   .kv { display:flex; gap:26px; flex-wrap:wrap; }
   .kv .item { min-width:120px; }
   .kv .val { font-size:28px; font-weight:650; }
@@ -171,7 +172,12 @@
     var v = m.view || { type: "raw" };
     if (v.type === "vega") {
       vegaCharts.push({ id: m.id + "-vis", spec: v.spec });
-      return '<div class="chart" id="' + m.id + '-vis"></div>';
+      var vegaNote = v.note ? '<p class="desc">' + v.note + '</p>' : '';
+      return vegaNote + '<div class="chart" id="' + m.id + '-vis"></div>';
+    }
+    if (v.type === "svg") {
+      var svgNote = v.note ? '<p class="desc">' + v.note + '</p>' : '';
+      return svgNote + '<div class="chart chart-static">' + v.svg + '</div>';
     }
     if (v.type === "kv") {
       return '<div class="kv">' + v.items.map(function (it) {

@@ -15,6 +15,7 @@ dynamic = ["version"]
 dependencies = [
     "docopt-ng",
     "jinja2",
+    "matplotlib",
     "numpy",
     "pandas",
     "patsy>=1.0",

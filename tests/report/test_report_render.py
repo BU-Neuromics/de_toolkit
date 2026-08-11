@@ -1,4 +1,5 @@
 """Tests for the Vega-Lite report rendering pipeline (Phase 2)."""
+
 import json
 import os
 import re
@@ -9,36 +10,88 @@ from de_toolkit.report_specs import clean, view_for
 
 
 def mod(name, properties, params=None):
-    return {"name": name, "params": params or {}, "properties": properties,
-            "detk_version": "0.0.0", "in_file_path": "counts.csv"}
+    return {
+        "name": name,
+        "params": params or {},
+        "properties": properties,
+        "detk_version": "0.0.0",
+        "in_file_path": "counts.csv",
+    }
 
 
 # synthetic module JSON matching the real emitted shapes
 FIXTURES = {
     "basestats": mod("basestats", {"num_rows": 100, "num_cols": 6}),
-    "pca": mod("pca", {
-        "column_names": ["s1", "s2", "s3"],
-        "column_variables": {"sample_names": ["s1", "s2", "s3"],
-                             "columns": [{"column": "status", "values": ["A", "B", "A"]}]},
-        "components": [
-            {"name": "PC1", "scores": [1.0, -2.0, 0.5], "perc_variance": 0.4, "projections": []},
-            {"name": "PC2", "scores": [0.2, 0.1, -0.3], "perc_variance": 0.2, "projections": []}]}),
-    "entropy": mod("entropy", {"entropies": {"pct": [0, 1, 2], "pctVal": [0.5, 1.0, 1.5],
-                                             "num_features": [1, 2, 3]}}),
-    "colzero": mod("colzero", {"zeros": [{"name": "s1", "zero_frac": 0.1},
-                                         {"name": "s2", "zero_frac": 0.3}]}),
-    "rowzero": mod("rowzero", {"zeros": [{"num_zeros": 0, "num_features": 50, "feature_frac": 0.5},
-                                         {"num_zeros": 1, "num_features": 30, "feature_frac": 0.3}]}),
-    "coldist": mod("coldist", {"dists": [{"name": "s1", "dist": [[0, 5], [10, 2]],
-                                          "percentiles": [[0.0, 0.0], [0.5, 10.0], [1.0, 20.0]]}]}),
-    "rowdist": mod("rowdist", {"pct": [5, 10], "dists": [{"name": "g1", "dist": [3, 1],
-                                                          "bins": [0.0, 5.0], "extrema": {}}]}),
+    "pca": mod(
+        "pca",
+        {
+            "column_names": ["s1", "s2", "s3"],
+            "column_variables": {
+                "sample_names": ["s1", "s2", "s3"],
+                "columns": [{"column": "status", "values": ["A", "B", "A"]}],
+            },
+            "components": [
+                {
+                    "name": "PC1",
+                    "scores": [1.0, -2.0, 0.5],
+                    "perc_variance": 0.4,
+                    "projections": [],
+                },
+                {
+                    "name": "PC2",
+                    "scores": [0.2, 0.1, -0.3],
+                    "perc_variance": 0.2,
+                    "projections": [],
+                },
+            ],
+        },
+    ),
+    "entropy": mod(
+        "entropy",
+        {"entropies": {"pct": [0, 1, 2], "pctVal": [0.5, 1.0, 1.5], "num_features": [1, 2, 3]}},
+    ),
+    "colzero": mod(
+        "colzero", {"zeros": [{"name": "s1", "zero_frac": 0.1}, {"name": "s2", "zero_frac": 0.3}]}
+    ),
+    "rowzero": mod(
+        "rowzero",
+        {
+            "zeros": [
+                {"num_zeros": 0, "num_features": 50, "feature_frac": 0.5},
+                {"num_zeros": 1, "num_features": 30, "feature_frac": 0.3},
+            ]
+        },
+    ),
+    "coldist": mod(
+        "coldist",
+        {
+            "dists": [
+                {
+                    "name": "s1",
+                    "dist": [[0, 5], [10, 2]],
+                    "percentiles": [[0.0, 0.0], [0.5, 10.0], [1.0, 20.0]],
+                }
+            ]
+        },
+    ),
+    "rowdist": mod(
+        "rowdist",
+        {
+            "pct": [5, 10],
+            "dists": [{"name": "g1", "dist": [3, 1], "bins": [0.0, 5.0], "extrema": {}}],
+        },
+    ),
 }
 
 
 def test_clean_nonfinite_is_valid_json():
-    d = {"a": float("nan"), "b": [1.0, float("inf"), 3.0],
-         "c": {"x": float("-inf")}, "ok": 2.5, "s": "keep"}
+    d = {
+        "a": float("nan"),
+        "b": [1.0, float("inf"), 3.0],
+        "c": {"x": float("-inf")},
+        "ok": 2.5,
+        "s": "keep",
+    }
     c = clean(d)
     assert c["a"] is None
     assert c["b"] == [1.0, None, 3.0]
@@ -83,6 +136,7 @@ def test_builder_error_falls_back_to_raw():
 
 def test_report_is_self_contained(tmp_path):
     from de_toolkit.report import DetkReport
+
     rep = DetkReport(str(tmp_path / "rep"))
     for name, m in FIXTURES.items():
         with open(os.path.join(rep.json_dir, name + ".json"), "w") as f:

@@ -100,14 +100,14 @@ from de_toolkit.report import DetkReport
 from de_toolkit.stats import BaseStats
 from de_toolkit.common import CountMatrixFile
 
-with open('counts.csv') as f:
+with open("counts.csv") as f:
     counts = CountMatrixFile(f)
 
-with DetkReport('my_report_dir') as r:
+with DetkReport("my_report_dir") as r:
     r.add_module(
         BaseStats(counts),
-        in_file_path='counts.csv',
-        workdir='.',
+        in_file_path="counts.csv",
+        workdir=".",
     )
 # my_report_dir/detk_report.html is written on context exit
 ```

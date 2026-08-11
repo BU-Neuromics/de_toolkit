@@ -1,15 +1,15 @@
-r'''
+r"""
 Usage:
     detk-enrich fgsea [options] <gmt_fn> <result_fn>
 Options:
     -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
-'''
+"""
 
-todo = r'''
+todo = r"""
     detk-enrich fisher [options] <gmt_fn> <result_fn>
-'''
+"""
 cmd_opts = {
-        'fgsea':r'''
+    "fgsea": r"""
 Perform preranked Gene Set Enrichment Analysis using the fgsea bioconductor
 package on the given gmt gene set file.
 
@@ -58,7 +58,7 @@ Options:
                               debuggin out
     --rda=FILE                write out the fgsea result to the provide file
                               using saveRDS() in R
-''',
+""",
 }
 from collections import namedtuple, OrderedDict
 import csv
@@ -79,46 +79,39 @@ from .report import DetkReport
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-GeneSet = namedtuple('GeneSet',('name','desc','ids'))
+GeneSet = namedtuple("GeneSet", ("name", "desc", "ids"))
+
+
 class GMT(OrderedDict):
-    def __init__(self,sets=None) :
+    def __init__(self, sets=None):
         super().__init__()
-        for name,ids in (sets or {}).items() :
+        for name, ids in (sets or {}).items():
             self[name] = ids
 
-    def __setitem__(self,name,ids) :
-        self.add(name,ids)
+    def __setitem__(self, name, ids):
+        self.add(name, ids)
 
-    def add(self,name,ids,desc=None) :
-        OrderedDict.__setitem__(
-                self,
-                name,
-                GeneSet(name,desc or name,ids)
-            )
+    def add(self, name, ids, desc=None):
+        OrderedDict.__setitem__(self, name, GeneSet(name, desc or name, ids))
 
-    def load_file(self,fn) :
+    def load_file(self, fn):
         self.fn = fn
-        with open(fn,encoding='utf-8') as f :
-            for r in csv.reader(f,delimiter='\t') :
-                self.add(r[0],r[2:],desc=r[1])
-                #self[r[0]] = [_.strip() for _ in r[2:]]
+        with open(fn, encoding="utf-8") as f:
+            for r in csv.reader(f, delimiter="\t"):
+                self.add(r[0], r[2:], desc=r[1])
+                # self[r[0]] = [_.strip() for _ in r[2:]]
 
-    def write_file(self,out_fn) :
-        with open(out_fn,'w',encoding='utf-8') as f :
-            out_f = csv.writer(f,delimiter='\t')
-            for k,v in self.items() :
-                out_f.writerow([k,k]+list(v.ids))
+    def write_file(self, out_fn):
+        with open(out_fn, "w", encoding="utf-8") as f:
+            out_f = csv.writer(f, delimiter="\t")
+            for k, v in self.items():
+                out_f.writerow([k, k] + list(v.ids))
+
 
 def fgsea(
-        gmt,
-        stat,
-        minSize=15,
-        maxSize=500,
-        nperm=10000,
-        multilevel=False,
-        nproc=None,
-        rda_fn=None) :
-    '''
+    gmt, stat, minSize=15, maxSize=500, nperm=10000, multilevel=False, nproc=None, rda_fn=None
+):
+    """
     Perform pre-ranked Gene Set Enrichment Analysis using the fgsea Bioconductor
     package
 
@@ -138,45 +131,47 @@ def fgsea(
     - size: number of features in the feature set
     - leadingEdge: the leading edge features as defined by GSEA (string with
       space-separated feature names)
-    '''
+    """
     obj = FGSEARes(gmt, stat, minSize, maxSize, nperm, multilevel, nproc, rda_fn)
     return obj.output
 
-class FGSEARes(DetkModule) :
-    @require_r('fgsea')
-    def __init__(self,
-            gmt,
-            stat,
-            minSize=15,
-            maxSize=500,
-            nperm=10000,
-            multilevel=True,
-            nproc=None,
-            filter_unannotated=False,
-            rda_fn=None,
-            routput_dir=None
-        ) :
-        self['params'] = {
-                'minSize': minSize,
-                'maxSize': maxSize,
-                'nperm': nperm,
-                'multilevel': multilevel,
-                'nproc': nproc,
-                'rda_fn': rda_fn
-                }
+
+class FGSEARes(DetkModule):
+    @require_r("fgsea")
+    def __init__(
+        self,
+        gmt,
+        stat,
+        minSize=15,
+        maxSize=500,
+        nperm=10000,
+        multilevel=True,
+        nproc=None,
+        filter_unannotated=False,
+        rda_fn=None,
+        routput_dir=None,
+    ):
+        self["params"] = {
+            "minSize": minSize,
+            "maxSize": maxSize,
+            "nperm": nperm,
+            "multilevel": multilevel,
+            "nproc": nproc,
+            "rda_fn": rda_fn,
+        }
         self.gmt = gmt
-        gmt_ids = reduce(lambda a,b: set(a).union(set(b)), (_.ids for _ in gmt.values()))
+        gmt_ids = reduce(lambda a, b: set(a).union(set(b)), (_.ids for _ in gmt.values()))
 
         # check for NAs in the stat
-        if stat.isnull().any() :
+        if stat.isnull().any():
             nas = stat[stat.isnull()]
-            msg = f'The following statistics were NaN and were filtered prior to fgsea:\n{nas}'
+            msg = f"The following statistics were NaN and were filtered prior to fgsea:\n{nas}"
             warnings.warn(msg, stacklevel=2)
             logger.warning(msg)
             stat = stat[~stat.isnull()]
 
         # check for anything that isn't a string in the stat names
-        if stat.index.isnull().any() :
+        if stat.index.isnull().any():
             null_mask = stat.index.isnull()
             nas = stat[null_mask]
             msg = f'The following statistic names were NaN and cast to unique "null_N" names prior to fgsea:\n{nas}'
@@ -187,29 +182,32 @@ class FGSEARes(DetkModule) :
             # crash on >1 NaN. Rebuild positionally because None/NaN index labels
             # cannot be reliably remapped via a dict (NaN keys collapse).
             new_index = list(stat.index)
-            for i, is_null in enumerate(null_mask) :
-                if is_null :
-                    new_index[i] = f'null_{i}'
+            for i, is_null in enumerate(null_mask):
+                if is_null:
+                    new_index[i] = f"null_{i}"
             stat = stat.copy()
             stat.index = new_index
 
-        if filter_unannotated :
-            logger.info('filtering out features without annotation in GMT')
-            logger.info(f'{len(gmt_ids)} unique IDs found in GMT')
+        if filter_unannotated:
+            logger.info("filtering out features without annotation in GMT")
+            logger.info(f"{len(gmt_ids)} unique IDs found in GMT")
             annotated_ids = stat.index.intersection(gmt_ids)
-            logger.info(f'{len(annotated_ids)}/{stat.index.size} ({100*len(annotated_ids)/stat.index.size:.2f}%) of features retained'
+            logger.info(
+                f"{len(annotated_ids)}/{stat.index.size} ({100 * len(annotated_ids) / stat.index.size:.2f}%) of features retained"
             )
 
             stat = stat.loc[annotated_ids]
 
         # make sure at least some IDs match
-        if not any(_ in gmt_ids for _ in stat.index) :
-            err = ('No features map between GMT file and results. Check that the '
-                   'feature ID types match between your results and GMT.')
+        if not any(_ in gmt_ids for _ in stat.index):
+            err = (
+                "No features map between GMT file and results. Check that the "
+                "feature ID types match between your results and GMT."
+            )
             logger.error(err)
             raise Exception(err)
 
-        script = '''\
+        script = """\
         library(fgsea)
         library(data.table)
         library(BiocParallel)
@@ -264,182 +262,179 @@ class FGSEARes(DetkModule) :
             )
         }
         fwrite(fgseaRes,file=out.fn,sep=",",sep2=c("", " ", ""))
-        '''
-        logger.debug('fgsea R script:\n%s',script)
+        """
+        logger.debug("fgsea R script:\n%s", script)
 
         # need to write out the gmt to file
-        with tempfile.NamedTemporaryFile() as f :
+        with tempfile.NamedTemporaryFile() as f:
             gmt.write_file(f.name)
             params = {
-                'gmt.fn': os.path.realpath(f.name),
-                'stat': stat.tolist(),
-                'id': stat.index.tolist(),
-                'minSize': minSize,
-                'maxSize': maxSize,
-                'multilevel': multilevel,
-                'nperm': nperm,
-                'rda.fn': rda_fn,
-                'nproc': nproc or 0
+                "gmt.fn": os.path.realpath(f.name),
+                "stat": stat.tolist(),
+                "id": stat.index.tolist(),
+                "minSize": minSize,
+                "maxSize": maxSize,
+                "multilevel": multilevel,
+                "nperm": nperm,
+                "rda.fn": rda_fn,
+                "nproc": nproc or 0,
             }
-            logger.debug('fgsea wrapr params:\n%s',pformat(params))
-            with wrapr(script,
-                    params=params,
-                    raise_on_error=True,
-                    routput_dir=routput_dir) as r :
+            logger.debug("fgsea wrapr params:\n%s", pformat(params))
+            with wrapr(script, params=params, raise_on_error=True, routput_dir=routput_dir) as r:
                 gsea_res = r.output
-        
-        self.gsea_res = gsea_res
-        logger.info('shape of fgsea result dataframe: %s',gsea_res.shape)
 
-        logger.info('fgsea done')
+        self.gsea_res = gsea_res
+        logger.info("shape of fgsea result dataframe: %s", gsea_res.shape)
+
+        logger.info("fgsea done")
 
     @property
     def properties(self):
         return {
-                'num_pathways': len(self.gsea_res),
-                }
+            "num_pathways": len(self.gsea_res),
+        }
+
     @property
     def output(self):
         return self.gsea_res
 
-def main(argv=sys.argv) :
 
-    if '--version' in argv :
+def main(argv=sys.argv):
+
+    if "--version" in argv:
         from .version import __version__
+
         print(__version__)
         return
 
     # add the common opts to the docopt strings
     cmd_opts_aug = {}
-    for k,v in cmd_opts.items() :
+    for k, v in cmd_opts.items():
         cmd_opts_aug[k] = _cli_doc(v)
 
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
+    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts):
         docopt(__doc__)
     argv = argv[1:]
     cmd = argv[0]
 
-    if cmd == 'fgsea' :
-        args = docopt(cmd_opts_aug['fgsea'],argv)
+    if cmd == "fgsea":
+        args = docopt(cmd_opts_aug["fgsea"], argv)
 
         set_logging(args)
-        logger.info('cmd: %s',' '.join(argv))
+        logger.info("cmd: %s", " ".join(argv))
 
-        logger.info('reading in GMT file %s',args['<gmt_fn>'])
+        logger.info("reading in GMT file %s", args["<gmt_fn>"])
         gmt = GMT()
-        try :
-            gmt.load_file(args['<gmt_fn>'])
-        except Exception as e :
+        try:
+            gmt.load_file(args["<gmt_fn>"])
+        except Exception as e:
             logger.error(e)
             sys.exit(1)
 
-        logger.info('reading in results file %s',args['<result_fn>'])
-        try :
-            res_df = pandas.read_csv(
-                    args['<result_fn>'],
-                    sep=None,
-                    engine='python'
-            )
-        except Exception as e :
+        logger.info("reading in results file %s", args["<result_fn>"])
+        try:
+            res_df = pandas.read_csv(args["<result_fn>"], sep=None, engine="python")
+        except Exception as e:
             logger.error(e)
             sys.exit(1)
 
-        logger.info('result data frame shape: %s',res_df.shape)
+        logger.info("result data frame shape: %s", res_df.shape)
 
-        cores = args['--cores']
-        if cores is not None :
-
-            try :
+        cores = args["--cores"]
+        if cores is not None:
+            try:
                 cores = int(cores)
-            except ValueError :
-                logger.error(Exception('The cores argument to fgsea '
-                        'must be an integer'))
+            except ValueError:
+                logger.error(Exception("The cores argument to fgsea must be an integer"))
                 sys.exit(1)
 
-        def get_col_or_idcol(res_df,col) :
-            if col not in res_df.columns :
+        def get_col_or_idcol(res_df, col):
+            if col not in res_df.columns:
                 col = int(col)
-                if col >= len(res_df.columns) :
+                if col >= len(res_df.columns):
                     raise ValueError()
                 col = res_df.columns[col]
             return col
 
-        col = args['--statcol']
-        if col is not None :
+        col = args["--statcol"]
+        if col is not None:
             # check that the provided column is either in the column names
             # of the results df, or else is a valid integer index into it
 
-                try :
-                    col = get_col_or_idcol(res_df,col)
-                except ValueError :
-                    logger.error(Exception(
-                        f'Stat column {col} could not be found in results result '
-                        'or interpreted as an integer index, aborting'
-                        
-                    ))
-                    sys.exit(1)
-        else :
+            try:
+                col = get_col_or_idcol(res_df, col)
+            except ValueError:
+                logger.error(
+                    Exception(
+                        f"Stat column {col} could not be found in results result "
+                        "or interpreted as an integer index, aborting"
+                    )
+                )
+                sys.exit(1)
+        else:
             # pick the last numeric column
             col = res_df.columns[res_df.dtypes.apply(pandas.api.types.is_numeric_dtype)][-1]
-        logger.info('using %s as statistic column',col)
+        logger.info("using %s as statistic column", col)
 
         stat = res_df[col]
-        if args['--abs'] :
-            logger.info('taking absolute value of statistic column due to --abs')
+        if args["--abs"]:
+            logger.info("taking absolute value of statistic column due to --abs")
             stat = stat.abs()
 
-        idcol = args['--idcol']
-        if idcol is not None :
-            try :
-                idcol = get_col_or_idcol(res_df,idcol)
-            except ValueError :
-                logger.error(Exception(
-                    f'ID column {idcol} could not be found in results dataframe '
-                    'or interpreted as an integer index, aborting'
-                    
-                ))
+        idcol = args["--idcol"]
+        if idcol is not None:
+            try:
+                idcol = get_col_or_idcol(res_df, idcol)
+            except ValueError:
+                logger.error(
+                    Exception(
+                        f"ID column {idcol} could not be found in results dataframe "
+                        "or interpreted as an integer index, aborting"
+                    )
+                )
                 sys.exit(1)
 
             stat.index = res_df[idcol]
-        logger.info('using %s as identifier column',idcol)
+        logger.info("using %s as identifier column", idcol)
 
-        if args['--ascending'] :
-            logger.info('sorting statistic into ascending order due to --ascending')
+        if args["--ascending"]:
+            logger.info("sorting statistic into ascending order due to --ascending")
             stat = -stat
 
-        try :
+        try:
             out = FGSEARes(
-                    gmt,
-                    stat,
-                    minSize=int(args['--minSize']),
-                    maxSize=int(args['--maxSize']),
-                    nperm=int(args['--nperm']),
-                    multilevel=args['--multilevel'],
-                    nproc=cores,
-                    filter_unannotated=args['--filter-unannotated'],
-                    rda_fn=args['--rda'],
-                    routput_dir=args['--routput-dir']
-                )
-        except Exception as e :
+                gmt,
+                stat,
+                minSize=int(args["--minSize"]),
+                maxSize=int(args["--maxSize"]),
+                nperm=int(args["--nperm"]),
+                multilevel=args["--multilevel"],
+                nproc=cores,
+                filter_unannotated=args["--filter-unannotated"],
+                rda_fn=args["--rda"],
+                routput_dir=args["--routput-dir"],
+            )
+        except Exception as e:
             logger.error(e)
             sys.exit(1)
 
-    write_output(out.output,args)
+    write_output(out.output, args)
 
-    if not args['--no-report'] :
-        logging.info('writing report to %s',args['--report-dir'])
-        with DetkReport(args['--report-dir']) as r :
+    if not args["--no-report"]:
+        logging.info("writing report to %s", args["--report-dir"])
+        with DetkReport(args["--report-dir"]) as r:
             r.add_module(
-                    out,
-                    in_file_path=args['<gmt_fn>'],
-                    out_file_path=args['--output'],
-                    column_data_path=args.get('--column-data'),
-                    workdir=os.getcwd()
-                )
-    else :
-        logging.info('not generating report due to --no-report')
+                out,
+                in_file_path=args["<gmt_fn>"],
+                out_file_path=args["--output"],
+                column_data_path=args.get("--column-data"),
+                workdir=os.getcwd(),
+            )
+    else:
+        logging.info("not generating report due to --no-report")
 
-    logging.info('done')
+    logging.info("done")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

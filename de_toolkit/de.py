@@ -1,15 +1,15 @@
-r'''
+r"""
 Usage:
     detk-de deseq2 [options] <design> <counts_fn> <cov_fn>
     detk-de firth [options] <design> <counts_fn> <cov_fn>
-'''
+"""
 
-TODO = r'''
+TODO = r"""
     detk-de t-test ( help | [options] <counts_fn> <cov_fn> )
-'''
+"""
 
 cmd_opts = {
-        'deseq2':r'''
+    "deseq2": r"""
 Usage:
     detk-de deseq2 [options] <design> <counts_fn> <cov_fn>
 
@@ -31,8 +31,8 @@ Options:
     --gene-wise-disp       Use estimateDispersionsGeneEst instead of estimateDispersions
     --cores=N              Tell DESeq2 to use N cores when running, requires the
                            BiocParallel Bioconductor package to be installed [default: none]
-''',
-        'firth':r'''
+""",
+    "firth": r"""
 Usage:
     detk-de firth [options] <design> <counts_fn> <cov_fn>
 
@@ -50,7 +50,7 @@ Options:
                            beta coefficients
     --cores=N              Tell R to use N cores when running, requires the
                            parallel R package to be installed [default: none]
-'''
+""",
 }
 
 from docopt import docopt
@@ -58,12 +58,15 @@ import logging
 from pprint import pformat
 import sys
 import os
-from .common import (InvalidDesignException, DetkModule,
-        _cli_doc, set_logging, make_cli_count_obj, write_output
-    )
-from .wrapr import (
-        require_r, wrapr, require_r_package
-    )
+from .common import (
+    InvalidDesignException,
+    DetkModule,
+    _cli_doc,
+    set_logging,
+    make_cli_count_obj,
+    write_output,
+)
+from .wrapr import require_r, wrapr, require_r_package
 from .util import stub
 from .report import DetkReport
 
@@ -71,78 +74,85 @@ from .report import DetkReport
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-def deseq2(count_obj,
+
+def deseq2(
+    count_obj,
+    normalized=True,
+    rda=None,
+    all_coeff_results=True,
+    gene_wise_disp_est=False,
+    cores=None,
+    routput_dir=None,
+):
+    obj = DESeq2Counts(
+        count_obj,
+        normalized,
+        rda,
+        all_coeff_results,
+        gene_wise_disp_est,
+        cores,
+        routput_dir=routput_dir,
+    )
+    return obj.output
+
+
+class DESeq2Counts(DetkModule):
+    @require_r("DESeq2")
+    def __init__(
+        self,
+        count_obj,
         normalized=True,
         rda=None,
         all_coeff_results=True,
         gene_wise_disp_est=False,
         cores=None,
-        routput_dir=None):
-    obj = DESeq2Counts(
-            count_obj,
-            normalized,
-            rda,
-            all_coeff_results,
-            gene_wise_disp_est,
-            cores,
-            routput_dir=routput_dir
-    )
-    return obj.output
-
-class DESeq2Counts(DetkModule):
-    @require_r('DESeq2')
-    def __init__(self, count_obj,
-            normalized=True,
-            rda=None,
-            all_coeff_results=True,
-            gene_wise_disp_est=False,
-            cores=None,
-            routput_dir=None):
+        routput_dir=None,
+    ):
         self.count_obj = count_obj
-        self['params'] = {'normalized': normalized,
-                'rda': rda,
-                'all_coeff_results': all_coeff_results,
-                'gene_wise_disp_est': gene_wise_disp_est,
-                'cores': cores
-                }
+        self["params"] = {
+            "normalized": normalized,
+            "rda": rda,
+            "all_coeff_results": all_coeff_results,
+            "gene_wise_disp_est": gene_wise_disp_est,
+            "cores": cores,
+        }
 
         # make a copy of count_obj, since we mutate it
         count_obj = count_obj.copy()
 
         # validate the design matrix
-        if count_obj.design is None or count_obj.design_matrix is None :
-            raise InvalidDesignException('count_obj must have a design matrix to use'
-                ' DESeq2')
+        if count_obj.design is None or count_obj.design_matrix is None:
+            raise InvalidDesignException("count_obj must have a design matrix to use DESeq2")
 
-        if 'counts' not in count_obj.design_matrix.lhs :
-            raise InvalidDesignException('The term "counts" must exist on the left '
-                ' hand side of the model in DESeq2')
+        if "counts" not in count_obj.design_matrix.lhs:
+            raise InvalidDesignException(
+                'The term "counts" must exist on the left  hand side of the model in DESeq2'
+            )
 
         # drop the counts from the left hand side since DESeq2 doesn't use it
-        count_obj.design_matrix.drop_from_lhs('counts',quiet=True)
+        count_obj.design_matrix.drop_from_lhs("counts", quiet=True)
 
         # make sure the rhs of the design matrix doesn't have an intercept
-        count_obj.design_matrix.drop_from_rhs('Intercept',quiet=True)
+        count_obj.design_matrix.drop_from_rhs("Intercept", quiet=True)
 
-        if cores is not None :
-            logging.debug('Enabling parallelism with BiocParallel')
-            require_r_package('BiocParallel')
-            try :
+        if cores is not None:
+            logging.debug("Enabling parallelism with BiocParallel")
+            require_r_package("BiocParallel")
+            try:
                 cores = int(cores)
-            except ValueError as e :
-                raise Exception('The cores argument to DESeq2 '
-                        'must be an integer') from e
+            except ValueError as e:
+                raise Exception("The cores argument to DESeq2 must be an integer") from e
 
         params = {
-            'design': count_obj.design,
-            'normalized': normalized,
-            'rda': rda,
-            'cores': cores,
-            'all.coeff.results': all_coeff_results,
-            'gene.wise.disp.est': gene_wise_disp_est
+            "design": count_obj.design,
+            "normalized": normalized,
+            "rda": rda,
+            "cores": cores,
+            "all.coeff.results": all_coeff_results,
+            "gene.wise.disp.est": gene_wise_disp_est,
         }
-        logger.debug('DESeq2 wrapr params:\n %s', pformat(params))
-        script = '''\
+        logger.debug("DESeq2 wrapr params:\n %s", pformat(params))
+        script = """\
             library(DESeq2)
             cnts <- read.csv(counts.fn,header=T,as.is=T,check.names=FALSE)
             index.name <- names(cnts)[1]
@@ -278,73 +288,73 @@ class DESeq2Counts(DetkModule):
             colnames(res.df)[1] <- orig.index.name
 
             write.csv(res.df,out.fn,row.names=F)
-        '''
-        logging.info('Executing DESeq2 in wrapr')
-        with wrapr(script,
-                counts=count_obj.counts,
-                metadata=count_obj.design_matrix.full_matrix,
-                params=params,
-                routput_dir=routput_dir) as wr :
+        """
+        logging.info("Executing DESeq2 in wrapr")
+        with wrapr(
+            script,
+            counts=count_obj.counts,
+            metadata=count_obj.design_matrix.full_matrix,
+            params=params,
+            routput_dir=routput_dir,
+        ) as wr:
             self.wr_output = wr.output
 
-        logging.info('Done executing DESeq2 in wrapr')
+        logging.info("Done executing DESeq2 in wrapr")
+
     @property
     def output(self):
         return self.wr_output
+
     @property
     def properties(self):
-        return {'num_length': len(self.wr_output)
-                }
+        return {"num_length": len(self.wr_output)}
 
-def firth_logistic_regression(
-        count_obj,
-        standardize=False,
-        rda=None,
-        cores=None,
-        routput_dir=None) :
+
+def firth_logistic_regression(count_obj, standardize=False, rda=None, cores=None, routput_dir=None):
     obj = FLGCounts(count_obj, standardize, rda, cores)
     return obj.output
 
+
 class FLGCounts(DetkModule):
-    @require_r('logistf')
-    def __init__(self, count_obj,
-            standardize=False,
-            rda=None,
-            cores=None,
-            routput_dir=None):
+    @require_r("logistf")
+    def __init__(self, count_obj, standardize=False, rda=None, cores=None, routput_dir=None):
         self.count_obj = count_obj
 
         # make a copy of count_obj, since we mutate it
         count_obj = count_obj.copy()
 
         # validate the design matrix
-        if count_obj.design is None or count_obj.design_matrix is None :
-            raise InvalidDesignException('count_obj must have a design matrix in Firth'
-                ' logistic regression')
+        if count_obj.design is None or count_obj.design_matrix is None:
+            raise InvalidDesignException(
+                "count_obj must have a design matrix in Firth logistic regression"
+            )
 
-        if 'counts' not in count_obj.design_matrix.rhs :
-            raise InvalidDesignException('The term "counts" must exist on the right hand'
-                'side of the model in Firth logistic regression')
+        if "counts" not in count_obj.design_matrix.rhs:
+            raise InvalidDesignException(
+                'The term "counts" must exist on the right hand'
+                "side of the model in Firth logistic regression"
+            )
 
         # make sure the rhs of the design matrix doesn't have an intercept
-        count_obj.design_matrix.drop_from_rhs('Intercept',quiet=True)
+        count_obj.design_matrix.drop_from_rhs("Intercept", quiet=True)
 
-        if cores is not None :
-            require_r_package('parallel')
-            try :
+        if cores is not None:
+            require_r_package("parallel")
+            try:
                 cores = int(cores)
-            except ValueError as e :
-                raise Exception('The cores argument to firth_logistic_regression '
-                        'must be an integer') from e
+            except ValueError as e:
+                raise Exception(
+                    "The cores argument to firth_logistic_regression must be an integer"
+                ) from e
 
         params = {
-            'design': count_obj.design,
-            'standardize': standardize,
-            'rda': rda,
-            'cores': cores
+            "design": count_obj.design,
+            "standardize": standardize,
+            "rda": rda,
+            "cores": cores,
         }
-        logger.debug('logistf wrapr params:\n %s', pformat(params))
-        script = '''\
+        logger.debug("logistf wrapr params:\n %s", pformat(params))
+        script = """\
             library(logistf)
             cnts <- read.csv(counts.fn,header=T,as.is=T,check.names=FALSE)
             index.name <- names(cnts)[1]
@@ -420,103 +430,112 @@ class FLGCounts(DetkModule):
             colnames(res.df)[1] <- orig.index.name
 
             write.csv(res.df,out.fn,row.names=F)
-        '''
-        logging.info('Executing logistf in wrapr')
-        with wrapr(script,
-                counts=count_obj.counts,
-                metadata=count_obj.design_matrix.full_matrix,
-                params=params,
-                routput_dir=routput_dir) as wr :
+        """
+        logging.info("Executing logistf in wrapr")
+        with wrapr(
+            script,
+            counts=count_obj.counts,
+            metadata=count_obj.design_matrix.full_matrix,
+            params=params,
+            routput_dir=routput_dir,
+        ) as wr:
             self.wr_output = wr.output
 
-        logging.info('Done executing logistf in wrapr')
+        logging.info("Done executing logistf in wrapr")
+
     @property
     def output(self):
         return self.wr_output
+
     @property
     def properties(self):
-        return {'num_length': len(self.wr_output)
-                }
+        return {"num_length": len(self.wr_output)}
+
 
 @stub
-def t_test(count_obj) :
+def t_test(count_obj):
     pass
 
-def main(argv=sys.argv) :
 
-    if '--version' in argv :
+def main(argv=sys.argv):
+
+    if "--version" in argv:
         from .version import __version__
+
         print(__version__)
         return
 
     # add the common opts to the docopt strings
     cmd_opts_aug = {}
-    for k,v in cmd_opts.items() :
+    for k, v in cmd_opts.items():
         cmd_opts_aug[k] = _cli_doc(v)
 
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts_aug) :
+    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts_aug):
         docopt(_cli_doc(__doc__))
     argv = argv[1:]
     cmd = argv[0]
 
-    if cmd == 'deseq2' :
-        args = docopt(cmd_opts_aug['deseq2'],argv)
+    if cmd == "deseq2":
+        args = docopt(cmd_opts_aug["deseq2"], argv)
 
         set_logging(args)
-        logger.info('cmd: %s',' '.join(argv))
+        logger.info("cmd: %s", " ".join(argv))
 
         count_obj = make_cli_count_obj(args)
 
-        try :
-            logger.info('running DESeq2')
-            out = DESeq2Counts(count_obj,
-                    normalized=args.get('--norm-counts',False),
-                    rda=args.get('--rda'),
-                    all_coeff_results=not args.get('--last-term-only',False),
-                    gene_wise_disp_est=args.get('--gene-wise-disp',False),
-                    cores=int(args['--cores']) if args['--cores'] != 'none' else None,
-                    routput_dir=args['--routput-dir']
+        try:
+            logger.info("running DESeq2")
+            out = DESeq2Counts(
+                count_obj,
+                normalized=args.get("--norm-counts", False),
+                rda=args.get("--rda"),
+                all_coeff_results=not args.get("--last-term-only", False),
+                gene_wise_disp_est=args.get("--gene-wise-disp", False),
+                cores=int(args["--cores"]) if args["--cores"] != "none" else None,
+                routput_dir=args["--routput-dir"],
             )
-        except Exception as e :
+        except Exception as e:
             logger.error(e)
             sys.exit(1)
 
-    elif cmd == 'firth' :
-        args = docopt(cmd_opts_aug['firth'],argv)
+    elif cmd == "firth":
+        args = docopt(cmd_opts_aug["firth"], argv)
 
         set_logging(args)
-        logger.info('cmd: %s',' '.join(argv))
+        logger.info("cmd: %s", " ".join(argv))
 
         count_obj = make_cli_count_obj(args)
 
-        try :
-            logger.info('running Firth logistic regression')
-            out = FLGCounts(count_obj,
-                    rda=args['--rda'],
-                    standardize=args.get('--standardize',False),
-                    cores=int(args['--cores']) if args['--cores'] != 'none' else None,
-                    routput_dir=args['--routput-dir']
+        try:
+            logger.info("running Firth logistic regression")
+            out = FLGCounts(
+                count_obj,
+                rda=args["--rda"],
+                standardize=args.get("--standardize", False),
+                cores=int(args["--cores"]) if args["--cores"] != "none" else None,
+                routput_dir=args["--routput-dir"],
             )
-        except Exception as e :
+        except Exception as e:
             logger.error(e)
             sys.exit(1)
 
-    write_output(out.output,args)
+    write_output(out.output, args)
 
-    if not args['--no-report'] :
-        logging.info('writing report to %s',args['--report-dir'])
-        with DetkReport(args['--report-dir']) as r :
+    if not args["--no-report"]:
+        logging.info("writing report to %s", args["--report-dir"])
+        with DetkReport(args["--report-dir"]) as r:
             r.add_module(
-                    out,
-                    in_file_path=args['<counts_fn>'],
-                    out_file_path=args['--output'],
-                    column_data_path=args.get('--column-data'),
-                    workdir=os.getcwd()
-                    )
-    else :
-        logging.info('not generating report due to --no-report')
+                out,
+                in_file_path=args["<counts_fn>"],
+                out_file_path=args["--output"],
+                column_data_path=args.get("--column-data"),
+                workdir=os.getcwd(),
+            )
+    else:
+        logging.info("not generating report due to --no-report")
 
-    logging.info('done')
+    logging.info("done")
 
-if __name__ == '__main__' :
+
+if __name__ == "__main__":
     main()

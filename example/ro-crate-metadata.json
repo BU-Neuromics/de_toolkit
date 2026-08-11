@@ -1,0 +1,603 @@
+{
+  "@context": "https://w3id.org/ro/crate/1.1/context",
+  "@graph": [
+    {
+      "@id": "ro-crate-metadata.json",
+      "@type": "CreativeWork",
+      "conformsTo": {
+        "@id": "https://w3id.org/ro/crate/1.1"
+      },
+      "about": {
+        "@id": "./"
+      }
+    },
+    {
+      "@id": "./",
+      "@type": "Dataset",
+      "conformsTo": {
+        "@id": "https://w3id.org/ro/wfrun/process/0.5"
+      },
+      "name": "detk analysis provenance",
+      "description": "Provenance of de_toolkit (detk) tool executions in this directory, recorded as a Process Run Crate. Each CreateAction is one detk invocation; the same facts in detk's native format are under the report directory's json/ folder.",
+      "license": "Not specified -- rights to the data described by this crate remain with its owner.",
+      "datePublished": "2026-08-11T20:39:13.209672+00:00",
+      "hasPart": [
+        {
+          "@id": "counts.csv"
+        },
+        {
+          "@id": "raw_summary_stats.csv"
+        },
+        {
+          "@id": "counts_filtered.csv"
+        },
+        {
+          "@id": "norm_counts.csv"
+        },
+        {
+          "@id": "vst_counts.csv"
+        },
+        {
+          "@id": "entropy_flags.csv"
+        },
+        {
+          "@id": "deseq2_results.csv"
+        },
+        {
+          "@id": "wikipathways.gmt"
+        },
+        {
+          "@id": "fgsea_results.csv"
+        }
+      ],
+      "mentions": [
+        {
+          "@id": "urn:uuid:ebc115af-27c7-574f-81fc-911b2ea34e9c"
+        },
+        {
+          "@id": "urn:uuid:f4d2d7d9-cb23-5de8-9f43-83faba6c7755"
+        },
+        {
+          "@id": "urn:uuid:bb4eb77f-7ff5-539e-91eb-9af088a7a9a2"
+        },
+        {
+          "@id": "urn:uuid:0b82d3fd-e521-5e3e-8381-61eac4da843a"
+        },
+        {
+          "@id": "urn:uuid:c9edf551-12f8-58bd-b43c-3adb25f8a232"
+        },
+        {
+          "@id": "urn:uuid:3a2ed678-e2b9-5a6b-8d54-2780282c719f"
+        },
+        {
+          "@id": "urn:uuid:fe99e962-0287-5b83-9e32-ef42a5f221cc"
+        },
+        {
+          "@id": "urn:uuid:fcc0535b-d73f-59ec-9077-95b6092b53ba"
+        },
+        {
+          "@id": "urn:uuid:6987391c-65a3-594d-864a-a9ad6ef812e5"
+        },
+        {
+          "@id": "urn:uuid:8a8eaccc-20f4-5906-81a8-947717fc95bb"
+        },
+        {
+          "@id": "urn:uuid:361eca75-b6a2-58c6-9077-584aed8cf29b"
+        },
+        {
+          "@id": "urn:uuid:4ed7153d-3839-55fd-9285-1a2d6938d69c"
+        }
+      ]
+    },
+    {
+      "@id": "https://w3id.org/ro/wfrun/process/0.5",
+      "@type": "CreativeWork",
+      "name": "Process Run Crate",
+      "version": "0.5"
+    },
+    {
+      "@id": "counts.csv",
+      "@type": "File",
+      "name": "counts.csv",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "raw_summary_stats.csv",
+      "@type": "File",
+      "name": "raw_summary_stats.csv",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "counts_filtered.csv",
+      "@type": "File",
+      "name": "counts_filtered.csv",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "norm_counts.csv",
+      "@type": "File",
+      "name": "norm_counts.csv",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "vst_counts.csv",
+      "@type": "File",
+      "name": "vst_counts.csv",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "entropy_flags.csv",
+      "@type": "File",
+      "name": "entropy_flags.csv",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "deseq2_results.csv",
+      "@type": "File",
+      "name": "deseq2_results.csv",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "wikipathways.gmt",
+      "@type": "File",
+      "name": "wikipathways.gmt",
+      "encodingFormat": "text/tab-separated-values"
+    },
+    {
+      "@id": "fgsea_results.csv",
+      "@type": "File",
+      "name": "fgsea_results.csv",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-stats-entropy",
+      "@type": "SoftwareApplication",
+      "name": "detk-stats entropy",
+      "url": "https://bu-neuromics.github.io/de_toolkit/",
+      "softwareVersion": "0.9.12"
+    },
+    {
+      "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-stats-pca",
+      "@type": "SoftwareApplication",
+      "name": "detk-stats pca",
+      "url": "https://bu-neuromics.github.io/de_toolkit/",
+      "softwareVersion": "0.9.12"
+    },
+    {
+      "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-stats-coldist",
+      "@type": "SoftwareApplication",
+      "name": "detk-stats coldist",
+      "url": "https://bu-neuromics.github.io/de_toolkit/",
+      "softwareVersion": "0.9.12"
+    },
+    {
+      "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-stats-rowzero",
+      "@type": "SoftwareApplication",
+      "name": "detk-stats rowzero",
+      "url": "https://bu-neuromics.github.io/de_toolkit/",
+      "softwareVersion": "0.9.12"
+    },
+    {
+      "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-stats-basestats",
+      "@type": "SoftwareApplication",
+      "name": "detk-stats basestats",
+      "url": "https://bu-neuromics.github.io/de_toolkit/",
+      "softwareVersion": "0.9.12"
+    },
+    {
+      "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-stats-colzero",
+      "@type": "SoftwareApplication",
+      "name": "detk-stats colzero",
+      "url": "https://bu-neuromics.github.io/de_toolkit/",
+      "softwareVersion": "0.9.12"
+    },
+    {
+      "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-filter",
+      "@type": "SoftwareApplication",
+      "name": "detk-filter",
+      "url": "https://bu-neuromics.github.io/de_toolkit/",
+      "softwareVersion": "0.9.12"
+    },
+    {
+      "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-norm-deseq2",
+      "@type": "SoftwareApplication",
+      "name": "detk-norm deseq2",
+      "url": "https://bu-neuromics.github.io/de_toolkit/",
+      "softwareVersion": "0.9.12"
+    },
+    {
+      "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-transform-vst",
+      "@type": "SoftwareApplication",
+      "name": "detk-transform vst",
+      "url": "https://bu-neuromics.github.io/de_toolkit/",
+      "softwareVersion": "0.9.12"
+    },
+    {
+      "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-outlier-entropy",
+      "@type": "SoftwareApplication",
+      "name": "detk-outlier entropy",
+      "url": "https://bu-neuromics.github.io/de_toolkit/",
+      "softwareVersion": "0.9.12"
+    },
+    {
+      "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-de-deseq2",
+      "@type": "SoftwareApplication",
+      "name": "detk-de deseq2",
+      "url": "https://bu-neuromics.github.io/de_toolkit/",
+      "softwareVersion": "0.9.12"
+    },
+    {
+      "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-enrich-fgsea",
+      "@type": "SoftwareApplication",
+      "name": "detk-enrich fgsea",
+      "url": "https://bu-neuromics.github.io/de_toolkit/",
+      "softwareVersion": "0.9.12"
+    },
+    {
+      "@id": "#param-6b5518684ff5b467d2bf400dcc6325be-bins",
+      "@type": "PropertyValue",
+      "name": "detk-stats coldist bins",
+      "value": 20
+    },
+    {
+      "@id": "#param-6b5518684ff5b467d2bf400dcc6325be-density",
+      "@type": "PropertyValue",
+      "name": "detk-stats coldist density",
+      "value": false
+    },
+    {
+      "@id": "#param-6b5518684ff5b467d2bf400dcc6325be-log",
+      "@type": "PropertyValue",
+      "name": "detk-stats coldist log",
+      "value": true
+    },
+    {
+      "@id": "#param-c75868cf77bc9a2744eb5a931a349043-command",
+      "@type": "PropertyValue",
+      "name": "detk-filter command",
+      "value": "nonzero(all) >= 0.5"
+    },
+    {
+      "@id": "#param-5a136a25021ffdc8b9d0784331125a51-blind",
+      "@type": "PropertyValue",
+      "name": "detk-transform vst blind",
+      "value": true
+    },
+    {
+      "@id": "#param-8eb12f3e87f82585ada326e5311c31b8-threshold",
+      "@type": "PropertyValue",
+      "name": "detk-outlier entropy threshold",
+      "value": 0.05
+    },
+    {
+      "@id": "#param-02eed2196b5e497d11628351b81d82c8-all_coeff_results",
+      "@type": "PropertyValue",
+      "name": "detk-de deseq2 all_coeff_results",
+      "value": true
+    },
+    {
+      "@id": "#param-02eed2196b5e497d11628351b81d82c8-design",
+      "@type": "PropertyValue",
+      "name": "detk-de deseq2 design",
+      "value": "counts ~ Intercept + cell__N061011 + cell__N080611 + cell__N61311 + dex__trt"
+    },
+    {
+      "@id": "#param-02eed2196b5e497d11628351b81d82c8-gene_wise_disp_est",
+      "@type": "PropertyValue",
+      "name": "detk-de deseq2 gene_wise_disp_est",
+      "value": false
+    },
+    {
+      "@id": "#param-02eed2196b5e497d11628351b81d82c8-normalized",
+      "@type": "PropertyValue",
+      "name": "detk-de deseq2 normalized",
+      "value": false
+    },
+    {
+      "@id": "#param-b5455bfcfddb21cce9d1137eaa69c8f6-maxSize",
+      "@type": "PropertyValue",
+      "name": "detk-enrich fgsea maxSize",
+      "value": 500
+    },
+    {
+      "@id": "#param-b5455bfcfddb21cce9d1137eaa69c8f6-minSize",
+      "@type": "PropertyValue",
+      "name": "detk-enrich fgsea minSize",
+      "value": 15
+    },
+    {
+      "@id": "#param-b5455bfcfddb21cce9d1137eaa69c8f6-multilevel",
+      "@type": "PropertyValue",
+      "name": "detk-enrich fgsea multilevel",
+      "value": false
+    },
+    {
+      "@id": "#param-b5455bfcfddb21cce9d1137eaa69c8f6-nperm",
+      "@type": "PropertyValue",
+      "name": "detk-enrich fgsea nperm",
+      "value": 10000
+    },
+    {
+      "@id": "urn:uuid:ebc115af-27c7-574f-81fc-911b2ea34e9c",
+      "@type": "CreateAction",
+      "name": "detk-stats entropy run",
+      "instrument": {
+        "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-stats-entropy"
+      },
+      "startTime": "2026-08-11T20:38:32.201163+00:00",
+      "endTime": "2026-08-11T20:38:38.684437+00:00",
+      "object": [
+        {
+          "@id": "counts.csv"
+        }
+      ],
+      "result": [
+        {
+          "@id": "raw_summary_stats.csv"
+        }
+      ]
+    },
+    {
+      "@id": "urn:uuid:f4d2d7d9-cb23-5de8-9f43-83faba6c7755",
+      "@type": "CreateAction",
+      "name": "detk-stats pca run",
+      "instrument": {
+        "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-stats-pca"
+      },
+      "startTime": "2026-08-11T20:38:32.201163+00:00",
+      "endTime": "2026-08-11T20:38:38.684462+00:00",
+      "object": [
+        {
+          "@id": "counts.csv"
+        }
+      ],
+      "result": [
+        {
+          "@id": "raw_summary_stats.csv"
+        }
+      ]
+    },
+    {
+      "@id": "urn:uuid:bb4eb77f-7ff5-539e-91eb-9af088a7a9a2",
+      "@type": "CreateAction",
+      "name": "detk-stats coldist run",
+      "instrument": {
+        "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-stats-coldist"
+      },
+      "startTime": "2026-08-11T20:38:32.201163+00:00",
+      "endTime": "2026-08-11T20:38:38.684349+00:00",
+      "object": [
+        {
+          "@id": "counts.csv"
+        },
+        {
+          "@id": "#param-6b5518684ff5b467d2bf400dcc6325be-bins"
+        },
+        {
+          "@id": "#param-6b5518684ff5b467d2bf400dcc6325be-density"
+        },
+        {
+          "@id": "#param-6b5518684ff5b467d2bf400dcc6325be-log"
+        }
+      ],
+      "result": [
+        {
+          "@id": "raw_summary_stats.csv"
+        }
+      ]
+    },
+    {
+      "@id": "urn:uuid:0b82d3fd-e521-5e3e-8381-61eac4da843a",
+      "@type": "CreateAction",
+      "name": "detk-stats rowzero run",
+      "instrument": {
+        "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-stats-rowzero"
+      },
+      "startTime": "2026-08-11T20:38:32.201163+00:00",
+      "endTime": "2026-08-11T20:38:38.684412+00:00",
+      "object": [
+        {
+          "@id": "counts.csv"
+        }
+      ],
+      "result": [
+        {
+          "@id": "raw_summary_stats.csv"
+        }
+      ]
+    },
+    {
+      "@id": "urn:uuid:c9edf551-12f8-58bd-b43c-3adb25f8a232",
+      "@type": "CreateAction",
+      "name": "detk-stats basestats run",
+      "instrument": {
+        "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-stats-basestats"
+      },
+      "startTime": "2026-08-11T20:38:32.201163+00:00",
+      "endTime": "2026-08-11T20:38:38.684211+00:00",
+      "object": [
+        {
+          "@id": "counts.csv"
+        }
+      ],
+      "result": [
+        {
+          "@id": "raw_summary_stats.csv"
+        }
+      ]
+    },
+    {
+      "@id": "urn:uuid:3a2ed678-e2b9-5a6b-8d54-2780282c719f",
+      "@type": "CreateAction",
+      "name": "detk-stats colzero run",
+      "instrument": {
+        "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-stats-colzero"
+      },
+      "startTime": "2026-08-11T20:38:32.201163+00:00",
+      "endTime": "2026-08-11T20:38:38.684383+00:00",
+      "object": [
+        {
+          "@id": "counts.csv"
+        }
+      ],
+      "result": [
+        {
+          "@id": "raw_summary_stats.csv"
+        }
+      ]
+    },
+    {
+      "@id": "urn:uuid:fe99e962-0287-5b83-9e32-ef42a5f221cc",
+      "@type": "CreateAction",
+      "name": "detk-filter run",
+      "instrument": {
+        "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-filter"
+      },
+      "startTime": "2026-08-11T20:38:39.122416+00:00",
+      "endTime": "2026-08-11T20:38:39.307049+00:00",
+      "object": [
+        {
+          "@id": "counts.csv"
+        },
+        {
+          "@id": "#param-c75868cf77bc9a2744eb5a931a349043-command"
+        }
+      ],
+      "result": [
+        {
+          "@id": "counts_filtered.csv"
+        }
+      ]
+    },
+    {
+      "@id": "urn:uuid:fcc0535b-d73f-59ec-9077-95b6092b53ba",
+      "@type": "CreateAction",
+      "name": "detk-norm deseq2 run",
+      "instrument": {
+        "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-norm-deseq2"
+      },
+      "startTime": "2026-08-11T20:38:39.650939+00:00",
+      "endTime": "2026-08-11T20:38:39.844897+00:00",
+      "object": [
+        {
+          "@id": "counts_filtered.csv"
+        }
+      ],
+      "result": [
+        {
+          "@id": "norm_counts.csv"
+        }
+      ]
+    },
+    {
+      "@id": "urn:uuid:6987391c-65a3-594d-864a-a9ad6ef812e5",
+      "@type": "CreateAction",
+      "name": "detk-transform vst run",
+      "instrument": {
+        "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-transform-vst"
+      },
+      "startTime": "2026-08-11T20:38:40.193099+00:00",
+      "endTime": "2026-08-11T20:38:53.079965+00:00",
+      "object": [
+        {
+          "@id": "counts_filtered.csv"
+        },
+        {
+          "@id": "#param-5a136a25021ffdc8b9d0784331125a51-blind"
+        }
+      ],
+      "result": [
+        {
+          "@id": "vst_counts.csv"
+        }
+      ]
+    },
+    {
+      "@id": "urn:uuid:8a8eaccc-20f4-5906-81a8-947717fc95bb",
+      "@type": "CreateAction",
+      "name": "detk-outlier entropy run",
+      "instrument": {
+        "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-outlier-entropy"
+      },
+      "startTime": "2026-08-11T20:38:53.452108+00:00",
+      "endTime": "2026-08-11T20:38:56.283186+00:00",
+      "object": [
+        {
+          "@id": "counts_filtered.csv"
+        },
+        {
+          "@id": "#param-8eb12f3e87f82585ada326e5311c31b8-threshold"
+        }
+      ],
+      "result": [
+        {
+          "@id": "entropy_flags.csv"
+        }
+      ]
+    },
+    {
+      "@id": "urn:uuid:361eca75-b6a2-58c6-9077-584aed8cf29b",
+      "@type": "CreateAction",
+      "name": "detk-de deseq2 run",
+      "instrument": {
+        "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-de-deseq2"
+      },
+      "startTime": "2026-08-11T20:38:56.700706+00:00",
+      "endTime": "2026-08-11T20:39:07.250053+00:00",
+      "object": [
+        {
+          "@id": "counts_filtered.csv"
+        },
+        {
+          "@id": "#param-02eed2196b5e497d11628351b81d82c8-all_coeff_results"
+        },
+        {
+          "@id": "#param-02eed2196b5e497d11628351b81d82c8-design"
+        },
+        {
+          "@id": "#param-02eed2196b5e497d11628351b81d82c8-gene_wise_disp_est"
+        },
+        {
+          "@id": "#param-02eed2196b5e497d11628351b81d82c8-normalized"
+        }
+      ],
+      "result": [
+        {
+          "@id": "deseq2_results.csv"
+        }
+      ]
+    },
+    {
+      "@id": "urn:uuid:4ed7153d-3839-55fd-9285-1a2d6938d69c",
+      "@type": "CreateAction",
+      "name": "detk-enrich fgsea run",
+      "instrument": {
+        "@id": "https://github.com/BU-Neuromics/de_toolkit#detk-enrich-fgsea"
+      },
+      "startTime": "2026-08-11T20:39:08.133148+00:00",
+      "endTime": "2026-08-11T20:39:12.692904+00:00",
+      "object": [
+        {
+          "@id": "wikipathways.gmt"
+        },
+        {
+          "@id": "#param-b5455bfcfddb21cce9d1137eaa69c8f6-maxSize"
+        },
+        {
+          "@id": "#param-b5455bfcfddb21cce9d1137eaa69c8f6-minSize"
+        },
+        {
+          "@id": "#param-b5455bfcfddb21cce9d1137eaa69c8f6-multilevel"
+        },
+        {
+          "@id": "#param-b5455bfcfddb21cce9d1137eaa69c8f6-nperm"
+        }
+      ],
+      "result": [
+        {
+          "@id": "fgsea_results.csv"
+        }
+      ]
+    }
+  ]
+}

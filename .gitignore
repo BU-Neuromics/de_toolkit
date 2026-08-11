@@ -15,4 +15,4 @@ htmlcov/
 .venv/
 dist/
 site/
-ro-crate-metadata.json
+/ro-crate-metadata.json

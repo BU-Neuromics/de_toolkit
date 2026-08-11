@@ -144,7 +144,7 @@ class CountMatrix:
                     "common names between counts and column data:\n %s", pformat(common_names)
                 )
 
-                # fix to "no memory available" bitbucket issue #4 when matrices are
+                # fix to a "no memory available" issue (old Bitbucket tracker) when matrices are
                 # empty
                 if len(common_names) < 2:
                     raise SampleMismatchException(

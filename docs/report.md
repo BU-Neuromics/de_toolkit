@@ -83,6 +83,31 @@ it in detk's test suite. For example (abbreviated):
 }
 ```
 
+### Document schema
+
+The envelope is versioned (`schema_version`, currently **1.0**) and specified
+by a JSON Schema shipped inside the package at `de_toolkit/module_schema.json`
+([view on GitHub](https://github.com/BU-Neuromics/de_toolkit/blob/main/de_toolkit/module_schema.json)).
+Required fields:
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `name` | string | module name (lowercased `DetkModule` subclass) |
+| `id` | string | content hash of (name, params, input file, detk version); stable across re-runs |
+| `schema_version` | string | version of this envelope format |
+| `detk_version` | string | de_toolkit version that wrote the document |
+| `last_modified` | integer | unix ms timestamp of the write |
+| `params` | object | invocation parameters (empty only for modules that take none) |
+| `properties` | object | module-specific results consumed by the report views |
+
+Optional fields: `start_time` / `end_time` (ISO 8601 UTC), `argv` (the process
+argument vector), `in_file_path`, `out_file_path`, `column_data_path`,
+`workdir`. Every document detk emits is validated against the schema in the
+test suite; validate your own consumers against the same file. Small
+p-values never appear as raw floats in `properties` — the encoder rounds
+floats to 3 decimals, so modules emit `-log10` values or preformatted strings
+instead.
+
 These documents are the intended integration point for any downstream tooling
 that wants to consume detk results programmatically — LIMS systems, QC
 dashboards, meta-analyses. The same JSON is also embedded verbatim inside the

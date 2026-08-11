@@ -77,3 +77,24 @@ def test_entropy(entropy_test_counts_obj):
     # check the results of the unit test
     assert results["entropy"].iloc[19] == 0 and results["entropy_p0_05"].iloc[19]
     assert True not in results["entropy_p0_05"].iloc[0:18].values.tolist()
+
+
+def test_entropy_cli(tmp_path, fake_counts_csv):
+    # regression: main passed the raw DataFrame instead of the count object,
+    # so the entropy subcommand crashed on any invocation
+    from de_toolkit.outlier import main
+
+    out = tmp_path / "flags.csv"
+    main(
+        [
+            "detk-outlier",
+            "entropy",
+            fake_counts_csv,
+            "-p",
+            "0.05",
+            "-o",
+            str(out),
+            f"--report-dir={tmp_path / 'rep'}",
+        ]
+    )
+    assert out.exists()

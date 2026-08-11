@@ -15,6 +15,10 @@ Documentation is at:
 
 - [bu-neuromics.github.io/de_toolkit](https://bu-neuromics.github.io/de_toolkit/)
 
+See a [live example report](https://bu-neuromics.github.io/de_toolkit/example/detk_report.html)
+generated from the public [airway RNA-seq dataset](https://bu-neuromics.github.io/de_toolkit/example/)
+— self-contained HTML produced by `detk-report generate`.
+
 # Installing
 
 ## From pypi

@@ -203,6 +203,14 @@ class FGSEARes(DetkModule):
         self.gmt = gmt
         gmt_ids = reduce(lambda a, b: set(a).union(set(b)), (_.ids for _ in gmt.values()))
 
+        # GMT IDs are always strings, but pandas parses an all-integer ID
+        # column (e.g. Entrez gene IDs) as int64, which silently matched
+        # nothing; compare as strings on both sides
+        gmt_ids = {str(_) for _ in gmt_ids}
+        if not stat.index.isnull().any():
+            stat = stat.copy()
+            stat.index = stat.index.map(str)
+
         # check for NAs in the stat
         if stat.isnull().any():
             nas = stat[stat.isnull()]

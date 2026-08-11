@@ -21,7 +21,9 @@ detk-norm deseq2 counts.csv > norm_counts.csv
 detk-de deseq2 "counts ~ AgeOfDeath + Status[control]" counts.csv samples.csv > de_results.csv
 ```
 
-Head to the [Quickstart](quickstart.md) to see a full workflow, or
+Head to the [Quickstart](quickstart.md) to see a full workflow,
+the [worked example](example.md) for a real analysis ending in a
+[live example report](example/detk_report.html), or
 [Concepts](concepts.md) for the input file formats every tool shares.
 
 ## Installation

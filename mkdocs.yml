@@ -54,6 +54,7 @@ exclude_docs: |
 nav:
   - Home: index.md
   - Quickstart: quickstart.md
+  - Worked example (airway): example.md
   - Concepts & file formats: concepts.md
   - Tools:
     - Overview & common options: tools/index.md

@@ -79,3 +79,13 @@ def test_transform_plog_cli(fake_counts_csv):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         main(["detk-transform", "plog", fake_counts_csv])
+
+
+def test_plog_cli_accepts_output_option(tmp_path, fake_counts_csv):
+    # regression: main used to parse the module-level usage first, whose
+    # [options] did not include -o, so every subcommand option was rejected
+    from de_toolkit.transform import main
+
+    out = tmp_path / "plog.csv"
+    main(["detk-transform", "plog", "-o", str(out), "--no-report", fake_counts_csv])
+    assert out.exists()

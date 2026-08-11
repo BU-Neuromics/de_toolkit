@@ -348,7 +348,7 @@ def main(argv=sys.argv):
 
         # run the entropy_calc function
         try:
-            out = EntropyCounts(count_obj.counts, pval)
+            out = EntropyCounts(count_obj, pval)
         except Exception as e:
             logger.error(e)
             sys.exit(1)

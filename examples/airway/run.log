@@ -1,0 +1,244 @@
+== preparing airway data (Bioconductor airway package)
+'select()' returned 1:many mapping between keys and columns
+'select()' returned 1:many mapping between keys and columns
+wrote counts.csv (63677 genes x 8 samples), sample_info.csv, gene_map.csv
+== stats on the raw counts
+[2026-08-11 16:38:32,841] INFO:de_toolkit.common: 
+===========================
+        _      _   _    
+       | |    | | | |   
+     __| | ___| |_| | __
+    / _` |/ _ \ __| |/ /
+   | (_| |  __/ |_|   < 
+    \__,_|\___|\__|_|\_\
+                        
+ de-toolkit.readthedocs.io
+ Version: 0.9.12
+===========================
+[2026-08-11 16:38:32,841] INFO:de_toolkit.common: detk version: 0.9.12
+[2026-08-11 16:38:32,841] INFO:de_toolkit.stats: cmd: summary --log --color-col=dex -o raw_summary_stats.csv counts.csv sample_info.csv
+[2026-08-11 16:38:32,841] INFO:de_toolkit.common: constructing counts matrix from counts.csv and sample_info.csv
+[2026-08-11 16:38:32,841] INFO:de_toolkit.common: design is None
+[2026-08-11 16:38:32,990] INFO:de_toolkit.common: counts matrix has shape: (63677, 8)
+[2026-08-11 16:38:32,990] INFO:de_toolkit.common: column data matrix has shape: (8, 3)
+[2026-08-11 16:38:32,990] INFO:de_toolkit.common: design: None
+[2026-08-11 16:38:32,990] INFO:de_toolkit.common: counts matrix created successfully
+[2026-08-11 16:38:38,683] INFO:root: writing report to ./detk_report
+[2026-08-11 16:38:38,836] INFO:de_toolkit.report: wrote report (11 modules) to /home/labadorf/neuromics/de_toolkit/examples/airway/detk_report/detk_report.html
+[2026-08-11 16:38:38,838] INFO:de_toolkit.report: wrote provenance crate to /home/labadorf/neuromics/de_toolkit/examples/airway/ro-crate-metadata.json
+[2026-08-11 16:38:38,841] INFO:root: done
+== filtering: keep genes with nonzero counts in at least half the samples
+[2026-08-11 16:38:39,133] INFO:de_toolkit.common: 
+===========================
+        _      _   _    
+       | |    | | | |   
+     __| | ___| |_| | __
+    / _` |/ _ \ __| |/ /
+   | (_| |  __/ |_|   < 
+    \__,_|\___|\__|_|\_\
+                        
+ de-toolkit.readthedocs.io
+ Version: 0.9.12
+===========================
+[2026-08-11 16:38:39,133] INFO:de_toolkit.common: detk version: 0.9.12
+[2026-08-11 16:38:39,133] INFO:de_toolkit.filter: cmd: nonzero(all) >= 0.5 -o counts_filtered.csv counts.csv
+[2026-08-11 16:38:39,133] INFO:de_toolkit.common: constructing counts matrix from counts.csv and None
+[2026-08-11 16:38:39,133] INFO:de_toolkit.common: design is None
+[2026-08-11 16:38:39,271] INFO:de_toolkit.common: counts matrix has shape: (63677, 8)
+[2026-08-11 16:38:39,271] INFO:de_toolkit.common: column data was not provided
+[2026-08-11 16:38:39,271] INFO:de_toolkit.common: design: None
+[2026-08-11 16:38:39,271] INFO:de_toolkit.common: counts matrix created successfully
+[2026-08-11 16:38:39,271] INFO:de_toolkit.filter: filtering counts with command: nonzero(all) >= 0.5
+Generating LALR tables
+WARNING: 4 shift/reduce conflicts
+[2026-08-11 16:38:39,282] INFO:de_toolkit.filter: features filtered: 38971
+[2026-08-11 16:38:39,282] INFO:de_toolkit.filter: features kept after filtering: 24706
+[2026-08-11 16:38:39,288] INFO:root: writing result to counts_filtered.csv
+[2026-08-11 16:38:39,306] INFO:root: finished writing output
+[2026-08-11 16:38:39,306] INFO:root: writing report to ./detk_report
+[2026-08-11 16:38:39,437] INFO:de_toolkit.report: wrote report (11 modules) to /home/labadorf/neuromics/de_toolkit/examples/airway/detk_report/detk_report.html
+[2026-08-11 16:38:39,438] INFO:de_toolkit.report: wrote provenance crate to /home/labadorf/neuromics/de_toolkit/examples/airway/ro-crate-metadata.json
+[2026-08-11 16:38:39,441] INFO:root: done
+== DESeq2 normalization
+[2026-08-11 16:38:39,720] INFO:de_toolkit.common: 
+===========================
+        _      _   _    
+       | |    | | | |   
+     __| | ___| |_| | __
+    / _` |/ _ \ __| |/ /
+   | (_| |  __/ |_|   < 
+    \__,_|\___|\__|_|\_\
+                        
+ de-toolkit.readthedocs.io
+ Version: 0.9.12
+===========================
+[2026-08-11 16:38:39,720] INFO:de_toolkit.common: detk version: 0.9.12
+[2026-08-11 16:38:39,720] INFO:de_toolkit.norm: cmd: deseq2 -o norm_counts.csv --size-factors=size_factors.tsv counts_filtered.csv
+[2026-08-11 16:38:39,720] INFO:de_toolkit.norm: running DESeq2 normalization
+/home/labadorf/neuromics/de_toolkit/de_toolkit/norm.py:118: RuntimeWarning: divide by zero encountered in log
+  loggeomeans = np.log(cnts).mean(axis=1)
+[2026-08-11 16:38:39,721] INFO:de_toolkit.norm: features usable in geometric mean calculation: 18870
+/home/labadorf/neuromics/de_toolkit/de_toolkit/norm.py:127: RuntimeWarning: divide by zero encountered in log
+  divFact = (np.log(cnts).T - loggeomeans).T
+/home/labadorf/neuromics/de_toolkit/de_toolkit/norm.py:127: RuntimeWarning: invalid value encountered in subtract
+  divFact = (np.log(cnts).T - loggeomeans).T
+[2026-08-11 16:38:39,725] INFO:de_toolkit.norm: DESeq2 normalization done
+[2026-08-11 16:38:39,725] INFO:root: writing result to norm_counts.csv
+[2026-08-11 16:38:39,844] INFO:root: finished writing output
+[2026-08-11 16:38:39,844] INFO:root: writing report to ./detk_report
+[2026-08-11 16:38:39,974] INFO:de_toolkit.report: wrote report (11 modules) to /home/labadorf/neuromics/de_toolkit/examples/airway/detk_report/detk_report.html
+[2026-08-11 16:38:39,975] INFO:de_toolkit.report: wrote provenance crate to /home/labadorf/neuromics/de_toolkit/examples/airway/ro-crate-metadata.json
+[2026-08-11 16:38:39,978] INFO:root: done
+== variance-stabilizing transform
+[2026-08-11 16:38:40,204] INFO:de_toolkit.common: 
+===========================
+        _      _   _    
+       | |    | | | |   
+     __| | ___| |_| | __
+    / _` |/ _ \ __| |/ /
+   | (_| |  __/ |_|   < 
+    \__,_|\___|\__|_|\_\
+                        
+ de-toolkit.readthedocs.io
+ Version: 0.9.12
+===========================
+[2026-08-11 16:38:40,204] INFO:de_toolkit.common: detk version: 0.9.12
+[2026-08-11 16:38:40,204] INFO:de_toolkit.transform: cmd: vst -o vst_counts.csv counts_filtered.csv
+[2026-08-11 16:38:40,204] INFO:de_toolkit.common: constructing counts matrix from counts_filtered.csv and None
+[2026-08-11 16:38:40,204] INFO:de_toolkit.common: design is None
+[2026-08-11 16:38:40,262] INFO:de_toolkit.common: counts matrix has shape: (24706, 8)
+[2026-08-11 16:38:40,262] INFO:de_toolkit.common: column data was not provided
+[2026-08-11 16:38:40,262] INFO:de_toolkit.common: design: None
+[2026-08-11 16:38:40,262] INFO:de_toolkit.common: counts matrix created successfully
+[2026-08-11 16:38:45,922] INFO:de_toolkit.wrapr: wrapr() executing
+[2026-08-11 16:38:46,052] INFO:de_toolkit.wrapr: executing Rscript: /tmp/tmpozhcmq5d/script.R
+[2026-08-11 16:38:52,955] INFO:de_toolkit.wrapr: writing out R script params json to /tmp/tmpozhcmq5d/params_out.json
+[2026-08-11 16:38:52,955] INFO:de_toolkit.wrapr: R script done executing
+[2026-08-11 16:38:52,956] INFO:de_toolkit.transform: done VST transform
+[2026-08-11 16:38:52,956] INFO:root: writing result to vst_counts.csv
+[2026-08-11 16:38:53,058] INFO:root: finished writing output
+[2026-08-11 16:38:53,058] INFO:root: writing report to ./detk_report
+[2026-08-11 16:38:53,231] INFO:de_toolkit.report: wrote report (11 modules) to /home/labadorf/neuromics/de_toolkit/examples/airway/detk_report/detk_report.html
+[2026-08-11 16:38:53,232] INFO:de_toolkit.report: wrote provenance crate to /home/labadorf/neuromics/de_toolkit/examples/airway/ro-crate-metadata.json
+[2026-08-11 16:38:53,235] INFO:root: done
+== entropy-based outlier flagging
+[2026-08-11 16:38:53,764] INFO:de_toolkit.common: 
+===========================
+        _      _   _    
+       | |    | | | |   
+     __| | ___| |_| | __
+    / _` |/ _ \ __| |/ /
+   | (_| |  __/ |_|   < 
+    \__,_|\___|\__|_|\_\
+                        
+ de-toolkit.readthedocs.io
+ Version: 0.9.12
+===========================
+[2026-08-11 16:38:53,764] INFO:de_toolkit.common: detk version: 0.9.12
+[2026-08-11 16:38:53,764] INFO:de_toolkit.outlier: cmd: entropy counts_filtered.csv -p 0.05 -o entropy_flags.csv
+[2026-08-11 16:38:53,764] INFO:de_toolkit.common: constructing counts matrix from counts_filtered.csv and None
+[2026-08-11 16:38:53,764] INFO:de_toolkit.common: design is None
+[2026-08-11 16:38:53,822] INFO:de_toolkit.common: counts matrix has shape: (24706, 8)
+[2026-08-11 16:38:53,822] INFO:de_toolkit.common: column data was not provided
+[2026-08-11 16:38:53,822] INFO:de_toolkit.common: design: None
+[2026-08-11 16:38:53,822] INFO:de_toolkit.common: counts matrix created successfully
+[2026-08-11 16:38:53,822] INFO:de_toolkit.outlier: entropy thresholding
+[2026-08-11 16:38:56,265] INFO:de_toolkit.outlier: number of flagged features: 13
+[2026-08-11 16:38:56,266] INFO:de_toolkit.outlier: entropy threshold done
+[2026-08-11 16:38:56,266] INFO:root: writing result to entropy_flags.csv
+[2026-08-11 16:38:56,281] INFO:root: finished writing output
+[2026-08-11 16:38:56,281] INFO:root: writing report to ./detk_report
+[2026-08-11 16:38:56,449] INFO:de_toolkit.report: wrote report (11 modules) to /home/labadorf/neuromics/de_toolkit/examples/airway/detk_report/detk_report.html
+[2026-08-11 16:38:56,450] INFO:de_toolkit.report: wrote provenance crate to /home/labadorf/neuromics/de_toolkit/examples/airway/ro-crate-metadata.json
+[2026-08-11 16:38:56,452] INFO:root: done
+== DESeq2 differential expression: counts ~ cell + dex[untrt]
+[2026-08-11 16:38:56,710] INFO:de_toolkit.common: 
+===========================
+        _      _   _    
+       | |    | | | |   
+     __| | ___| |_| | __
+    / _` |/ _ \ __| |/ /
+   | (_| |  __/ |_|   < 
+    \__,_|\___|\__|_|\_\
+                        
+ de-toolkit.readthedocs.io
+ Version: 0.9.12
+===========================
+[2026-08-11 16:38:56,710] INFO:de_toolkit.common: detk version: 0.9.12
+[2026-08-11 16:38:56,711] INFO:de_toolkit.de: cmd: deseq2 -o deseq2_results.csv counts ~ cell + dex[untrt] counts_filtered.csv sample_info.csv
+[2026-08-11 16:38:56,711] INFO:de_toolkit.common: constructing counts matrix from counts_filtered.csv and sample_info.csv
+[2026-08-11 16:38:56,711] INFO:de_toolkit.common: design is counts ~ cell + dex[untrt]
+[2026-08-11 16:38:56,768] INFO:de_toolkit.common: counts matrix has shape: (24706, 8)
+[2026-08-11 16:38:56,768] INFO:de_toolkit.common: column data matrix has shape: (8, 3)
+[2026-08-11 16:38:56,771] INFO:de_toolkit.common: design: counts ~ cell + dex[untrt]
+[2026-08-11 16:38:56,771] INFO:de_toolkit.common: counts matrix created successfully
+[2026-08-11 16:38:56,771] INFO:de_toolkit.de: running DESeq2
+[2026-08-11 16:38:59,974] INFO:root: Executing DESeq2 in wrapr
+[2026-08-11 16:38:59,974] INFO:de_toolkit.wrapr: wrapr() executing
+[2026-08-11 16:39:00,098] INFO:de_toolkit.wrapr: executing Rscript: /tmp/tmphtfrwn0n/script.R
+[2026-08-11 16:39:06,930] INFO:de_toolkit.wrapr: writing out R script params json to /tmp/tmphtfrwn0n/params_out.json
+[2026-08-11 16:39:06,930] INFO:de_toolkit.wrapr: R script done executing
+[2026-08-11 16:39:06,931] INFO:root: Done executing DESeq2 in wrapr
+[2026-08-11 16:39:06,931] INFO:root: writing result to deseq2_results.csv
+[2026-08-11 16:39:07,196] INFO:root: finished writing output
+[2026-08-11 16:39:07,196] INFO:root: writing report to ./detk_report
+[2026-08-11 16:39:07,451] INFO:de_toolkit.report: wrote report (11 modules) to /home/labadorf/neuromics/de_toolkit/examples/airway/detk_report/detk_report.html
+[2026-08-11 16:39:07,452] INFO:de_toolkit.report: wrote provenance crate to /home/labadorf/neuromics/de_toolkit/examples/airway/ro-crate-metadata.json
+[2026-08-11 16:39:07,455] INFO:root: done
+== gene set enrichment against WikiPathways (CC0)
+kept 18296 genes with Entrez IDs
+[2026-08-11 16:39:08,143] INFO:de_toolkit.common: 
+===========================
+        _      _   _    
+       | |    | | | |   
+     __| | ___| |_| | __
+    / _` |/ _ \ __| |/ /
+   | (_| |  __/ |_|   < 
+    \__,_|\___|\__|_|\_\
+                        
+ de-toolkit.readthedocs.io
+ Version: 0.9.12
+===========================
+[2026-08-11 16:39:08,143] INFO:de_toolkit.common: detk version: 0.9.12
+[2026-08-11 16:39:08,143] INFO:de_toolkit.enrich: cmd: fgsea --filter-unannotated -i entrez -c dex__trt__log2FoldChange -o fgsea_results.csv wikipathways.gmt deseq2_results_entrez.csv
+[2026-08-11 16:39:08,143] INFO:de_toolkit.enrich: reading in GMT file wikipathways.gmt
+[2026-08-11 16:39:08,146] INFO:de_toolkit.enrich: reading in results file deseq2_results_entrez.csv
+[2026-08-11 16:39:08,246] INFO:de_toolkit.enrich: result data frame shape: (18296, 23)
+[2026-08-11 16:39:08,247] INFO:de_toolkit.enrich: using dex__trt__log2FoldChange as statistic column
+[2026-08-11 16:39:08,247] INFO:de_toolkit.enrich: using entrez as identifier column
+[2026-08-11 16:39:09,439] INFO:de_toolkit.enrich: filtering out features without annotation in GMT
+[2026-08-11 16:39:09,439] INFO:de_toolkit.enrich: 9031 unique IDs found in GMT
+[2026-08-11 16:39:09,441] INFO:de_toolkit.enrich: 7199/18296 (39.35%) of features retained
+[2026-08-11 16:39:09,455] INFO:de_toolkit.wrapr: wrapr() executing
+[2026-08-11 16:39:09,563] INFO:de_toolkit.wrapr: executing Rscript: /tmp/tmpx5cdx3j4/script.R
+[2026-08-11 16:39:12,688] INFO:de_toolkit.wrapr: writing out R script params json to /tmp/tmpx5cdx3j4/params_out.json
+[2026-08-11 16:39:12,688] INFO:de_toolkit.wrapr: R script done executing
+[2026-08-11 16:39:12,688] INFO:de_toolkit.enrich: shape of fgsea result dataframe: (611, 7)
+[2026-08-11 16:39:12,688] INFO:de_toolkit.enrich: fgsea done
+[2026-08-11 16:39:12,689] INFO:root: writing result to fgsea_results.csv
+[2026-08-11 16:39:12,692] INFO:root: finished writing output
+[2026-08-11 16:39:12,692] INFO:root: writing report to ./detk_report
+[2026-08-11 16:39:12,842] INFO:de_toolkit.report: wrote report (12 modules) to /home/labadorf/neuromics/de_toolkit/examples/airway/detk_report/detk_report.html
+[2026-08-11 16:39:12,843] INFO:de_toolkit.report: wrote provenance crate to /home/labadorf/neuromics/de_toolkit/examples/airway/ro-crate-metadata.json
+[2026-08-11 16:39:12,847] INFO:root: done
+== generating the report
+[2026-08-11 16:39:13,062] INFO:de_toolkit.common: 
+===========================
+        _      _   _    
+       | |    | | | |   
+     __| | ___| |_| | __
+    / _` |/ _ \ __| |/ /
+   | (_| |  __/ |_|   < 
+    \__,_|\___|\__|_|\_\
+                        
+ de-toolkit.readthedocs.io
+ Version: 0.9.12
+===========================
+[2026-08-11 16:39:13,062] INFO:de_toolkit.common: detk version: 0.9.12
+[2026-08-11 16:39:13,062] INFO:de_toolkit.report: cmd: generate
+[2026-08-11 16:39:13,209] INFO:de_toolkit.report: wrote report (12 modules) to /home/labadorf/neuromics/de_toolkit/examples/airway/detk_report/detk_report.html
+[2026-08-11 16:39:13,210] INFO:de_toolkit.report: wrote provenance crate to /home/labadorf/neuromics/de_toolkit/examples/airway/ro-crate-metadata.json
+[2026-08-11 16:39:13,212] INFO:de_toolkit.report: done
+report: /home/labadorf/neuromics/de_toolkit/examples/airway/detk_report/detk_report.html
+provenance: /home/labadorf/neuromics/de_toolkit/examples/airway/ro-crate-metadata.json
+== publishing into docs/example/

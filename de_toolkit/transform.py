@@ -324,25 +324,25 @@ def main(argv=sys.argv):
     for k, v in cmd_opts.items():
         cmd_opts_aug[k] = _cli_doc(v)
 
-    args = docopt(_cli_doc(__doc__), argv=argv[1:])
-    set_logging(args)
-    logger.info("cmd: %s", " ".join(argv))
-
-    count_obj = make_cli_count_obj(args)
-
+    # dispatch on the subcommand and parse with its own usage string; parsing
+    # the module-level usage first (as this main used to) rejected every
+    # subcommand-specific option like -o, because [options] only expands to
+    # the options listed in the same docstring
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts):
         docopt(_cli_doc(__doc__))
     argv = argv[1:]
     cmd = argv[0]
 
-    if cmd == "vst":
-        args = docopt(cmd_opts_aug["vst"], argv)
+    args = docopt(cmd_opts_aug[cmd], argv)
+    set_logging(args)
+    logger.info("cmd: %s", " ".join(argv))
 
+    count_obj = make_cli_count_obj(args)
+
+    if cmd == "vst":
         out = VstCounts(count_obj)
 
-    if cmd == "plog":
-        args = docopt(cmd_opts_aug["plog"], argv)
-
+    elif cmd == "plog":
         try:
             out = PlogCounts(
                 count_obj, pseudocount=float(args["--pseudocount"]), base=float(args["--base"])
@@ -352,8 +352,6 @@ def main(argv=sys.argv):
             sys.exit(1)
 
     elif cmd == "rlog":
-        args = docopt(cmd_opts_aug["rlog"], argv)
-
         if args["--blind"] is None:
             args["--blind"] = True
 

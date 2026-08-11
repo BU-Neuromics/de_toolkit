@@ -100,6 +100,74 @@ def test_clean_nonfinite_is_valid_json():
     json.dumps(c)  # must not raise (no bare NaN/Inf)
 
 
+OUTLIER_FIXTURES = {
+    "entropycounts": mod(
+        "entropycounts",
+        {
+            "num_kept": 100,
+            "num_flagged": 5,
+            "entropy_threshold": 0.42,
+            "entropies": {"pct": list(range(100)), "pctVal": [i / 100 for i in range(100)]},
+        },
+        params={"threshold": 5},
+    ),
+    "shrinkcounts": mod(
+        "shrinkcounts",
+        {"num_kept": 100},
+        params={"shrink_factor": 0.25, "p_max": None, "iters": 1000},
+    ),
+    "pmftransform": mod(
+        "pmftransform",
+        {"num_kept": 100},
+        params={"shrink_factor": 0.25, "p_max": 0.3, "iters": 1000},
+    ),
+}
+
+
+@pytest.mark.parametrize("name", list(OUTLIER_FIXTURES))
+def test_view_for_outlier_family(name):
+    family, title, desc, view = view_for(OUTLIER_FIXTURES[name])
+    assert family == "outlier"
+    assert title
+    assert view["type"] in ("vega", "kv")
+
+
+def test_entropycounts_marks_module_threshold():
+    _, _, _, view = view_for(OUTLIER_FIXTURES["entropycounts"])
+    spec = json.dumps(view["spec"])
+    assert '"datum": 5' in spec or '"datum": 5.0' in spec  # rule at params threshold
+    assert "5 flagged" in spec
+
+
+def test_every_detk_module_has_a_registry_entry():
+    """Every DetkModule subclass must resolve to a real family, so a new
+    module can never silently fall into the 'other' bucket again (#10)."""
+    import importlib
+    import inspect
+
+    from de_toolkit import report_specs
+    from de_toolkit.common import DetkModule
+
+    # modules whose `name` property differs from the lowercased class name
+    name_overrides = {"countpca": "pca"}
+
+    emitted = set()
+    for modname in ("de", "norm", "transform", "filter", "stats", "outlier", "enrich"):
+        pymod = importlib.import_module(f"de_toolkit.{modname}")
+        for _, cls in inspect.getmembers(pymod, inspect.isclass):
+            if (
+                issubclass(cls, DetkModule)
+                and cls is not DetkModule
+                and cls.__module__ == f"de_toolkit.{modname}"
+            ):
+                default = cls.__name__.lower()
+                emitted.add(name_overrides.get(default, default))
+
+    known = set(report_specs.REGISTRY) | set(report_specs._FALLBACK_FAMILIES)
+    missing = emitted - known
+    assert not missing, f"modules that would land in the 'other' family: {sorted(missing)}"
+
+
 @pytest.mark.parametrize("name", list(FIXTURES))
 def test_view_for_stats_family(name):
     family, title, desc, view = view_for(FIXTURES[name])
@@ -111,10 +179,10 @@ def test_view_for_stats_family(name):
         assert "data" in view["spec"] or "layer" in view["spec"]
 
 
-@pytest.mark.parametrize("name", list(FIXTURES))
+@pytest.mark.parametrize("name", list(FIXTURES) + list(OUTLIER_FIXTURES))
 def test_specs_compile(name):
     vlc = pytest.importorskip("vl_convert")
-    _, _, _, view = view_for(FIXTURES[name])
+    _, _, _, view = view_for({**FIXTURES, **OUTLIER_FIXTURES}[name])
     if view["type"] != "vega":
         pytest.skip("not a vega view")
     svg = vlc.vegalite_to_svg(json.dumps(clean(view["spec"])))

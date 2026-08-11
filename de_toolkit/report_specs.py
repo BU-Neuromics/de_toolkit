@@ -297,6 +297,84 @@ def build_rowdist(mod):
 
 
 # ---------------------------------------------------------------------------
+# outlier module builders
+# ---------------------------------------------------------------------------
+
+
+def build_entropycounts(mod):
+    """Entropy percentile curve with the module's actual threshold marked
+    (the stats-family entropy chart shows an example threshold instead)."""
+    e = mod["properties"]["entropies"]
+    rows = [{"pct": pct, "entropy": val} for pct, val in zip(e["pct"], e["pctVal"])]
+    thresh = mod.get("params", {}).get("threshold")
+    flagged = mod["properties"].get("num_flagged")
+    ymax = max((r["entropy"] for r in rows if r["entropy"] is not None), default=0)
+    label = f"p{thresh} threshold" + (f" ({flagged} flagged)" if flagged is not None else "")
+    return _vl(
+        {
+            "data": {"values": rows},
+            "layer": [
+                {
+                    "mark": {"type": "area", "opacity": 0.25, "color": _CAT[0]},
+                    "encoding": {
+                        "x": {"field": "pct", "type": "quantitative"},
+                        "y": {"field": "entropy", "type": "quantitative"},
+                    },
+                },
+                {
+                    "mark": {"type": "line", "color": _CAT[0]},
+                    "encoding": {
+                        "x": {
+                            "field": "pct",
+                            "type": "quantitative",
+                            "title": "feature percentile",
+                        },
+                        "y": {
+                            "field": "entropy",
+                            "type": "quantitative",
+                            "title": "Shannon entropy",
+                        },
+                    },
+                },
+                {
+                    "mark": {"type": "rule", "color": _CAT[3], "strokeDash": [5, 4]},
+                    "encoding": {"x": {"datum": thresh}},
+                },
+                {
+                    "mark": {
+                        "type": "text",
+                        "align": "left",
+                        "dx": 5,
+                        "dy": -6,
+                        "color": _CAT[3],
+                        "fontSize": 11,
+                    },
+                    "encoding": {
+                        "x": {"datum": thresh},
+                        "y": {"datum": ymax},
+                        "text": {"datum": label},
+                    },
+                },
+            ],
+        }
+    )
+
+
+def build_shrink(mod):
+    p = mod.get("params", {})
+    props = mod.get("properties", {})
+    return {
+        "type": "kv",
+        "items": [
+            {"label": "features", "value": props.get("num_kept")},
+            {"label": "shrink factor", "value": p.get("shrink_factor")},
+            {"label": "max sample proportion (p_max)", "value": p.get("p_max") or "sqrt(1/n)"},
+            {"label": "iterations", "value": p.get("iters")},
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
 # registry
 # ---------------------------------------------------------------------------
 
@@ -338,6 +416,25 @@ REGISTRY = {
         "Principal component analysis",
         "Samples on the first two principal components, coloured by a covariate.",
         build_pca,
+    ),
+    # outlier family
+    "entropycounts": (
+        "outlier",
+        "Entropy outlier flagging",
+        "Shannon entropy across feature percentiles with the flagging threshold marked.",
+        build_entropycounts,
+    ),
+    "shrinkcounts": (
+        "outlier",
+        "Outlier count shrinkage",
+        "Counts dominating a feature's mass shrunk toward the feature distribution.",
+        build_shrink,
+    ),
+    "pmftransform": (
+        "outlier",
+        "PMF transform",
+        "Probability-mass-function transform underlying outlier count shrinkage.",
+        build_shrink,
     ),
 }
 

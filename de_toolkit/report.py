@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # preferred top-level ordering of module families in the report/nav
-FAMILY_ORDER = ["stats", "de", "norm", "transform", "filter", "enrich", "other"]
+FAMILY_ORDER = ["stats", "de", "norm", "transform", "filter", "enrich", "outlier", "other"]
 
 
 def _asset(*parts):

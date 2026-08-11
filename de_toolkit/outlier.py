@@ -263,6 +263,8 @@ class EntropyCounts(DetkModule):
         results_df.index = counts_obj.counts.index
 
         self.results_df = results_df
+        self.entropy_threshold = float(entropy_threshold)
+        self.num_flagged = int((entropy < entropy_threshold).sum())
         logger.info("entropy threshold done")
 
     @property
@@ -271,7 +273,18 @@ class EntropyCounts(DetkModule):
 
     @property
     def properties(self):
-        return {"num_kept": len(self.results_df)}
+        # percentile curve of the entropy distribution, same shape as the
+        # stats Entropy module so the report can draw the same chart with
+        # this module's actual threshold marked
+        numeric = pd.to_numeric(self.results_df["entropy"], errors="coerce").dropna()
+        pct = list(range(100))
+        pctVal = np.percentile(numeric, pct, method="higher").tolist() if len(numeric) else []
+        return {
+            "num_kept": len(self.results_df),
+            "num_flagged": self.num_flagged,
+            "entropy_threshold": self.entropy_threshold,
+            "entropies": {"pct": pct, "pctVal": pctVal},
+        }
 
 
 def plot_entropy(entropy_res, threshold, name=None, show=None):

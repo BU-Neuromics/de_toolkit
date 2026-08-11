@@ -297,6 +297,167 @@ def build_rowdist(mod):
 
 
 # ---------------------------------------------------------------------------
+# norm module builders
+# ---------------------------------------------------------------------------
+
+
+def _sample_bar(rows, y_field, y_title, color, rule_at=None, y_fmt=None):
+    layers = [
+        {
+            "mark": {"type": "bar", "color": color},
+            "encoding": {
+                "x": {"field": "sample", "type": "nominal", "sort": "-y", "title": "sample"},
+                "y": {
+                    "field": y_field,
+                    "type": "quantitative",
+                    "title": y_title,
+                    **({"axis": {"format": y_fmt}} if y_fmt else {}),
+                },
+                "tooltip": [
+                    {"field": "sample"},
+                    {"field": y_field, "type": "quantitative", "format": ".3f"},
+                ],
+            },
+        }
+    ]
+    if rule_at is not None:
+        layers.append(
+            {
+                "mark": {"type": "rule", "color": _CAT[3], "strokeDash": [5, 4]},
+                "encoding": {"y": {"datum": rule_at}},
+            }
+        )
+    return _vl({"data": {"values": rows}, "layer": layers, "height": 300})
+
+
+def build_deseq2norm(mod):
+    sf = mod["properties"].get("size_factors") or {}
+    if not sf:
+        return {"type": "raw"}
+    rows = [{"sample": s, "size_factor": v} for s, v in sf.items()]
+    return _sample_bar(rows, "size_factor", "DESeq2 size factor", _CAT[0], rule_at=1.0)
+
+
+def build_librarysize(mod):
+    sizes = mod["properties"].get("library_sizes") or {}
+    if not sizes:
+        return {"type": "raw"}
+    rows = [{"sample": s, "library_size": v} for s, v in sizes.items()]
+    return _sample_bar(rows, "library_size", "library size (total counts)", _CAT[2], y_fmt="~s")
+
+
+def build_fpkmcounts(mod):
+    quantiles = mod["properties"].get("length_quantiles") or []
+    if not quantiles:
+        return {"type": "raw"}
+    return _vl(
+        {
+            "data": {"values": quantiles},
+            "mark": {"type": "line", "point": True, "color": _CAT[1]},
+            "encoding": {
+                "x": {"field": "q", "type": "quantitative", "title": "feature percentile"},
+                "y": {
+                    "field": "length",
+                    "type": "quantitative",
+                    "title": "feature length (bases)",
+                    "scale": {"type": "symlog", "constant": 1},
+                },
+                "tooltip": [
+                    {"field": "q", "title": "percentile"},
+                    {"field": "length", "type": "quantitative", "format": ",.0f"},
+                ],
+            },
+            "height": 300,
+        }
+    )
+
+
+# ---------------------------------------------------------------------------
+# transform module builders
+# ---------------------------------------------------------------------------
+
+
+def build_transform(mod):
+    t = mod["properties"].get("transform") or {}
+    dists, mean_sd = t.get("dists") or [], t.get("mean_sd") or []
+    if not dists:
+        return {"type": "raw"}
+
+    dist_panel = {
+        "data": {"values": dists},
+        "mark": {"type": "line", "opacity": 0.6, "strokeWidth": 1.2},
+        "encoding": {
+            "x": {"field": "q", "type": "quantitative", "title": "quantile (%)"},
+            "y": {
+                "field": "value",
+                "type": "quantitative",
+                "title": "count value",
+                "scale": {"type": "symlog", "constant": 1},
+            },
+            "color": {"field": "sample", "type": "nominal", "legend": None},
+            "facet": {
+                "field": "stage",
+                "type": "nominal",
+                "title": None,
+                "sort": ["before", "after"],
+            },
+        },
+        "resolve": {"scale": {"y": "independent"}},
+        "columns": 2,
+        "height": 260,
+        "width": 280,
+    }
+
+    charts = [dist_panel]
+    if mean_sd:
+        charts.append(
+            {
+                "data": {"values": mean_sd},
+                "mark": {"type": "point", "filled": True, "size": 14, "opacity": 0.5},
+                "encoding": {
+                    "x": {
+                        "field": "rank_pct",
+                        "type": "quantitative",
+                        "title": "features ranked by mean (%)",
+                    },
+                    "y": {
+                        "field": "sd",
+                        "type": "quantitative",
+                        "title": "per-feature standard deviation",
+                        "scale": {"type": "symlog", "constant": 0.1},
+                    },
+                    "color": {
+                        "field": "stage",
+                        "type": "nominal",
+                        "title": "stage",
+                        "scale": {"domain": ["before", "after"], "range": [_CAT[1], _CAT[0]]},
+                    },
+                    "tooltip": [
+                        {"field": "stage"},
+                        {"field": "rank_pct", "type": "quantitative", "format": ".1f"},
+                        {"field": "sd", "type": "quantitative", "format": ".3f"},
+                    ],
+                },
+                "width": "container",
+                "height": 280,
+            }
+        )
+
+    return {
+        "type": "vega",
+        "spec": {"$schema": VEGA_LITE_SCHEMA, "vconcat": charts},
+        "note": (
+            "Top: per-sample count distributions before and after the transform "
+            "(independent y scales). Bottom: per-feature standard deviation across "
+            "samples by mean rank — a flat 'after' trend is the goal of a "
+            "variance-stabilizing transform."
+        )
+        if mean_sd
+        else None,
+    }
+
+
+# ---------------------------------------------------------------------------
 # de module builders
 # ---------------------------------------------------------------------------
 
@@ -548,6 +709,44 @@ REGISTRY = {
         "Samples on the first two principal components, coloured by a covariate.",
         build_pca,
     ),
+    # norm family
+    "deseq2norm": (
+        "norm",
+        "DESeq2 normalization",
+        "Per-sample size factors from the median-of-ratios method.",
+        build_deseq2norm,
+    ),
+    "librarysize": (
+        "norm",
+        "Library-size normalization",
+        "Total counts per sample used as the normalization divisor.",
+        build_librarysize,
+    ),
+    "fpkmcounts": (
+        "norm",
+        "FPKM normalization",
+        "Distribution of the feature lengths used in the normalization.",
+        build_fpkmcounts,
+    ),
+    # transform family
+    "plogcounts": (
+        "transform",
+        "Pseudo-log transform",
+        "Count distributions and the mean-variance trend before vs after the transform.",
+        build_transform,
+    ),
+    "vstcounts": (
+        "transform",
+        "Variance-stabilizing transform",
+        "Count distributions and the mean-variance trend before vs after the transform.",
+        build_transform,
+    ),
+    "rlogcounts": (
+        "transform",
+        "Regularized-log transform",
+        "Count distributions and the mean-variance trend before vs after the transform.",
+        build_transform,
+    ),
     # de family
     "deseq2counts": (
         "de",
@@ -585,12 +784,6 @@ REGISTRY = {
 # families for non-stats modules so nav grouping works and they are not dropped;
 # builders are added in later phases (they fall back to a raw-JSON view for now).
 _FALLBACK_FAMILIES = {
-    "deseq2norm": ("norm", "DESeq2 normalization"),
-    "librarysize": ("norm", "Library-size normalization"),
-    "fpkmcounts": ("norm", "FPKM normalization"),
-    "plogcounts": ("transform", "Pseudo-log transform"),
-    "vstcounts": ("transform", "Variance-stabilizing transform"),
-    "rlogcounts": ("transform", "Regularized-log transform"),
     "filtercounts": ("filter", "Feature filter"),
     "fgseares": ("enrich", "fgsea gene-set enrichment"),
 }

@@ -57,6 +57,49 @@ from .wrapr import require_r, wrapr
 from .util import stub
 from .report import DetkReport
 
+# cap on the number of per-feature (rank, sd) points emitted for the
+# mean-variance trend chart
+_MEANSD_BUDGET = 1200
+
+
+def _transform_report_data(before_df, after_df):
+    """Chart-ready before/after comparison for a count transformation.
+
+    Emits per-sample quantile curves of both matrices plus a rank-sampled
+    per-feature mean-vs-sd trend, which is the standard way to show that a
+    variance-stabilizing transform actually stabilized the variance.
+    """
+    qs = list(range(0, 101, 5))
+    dists = []
+    for stage, df in (("before", before_df), ("after", after_df)):
+        vals = numpy.percentile(df.values, qs, axis=0)
+        for si, sample in enumerate(df.columns):
+            dists.extend(
+                {"stage": stage, "sample": str(sample), "q": q, "value": float(vals[qi][si])}
+                for qi, q in enumerate(qs)
+            )
+
+    mean_sd = []
+    for stage, df in (("before", before_df), ("after", after_df)):
+        means = df.mean(axis=1)
+        sds = df.std(axis=1)
+        order = numpy.argsort(means.values)
+        n = len(order)
+        if n == 0:
+            continue
+        keep = numpy.unique(numpy.linspace(0, n - 1, min(n, _MEANSD_BUDGET)).astype(int))
+        mean_sd.extend(
+            {
+                "stage": stage,
+                "rank_pct": float(100.0 * i / max(n - 1, 1)),
+                "sd": float(sds.values[order[i]]),
+            }
+            for i in keep
+        )
+
+    return {"dists": dists, "mean_sd": mean_sd}
+
+
 # setup logging, null on the library level
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -96,7 +139,10 @@ class PlogCounts(DetkModule):
 
     @property
     def properties(self):
-        return {"num_length": len(self.plog_counts), "params": self["params"]}
+        return {
+            "num_length": len(self.plog_counts),
+            "transform": _transform_report_data(self.count_obj.counts, self.plog_counts),
+        }
 
 
 def vst(count_obj):
@@ -150,7 +196,10 @@ class VstCounts(DetkModule):
 
     @property
     def properties(self):
-        return {"num_length": len(self.vsd_values)}
+        return {
+            "num_length": len(self.vsd_values),
+            "transform": _transform_report_data(self.count_obj.counts, self.vsd_values),
+        }
 
 
 def rlog(count_obj, blind=True):
@@ -251,7 +300,10 @@ class RlogCounts(DetkModule):
 
     @property
     def properties(self):
-        return {"num_length": len(self.vsd_values)}
+        return {
+            "num_length": len(self.vsd_values),
+            "transform": _transform_report_data(self.count_obj.counts, self.vsd_values),
+        }
 
 
 @stub

@@ -213,4 +213,11 @@ def test_fpkm_properties(fake_counts_obj, fake_counts_gene_lengths):
     obj = FPKMCounts(fake_counts_obj.counts, fake_counts_gene_lengths)
     props = obj.properties
     assert props["num_kept"] == len(obj.output)
-    assert len(props["lengths"]) == len(fake_counts_gene_lengths)
+    # lengths are summarized as quantiles (the raw Series broke serialization)
+    qs = props["length_quantiles"]
+    assert qs[0]["q"] == 0 and qs[-1]["q"] == 100
+    assert qs[0]["length"] == float(fake_counts_gene_lengths.min())
+    assert qs[-1]["length"] == float(fake_counts_gene_lengths.max())
+    import json
+
+    json.dumps(props)  # must be serializable

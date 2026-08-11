@@ -344,3 +344,111 @@ def test_de_report_data_caps_and_classifies():
     assert all("lmean" in p and "nlp" in p for p in t["points"])
     # deterministic
     assert _de_report_data(df, "deseq2") == de
+
+
+# --------------------------------------------------------------------------
+# norm + transform families (#6/#7)
+# --------------------------------------------------------------------------
+
+NORM_TRANSFORM_FIXTURES = {
+    "deseq2norm": mod(
+        "deseq2norm",
+        {"num_kept": 100, "size_factors": {"s1": 0.9, "s2": 1.1, "s3": 1.0}},
+    ),
+    "librarysize": mod(
+        "librarysize",
+        {"num_features": 100, "library_sizes": {"s1": 1e6, "s2": 2e6}},
+    ),
+    "fpkmcounts": mod(
+        "fpkmcounts",
+        {
+            "num_kept": 100,
+            "length_quantiles": [{"q": q, "length": 100.0 * (q + 1)} for q in range(0, 101, 5)],
+        },
+    ),
+    "plogcounts": mod(
+        "plogcounts",
+        {
+            "num_length": 100,
+            "transform": {
+                "dists": [
+                    {"stage": st, "sample": s, "q": q, "value": float(q)}
+                    for st in ("before", "after")
+                    for s in ("s1", "s2")
+                    for q in range(0, 101, 5)
+                ],
+                "mean_sd": [
+                    {"stage": st, "rank_pct": float(i), "sd": 1.0}
+                    for st in ("before", "after")
+                    for i in range(0, 100, 10)
+                ],
+            },
+        },
+        params={"pseudocount": 1, "base": 10},
+    ),
+}
+NORM_TRANSFORM_FIXTURES["vstcounts"] = dict(NORM_TRANSFORM_FIXTURES["plogcounts"], name="vstcounts")
+NORM_TRANSFORM_FIXTURES["rlogcounts"] = dict(
+    NORM_TRANSFORM_FIXTURES["plogcounts"], name="rlogcounts"
+)
+
+_EXPECTED_FAMILY = {
+    "deseq2norm": "norm",
+    "librarysize": "norm",
+    "fpkmcounts": "norm",
+    "plogcounts": "transform",
+    "vstcounts": "transform",
+    "rlogcounts": "transform",
+}
+
+
+@pytest.mark.parametrize("name", list(NORM_TRANSFORM_FIXTURES))
+def test_view_for_norm_transform_families(name):
+    family, title, _, view = view_for(NORM_TRANSFORM_FIXTURES[name])
+    assert family == _EXPECTED_FAMILY[name]
+    assert view["type"] == "vega"
+
+
+@pytest.mark.parametrize("name", list(NORM_TRANSFORM_FIXTURES))
+def test_norm_transform_specs_compile(name):
+    vlc = pytest.importorskip("vl_convert")
+    _, _, _, view = view_for(NORM_TRANSFORM_FIXTURES[name])
+    svg = vlc.vegalite_to_svg(json.dumps(clean(view["spec"])))
+    assert "<svg" in svg[:300]
+
+
+def test_transform_view_has_before_after_and_meansd():
+    _, _, _, view = view_for(NORM_TRANSFORM_FIXTURES["vstcounts"])
+    spec = view["spec"]
+    assert len(spec["vconcat"]) == 2  # dist facet + mean-sd trend
+    assert "variance-stabilizing" in view["note"]
+
+
+def test_transform_report_data_shapes():
+    import pandas as pd
+
+    from de_toolkit.transform import _transform_report_data
+
+    before = pd.DataFrame(
+        {"s1": range(100), "s2": range(0, 200, 2)}, index=[f"g{i}" for i in range(100)]
+    )
+    after = before / 10.0
+    t = _transform_report_data(before, after)
+    stages = {d["stage"] for d in t["dists"]}
+    assert stages == {"before", "after"}
+    assert len(t["dists"]) == 2 * 2 * 21  # stages x samples x quantiles
+    assert all(0 <= m["rank_pct"] <= 100 for m in t["mean_sd"])
+    json.dumps(t)  # serializable
+
+
+def test_plog_module_emits_transform_data(tmp_path):
+    import pandas as pd
+
+    from de_toolkit.common import CountMatrix
+    from de_toolkit.transform import PlogCounts
+
+    counts = pd.DataFrame({"s1": [0, 10, 100], "s2": [5, 50, 500]}, index=["g1", "g2", "g3"])
+    obj = PlogCounts(CountMatrix(counts))
+    props = obj.properties
+    assert "transform" in props and props["transform"]["dists"]
+    assert obj["params"] == {"pseudocount": 1, "base": 10}

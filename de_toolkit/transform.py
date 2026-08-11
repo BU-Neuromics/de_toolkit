@@ -1,4 +1,4 @@
-r'''
+r"""
 Usage:
     detk-transform plog [options] <counts_fn>
     detk-transform vst [options] <counts_fn>
@@ -6,13 +6,14 @@ Usage:
 
 Options:
     -h --help   This helpful helping of help
-'''
-TODO = '''
+"""
+
+TODO = """
     detk-transform ruvseq <counts_fn>
-'''
+"""
 
 cmd_opts = {
-    'vst':r'''
+    "vst": r"""
 Usage:
     detk-transform vst [options] <counts_fn>
 
@@ -20,8 +21,8 @@ Options:
     -o FILE --output=FILE  Destination of primary output [default: stdout]
     --rda=RDA              Filename passed to saveRDS() R function of the result
                            objects from the analysis
-''',
-    'plog':r'''
+""",
+    "plog": r"""
 Usage:
     detk-transform plog [options] <counts_fn>
 
@@ -29,8 +30,8 @@ Options:
     -c N --pseudocount=N   The pseudocount to use when taking the log transform [default: 1]
     -b B --base=B          The base of the log to use [default: 10]
     -o FILE --output=FILE  Destination of primary output [default: stdout]
-''',
-    'rlog':r'''
+""",
+    "rlog": r"""
 Usage:
     detk-transform rlog [options] <counts_fn> [<design> <cov_fn>]
 
@@ -42,21 +43,17 @@ Options:
                            counts file are the same as, and in the same order as, the
                            sample order in the row names of the covariates file
     --blind N              If False, count_obj is expected to have column_data
-''',
+""",
 }
 
 from docopt import docopt
 import logging
-import math, os
+import os
 import numpy
-import pandas
 from pprint import pformat
 import sys
-from .common import CountMatrixFile, DetkModule, _cli_doc, make_cli_count_obj, set_logging, write_output
-from .wrapr import (
-                require_r, require_deseq2, wrapr, RExecutionError, RPackageMissing,
-                require_r_package
-        )
+from .common import DetkModule, _cli_doc, make_cli_count_obj, set_logging, write_output
+from .wrapr import require_r, wrapr
 from .util import stub
 from .report import DetkReport
 
@@ -64,8 +61,9 @@ from .report import DetkReport
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-def plog(count_obj,pseudocount=1,base=10) :
-    '''
+
+def plog(count_obj, pseudocount=1, base=10):
+    """
     Logarithmic transform of a counts matrix with fixed pseudocount, i.e. $\\log(x+c)$
 
     Parameters
@@ -79,28 +77,30 @@ def plog(count_obj,pseudocount=1,base=10) :
         log transformed counts dataframe with the same dimensionality as input
         counts
 
-    '''
+    """
     obj = PlogCounts(count_obj, pseudocount, base)
     return obj.output
 
+
 class PlogCounts(DetkModule):
     def __init__(self, count_obj, pseudocount=1, base=10):
-        self['params'] = {'pseudocount': pseudocount,
-                'base': base}
-        logger.debug('plog params: %s',pformat(self['params']))
+        self["params"] = {"pseudocount": pseudocount, "base": base}
+        logger.debug("plog params: %s", pformat(self["params"]))
         self.count_obj = count_obj
-        self.plog_counts = numpy.log(count_obj.counts+pseudocount)/numpy.log(base)
-        logger.info('done plog transform')
+        self.plog_counts = numpy.log(count_obj.counts + pseudocount) / numpy.log(base)
+        logger.info("done plog transform")
+
     @property
     def output(self):
         return self.plog_counts
+
     @property
     def properties(self):
-        return {'num_length': len(self.plog_counts),
-                'params': self['params']}
+        return {"num_length": len(self.plog_counts), "params": self["params"]}
 
-def vst(count_obj) :
-    '''
+
+def vst(count_obj):
+    """
     Variance Stabilizing Transformation implemented in the DESeq2 bioconductor
     package.
 
@@ -114,15 +114,16 @@ def vst(count_obj) :
     pandas.DataFrame
         VST transformed counts dataframe with the same dimensionality as input
         counts
-    '''
+    """
     obj = VstCounts(count_obj)
     return obj.output
 
+
 class VstCounts(DetkModule):
-    @require_r('DESeq2','SummarizedExperiment')
+    @require_r("DESeq2", "SummarizedExperiment")
     def __init__(self, count_obj):
         self.count_obj = count_obj
-        script = '''\
+        script = """\
         library(DESeq2)
         library(SummarizedExperiment)
 
@@ -133,27 +134,26 @@ class VstCounts(DetkModule):
             design = ~ 1)
         dds <- varianceStabilizingTransformation(dds)
         write.csv(assay(dds),out.fn)
-        '''
-        logger.debug('VST R script:\n%s',pformat(script))
+        """
+        logger.debug("VST R script:\n%s", pformat(script))
 
-        with wrapr(script,
-                counts=count_obj.counts,
-                raise_on_error=True) as r :
+        with wrapr(script, counts=count_obj.counts, raise_on_error=True) as r:
             vsd_values = r.output
             self.vsd_values = vsd_values
 
-        logger.info('done VST transform')
+        logger.info("done VST transform")
 
     @property
     def output(self):
         return self.vsd_values
+
     @property
     def properties(self):
-        return {'num_length': len(self.vsd_values)
-            }
+        return {"num_length": len(self.vsd_values)}
 
-def rlog(count_obj, blind=True) :
-    '''
+
+def rlog(count_obj, blind=True):
+    """
     Regularized log (rlog) transformation implemented in the DESeq2 bioconductor
     package.
 
@@ -171,20 +171,20 @@ def rlog(count_obj, blind=True) :
     pandas.DataFrame
         rlog transformed counts dataframe with the same dimensionality as input
         counts
-    '''
+    """
     obj = RlogCounts(count_obj, blind)
     return obj.output
 
+
 class RlogCounts(DetkModule):
-    @require_r('DESeq2','SummarizedExperiment')
+    @require_r("DESeq2", "SummarizedExperiment")
     def __init__(self, count_obj, blind=True):
-        self['params'] = {'blind': blind
-                }
-        logger.debug('rlog params:\n%s',pformat(self['params']))
+        self["params"] = {"blind": blind}
+        logger.debug("rlog params:\n%s", pformat(self["params"]))
 
         self.count_obj = count_obj
 
-        script = '''\
+        script = """\
         library(DESeq2)
         library(SummarizedExperiment)
 
@@ -223,107 +223,108 @@ class RlogCounts(DetkModule):
 
         dds <- rlog(dds,blind=blind)
         write.csv(assay(dds),out.fn)
-        '''
-        logger.debug('VST R script:\n%s',script)
+        """
+        logger.debug("VST R script:\n%s", script)
         column_data = None
-        if not blind and count_obj.column_data is not None :
+        if not blind and count_obj.column_data is not None:
             column_data = count_obj.design_matrix.full_matrix
 
-        params = {
-            'design': '~ 1' if blind else count_obj.design,
-            'blind': blind
-        }
-        logger.debug('VST R script params:\n%s',pformat(params))
+        params = {"design": "~ 1" if blind else count_obj.design, "blind": blind}
+        logger.debug("VST R script params:\n%s", pformat(params))
 
-        with wrapr(script,
-                counts=count_obj.counts,
-                metadata=column_data,
-                params=params,
-                raise_on_error=True) as r :
+        with wrapr(
+            script,
+            counts=count_obj.counts,
+            metadata=column_data,
+            params=params,
+            raise_on_error=True,
+        ) as r:
             vsd_values = r.output
             self.vsd_values = vsd_values
 
-        logger.info('done rlog transform')
+        logger.info("done rlog transform")
+
     @property
     def output(self):
         return self.vsd_values
+
     @property
     def properties(self):
-        return {'num_length': len(self.vsd_values)
-                }
+        return {"num_length": len(self.vsd_values)}
+
 
 @stub
-def ruvseq(count_obj) :
+def ruvseq(count_obj):
     pass
 
-def main(argv=sys.argv) :
 
-    if '--version' in argv :
+def main(argv=sys.argv):
+
+    if "--version" in argv:
         from .version import __version__
+
         print(__version__)
         return
 
     # add the common opts to the docopt strings
     cmd_opts_aug = {}
-    for k,v in cmd_opts.items() :
+    for k, v in cmd_opts.items():
         cmd_opts_aug[k] = _cli_doc(v)
 
     args = docopt(_cli_doc(__doc__), argv=argv[1:])
     set_logging(args)
-    logger.info('cmd: %s',' '.join(argv))
+    logger.info("cmd: %s", " ".join(argv))
 
     count_obj = make_cli_count_obj(args)
 
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts) :
+    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts):
         docopt(_cli_doc(__doc__))
     argv = argv[1:]
     cmd = argv[0]
 
-    if cmd == 'vst' :
-        args = docopt(cmd_opts_aug['vst'],argv)
+    if cmd == "vst":
+        args = docopt(cmd_opts_aug["vst"], argv)
 
         out = VstCounts(count_obj)
 
-    if cmd == 'plog' :
-        args = docopt(cmd_opts_aug['plog'],argv)
+    if cmd == "plog":
+        args = docopt(cmd_opts_aug["plog"], argv)
 
-        try :
+        try:
             out = PlogCounts(
-                    count_obj,
-                    pseudocount=float(args['--pseudocount']),
-                    base=float(args['--base'])
-                    )
-        except Exception as e :
-            logger.error(e)
-            sys.exit(1)
-    
-    elif cmd == 'rlog' :
-        args = docopt(cmd_opts_aug['rlog'],argv)
-
-        if args['--blind'] is None:
-            args['--blind'] = True
-
-        try :
-            out = RlogCounts(count_obj,
-                    blind=args['--blind'])
-        except Exception as e :
+                count_obj, pseudocount=float(args["--pseudocount"]), base=float(args["--base"])
+            )
+        except Exception as e:
             logger.error(e)
             sys.exit(1)
 
-    write_output(out.output,args)
+    elif cmd == "rlog":
+        args = docopt(cmd_opts_aug["rlog"], argv)
 
-    if not args['--no-report'] :
-        logging.info('writing report to %s',args['--report-dir'])
-        with DetkReport(args['--report-dir']) as r :
+        if args["--blind"] is None:
+            args["--blind"] = True
+
+        try:
+            out = RlogCounts(count_obj, blind=args["--blind"])
+        except Exception as e:
+            logger.error(e)
+            sys.exit(1)
+
+    write_output(out.output, args)
+
+    if not args["--no-report"]:
+        logging.info("writing report to %s", args["--report-dir"])
+        with DetkReport(args["--report-dir"]) as r:
             r.add_module(
-                    out,
-                    in_file_path=args['<counts_fn>'],
-                    out_file_path=args['--output'],
-                    column_data_path=args.get('--column-data'),
-                    workdir=os.getcwd()
-                    )
+                out,
+                in_file_path=args["<counts_fn>"],
+                out_file_path=args["--output"],
+                column_data_path=args.get("--column-data"),
+                workdir=os.getcwd(),
+            )
 
-    logging.info('done')
+    logging.info("done")
 
-if __name__ == '__main__' :
+
+if __name__ == "__main__":
     main()

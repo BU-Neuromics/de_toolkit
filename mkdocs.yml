@@ -1,0 +1,71 @@
+site_name: de_toolkit
+site_description: Suite of command line tools for working with count matrices in differential expression workflows
+site_url: https://bu-neuromics.github.io/de_toolkit/
+repo_url: https://github.com/BU-Neuromics/de_toolkit
+repo_name: BU-Neuromics/de_toolkit
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: logo/detk_logo.svg
+  favicon: logo/detk_logo.svg
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - search.suggest
+    - content.code.copy
+    - content.action.edit
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: null
+            show_source: true
+            show_root_heading: true
+
+exclude_docs: |
+  dev/
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Concepts & file formats: concepts.md
+  - Tools:
+    - Overview & common options: tools/index.md
+    - stats — count matrix statistics: tools/stats.md
+    - filter — filtering count matrices: tools/filter.md
+    - norm — normalization: tools/norm.md
+    - transform — count transformations: tools/transform.md
+    - de — differential expression: tools/de.md
+    - enrich — set enrichment: tools/enrich.md
+    - outlier — outlier identification: tools/outlier.md
+    - util — file utilities: tools/util.md
+    - wrapr — R bridge: tools/wrapr.md
+  - Design formulas: formulas.md
+  - Reports: report.md
+  - API reference: api.md

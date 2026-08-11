@@ -8,7 +8,10 @@ dist
 .pytest_cache/
 docs/_build
 twine_creds.sh
-.snakemake/
+
 detk_report/
 .coverage
 htmlcov/
+.venv/
+dist/
+site/

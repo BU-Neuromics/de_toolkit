@@ -12,3 +12,6 @@ twine_creds.sh
 detk_report/
 .coverage
 htmlcov/
+.venv/
+dist/
+site/

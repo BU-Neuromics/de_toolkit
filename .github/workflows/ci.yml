@@ -7,6 +7,23 @@ on:
     branches: [ main ]
 
 jobs:
+  lint:
+    name: ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v9
+        with:
+          enable-cache: true
+
+      - name: ruff check
+        run: uv run --only-group dev ruff check .
+
+      - name: ruff format check
+        run: uv run --only-group dev ruff format --check .
+
   test:
     name: test (python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -18,24 +35,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v9
         with:
+          enable-cache: true
           python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
 
-      - name: Install package and test dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e '.[test]'
+      - name: Install the project
+        run: uv sync --locked --dev
 
       # R and Bioconductor are not installed in this job, so the R-backed tests
-      # (DESeq2, fgsea, logistf) and the Snakemake report end-to-end test skip
-      # automatically. The test-r job below exercises the R integration.
+      # (DESeq2, fgsea, logistf) skip automatically. The test-r job below
+      # exercises the R integration.
       - name: Run non-R test suite
         run: |
-          pytest tests -o addopts="" -p no:cacheprovider \
+          uv run pytest tests -o addopts="" -p no:cacheprovider \
             --cov=de_toolkit --cov-report=term-missing
 
   test-r:

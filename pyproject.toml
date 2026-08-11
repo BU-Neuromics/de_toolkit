@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "de_toolkit"
@@ -41,10 +41,23 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/BU-Neuromics/de_toolkit"
 Repository = "https://github.com/BU-Neuromics/de_toolkit"
-Documentation = "http://de-toolkit.readthedocs.io/en/latest/"
+Documentation = "https://bu-neuromics.github.io/de_toolkit/"
 
+# kept for plain-pip users (`pip install -e '.[test]'`); uv users get the same
+# packages via the dev dependency group below
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+]
+docs = [
+    "mkdocs-material",
+    "mkdocstrings[python]",
+]
 
 [project.scripts]
 detk = "de_toolkit.common:main"
@@ -59,14 +72,29 @@ detk-wrapr = "de_toolkit.wrapr:main"
 detk-report = "de_toolkit.report:main"
 detk-util = "de_toolkit.util:main"
 
-[tool.setuptools]
-include-package-data = true
+[tool.hatch.version]
+path = "de_toolkit/version.py"
 
-[tool.setuptools.dynamic]
-version = { attr = "de_toolkit.version.__version__" }
+[tool.hatch.build.targets.wheel]
+# hatchling ships every file under the package by default, which is what we
+# want: templates/report.html and templates/vega/* must be in the wheel
+# (asserted in tests/report/test_report_render.py)
+packages = ["de_toolkit"]
 
-[tool.setuptools.packages.find]
-include = ["de_toolkit*"]
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+# conservative start: pyflakes/pycodestyle defaults plus modernization (UP)
+# and likely-bug (B) rules; ratchet further rules in later, dedicated passes
+select = ["E4", "E7", "E9", "F", "UP", "B"]
+ignore = [
+    "B011", # assert-false: used intentionally in tests
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["de_toolkit"]

@@ -1,3 +1,9 @@
+[![CI](https://github.com/BU-Neuromics/de_toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/BU-Neuromics/de_toolkit/actions/workflows/ci.yml)
+[![docs](https://img.shields.io/badge/docs-latest-blue)](https://bu-neuromics.github.io/de_toolkit/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/de_toolkit)](https://pypi.org/project/de_toolkit/)
+<!-- NOTE: the PyPI badge shows the stale 0.9.12 release until the 1.0.0 release is published -->
+
 # Introduction
 
 This is a collection of utilities to perform various operations on genomic

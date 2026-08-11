@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: >-
+  If you use de_toolkit in your research, please cite it using the
+  metadata in this file. A citable journal reference will be added
+  here once the application note is published.
+title: de_toolkit
+type: software
+authors:
+  - family-names: Labadorf
+    given-names: Adam
+    email: labadorf@bu.edu
+    affiliation: Boston University
+repository-code: "https://github.com/BU-Neuromics/de_toolkit"
+url: "https://bu-neuromics.github.io/de_toolkit/"
+license: MIT
+keywords:
+  - bioinformatics
+  - RNA-seq
+  - differential-expression

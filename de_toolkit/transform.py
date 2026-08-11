@@ -123,6 +123,7 @@ class VstCounts(DetkModule):
     @require_r("DESeq2", "SummarizedExperiment")
     def __init__(self, count_obj):
         self.count_obj = count_obj
+        self["params"] = {"blind": True}
         script = """\
         library(DESeq2)
         library(SummarizedExperiment)

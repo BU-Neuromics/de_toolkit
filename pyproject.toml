@@ -50,6 +50,8 @@ test = ["pytest", "pytest-cov"]
 
 [dependency-groups]
 dev = [
+    "jsonschema",
+    "roc-validator",
     "pytest",
     "pytest-cov",
     "ruff",

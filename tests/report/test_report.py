@@ -23,8 +23,11 @@ def fake_module(request):
     return FakeModule()
 
 
-def test_report_cli(fake_module):
+def test_report_cli(fake_module, tmp_path, monkeypatch):
     from de_toolkit.report import main, DetkReport
+
+    # crate + default report dir land in cwd; keep them off the repo root
+    monkeypatch.chdir(tmp_path)
 
     with pytest.raises(docopt.DocoptExit):
         main()
@@ -91,10 +94,11 @@ def test_detk_report(fake_module):
     from de_toolkit.report import DetkReport
 
     with TemporaryDirectory() as d:
-        with DetkReport(d) as r:
+        with DetkReport(d, crate_dir=d) as r:
             r.add_module(fake_module, "counts.csv", "new_counts.csv")
 
         assert os.path.exists(os.path.join(d, "detk_report.html"))
+        assert os.path.exists(os.path.join(d, "ro-crate-metadata.json"))
 
 
 def _run_detk(args, cwd):
@@ -161,3 +165,25 @@ def test_report_generate(tmp_path):
     html = report.read_text()
     for module in ("basestats", "coldist", "filtercounts"):
         assert module in html
+
+    # every module document must validate against the shipped JSON Schema
+    jsonschema = pytest.importorskip("jsonschema")
+    from importlib.resources import files as pkg_files
+
+    schema = json.loads(pkg_files("de_toolkit").joinpath("module_schema.json").read_text())
+    for jf in json_files:
+        jsonschema.validate(json.loads(jf.read_text()), schema)
+
+    # the provenance crate is written at the workdir (= crate) root and
+    # records the filter invocation with its input and output files chained
+    crate_path = tmp_path / "ro-crate-metadata.json"
+    assert crate_path.exists()
+    graph = {e["@id"]: e for e in json.loads(crate_path.read_text())["@graph"]}
+    assert graph["./"]["conformsTo"]["@id"].startswith("https://w3id.org/ro/wfrun/process/")
+    actions = [e for e in graph.values() if e["@type"] == "CreateAction"]
+    assert len(actions) >= 3
+    filter_actions = [a for a in actions if graph[a["instrument"]["@id"]]["name"] == "detk-filter"]
+    assert len(filter_actions) == 1
+    objs = {o["@id"] for o in filter_actions[0]["object"]}
+    assert "all_mRNA_nonzero_norm_counts_trim.csv" in objs
+    assert {r["@id"] for r in filter_actions[0]["result"]} == {"norm_filtered.csv"}

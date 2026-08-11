@@ -137,7 +137,7 @@ def test_builder_error_falls_back_to_raw():
 def test_report_is_self_contained(tmp_path):
     from de_toolkit.report import DetkReport
 
-    rep = DetkReport(str(tmp_path / "rep"))
+    rep = DetkReport(str(tmp_path / "rep"), crate_dir=str(tmp_path))
     for name, m in FIXTURES.items():
         with open(os.path.join(rep.json_dir, name + ".json"), "w") as f:
             json.dump(m, f)

@@ -114,3 +114,14 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 source = ["de_toolkit"]
+# record paths relative to the repo root so data files measured on different
+# CI runners (uv matrix job, micromamba R job) combine into one report
+relative_files = true
+
+[tool.coverage.paths]
+# fold any absolute or site-packages path for the package back onto the
+# repo-relative source tree when combining
+source = [
+    "de_toolkit",
+    "*/de_toolkit",
+]

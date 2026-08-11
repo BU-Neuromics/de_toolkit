@@ -76,14 +76,14 @@ class NumpyEncoder(json.JSONEncoder):
         elif isinstance(obj, Mapping) :
             vals = []
             for k in sorted(obj) :
-                vals.append('"{}": {}'.format(k,self.encode(obj[k])))
+                vals.append(f'"{k}": {self.encode(obj[k])}')
             return '{' + ', '.join(vals) + '}'
         return json.JSONEncoder.encode(self, obj)
 
 def hash_str(st) :
     return hashlib.md5(st.encode()).hexdigest()
 
-class DetkModuleJSON(object):
+class DetkModuleJSON:
     def __init__(self,
             module,
             in_file_path=None,
@@ -105,7 +105,7 @@ class DetkModuleJSON(object):
         module_id = hash_str(module.name+param_str+repl_file_path+__version__)
         logger.debug('writing module for module_id: %s',module_id)
 
-        filename = '{}.json'.format(module_id)
+        filename = f'{module_id}.json'
 
         if json_path is not None :
             self.filepath = json_path
@@ -148,11 +148,11 @@ class DetkModuleJSON(object):
 
         logger.debug('writing out module JSON for module %s (id: %s)',self.out_d['name'],self.out_d['id'])
 
-        with open(self.filepath,'wt') as f :
+        with open(self.filepath,'w') as f :
             json.dump(self.out_d,f,indent=indent,cls=NumpyEncoder)
 
 
-class DetkReport(object):
+class DetkReport:
     '''
     Collects detk module JSON and renders a single self-contained, offline HTML
     report. Each module run serializes its JSON into ``<report_dir>/json/`` (the
@@ -218,7 +218,7 @@ class DetkReport(object):
             base = mj.get('name', 'unknown')
             n = seen.get(base, 0)
             seen[base] = n + 1
-            dom_id = base if n == 0 else '{}-{}'.format(base, n)
+            dom_id = base if n == 0 else f'{base}-{n}'
             modules.append({
                 'id': dom_id,
                 'module': base,

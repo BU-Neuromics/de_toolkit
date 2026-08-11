@@ -30,7 +30,6 @@ import os
 import pandas as pd
 import pathlib
 from pprint import pformat
-import shutil
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -62,13 +61,12 @@ def check_r_package(pkg) :
     cmd = [
         r_path,
         '-e',
-        'library({})'.format(pkg)
+        f'library({pkg})'
         ]
     logger.debug('check_r_package cmd: %s',cmd)
     p = subprocess.run(cmd,
         shell=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        capture_output=True
     )
     logger.debug('check_r_package stdout:\n%s',pformat(p.stdout.decode('utf-8')))
     logger.debug('check_r_package stderr:\n%s',pformat(p.stderr.decode('utf-8')))
@@ -78,9 +76,9 @@ def check_r_package(pkg) :
 def require_r_package(pkg) :
     'Check whether pkg is installed in R, and raise if not.'
     if not check_r_package(pkg) :
-        raise RPackageMissing(('R package {pkg} is needed for this '
+        raise RPackageMissing(f'R package {pkg} is needed for this '
                 'functionality. In R, try installing with:\n\n'
-                'install.packages("{pkg}")').format(pkg=pkg))
+                f'install.packages("{pkg}")')
 
 def require_r(*pkgs):
     '''Decorator for functions that require using R. Raises exception if
@@ -157,7 +155,7 @@ params <- if(nchar(json) > 0) {{
 
 {script}
 '''
-class WrapR(object) :
+class WrapR :
     '''
     Wrapper object for calling R code with Rscript.
 
@@ -310,15 +308,15 @@ class WrapR(object) :
 
         # load script code and put into the template that defines convenience
         # in/out filename variables
-        with open(os.path.join(self.routput_dir,'script.R'),'wt') as f :
+        with open(os.path.join(self.routput_dir,'script.R'),'w') as f :
             self._files['rscript'] = f
             self._paths['rscript'] = f.name
-            with open(os.path.realpath(rscript_path),'rt') as f_in :
+            with open(os.path.realpath(rscript_path)) as f_in :
                 f.write(_script_tmpl.format(script=f_in.read()))
             f.flush()
 
         # write counts to tempfile
-        with open(os.path.join(self.routput_dir,'counts.csv'),'wt') as f :
+        with open(os.path.join(self.routput_dir,'counts.csv'),'w') as f :
             self._files['counts_in'] = f
             self._paths['counts_in'] = f.name
             if counts is not None :
@@ -330,12 +328,12 @@ class WrapR(object) :
         if output_fn is None :
             self._files['output'] = open(
                     os.path.join(self.routput_dir,'counts_out.csv'),
-                    'wt'
+                    'w'
             )
             self._paths['output'] = self._files['output'].name
 
         # write metadata to tempfile if provided
-        with open(os.path.join(self.routput_dir,'meta_in.csv'),'wt') as f :
+        with open(os.path.join(self.routput_dir,'meta_in.csv'),'w') as f :
             self._files['meta_in'] = f
             self._paths['meta_in'] = f.name
             if metadata is not None :
@@ -348,12 +346,12 @@ class WrapR(object) :
 
             self._files['meta_out'] = open(
                     os.path.join(self.routput_dir,'meta_out.csv'),
-                    'wt'
+                    'w'
             )
             self._paths['meta_out'] = self._files['meta_out'].name
 
         # write out params json if provided
-        with open(os.path.join(self.routput_dir,'params_in.json'),'wt') as f :
+        with open(os.path.join(self.routput_dir,'params_in.json'),'w') as f :
             self._files['params_in'] = f
             self._paths['params_in'] = f.name
             if params is not None :
@@ -362,7 +360,7 @@ class WrapR(object) :
 
         self._paths['params_out'] = params_out_fn
         if params_out_fn is None :
-            self._files['params_out'] = open(os.path.join(self.routput_dir,'params_out.json'),'wt')
+            self._files['params_out'] = open(os.path.join(self.routput_dir,'params_out.json'),'w')
             self._paths['params_out'] = self._files['params_out'].name
 
         logger.debug('wrapr paths:\n %s',pformat(self._paths))
@@ -391,8 +389,7 @@ class WrapR(object) :
         # run the R script
         p = subprocess.run(
                 cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                capture_output=True
         )
 
         self.process = p
@@ -416,8 +413,8 @@ class WrapR(object) :
 
         if self.raise_on_error and not self.success :
             raise RExecutionError('R encountered an error:\n\n' +
-                    'stdout:\n{}\n\n'.format(self.stdout) +
-                    'stderr:\n{}\n'.format(self.stderr)
+                    f'stdout:\n{self.stdout}\n\n' +
+                    f'stderr:\n{self.stderr}\n'
                 )
 
         # read in the outputs
@@ -443,7 +440,7 @@ class WrapR(object) :
 
         if os.path.exists(self._paths['params_out']) :
             logger.info('writing out R script params json to %s', self._paths['params_out'])
-            with open(self._paths['params_out'],'rt') as f :
+            with open(self._paths['params_out']) as f :
                 json_str = f.read()
                 if len(json_str) > 0 :
                     self.params_out = json.loads(json_str)
@@ -528,7 +525,7 @@ def main(argv=sys.argv) :
     if len(argv) < 2 or (len(argv) > 1 and argv[1] not in ('check','run')) :
         docopt(doc,argv=argv)
     argv = argv[1:]
-    cmd = argv[0]
+    argv[0]
 
     args = docopt(doc,argv=argv)
 
@@ -561,7 +558,7 @@ def main(argv=sys.argv) :
 
         params = None
         if args['--params-in'] is not None and os.path.exists(args['--params-in']) :
-            with open(args['--params-in'],'rt') as f :
+            with open(args['--params-in']) as f :
                 params = json.load(f)
 
         with WrapR(

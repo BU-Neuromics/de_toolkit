@@ -61,8 +61,9 @@ import logging
 import numpy as np
 import pandas
 from pprint import pformat
-import sys, os
-from .common import (CountMatrixFile, DetkModule, _cli_doc, set_logging,
+import sys
+import os
+from .common import (DetkModule, _cli_doc, set_logging,
         make_cli_count_obj, write_output
     )
 from .report import DetkReport
@@ -260,7 +261,7 @@ class FPKMCounts(DetkModule):
         missing_indices = count_df.index.difference(lengths.index)
         if len(missing_indices) != 0 :
             raise NormalizationException(
-                    '{} indices in the counts matrix were '.format(len(missing_indices))+
+                    f'{len(missing_indices)} indices in the counts matrix were '+
                     'not found in the lengths parameters, here are a couple: \n'+
                     '\n'.join(_ for _ in list(missing_indices)[:5])
                     )

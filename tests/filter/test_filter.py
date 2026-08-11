@@ -1,7 +1,5 @@
-import docopt
 import pytest
 import pandas
-import pytest
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from de_toolkit.filter import parse_filter_command, main
 from de_toolkit.common import CountMatrix
@@ -14,7 +12,7 @@ def filter_count_obj(request) :
     hsamp = int(nsamp/2)
     qsamp = int(nsamp/4)
 
-    samp_names = ['id{}'.format(_) for _ in range(nsamp)]
+    samp_names = [f'id{_}' for _ in range(nsamp)]
     sample_info = [
             samp_names,
             ['case']*hsamp+['cont']*hsamp
@@ -48,7 +46,7 @@ def filter_count_obj(request) :
         [0]*8+[1]*(hsamp-8)+[0]*8+[1]*(hsamp-8),
         [0]*nsamp
     ])
-    count_names = ['gene{:02d}'.format(_) for _ in range(len(counts))]
+    count_names = [f'gene{_:02d}' for _ in range(len(counts))]
     counts = pandas.DataFrame(
         counts,
         index=count_names,
@@ -67,12 +65,12 @@ def test_filter_cli(filter_count_obj):
                 counts_f.flush()
 
                 with NamedTemporaryFile('wt') as out_f :
-                    main(['detk-filter','-o',out_f.name,'mean(all) == 1',counts_f.name,'--report-dir={}'.format(d)])
+                    main(['detk-filter','-o',out_f.name,'mean(all) == 1',counts_f.name,f'--report-dir={d}'])
                     df = pandas.read_csv(out_f.name,index_col=0)
                     assert all(df.index == ['gene00'])
 
                 with NamedTemporaryFile('wt') as out_f :
-                    main(['detk-filter','-o',out_f.name,'mean(all) == 1 or mean(all) == 0',counts_f.name,'--report-dir={}'.format(d)])
+                    main(['detk-filter','-o',out_f.name,'mean(all) == 1 or mean(all) == 0',counts_f.name,f'--report-dir={d}'])
                     df = pandas.read_csv(out_f.name,index_col=0)
                     assert all(df.index == ['gene00','gene11'])
 
@@ -80,17 +78,17 @@ def test_filter_cli(filter_count_obj):
                 cov_f.flush()
 
                 with NamedTemporaryFile('wt') as out_f :
-                    main(['detk','filter','-o',out_f.name,'mean(all) == 1 or mean(all) == 0',counts_f.name,cov_f.name,'--report-dir={}'.format(d)])
+                    main(['detk','filter','-o',out_f.name,'mean(all) == 1 or mean(all) == 0',counts_f.name,cov_f.name,f'--report-dir={d}'])
                     df = pandas.read_csv(out_f.name,index_col=0)
                     assert all(df.index == ['gene00','gene11'])
 
                 with NamedTemporaryFile('wt') as out_f :
-                    main(['detk-filter','-o',out_f.name,'mean(all) == 1 or mean(all) == 0',counts_f.name,cov_f.name,'--report-dir={}'.format(d)])
+                    main(['detk-filter','-o',out_f.name,'mean(all) == 1 or mean(all) == 0',counts_f.name,cov_f.name,f'--report-dir={d}'])
                     df = pandas.read_csv(out_f.name,index_col=0)
                     assert all(df.index == ['gene00','gene11'])
 
                 with NamedTemporaryFile('wt') as out_f :
-                    main(['detk-filter','-o',out_f.name,'nonzero(cov[case]) == 0 and zero(cov[cont]) == 0',counts_f.name,cov_f.name,'--report-dir={}'.format(d)])
+                    main(['detk-filter','-o',out_f.name,'nonzero(cov[case]) == 0 and zero(cov[cont]) == 0',counts_f.name,cov_f.name,f'--report-dir={d}'])
                     df = pandas.read_csv(out_f.name,index_col=0)
                     assert all(df.index == ['gene05'])
 

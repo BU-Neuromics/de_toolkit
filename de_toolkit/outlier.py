@@ -29,7 +29,7 @@ Options:
 ''',
 }
 
-import csv, os
+import os
 from docopt import docopt
 import logging
 import numpy as np
@@ -60,7 +60,7 @@ class PMFTransform(DetkModule):
         count_obj = count_obj.copy()
         p_max = p_max or np.sqrt(1./len(count_obj))
 
-        for i in range(iters) :
+        for _ in range(iters) :
             p_count = count_obj/count_obj.sum()
 
             if count_obj.sum() == 0 :
@@ -233,7 +233,7 @@ class EntropyCounts(DetkModule):
         dropped_features = set(all_features) - set(nonzero_features)
 
         # create a null results df for all of the dropped features
-        dropped_df = pd.DataFrame(columns=['entropy', 'entropy_p0_{}'.format(trshld_name)], index=sorted(dropped_features))
+        dropped_df = pd.DataFrame(columns=['entropy', f'entropy_p0_{trshld_name}'], index=sorted(dropped_features))
         dropped_df.replace(dropped_df, 'Null')
 
         # calculate the entropy over all of the features
@@ -246,7 +246,7 @@ class EntropyCounts(DetkModule):
         # column 1 is the entropy value
         # column 2 is a boolean indication whether the value is under the user described threshold
         results_df = pd.DataFrame(entropy, columns=['entropy'])
-        results_df['entropy_p0_{}'.format(trshld_name)] = entropy < entropy_threshold
+        results_df[f'entropy_p0_{trshld_name}'] = entropy < entropy_threshold
         logger.info('number of flagged features: %d',(entropy<entropy_threshold).sum())
 
         frames = [results_df, dropped_df]
@@ -290,7 +290,7 @@ def plot_entropy(entropy_res, threshold, name=None, show=None):
     plt.xlabel('Entropy')
     plt.ylabel('Samples Per Bin')
     plt.title('Binned Feature Entropy')
-    plt.legend(['P < {}'.format(threshold), 'Data'])
+    plt.legend([f'P < {threshold}', 'Data'])
     fig.set_size_inches(10,10)
 
     if name is not None:

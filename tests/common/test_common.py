@@ -128,7 +128,7 @@ def test_CountMatrixFile(
     ) :
     from de_toolkit import CountMatrixFile
 
-    mat = CountMatrixFile(
+    CountMatrixFile(
         fake_counts_csv
         ,column_data_f=fake_column_data_csv
     )
@@ -136,7 +136,6 @@ def test_CountMatrixFile(
 ################################################################################
 # DetkModule base class
 def test_DetkModule() :
-        from de_toolkit.common import __version__
         stat = DetkModule()
         assert stat.json == {
                         'name':'detkmodule',

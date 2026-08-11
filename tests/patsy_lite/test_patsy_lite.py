@@ -113,14 +113,14 @@ def test_DesignMatrix(model_data) :
 
 def test_DesignMatrix_colnames(model_data) :
 
-    from de_toolkit.patsy_lite import DesignMatrix, PatsyLiteParseError, patsy_lite_to_patsy
+    from de_toolkit.patsy_lite import DesignMatrix, PatsyLiteParseError
 
 
     dm = DesignMatrix('cont ~ cont + binary_str',model_data)
     assert dm.design == 'cont ~ Intercept + cont + binary_str__B'
 
     # add . to column names
-    model_data.columns = ['fld.{}'.format(_) for _ in model_data.columns]
+    model_data.columns = [f'fld.{_}' for _ in model_data.columns]
 
     dm = DesignMatrix('fld.cont ~ fld.cat_int',model_data)
     assert dm.design == 'fld.cont ~ Intercept + fld.cat_int'

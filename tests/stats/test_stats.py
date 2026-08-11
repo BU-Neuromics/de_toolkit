@@ -1,12 +1,9 @@
-import docopt
 import numpy as np
 import os
 import pandas
-from pprint import pprint
 import pytest
 import tempfile
 import json
-import math
 from de_toolkit.common import *
 from de_toolkit.stats import *
 
@@ -50,8 +47,8 @@ def test_stats_cli(fake_counts_csv) :
       for cmd in ('summary','basestats','coldist','rowdist','colzero','rowzero','entropy') :
           with pytest.raises(DocoptExit) :
               main(['detk-stats',cmd])
-          print(['detk-stats',cmd,'--report-dir={}'.format(d),fake_counts_csv])
-          main(['detk-stats',cmd,'--report-dir={}'.format(d),fake_counts_csv])
+          print(['detk-stats',cmd,f'--report-dir={d}',fake_counts_csv])
+          main(['detk-stats',cmd,f'--report-dir={d}',fake_counts_csv])
 
 ################################################################################
 # base tests
@@ -85,7 +82,7 @@ def fake_count_list_data_coldist() :
       ['gene','a','b','c']
   ]
   for i in range(100) :
-      data.append(['gene{}'.format(i)]+[i]*3)
+      data.append([f'gene{i}']+[i]*3)
   return data
 
 
@@ -128,8 +125,8 @@ def test_stats_coldist_params(fake_count_coldist_obj):
     output = ColDist(fake_count_coldist_obj, 20, False, False)
 
     assert output.params['bins'] == 20
-    assert output.params['log'] == False
-    assert output.params['density'] == False
+    assert not output.params['log']
+    assert not output.params['density']
 
 def test_stats_coldist_names(fake_count_coldist_obj):
     output = ColDist(fake_count_coldist_obj, 20, False, False)
@@ -227,7 +224,7 @@ def test_stats_coldist_json(fake_count_coldist_obj):
     name = json_output.get('name')
     dists = json_output.get('properties', {}).get('dists')
 
-    true_pct = [10*x for x in range(1, 11)]
+    [10*x for x in range(1, 11)]
 
     true_col_names = ['a', 'b', 'c']
     col_names = []
@@ -260,16 +257,16 @@ def test_stats_coldist_output(fake_count_coldist_obj):
     colnames = []
     for col in fake_count_coldist_obj.counts.columns :
         for colstat in ('binstart','bincount','pct','pctVal') :
-            colnames.append('{}__{}'.format(col,colstat))
+            colnames.append(f'{col}__{colstat}')
     assert output.output[0] == colnames
 
 ################################################################################
 # rowdist tests
 @pytest.fixture
 def fake_count_list_data_rowdist() :
-  data = [['gene']+['s{}'.format(_) for _ in range(100)]]
+  data = [['gene']+[f's{_}' for _ in range(100)]]
   for i in range(3) :
-      data.append(['gene{}'.format(i+1)]+[_+1 for _ in range(100)])
+      data.append([f'gene{i+1}']+[_+1 for _ in range(100)])
   return data
 
 @pytest.fixture
@@ -309,8 +306,8 @@ def test_stats_rowdist_params(fake_count_rowdist_obj):
     output = RowDist(fake_count_rowdist_obj, 20, False, False)
 
     assert output.params['bins'] == 20
-    assert output.params['log'] == False
-    assert output.params['density'] == False
+    assert not output.params['log']
+    assert not output.params['density']
 
 #test that rowdist function gets correct row names
 def test_stats_rowdist_names(fake_count_rowdist_obj):
@@ -357,7 +354,7 @@ def test_stats_rowdist_bins(fake_count_rowdist_obj):
     assert num_bins == true_bins
 
 #test log option for rowdist function
-def test_stats_rowdist_bins(fake_count_rowdist_obj):
+def test_stats_rowdist_log(fake_count_rowdist_obj):
     output = RowDist(fake_count_rowdist_obj, bins=2, log=True)
     row_dists = output['dists']
     row_dist_bins = [d['bins'] for d in row_dists]
@@ -389,7 +386,6 @@ def test_stats_rowdist_json(fake_count_rowdist_obj):
 
     row_dist_func = [d['dist'] for d in dists]
 
-    true_bins = [[1,2]]*3
     row_dist_true = [[9,91]]*3
 
     assert name=='rowdist'
@@ -640,9 +636,9 @@ def test_stats_rowzero_output(fake_counts_rowzero_obj):
 @pytest.fixture
 def fake_counts_list_data_entropy() :
     # this counts matrix is a 100x99 lower diagonal of 1s
-    data = [['gene']+['s{}'.format(_+1) for _ in range(99)]]
+    data = [['gene']+[f's{_+1}' for _ in range(99)]]
     for i in range(100) :
-        data.append(['gene{}'.format(i+1)]+[1]*i+[0]*(99-i))
+        data.append([f'gene{i+1}']+[1]*i+[0]*(99-i))
     return data
 
 #convert to csv from 2-D list
@@ -658,7 +654,6 @@ def fake_counts_entropy_obj(fake_counts_entropy_csv) :
 
 #test that entropy function calculates correct entropy values
 def test_stats_entropies(fake_counts_entropy_obj):
-    from math import log
     output = Entropy(fake_counts_entropy_obj)
     entropies = output['entropies']
 
@@ -668,7 +663,7 @@ def test_stats_entropies(fake_counts_entropy_obj):
     true_entropies = [0]+[-i*(1/i)*np.log(1/i) for i in range(1,100)]
     #assert np.allclose(entropies['entropies'],true_entropies)
 
-    pctVal = np.percentile(true_entropies,true_pct,method='higher')
+    np.percentile(true_entropies,true_pct,method='higher')
 
     assert np.allclose(
         entropies['pctVal'],
@@ -693,7 +688,7 @@ def test_stats_entropy_json(fake_counts_entropy_obj):
     true_entropies = [0]+[-i*(1/i)*np.log(1/i) for i in range(1,100)]
     #assert np.allclose(entropies['entropies'],true_entropies)
 
-    pctVal = np.percentile(true_entropies,true_pct,method='higher')
+    np.percentile(true_entropies,true_pct,method='higher')
 
     assert np.allclose(
         entropies['pctVal'],
@@ -707,9 +702,8 @@ def test_stats_entropy_json(fake_counts_entropy_obj):
     assert entropies['exemplar_features'][1]['counts'][0] == ('s1',0)
 
 def test_stats_entropy_output(fake_counts_entropy_obj):
-    from math import log
     output = Entropy(fake_counts_entropy_obj)
-    true_entropies = [0]+[-i*(1/i)*np.log(1/i) for i in range(1,101)]
+    [0]+[-i*(1/i)*np.log(1/i) for i in range(1,101)]
     output = output.output
 
     assert output[0][:4] == ['pct','pctVal','num_features','frac_features']
@@ -731,7 +725,7 @@ def pca_counts_obj(request) :
     counts = pandas.DataFrame(
                 X,
                 columns=('a','b'),
-                index=['gene{}'.format(_) for _ in range(X.shape[0])]
+                index=[f'gene{_}' for _ in range(X.shape[0])]
             )
     col_data = pandas.DataFrame({
         'cond': ['c1','c2'],
@@ -829,7 +823,7 @@ def test_stats_PCA_json(pca_counts_obj):
 
 def test_stats_PCA_output(pca_counts_obj):
     output = CountPCA(pca_counts_obj)
-    true_projections = np.array([[0.1,0.99],[0.1,0]])
+    np.array([[0.1,0.99],[0.1,0]])
     assert output.output[0] == ('colname','PC1_100','PC2_000')
     a_proj, pc1, pc2 = output.output[1]
     assert a_proj == 'a'
@@ -871,19 +865,19 @@ def test_stats_summary_sparse_json():
 
     with tempfile.TemporaryDirectory() as d :
 
-        main(['detk-stats','summary','--report-dir={}'.format(d),
+        main(['detk-stats','summary',f'--report-dir={d}',
             '-o','/dev/null','tests/stats/sparse_counts.csv'])
 
 #test that all functions were written to json output when summary is called
 def test_stats_cli_json(fake_count_rowdist_obj, fake_count_rowdist_csv):
 
-    output = summary(fake_count_rowdist_obj)
+    summary(fake_count_rowdist_obj)
 
     true_funcs = set(['basestats', 'coldist', 'colzero', 'rowzero', 'entropy','pca'])
 
     with tempfile.TemporaryDirectory() as d :
 
-        main(['detk-stats','summary','--report-dir={}'.format(d),
+        main(['detk-stats','summary',f'--report-dir={d}',
             '-o','/dev/null',fake_count_rowdist_csv])
 
         # check that there is that number of output json files

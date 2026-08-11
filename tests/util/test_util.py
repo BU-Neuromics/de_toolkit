@@ -1,6 +1,4 @@
-import csv
 import docopt
-import numpy as np
 import pandas
 import pytest
 import sys

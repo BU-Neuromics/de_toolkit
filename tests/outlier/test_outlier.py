@@ -1,5 +1,3 @@
-import docopt
-import os
 import pandas
 import pytest
 import warnings
@@ -71,5 +69,5 @@ def test_entropy(entropy_test_counts_obj):
     results = entropy(entropy_test_counts_obj, 0.05)
 
     # check the results of the unit test
-    assert results['entropy'].iloc[19] == 0 and results['entropy_p0_05'].iloc[19] == True
+    assert results['entropy'].iloc[19] == 0 and results['entropy_p0_05'].iloc[19]
     assert True not in results['entropy_p0_05'].iloc[0:18].values.tolist()

@@ -47,15 +47,13 @@ Options:
 '''
 }
 
-from contextlib import contextmanager
 from docopt import docopt
 import logging
 import pandas
 import sys
 
-from .common import (CountMatrix, CountMatrixFile, _cli_doc, set_logging,
+from .common import (_cli_doc, set_logging,
         make_cli_count_obj, write_output)
-from .patsy_lite import ModelError
 
 # setup logging, null on the library level
 logger = logging.getLogger(__name__)
@@ -82,7 +80,7 @@ def which(program):
 class Stub(Exception): pass
 def stub(f) :
   def stub(*args,**kwargs) :
-    raise Stub('Not yet implemented - {}.{}'.format(f.__module__,f.__name__))
+    raise Stub(f'Not yet implemented - {f.__module__}.{f.__name__}')
   return stub
 
 def main(argv=sys.argv) :

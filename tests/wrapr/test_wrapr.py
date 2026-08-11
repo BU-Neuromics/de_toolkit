@@ -22,7 +22,7 @@ def test_wrapr_cli_check(monkeypatch) :
             wrapr.main([
                 'detk-wrapr',
                 'run',
-                '--routput-dir={}'.format(d),
+                f'--routput-dir={d}',
                 f.name
             ])
             assert os.path.exists(os.path.join(d,'script.R'))
@@ -56,13 +56,13 @@ def test_check_r(monkeypatch) :
     def f(*args,**kwargs):
         return None
     monkeypatch.setattr(wrapr,'get_r_path',f)
-    assert wrapr.check_r() == False
+    assert not wrapr.check_r()
 
     # when true
     def f(*args,**kwargs):
         return '/usr/bin/Rscript'
     monkeypatch.setattr(wrapr,'get_r_path',f)
-    assert wrapr.check_r() == True
+    assert wrapr.check_r()
 
 @r_test
 def test_require_r(monkeypatch) :

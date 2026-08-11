@@ -8,11 +8,8 @@ Options:
                                      command line argument instead
 '''
 
-import csv
 from docopt import docopt
 import logging
-import numpy as np
-import pandas as pd
 import os.path
 import ply.lex as lex
 import ply.yacc as yacc
@@ -20,7 +17,7 @@ import sys
 from tempfile import TemporaryDirectory
 from warnings import warn
 
-from .common import CountMatrixFile, DetkModule, _cli_doc, set_logging, make_cli_count_obj, write_output
+from .common import DetkModule, _cli_doc, set_logging, make_cli_count_obj, write_output
 from .report import DetkReport
 
 # setup logging, null on the library level
@@ -53,7 +50,7 @@ t_ignore = ' '
 
 #Prints an error message if there's an invalid token
 def t_error(t):
-    raise Exception('Illegal character {}'.format(t.value[0]))
+    raise Exception(f'Illegal character {t.value[0]}')
 
 # mini language is like:
 #
@@ -64,7 +61,7 @@ def t_error(t):
 # spec       : FUNC LPAREN ALL RPAREN
 #            | FUNC LPAREN word RPAREN
 #            | FUNC LPAREN word LBRACKET word RBRACKET RPAREN
-class Expr(object) : pass
+class Expr : pass
 class And(Expr) :
     def __init__(self,a,b) :
         self.a = a
@@ -73,10 +70,7 @@ class And(Expr) :
         # inner join
         return self.a(mat).intersection(self.b(mat))
     def __repr__(self) :
-        return 'And({},{})'.format(
-                repr(self.a),
-                repr(self.b)
-            )
+        return f'And({repr(self.a)},{repr(self.b)})'
 
 class Or(Expr) :
     def __init__(self,a,b) :
@@ -86,10 +80,7 @@ class Or(Expr) :
         # outer join
         return self.a(mat).union(self.b(mat))
     def __repr__(self) :
-        return 'Or({},{})'.format(
-                repr(self.a),
-                repr(self.b)
-            )
+        return f'Or({repr(self.a)},{repr(self.b)})'
 
 class Group(Expr) :
     def __init__(self,member) :
@@ -97,7 +88,7 @@ class Group(Expr) :
     def __call__(self,mat) :
         return self.member(mat)
     def __repr__(self) :
-        return 'Group({})'.format(repr(self.member))
+        return f'Group({repr(self.member)})'
 
 class Clause(Expr) :
     def __init__(self,func,spec,op,val) :
@@ -144,12 +135,7 @@ class Clause(Expr) :
 
         return idx
     def __repr__(self) :
-        return 'Clause({},{},{},{})'.format(
-                repr(self.func),
-                repr(self.spec),
-                repr(self.op),
-                repr(self.val)
-            )
+        return f'Clause({repr(self.func)},{repr(self.spec)},{repr(self.op)},{repr(self.val)})'
 
 class ColSpec(Expr) :
     def __init__(self,field=None,group=None) :
@@ -173,36 +159,25 @@ class ColSpec(Expr) :
                 # this is probably not intended
                 cols = mat.column_data.index[mat.column_data[self.field]==self.group]
                 if cols.size == 0 :
-                    warn(('Specified group value {}=="{}" was not found in '
-                          'column values ({}). This is probably not what you '
-                          'want to do, give that filter command a good look.').format(
-                                self.field,
-                                self.group,
-                                mat.column_data[self.field].unique()
-                                )
-                            )
-                    warn(('Specified group value {}=="{}" was not found in '
-                          'column values ({}). This is probably not what you '
-                          'want to do, give that filter command a good look.').format(
-                                self.field,
-                                self.group,
-                                mat.column_data[self.field].unique()
-                                )
-                            )
+                    warn(f'Specified group value {self.field}=="{self.group}" was not found in '
+                          f'column values ({mat.column_data[self.field].unique()}). This is probably not what you '
+                          'want to do, give that filter command a good look.'
+                            , stacklevel=2)
+                    warn(f'Specified group value {self.field}=="{self.group}" was not found in '
+                          f'column values ({mat.column_data[self.field].unique()}). This is probably not what you '
+                          'want to do, give that filter command a good look.'
+                            , stacklevel=2)
 
                 return [mat.counts[cols]]
             else :
                 # return a list of dataframe slices, one per
                 # group
                 dfs = []
-                for v,df in mat.column_data.groupby(self.field) :
+                for _,df in mat.column_data.groupby(self.field) :
                     dfs.append(mat.counts[df.index])
                 return dfs
     def __repr__(self) :
-        return 'ColSpec(field={},group={})'.format(
-                    repr(self.field),
-                    repr(self.group)
-                )
+        return f'ColSpec(field={repr(self.field)},group={repr(self.group)})'
 
 
 def p_expression(p) :
@@ -258,14 +233,14 @@ def parse_filter_command(cmd) :
     # put them in a tempdir to keep things tidy
     with TemporaryDirectory() as tmpdir :
 
-        lexer = lex.lex(outputdir=tmpdir)
+        lex.lex(outputdir=tmpdir)
 
         parser = yacc.yacc(outputdir=tmpdir)
 
 
     parsed = parser.parse(cmd)
     if parsed is None : # failed to parse
-        raise Exception('Could not parse filter command, check syntax: {}'.format(cmd))
+        raise Exception(f'Could not parse filter command, check syntax: {cmd}')
 
     return parsed
 

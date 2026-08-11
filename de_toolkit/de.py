@@ -55,15 +55,14 @@ Options:
 
 from docopt import docopt
 import logging
-import pandas
 from pprint import pformat
-import sys, os
-from .common import (CountMatrixFile, InvalidDesignException, DetkModule,
+import sys
+import os
+from .common import (InvalidDesignException, DetkModule,
         _cli_doc, set_logging, make_cli_count_obj, write_output
     )
 from .wrapr import (
-        require_r, require_deseq2, wrapr, RExecutionError, RPackageMissing,
-        require_r_package
+        require_r, wrapr, require_r_package
     )
 from .util import stub
 from .report import DetkReport
@@ -130,9 +129,9 @@ class DESeq2Counts(DetkModule):
             require_r_package('BiocParallel')
             try :
                 cores = int(cores)
-            except ValueError :
+            except ValueError as e :
                 raise Exception('The cores argument to DESeq2 '
-                        'must be an integer')
+                        'must be an integer') from e
 
         params = {
             'design': count_obj.design,
@@ -334,9 +333,9 @@ class FLGCounts(DetkModule):
             require_r_package('parallel')
             try :
                 cores = int(cores)
-            except ValueError :
+            except ValueError as e :
                 raise Exception('The cores argument to firth_logistic_regression '
-                        'must be an integer')
+                        'must be an integer') from e
 
         params = {
             'design': count_obj.design,

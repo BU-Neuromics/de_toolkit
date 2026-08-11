@@ -10,7 +10,7 @@ import tempfile
 # utility functions
 @pytest.fixture
 def check_exit_status() :
-  def f(cmd,exits=[0]):
+  def f(cmd,exits=(0,)):
     p = Popen(cmd,shell=True)
     p.communicate()
     return p.returncode in exits
@@ -259,7 +259,7 @@ def fake_big_counts_data() :
     n = randint(5,40)
     p = uniform(0.1,0.3)
     data.append([
-      'gene{}'.format(i)
+      f'gene{i}'
       ,negative_binomial(n,p)
       ,negative_binomial(n,p)
       ,negative_binomial(n,p)
@@ -312,7 +312,7 @@ def fake_huge_counts_data() :
   for i in range(30000) :
     n = randint(5,40)
     p = uniform(0.1,0.3)
-    data.append(['gene{}'.format(i)]+
+    data.append([f'gene{i}']+
       [negative_binomial(n,p) for _ in range(len(string.ascii_lowercase))]
     )
   return data

@@ -38,7 +38,7 @@ def test_report_cli(fake_module):
         assert os.path.exists(fn)
         os.remove(fn)
         assert not os.path.exists(fn)
-        main(['detk-report','generate','--report-dir={}'.format(d)])
+        main(['detk-report','generate',f'--report-dir={d}'])
         assert os.path.exists(fn)
 
     main(['report','clean'])
@@ -50,7 +50,6 @@ def test_report_cli(fake_module):
 def test_numpyencoder() :
     from de_toolkit.report import NumpyEncoder
     from functools import partial
-    from json import dumps
 
     d = partial(json.dumps, cls=NumpyEncoder)
 
@@ -66,13 +65,13 @@ def test_detk_module_json(fake_module):
     from de_toolkit.report import DetkModuleJSON, hash_str
 
     with TemporaryDirectory() as d :
-        j = DetkModuleJSON(fake_module,json_dir=d).write()
+        DetkModuleJSON(fake_module,json_dir=d).write()
         # hashed filename should be
         fn = hash_str('fakemodule{"a": 1}-'+__version__)+'.json'
         print(fn)
         assert os.path.exists(os.path.join(d,fn))
 
-        j = DetkModuleJSON(
+        DetkModuleJSON(
                 fake_module,
                 json_path=os.path.join(d,'fn.json')
             ).write(indent=2)
@@ -86,7 +85,6 @@ def test_detk_module_json(fake_module):
 
 def test_detk_report(fake_module) :
     from de_toolkit.report import DetkReport
-    from pprint import pprint
 
     with TemporaryDirectory() as d :
         with DetkReport(d) as r :

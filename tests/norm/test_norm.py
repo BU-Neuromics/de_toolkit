@@ -24,7 +24,7 @@ def test_norm_cli():
         main()
 
 @deseq2_test
-def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
+def test_deseq2_norm_cli_stdout(fake_counts_csv,fake_column_data_csv):
     from de_toolkit.norm import main
     main(['detk-norm','deseq2',fake_counts_csv])
 
@@ -37,7 +37,7 @@ def test_deseq2_norm_cli(fake_counts_csv,fake_column_data_csv):
     f = tempfile.NamedTemporaryFile('wt',delete=False)
     f.close() # close the file so the command can write to it cross-platform
 
-    main(['detk-norm','deseq2','--output={}'.format(f.name),fake_counts_csv])
+    main(['detk-norm','deseq2',f'--output={f.name}',fake_counts_csv])
 
     in_counts = CountMatrixFile(fake_counts_csv)
     norm_counts = deseq2(in_counts)
@@ -197,7 +197,7 @@ def test_fpkm_missing_lens(fake_counts_obj,fake_counts_gene_lengths) :
         )
 
 def test_fpkm(fake_counts_obj,fake_counts_gene_lengths) :
-    from de_toolkit.norm import fpkm, NormalizationException
+    from de_toolkit.norm import fpkm
 
     res = fpkm(fake_counts_obj.counts, fake_counts_gene_lengths)
     assert np.allclose(res['a'],[1e-6]*res.shape[0])

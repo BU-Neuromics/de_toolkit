@@ -47,15 +47,13 @@ Options:
 
 from docopt import docopt
 import logging
-import math, os
+import os
 import numpy
-import pandas
 from pprint import pformat
 import sys
-from .common import CountMatrixFile, DetkModule, _cli_doc, make_cli_count_obj, set_logging, write_output
+from .common import DetkModule, _cli_doc, make_cli_count_obj, set_logging, write_output
 from .wrapr import (
-                require_r, require_deseq2, wrapr, RExecutionError, RPackageMissing,
-                require_r_package
+                require_r, wrapr
         )
 from .util import stub
 from .report import DetkReport

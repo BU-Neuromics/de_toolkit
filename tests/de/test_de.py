@@ -1,9 +1,8 @@
 
-from de_toolkit.common import CountMatrix, CountMatrixFile, InvalidDesignException
+from de_toolkit.common import CountMatrix, InvalidDesignException
 from de_toolkit.de import main
-from de_toolkit.wrapr import check_r, require_r, check_r_package
+from de_toolkit.wrapr import check_r, check_r_package
 
-from copy import deepcopy
 import docopt
 from itertools import cycle
 import numpy
@@ -43,10 +42,10 @@ def test_R_check_names_nonsense(deseq2_test_counts_obj) :
     # the R scripts in detk need to be able to handle this
     # add invalid R characters to columns and rows
     cnts = deseq2_test_counts_obj.counts.copy()
-    cnts.columns = ['$-{}'.format(_) for _ in cnts.columns]
+    cnts.columns = [f'$-{_}' for _ in cnts.columns]
 
     covs = deseq2_test_counts_obj.column_data.copy()
-    covs.index = ['$-{}'.format(_) for _ in covs.index]
+    covs.index = [f'$-{_}' for _ in covs.index]
 
     counts_obj = CountMatrix(
             cnts,
@@ -85,8 +84,8 @@ def deseq2_test_counts_obj() :
   real_lfc = range(-4,5)
 
   counts = pandas.DataFrame(
-    columns=['sample{}'.format(_) for _ in range(N)]
-    ,index=('gene{}'.format(_) for _ in range(len(real_lfc)))
+    columns=[f'sample{_}' for _ in range(N)]
+    ,index=(f'gene{_}' for _ in range(len(real_lfc)))
     ,dtype='float64'
   )
 
@@ -262,7 +261,7 @@ def logistic_test_counts_obj() :
   N1 = int(N/2)
   N2 = N-N1
   counts = pandas.DataFrame(
-    columns=['gene{}'.format(_) for _ in range(N)]
+    columns=[f'gene{_}' for _ in range(N)]
     ,index=('gene1','gene2','gene3')
     ,dtype='float64'
   )
@@ -351,7 +350,7 @@ def test_firth_rda(logistic_test_counts_obj) :
 
   # test with rda
   with NamedTemporaryFile() as f :
-      firth_out = firth_logistic_regression(
+      firth_logistic_regression(
               logistic_test_counts_obj,
               rda=f.name
       )
@@ -367,7 +366,7 @@ def test_firth_parallel(logistic_test_counts_obj) :
 
   logistic_test_counts_obj.design = 'category[control] ~ counts'
 
-  firth_out = firth_logistic_regression(
+  firth_logistic_regression(
           logistic_test_counts_obj,
           cores=2
   )
@@ -395,7 +394,7 @@ def test_firth_w_cov(logistic_test_counts_obj) :
 def test_firth_w_big_data_cov(fake_big_counts_obj) :
   from de_toolkit.de import firth_logistic_regression
 
-  firth_out = firth_logistic_regression(logistic_test_counts_obj)
+  firth_logistic_regression(logistic_test_counts_obj)
 
 @pytest.mark.skip(reason='test takes a long time, only turn on periodically')
 def test_firth_w_huge_data_cov(fake_huge_counts_obj) :
@@ -403,6 +402,6 @@ def test_firth_w_huge_data_cov(fake_huge_counts_obj) :
 
   fake_huge_counts_obj.add_design('category ~ cont_cov')
 
-  firth_out = firth_logistic_regression(fake_huge_counts_obj)
+  firth_logistic_regression(fake_huge_counts_obj)
 
 

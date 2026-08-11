@@ -108,7 +108,7 @@ def build_entropy(mod):
              'encoding': {'x': {'datum': thresh}}},
             {'mark': {'type': 'text', 'align': 'left', 'dx': 5, 'dy': -6, 'color': _CAT[3], 'fontSize': 11},
              'encoding': {'x': {'datum': thresh}, 'y': {'datum': ymax},
-                          'text': {'datum': 'p{} threshold'.format(thresh)}}},
+                          'text': {'datum': f'p{thresh} threshold'}}},
         ],
     })
 
@@ -188,7 +188,7 @@ def build_rowdist(mod):
                 rows.append({'feature': d['name'], 'value': binvals[j], 'count': c})
     n_shown = len({r['feature'] for r in rows})
     return _vl({
-        'title': {'text': 'sample of {} of {} features'.format(n_shown, n), 'fontSize': 11,
+        'title': {'text': f'sample of {n_shown} of {n} features', 'fontSize': 11,
                   'color': '#888', 'anchor': 'start'},
         'data': {'values': rows},
         'mark': {'type': 'line', 'opacity': 0.18, 'strokeWidth': 1, 'color': _CAT[5]},

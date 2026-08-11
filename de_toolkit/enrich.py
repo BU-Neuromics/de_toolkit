@@ -65,16 +65,14 @@ import csv
 from docopt import docopt
 from functools import reduce
 import logging
-import numpy as np
 import os
 import pandas
 from pprint import pformat
 import tempfile
 import sys
 import warnings
-from .common import CountMatrixFile, DetkModule, _cli_doc, set_logging, write_output
-from .util import stub
-from .wrapr import require_r, wrapr, require_r_package, RPackageMissing
+from .common import DetkModule, _cli_doc, set_logging, write_output
+from .wrapr import require_r, wrapr
 from .report import DetkReport
 
 # setup logging, null on the library level
@@ -83,9 +81,9 @@ logger.addHandler(logging.NullHandler())
 
 GeneSet = namedtuple('GeneSet',('name','desc','ids'))
 class GMT(OrderedDict):
-    def __init__(self,sets={}) :
-        super(GMT, self).__init__(self)
-        for name,ids in sets.items() :
+    def __init__(self,sets=None) :
+        super().__init__()
+        for name,ids in (sets or {}).items() :
             self[name] = ids
 
     def __setitem__(self,name,ids) :
@@ -106,7 +104,7 @@ class GMT(OrderedDict):
                 #self[r[0]] = [_.strip() for _ in r[2:]]
 
     def write_file(self,out_fn) :
-        with open(out_fn,'wt',encoding='utf-8') as f :
+        with open(out_fn,'w',encoding='utf-8') as f :
             out_f = csv.writer(f,delimiter='\t')
             for k,v in self.items() :
                 out_f.writerow([k,k]+list(v.ids))
@@ -172,8 +170,8 @@ class FGSEARes(DetkModule) :
         # check for NAs in the stat
         if stat.isnull().any() :
             nas = stat[stat.isnull()]
-            msg = 'The following statistics were NaN and were filtered prior to fgsea:\n{}'.format(nas)
-            warnings.warn(msg)
+            msg = f'The following statistics were NaN and were filtered prior to fgsea:\n{nas}'
+            warnings.warn(msg, stacklevel=2)
             logger.warning(msg)
             stat = stat[~stat.isnull()]
 
@@ -181,8 +179,8 @@ class FGSEARes(DetkModule) :
         if stat.index.isnull().any() :
             null_mask = stat.index.isnull()
             nas = stat[null_mask]
-            msg = 'The following statistic names were NaN and cast to unique "null_N" names prior to fgsea:\n{}'.format(nas)
-            warnings.warn(msg)
+            msg = f'The following statistic names were NaN and cast to unique "null_N" names prior to fgsea:\n{nas}'
+            warnings.warn(msg, stacklevel=2)
             logger.warning(msg)
             # each null name must be given a unique placeholder: fgsea rejects
             # duplicate names(stats), so a single "null" for every NaN name would
@@ -191,19 +189,15 @@ class FGSEARes(DetkModule) :
             new_index = list(stat.index)
             for i, is_null in enumerate(null_mask) :
                 if is_null :
-                    new_index[i] = 'null_{}'.format(i)
+                    new_index[i] = f'null_{i}'
             stat = stat.copy()
             stat.index = new_index
 
         if filter_unannotated :
             logger.info('filtering out features without annotation in GMT')
-            logger.info('{} unique IDs found in GMT'.format(len(gmt_ids)))
+            logger.info(f'{len(gmt_ids)} unique IDs found in GMT')
             annotated_ids = stat.index.intersection(gmt_ids)
-            logger.info('{}/{} ({:.2f}%) of features retained'.format(
-                len(annotated_ids),
-                stat.index.size,
-                100*len(annotated_ids)/stat.index.size
-                )
+            logger.info(f'{len(annotated_ids)}/{stat.index.size} ({100*len(annotated_ids)/stat.index.size:.2f}%) of features retained'
             )
 
             stat = stat.loc[annotated_ids]
@@ -378,10 +372,10 @@ def main(argv=sys.argv) :
                 try :
                     col = get_col_or_idcol(res_df,col)
                 except ValueError :
-                    logger.error(Exception((
-                        'Stat column {} could not be found in results result '
+                    logger.error(Exception(
+                        f'Stat column {col} could not be found in results result '
                         'or interpreted as an integer index, aborting'
-                        ).format(col)
+                        
                     ))
                     sys.exit(1)
         else :
@@ -399,10 +393,10 @@ def main(argv=sys.argv) :
             try :
                 idcol = get_col_or_idcol(res_df,idcol)
             except ValueError :
-                logger.error(Exception((
-                    'ID column {} could not be found in results dataframe '
+                logger.error(Exception(
+                    f'ID column {idcol} could not be found in results dataframe '
                     'or interpreted as an integer index, aborting'
-                    ).format(idcol)
+                    
                 ))
                 sys.exit(1)
 

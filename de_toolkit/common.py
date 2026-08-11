@@ -16,7 +16,6 @@ from docopt import docopt
 import logging
 import pandas
 from pprint import pformat
-import re
 import sys
 import warnings
 from .patsy_lite import DesignMatrix, PatsyLiteParseError
@@ -26,9 +25,9 @@ from .version import __version__
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-_cli_version = '''\
-detk version: {}\n
-'''.format(__version__)
+_cli_version = f'''\
+detk version: {__version__}\n
+'''
 
 _cli_common_opts = '''\
 
@@ -46,7 +45,7 @@ def _cli_doc(src) :
     'Add the common command line arguments to the given *src* docopt string'
     return _cli_version+src+_cli_common_opts
 
-banner = r'''
+banner = rf'''
 ===========================
         _      _   _    
        | |    | | | |   
@@ -56,8 +55,8 @@ banner = r'''
     \__,_|\___|\__|_|\_\
                         
  de-toolkit.readthedocs.io
- Version: {}
-==========================='''.format(__version__)
+ Version: {__version__}
+==========================='''
 def set_logging(opts) :
     if not opts['--shut-up'] :
         if opts['--quiet'] :
@@ -111,7 +110,7 @@ def write_output(df,args) :
 class InvalidDesignException(Exception): pass
 class SampleMismatchException(Exception): pass
 
-class CountMatrix(object) :
+class CountMatrix :
     def __init__(self
             ,counts
             ,column_data=None
@@ -205,23 +204,20 @@ class CountMatrix(object) :
                 self.design_matrix = DesignMatrix(design,self.column_data)
             except PatsyLiteParseError as e :
                 raise InvalidDesignException('Invalid design, patsy lite could not parse '
-                    '{}'.format(e.args))
+                    f'{e.args}') from e
 
             # check if the full design matrix has lost any rows due to
             # missing data
             if self.design_matrix.full_matrix.index.size != self.column_data.index.size :
                 msg = ('The full design matrix rows do not match the input column '
                        'data matrix, likely due to some missing fields. '
-                       '# design matrix rows: {}, # column data rows: {}. '.format(
-                           self.design_matrix.full_matrix.index.size,
-                           self.column_data.shape[0]
-                       ))
+                       f'# design matrix rows: {self.design_matrix.full_matrix.index.size}, # column data rows: {self.column_data.shape[0]}. ')
 
                 if self.strict :
                     raise SampleMismatchException(msg+'Aborting.')
                 else :
                     warnings.warn(msg+'Adjusting the counts matrix and column '
-                                      'data to fit.')
+                                      'data to fit.', stacklevel=2)
                     logger.warning(msg+'Adjusting the counts matrix and column '
                                       'data to fit.')
                     logger.warning('counts shape prior to fit: %s', self.counts.shape)
@@ -252,9 +248,9 @@ class CountMatrix(object) :
     def sample_names(self,value):
         try :
             self.counts = self.counts[value]
-        except Exception as e :
+        except Exception as e:
             raise Exception('Sample names provided that are not contained in the '
-                'counts matrix')
+                'counts matrix') from e
 
     @property
     def feature_names(self) :
@@ -264,9 +260,9 @@ class CountMatrix(object) :
     def feature_names(self,value):
         try :
             self.counts = self.counts.loc[value]
-        except Exception as e :
-            raise Exception('Feaure names provided that are not contained in the '
-                'counts matrix')
+        except Exception as e:
+            raise Exception('Feature names provided that are not contained in the '
+                'counts matrix') from e
 
     def copy(self) :
         return deepcopy(self)

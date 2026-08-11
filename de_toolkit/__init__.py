@@ -1,2 +1,2 @@
-from .common import CountMatrix, CountMatrixFile
-from .version import __version__
+from .common import CountMatrix as CountMatrix, CountMatrixFile as CountMatrixFile
+from .version import __version__ as __version__

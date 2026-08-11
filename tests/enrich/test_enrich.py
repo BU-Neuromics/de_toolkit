@@ -6,7 +6,7 @@ import pytest
 import os
 import tempfile
 
-from de_toolkit.wrapr import check_r, require_r, check_r_package
+from de_toolkit.wrapr import check_r, check_r_package
 
 r_test = pytest.mark.skipif(not check_r(),
         reason='r is not installed, skipping test'
@@ -58,7 +58,7 @@ def gmt_obj(request,gset_dict) :
 def stat(request) :
     return pandas.Series(
         range(10),
-        index=['gene{}'.format(_+1) for _ in range(10)]
+        index=[f'gene{_+1}' for _ in range(10)]
     )
 
 @pytest.fixture
@@ -111,13 +111,12 @@ def test_fgsea_id_type_mismatch(gmt_obj,stat) :
     # rename the stat index so there are no matches
     stat.index = ['X'+_ for _ in stat.index]
     with pytest.raises(Exception) :
-        res = fgsea(gmt_obj,stat,minSize=1)
+        fgsea(gmt_obj,stat,minSize=1)
 
 @r_test
 @fgsea_test
 def test_fgsea_filter_unannot_cli(gmt_file,result_w_unannotated_csv) :
     from de_toolkit.enrich import main
-    from de_toolkit.wrapr import wrapr
 
     #TODO I WAS TESTING --filter-unannotated
     with tempfile.NamedTemporaryFile('wt') as f:
@@ -173,7 +172,6 @@ def test_fgsea(gmt_obj,stat) :
 @fgsea_test
 def test_fgsea_multilevel(gmt_obj,stat) :
     from de_toolkit.enrich import fgsea
-    import numpy
 
     # same thing, but with multilevel mode
     res = fgsea(gmt_obj,stat,minSize=1,multilevel=True,nperm=100)
@@ -184,7 +182,6 @@ def test_fgsea_multilevel(gmt_obj,stat) :
 @fgsea_test
 def test_fgsea_cli(gmt_file,result_csv) :
     from de_toolkit.enrich import main
-    from de_toolkit.wrapr import wrapr
 
     with tempfile.NamedTemporaryFile('wt') as f:
 
@@ -198,7 +195,6 @@ def test_fgsea_cli(gmt_file,result_csv) :
 @fgsea_test
 def test_fgsea_cli_cores(gmt_file,result_csv) :
     from de_toolkit.enrich import main
-    from de_toolkit.wrapr import wrapr
 
 
     with tempfile.NamedTemporaryFile('wt') as f:
@@ -213,11 +209,10 @@ def test_fgsea_cli_cores(gmt_file,result_csv) :
 @fgsea_test
 def test_fgsea_cli_routput(gmt_file,result_csv) :
     from de_toolkit.enrich import main
-    from de_toolkit.wrapr import wrapr
 
     with tempfile.NamedTemporaryFile('wt') as f:
         with tempfile.TemporaryDirectory() as d :
-            main(['detk-enrich','fgsea','--routput-dir={}'.format(d),'--minSize=1',gmt_file,result_csv,'-o',f.name])
+            main(['detk-enrich','fgsea',f'--routput-dir={d}','--minSize=1',gmt_file,result_csv,'-o',f.name])
             res = pandas.read_csv(f.name,index_col=0)
             assert all(res.loc[['set1','set2','set3'],'NES'] < 0)
             assert all(res.loc[['set4','set5'],'NES'] > 0)
@@ -230,7 +225,6 @@ def test_fgsea_cli_routput(gmt_file,result_csv) :
 @fgsea_test
 def test_fgsea_cli_alt_statcol(gmt_file,result_csv) :
     from de_toolkit.enrich import main
-    from de_toolkit.wrapr import wrapr
 
     with tempfile.NamedTemporaryFile('wt') as f:
 
@@ -245,7 +239,6 @@ def test_fgsea_cli_alt_statcol(gmt_file,result_csv) :
 @fgsea_test
 def test_fgsea_cli_abs_statcol(gmt_file,result_csv) :
     from de_toolkit.enrich import main
-    from de_toolkit.wrapr import wrapr
 
     with tempfile.NamedTemporaryFile('wt') as f:
 
@@ -261,7 +254,6 @@ def test_fgsea_cli_abs_statcol(gmt_file,result_csv) :
 @fgsea_test
 def test_fgsea_cli_ascending(gmt_file,result_csv) :
     from de_toolkit.enrich import main
-    from de_toolkit.wrapr import wrapr
 
     with tempfile.NamedTemporaryFile('wt') as f:
 
@@ -276,7 +268,6 @@ def test_fgsea_cli_ascending(gmt_file,result_csv) :
 @fgsea_test
 def test_fgsea_cli_idcol(gmt_file,result_csv) :
     from de_toolkit.enrich import main
-    from de_toolkit.wrapr import wrapr
 
     with tempfile.NamedTemporaryFile('wt') as f:
 
@@ -299,18 +290,17 @@ def test_fgsea_cli_wrapr_cores(gmt_file,result_csv) :
             # means it ran with that number of cores question mark?
             # this also is a test that the rda functionality works
             main(['detk-enrich','fgsea','--minSize=1','--cores=2',
-                '--rda={}'.format(r_f.name),gmt_file,result_csv,'-o',f.name])
+                f'--rda={r_f.name}',gmt_file,result_csv,'-o',f.name])
             res = pandas.read_csv(f.name,index_col=0)
             assert all(res.loc[['set1','set2','set3'],'NES'] < 0)
             assert all(res.loc[['set4','set5'],'NES'] > 0)
 
-            with wrapr('cat(readRDS("{}")$params$nproc)'.format(r_f.name)) as r :
+            with wrapr(f'cat(readRDS("{r_f.name}")$params$nproc)') as r :
                 assert r.stdout == '2'
 @r_test
 @fgsea_test
 def test_fgsea_multilevel_cli(gmt_file,result_csv) :
     from de_toolkit.enrich import main
-    from de_toolkit.wrapr import wrapr
 
     with tempfile.NamedTemporaryFile('wt') as f:
 

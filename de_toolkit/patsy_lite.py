@@ -1,9 +1,7 @@
 import logging
-import numpy
 import pandas
-from patsy import EvalFactor, ModelDesc, design_matrix_builders, dmatrices, PatsyError
+from patsy import ModelDesc, dmatrices, PatsyError
 from ply import lex
-from pprint import pprint
 import re
 
 # setup logging, null on the library level
@@ -51,17 +49,17 @@ lexer = lex.lex()
 
 def quote_var(v) :
     if any(_ in v for _ in '#.()[]@') :
-        return 'Q("{}")'.format(v)
+        return f'Q("{v}")'
     return v
 
 def repr_val(v) :
     try :
         return int(v)
-    except :
+    except (ValueError, TypeError) :
         pass
     try :
         return float(v)
-    except :
+    except (ValueError, TypeError) :
         pass
     return v
 
@@ -85,9 +83,8 @@ def patsy_lite_to_patsy(formula) :
         try :
             tok = lexer.token()
         except lex.LexError as e :
-            raise PatsyLiteParseError('Error parsing formula:\n{}\n{}'.format(
-                formula,e.args)
-            )
+            raise PatsyLiteParseError(f'Error parsing formula:\n{formula}\n{e.args}'
+            ) from e
 
         if not tok : break
 
@@ -99,17 +96,11 @@ def patsy_lite_to_patsy(formula) :
         # term[lev1,lev2,lev3] -> C(term, levels=["lev1","lev2","lev3"])
         if tok.type == 'FACTORTERM' :
             if hasattr(tok,'ref') :
-                term = 'C({}, Treatment({}))'.format(
-                        quote_var(tok.term),
-                        repr(repr_val(tok.ref))
-                )
+                term = f'C({quote_var(tok.term)}, Treatment({repr(repr_val(tok.ref))}))'
                 name_map[term] = tok.term
                 patsy_formula.append(term)
             elif hasattr(tok,'levels') :
-                term = 'C({}, levels={})'.format(
-                        quote_var(tok.term),
-                        [repr_val(_) for _ in tok.levels]
-                )
+                term = f'C({quote_var(tok.term)}, levels={[repr_val(_) for _ in tok.levels]})'
                 name_map[term] = tok.term
                 patsy_formula.append(term)
             else :
@@ -124,7 +115,7 @@ def patsy_lite_to_patsy(formula) :
 
 class ModelError(Exception): pass
 
-class DesignMatrix(object) :
+class DesignMatrix :
 
     def __init__(self,formula,model_data) :
 
@@ -143,7 +134,7 @@ class DesignMatrix(object) :
         # we remove the Intercept term from the lhs before returning
         # the design matrix
         if not formula.strip().startswith('~') :
-            formula = '1 + {}'.format(formula)
+            formula = f'1 + {formula}'
 
         model = patsy_lite_to_patsy(formula)
         logger.debug('transpiled patsy formula: %s',model.describe())
@@ -156,7 +147,7 @@ class DesignMatrix(object) :
             )
         except PatsyError as e :
             raise PatsyLiteParseError('Misspecified column in design, check term '
-                'names. {}'.format(e.args))
+                f'names. {e.args}') from e
 
         # patsy reorders the terms after calling dmatrices for some reason
         # rearrange them back again to what was specified in the design
@@ -207,16 +198,16 @@ class DesignMatrix(object) :
     def drop_from_lhs(self,column,quiet=False) :
         try :
             self.lhs.drop(column,axis=1,inplace=True)
-        except KeyError as e :
+        except KeyError as e:
             if not quiet :
-                raise ModelError('Cannot drop {} from lhs, does not exist'.format(column))
+                raise ModelError(f'Cannot drop {column} from lhs, does not exist') from e
 
     def drop_from_rhs(self,column,quiet=False) :
         try :
             self.rhs.drop(column,axis=1,inplace=True)
-        except KeyError as e :
+        except KeyError as e:
             if not quiet :
-                raise ModelError('Cannot drop {} from rhs, does not exist'.format(column))
+                raise ModelError(f'Cannot drop {column} from rhs, does not exist') from e
 
     def head(self) :
         return self.full_matrix.head()
@@ -260,5 +251,5 @@ class DesignMatrix(object) :
         elif column in self.rhs :
             self.rhs[column] = values
         else :
-            raise ModelError(('Cannot replace values for column {}, '
-                'column does not exist').format(column))
+            raise ModelError(f'Cannot replace values for column {column}, '
+                'column does not exist')

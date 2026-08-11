@@ -269,23 +269,17 @@ Options:
 from collections import OrderedDict, defaultdict
 import csv
 from docopt import docopt
-import json
 import logging
-from pprint import pformat
-import math
 import numpy as np
-import pandas
 import os.path
 import scipy
-from sklearn.decomposition import PCA
-from string import Template
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 import sys
 import warnings
 
-from .common import (CountMatrixFile, DetkModule, _cli_doc, set_logging,
-        make_cli_count_obj, write_output)
+from .common import (DetkModule, _cli_doc, set_logging,
+        make_cli_count_obj)
 from .report import DetkReport
 
 # setup logging, null on the library level
@@ -462,7 +456,7 @@ class ColDist(DetkModule) :
         res = []
         for col in self.stats :
             for colstat in self.stats[col] :
-                res.append(['{}__{}'.format(col,colstat)]+list(self.stats[col][colstat]))
+                res.append([f'{col}__{colstat}']+list(self.stats[col][colstat]))
         return list(list(_) for _ in zip(*res))
     @property
     def properties(self) :
@@ -576,8 +570,8 @@ class RowDist(DetkModule):
                 percentile
         '''
         colnames = ['rowname']+\
-              ['bin_{}'.format(_) for _ in self['pct']]+\
-              ['dist_{}'.format(_) for _ in self['pct']]
+              [f'bin_{_}' for _ in self['pct']]+\
+              [f'dist_{_}' for _ in self['pct']]
         res = [colnames]
         for dist in self['dists'] :
             res.append([dist['name']]+dist['bins']+dist['dist'])
@@ -837,7 +831,7 @@ class Entropy(DetkModule) :
         #Get counts, number of columns, number of rows, and gene names
         cnts = count_mat.counts.values
         num_cols=len(cnts[0])
-        num_rows=len(cnts)
+        len(cnts)
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -845,7 +839,7 @@ class Entropy(DetkModule) :
             entropies[entropies.isnull()] = 0
 
         # there are 100 evenly spaced bins between [0,max_entropy]
-        max_entropy = -np.log(1/num_cols)
+        -np.log(1/num_cols)
         pct = list(range(100))
         pctVal = np.percentile(entropies,pct,method='higher').tolist()
 
@@ -1177,11 +1171,11 @@ def main(argv=sys.argv) :
         output = [output]
 
     #Obtain string used to name output files, unless filename is specified
-    filename_prefix = os.path.splitext(args['<counts_fn>'])[0]
+    os.path.splitext(args['<counts_fn>'])[0]
 
     outf = sys.stdout
     if args['--output'] != 'stdout' :
-        outf = open(args['--output'],'wt')
+        outf = open(args['--output'],'w')
 
     if args['--format'] == 'table' :
         from terminaltables import AsciiTable
@@ -1198,7 +1192,7 @@ def main(argv=sys.argv) :
             out_writer.writerows(output[0].output)
         else :
             for out in output :
-                out_writer.writerow(['#{}'.format(out.name)])
+                out_writer.writerow([f'#{out.name}'])
                 out_writer.writerows(out.output)
 
     # write out the report json

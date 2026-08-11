@@ -168,6 +168,6 @@ jobs:
 
       # Floor: local non-R total measured at 71%, rounded down minus a
       # 2-point safety margin. The combined number (with the R job) is
-      # higher — ratchet this up to that number after the first CI run.
+      # higher — first combined run measured 89% (2026-08-11); floor set to 87.
       - name: Enforce coverage floor
-        run: coverage report --fail-under=69
+        run: coverage report --fail-under=87

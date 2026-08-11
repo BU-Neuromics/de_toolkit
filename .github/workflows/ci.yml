@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, "phase1-tooling" ]
+    branches: [ main, "phase*" ]
   pull_request:
     branches: [ main ]
 

@@ -1,0 +1,3 @@
+# Run git config blame.ignoreRevsFile .git-blame-ignore-revs to use this file.
+# Phase 3: apply ruff format across the codebase
+3e580eefcbf82c7485930b8e446d7d137d7c973d

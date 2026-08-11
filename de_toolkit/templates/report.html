@@ -170,17 +170,16 @@
 
   function renderView(m) {
     var v = m.view || { type: "raw" };
+    var note = v.note ? '<p class="desc">' + v.note + '</p>' : '';
     if (v.type === "vega") {
       vegaCharts.push({ id: m.id + "-vis", spec: v.spec });
-      var vegaNote = v.note ? '<p class="desc">' + v.note + '</p>' : '';
-      return vegaNote + '<div class="chart" id="' + m.id + '-vis"></div>';
+      return note + '<div class="chart" id="' + m.id + '-vis"></div>';
     }
     if (v.type === "svg") {
-      var svgNote = v.note ? '<p class="desc">' + v.note + '</p>' : '';
-      return svgNote + '<div class="chart chart-static">' + v.svg + '</div>';
+      return note + '<div class="chart chart-static">' + v.svg + '</div>';
     }
     if (v.type === "kv") {
-      return '<div class="kv">' + v.items.map(function (it) {
+      return note + '<div class="kv">' + v.items.map(function (it) {
         return '<div class="item"><div class="val">' + fmt(it.value) +
                '</div><div class="lab">' + it.label + '</div></div>';
       }).join("") + '</div>';

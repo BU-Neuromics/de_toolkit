@@ -452,3 +452,107 @@ def test_plog_module_emits_transform_data(tmp_path):
     props = obj.properties
     assert "transform" in props and props["transform"]["dists"]
     assert obj["params"] == {"pseudocount": 1, "base": 10}
+
+
+# --------------------------------------------------------------------------
+# filter + enrich families (#8/#9)
+# --------------------------------------------------------------------------
+
+
+def test_filtercounts_view_accounts_for_features():
+    m = mod(
+        "filtercounts",
+        {"num_kept": 900, "num_filtered": 100},
+        params={"command": "mean(all) > 10"},
+    )
+    fam, _, _, view = view_for(m)
+    assert fam == "filter" and view["type"] == "kv"
+    items = {i["label"]: i["value"] for i in view["items"]}
+    assert items["features in"] == 1000
+    assert items["features kept"] == 900
+    assert items["features removed"] == 100
+    assert items["kept"] == "90.0%"
+    assert "mean(all) > 10" in view["note"]
+
+
+FGSEA_FIXTURE = mod(
+    "fgseares",
+    {
+        "num_pathways": 500,
+        "fgsea": {
+            "num_sig": 2,
+            "sig_threshold": 0.05,
+            "top_n": 3,
+            "pathways": [
+                {
+                    "pathway": "A",
+                    "nes": 2.5,
+                    "size": 50,
+                    "nlpadj": 9.0,
+                    "padj_str": "1.00e-09",
+                    "sig": True,
+                },
+                {
+                    "pathway": "B",
+                    "nes": -1.8,
+                    "size": 20,
+                    "nlpadj": 1.5,
+                    "padj_str": "3.00e-02",
+                    "sig": True,
+                },
+                {
+                    "pathway": "C",
+                    "nes": 0.3,
+                    "size": 10,
+                    "nlpadj": 0.3,
+                    "padj_str": "5.00e-01",
+                    "sig": False,
+                },
+            ],
+        },
+    },
+)
+
+
+def test_fgseares_view_is_nes_dotplot():
+    fam, _, _, view = view_for(FGSEA_FIXTURE)
+    assert fam == "enrich" and view["type"] == "vega"
+    assert "Top 3 gene sets" in view["note"]
+    assert "500 tested" in view["note"]
+
+
+def test_fgseares_spec_compiles():
+    vlc = pytest.importorskip("vl_convert")
+    _, _, _, view = view_for(FGSEA_FIXTURE)
+    svg = vlc.vegalite_to_svg(json.dumps(clean(view["spec"])))
+    assert "<svg" in svg[:300]
+
+
+def test_fgsea_report_data_helper():
+    import pandas
+
+    from de_toolkit.enrich import _fgsea_report_data
+
+    df = pandas.DataFrame(
+        {
+            "pathway": [f"P{i}" for i in range(50)],
+            "padj": [1e-9] * 5 + [0.5] * 45,
+            "NES": [2.0] * 5 + [0.1] * 45,
+            "size": [30] * 50,
+        }
+    )
+    fg = _fgsea_report_data(df)
+    assert fg["num_sig"] == 5
+    assert fg["top_n"] == 30  # capped
+    # small padj survives the float-truncating encoder as a string
+    assert fg["pathways"][0]["padj_str"] == "1.00e-09"
+    assert fg["pathways"][0]["nlpadj"] == 9.0
+    json.dumps(fg)
+
+
+def test_no_module_left_in_fallback():
+    """Every known module now has a real builder; the fallback map should be
+    empty (it remains as the safety net for future modules)."""
+    from de_toolkit.report_specs import _FALLBACK_FAMILIES
+
+    assert _FALLBACK_FAMILIES == {}

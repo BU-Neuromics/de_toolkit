@@ -297,6 +297,103 @@ def build_rowdist(mod):
 
 
 # ---------------------------------------------------------------------------
+# filter module builders
+# ---------------------------------------------------------------------------
+
+
+def build_filtercounts(mod):
+    p = mod.get("properties", {})
+    kept, filtered = p.get("num_kept"), p.get("num_filtered")
+    if kept is None:
+        return {"type": "raw"}
+    total = (kept or 0) + (filtered or 0)
+    command = mod.get("params", {}).get("command")
+    return {
+        "type": "kv",
+        "items": [
+            {"label": "features in", "value": total},
+            {"label": "features kept", "value": kept},
+            {"label": "features removed", "value": filtered},
+            {
+                "label": "kept",
+                "value": f"{100.0 * kept / total:.1f}%" if total else "—",
+            },
+        ],
+        "note": f"filter command: {command}" if command else None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# enrich module builders
+# ---------------------------------------------------------------------------
+
+
+def build_fgseares(mod):
+    fg = mod["properties"].get("fgsea") or {}
+    pathways = fg.get("pathways") or []
+    if not pathways:
+        return {"type": "raw"}
+    rows = [dict(p) for p in pathways]
+    n = len(rows)
+    note = (
+        f"Top {n} gene sets by adjusted p-value "
+        f"({fg.get('num_sig')} significant at padj < {fg.get('sig_threshold')} "
+        f"of {mod['properties'].get('num_pathways')} tested). "
+        "The full table is in the tool's output file."
+    )
+    return {
+        "type": "vega",
+        "spec": {
+            "$schema": VEGA_LITE_SCHEMA,
+            "data": {"values": rows},
+            "layer": [
+                {
+                    "mark": {"type": "rule", "color": "#b0b0b0", "strokeDash": [4, 4]},
+                    "encoding": {"x": {"datum": 0}},
+                },
+                {
+                    "mark": {"type": "point", "filled": True, "opacity": 0.85},
+                    "encoding": {
+                        "x": {
+                            "field": "nes",
+                            "type": "quantitative",
+                            "title": "normalized enrichment score (NES)",
+                        },
+                        "y": {
+                            "field": "pathway",
+                            "type": "nominal",
+                            "sort": {"field": "nes", "order": "descending"},
+                            "title": None,
+                            "axis": {"labelLimit": 260},
+                        },
+                        "size": {
+                            "field": "size",
+                            "type": "quantitative",
+                            "title": "gene set size",
+                        },
+                        "color": {
+                            "field": "nlpadj",
+                            "type": "quantitative",
+                            "title": "-log10 padj",
+                            "scale": {"scheme": "viridis"},
+                        },
+                        "tooltip": [
+                            {"field": "pathway"},
+                            {"field": "nes", "type": "quantitative", "format": ".2f"},
+                            {"field": "padj_str", "title": "padj"},
+                            {"field": "size", "title": "genes"},
+                        ],
+                    },
+                },
+            ],
+            "width": "container",
+            "height": {"step": 18},
+        },
+        "note": note,
+    }
+
+
+# ---------------------------------------------------------------------------
 # norm module builders
 # ---------------------------------------------------------------------------
 
@@ -709,6 +806,20 @@ REGISTRY = {
         "Samples on the first two principal components, coloured by a covariate.",
         build_pca,
     ),
+    # filter family
+    "filtercounts": (
+        "filter",
+        "Feature filter",
+        "How many features the filter command kept and removed.",
+        build_filtercounts,
+    ),
+    # enrich family
+    "fgseares": (
+        "enrich",
+        "fgsea gene-set enrichment",
+        "Top enriched gene sets by NES, coloured by adjusted p-value.",
+        build_fgseares,
+    ),
     # norm family
     "deseq2norm": (
         "norm",
@@ -783,10 +894,7 @@ REGISTRY = {
 
 # families for non-stats modules so nav grouping works and they are not dropped;
 # builders are added in later phases (they fall back to a raw-JSON view for now).
-_FALLBACK_FAMILIES = {
-    "filtercounts": ("filter", "Feature filter"),
-    "fgseares": ("enrich", "fgsea gene-set enrichment"),
-}
+_FALLBACK_FAMILIES = {}
 
 
 def view_for(mod):

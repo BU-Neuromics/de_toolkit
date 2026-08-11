@@ -65,6 +65,7 @@ import csv
 from docopt import docopt
 from functools import reduce
 import logging
+import math
 import os
 import pandas
 from pprint import pformat
@@ -78,6 +79,46 @@ from .report import DetkReport
 # setup logging, null on the library level
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+# number of top gene sets (by adjusted p-value) emitted for the report chart
+_FGSEA_TOP = 30
+_FGSEA_SIG_THRESHOLD = 0.05
+
+
+def _fgsea_report_data(df):
+    """Chart-ready summary of an fgsea result table.
+
+    Adjusted p-values are emitted both as -log10 (for the color scale) and as
+    preformatted strings (for tooltips): the module JSON encoder rounds floats
+    to 3 decimals, which would destroy small p-values.
+    """
+    d = df.copy()
+    for c in ("padj", "NES"):
+        if c in d.columns:
+            d[c] = pandas.to_numeric(d[c], errors="coerce")
+    if "padj" not in d.columns or "pathway" not in d.columns:
+        return {"num_sig": None, "pathways": []}
+    d = d.dropna(subset=["padj"]).sort_values("padj")
+    num_sig = int((d["padj"] < _FGSEA_SIG_THRESHOLD).sum())
+    top = d.head(_FGSEA_TOP)
+    pathways = [
+        {
+            "pathway": str(r["pathway"]),
+            "nes": float(r["NES"]) if "NES" in top.columns and pandas.notna(r["NES"]) else None,
+            "size": int(r["size"]) if "size" in top.columns and pandas.notna(r["size"]) else None,
+            "nlpadj": float(-math.log10(max(r["padj"], 1e-300))),
+            "padj_str": f"{r['padj']:.2e}",
+            "sig": bool(r["padj"] < _FGSEA_SIG_THRESHOLD),
+        }
+        for _, r in top.iterrows()
+    ]
+    return {
+        "num_sig": num_sig,
+        "sig_threshold": _FGSEA_SIG_THRESHOLD,
+        "top_n": len(pathways),
+        "pathways": pathways,
+    }
+
 
 GeneSet = namedtuple("GeneSet", ("name", "desc", "ids"))
 
@@ -292,6 +333,7 @@ class FGSEARes(DetkModule):
     def properties(self):
         return {
             "num_pathways": len(self.gsea_res),
+            "fgsea": _fgsea_report_data(self.gsea_res),
         }
 
     @property

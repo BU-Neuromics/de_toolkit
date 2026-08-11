@@ -10,7 +10,7 @@ Usage:
     detk-report generate [options]
 
 Options:
-    --dev  Format html for development (larger file size)
+    --dev  Pretty-print the embedded JSON payload (larger file, easier to read)
 ''',
         'clean':r'''
 Usage:
@@ -23,6 +23,7 @@ from collections.abc import Mapping
 from docopt import docopt
 from glob import glob
 import hashlib
+from importlib.resources import files as _pkg_files
 import jinja2
 import json
 import logging
@@ -30,53 +31,29 @@ from pprint import pformat
 import numpy as np
 import os
 import pathlib
-from importlib.resources import files as _pkg_files
 import shutil
 import sys
 import time
-import de_toolkit
-
-
-class _ResourceCompat(object):
-    '''Minimal drop-in replacement for the handful of ``pkg_resources``
-    resource accessors this module used, backed by ``importlib.resources``.
-    ``pkg_resources`` was removed from setuptools in v80+, so the legacy API is
-    no longer importable on modern installs. The ``package`` argument is kept
-    for call-site compatibility but ignored (always ``de_toolkit``).'''
-
-    @staticmethod
-    def _res(path):
-        t = _pkg_files('de_toolkit')
-        for part in str(path).strip('/').split('/'):
-            if part:
-                t = t / part
-        return t
-
-    def resource_exists(self, package, path):
-        r = self._res(path)
-        return r.is_file() or r.is_dir()
-
-    def resource_isdir(self, package, path):
-        return self._res(path).is_dir()
-
-    def resource_listdir(self, package, path):
-        return [p.name for p in self._res(path).iterdir()]
-
-    def resource_string(self, package, path):
-        return self._res(path).read_bytes()
-
-    def resource_filename(self, package, path):
-        return str(self._res(path))
-
-
-pkg_resources = _ResourceCompat()
 
 from .common import _cli_doc, set_logging
+from .report_specs import clean, view_for
 from .version import __version__
 
 # setup logging, null on the library level
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+# preferred top-level ordering of module families in the report/nav
+FAMILY_ORDER = ['stats', 'de', 'norm', 'transform', 'filter', 'enrich', 'other']
+
+
+def _asset(*parts):
+    'Read a packaged asset (e.g. a vendored JS file or template) as text.'
+    t = _pkg_files('de_toolkit')
+    for p in parts:
+        t = t / p
+    return t.read_text(encoding='utf-8')
+
 
 class NumpyEncoder(json.JSONEncoder):
     """ Special json encoder for numpy types """
@@ -174,17 +151,18 @@ class DetkModuleJSON(object):
         with open(self.filepath,'wt') as f :
             json.dump(self.out_d,f,indent=indent,cls=NumpyEncoder)
 
-def walk(path) :
-    l = []
-    for tmpl_path in pkg_resources.resource_listdir('de_toolkit',path) :
-        tmpl_path = os.path.join(path,tmpl_path)
-        if pkg_resources.resource_isdir('de_toolkit',tmpl_path) :
-            l.extend(walk(tmpl_path))
-        else :
-            l.append(tmpl_path)
-    return l
 
 class DetkReport(object):
+    '''
+    Collects detk module JSON and renders a single self-contained, offline HTML
+    report. Each module run serializes its JSON into ``<report_dir>/json/`` (the
+    machine-readable layer); ``write`` assembles every JSON found there into one
+    ``detk_report.html`` whose charts are rendered client-side by a vendored,
+    no-build Vega-Lite bundle, with the raw JSON embedded for provenance.
+    '''
+    template_name = 'report.html'
+    vega_assets = ('vega.min.js', 'vega-lite.min.js', 'vega-embed.min.js')
+
     def __init__(self, report_dir='./detk_report') :
         self.report_dir = os.path.realpath(report_dir)
         logger.debug('creating DetkReport at report dir: %s',self.report_dir)
@@ -197,13 +175,6 @@ class DetkReport(object):
         logger.debug('report path: %s',self.report_path)
 
         self.modules = []
-
-        self._template_data = {
-                'data':None,
-                'common': {},
-                'templates': {},
-                'assets': {}
-                }
 
     def add_module(self,
             module,
@@ -225,103 +196,63 @@ class DetkReport(object):
         self.modules.append(module_json)
 
     @property
-    def template_name(self) :
-        return 'base.html'
-
-    @property
-    def template_data(self) :
-
-        logger.debug('loading report templates')
-
-        template_data = self._template_data
-
-        json_str = self.json
-
-        # loading the whole json object on a single long line is hard on text
-        # editors
-        template_data['data'] = json.dumps(json_str,cls=NumpyEncoder)
-
-        # format the report
-        # do a scan through the json directory to pick up all the existing
-        # reports
-        module_names = set()
-        for module in json_str :
-            module_names.add(module.get('name'))
-
-        # load the module templates for the modules found in the report dir
-        for asset in ('js','css','html') :
-            # common (common) assets
-            common_path = 'templates/{}/common.{}'.format(asset,asset)
-            if pkg_resources.resource_exists('de_toolkit',common_path) :
-                template_data['common'][asset] = \
-                    pkg_resources.resource_string('de_toolkit',common_path).decode()
-
-            # module templates
-            d = template_data['templates'][asset] = {}
-            for name in module_names :
-                tmpl_path = 'templates/{}/{}.{}'.format(asset,name,asset)
-                if pkg_resources.resource_exists('de_toolkit',tmpl_path) :
-                    logger.debug('found template, loading: %s',tmpl_path)
-                    template_data['templates'][asset][name] = \
-                        pkg_resources.resource_string('de_toolkit',tmpl_path).decode()
-                else :
-                    logger.debug('no template found, skipping: %s',tmpl_path)
-
-            # third party assets
-            template_data['assets'][asset] = {}
-            asset_dir = 'templates/{}/assets/'.format(asset)
-            if pkg_resources.resource_exists('de_toolkit',asset_dir) :
-                for tmpl_path in walk(asset_dir) :
-                    logger.debug('loading asset: %s',tmpl_path)
-                    template_data['assets'][asset][os.path.basename(tmpl_path)] =  \
-                        pkg_resources.resource_string('de_toolkit', tmpl_path).decode()
-
-        return template_data
-
-    @property
     def json(self) :
-
-        logger.debug('collecting report json')
-
-        # write all the module JSON
+        'Serialize pending modules, then load every module JSON in the report dir.'
         for module in self.modules :
             logger.debug('writing module JSON: %s',module.out_d.get('name'))
             module.write()
 
-        # format the report
-        # do a scan through the json directory to pick up all the existing
-        # reports
         json_str = []
-        for fn in glob(os.path.join(self.json_dir,'*.json')) :
+        for fn in sorted(glob(os.path.join(self.json_dir,'*.json'))) :
             logger.debug('found module json: %s',fn)
             with open(fn) as f :
-                j = f.read().strip()
-                json_str.append(json.loads(j))
+                json_str.append(json.loads(f.read().strip()))
 
         return json_str
 
-    def write(self) :
+    def build_modules(self) :
+        'Turn each collected module JSON into a render descriptor for the SPA.'
+        modules, raw, seen = [], {}, {}
+        for mj in self.json :
+            family, title, desc, view = view_for(mj)
+            base = mj.get('name', 'unknown')
+            n = seen.get(base, 0)
+            seen[base] = n + 1
+            dom_id = base if n == 0 else '{}-{}'.format(base, n)
+            modules.append({
+                'id': dom_id,
+                'module': base,
+                'family': family,
+                'title': title,
+                'desc': desc,
+                'view': view,
+            })
+            raw[dom_id] = mj
 
-        logger.debug('writing out report')
+        fam_rank = {f: i for i, f in enumerate(FAMILY_ORDER)}
+        modules.sort(key=lambda m: (fam_rank.get(m['family'], len(FAMILY_ORDER)), m['title']))
+        return modules, raw
 
-        # write all the module JSON for this report
-        for module in self.modules :
-            logger.debug('writing module JSON: %s',module.out_d.get('name'))
-            module.write()
+    def write(self, dev=False) :
+        logger.debug('writing out report to %s', self.report_path)
 
-        # create and render the template
-        logger.debug('rendering report template')
-        template = jinja2.Template(
-            pkg_resources.resource_string(
-                'de_toolkit','templates/html/{}'.format(
-                    self.template_name
-                )
-            ).decode()
+        modules, raw = self.build_modules()
+        indent = 2 if dev else None
+
+        vega = {name.split('.')[0].replace('-', ''): _asset('templates', 'vega', name)
+                for name in self.vega_assets}
+
+        template = jinja2.Template(_asset('templates', self.template_name))
+        html = template.render(
+            modules_json=json.dumps(clean(modules), cls=NumpyEncoder, indent=indent),
+            raw_json=json.dumps(clean(raw), cls=NumpyEncoder, indent=indent),
+            vega_js=vega['vega'],
+            vegalite_js=vega['vegalite'],
+            vegaembed_js=vega['vegaembed'],
         )
-
-        with open(self.report_path,'wb') as f :
-            logger.debug('writing out template')
-            f.write(template.render(**self.template_data).encode())
+        with open(self.report_path, 'w', encoding='utf-8') as f :
+            f.write(html)
+        logger.info('wrote report (%d modules) to %s', len(modules), self.report_path)
 
     def __enter__(self) :
         return self
@@ -329,93 +260,6 @@ class DetkReport(object):
     def __exit__(self,type,value,traceback):
         self.write()
 
-class DetkReportDev(DetkReport) :
-    @property
-    def template_name(self) :
-        return 'base_dev.html'
-
-    @property
-    def template_data(self) :
-        template_data = self._template_data
-        # in development mode, copy assets and data to the report directory
-        # instead of writing into the file
-
-        json_str = self.json
-
-        # write the data into its own javascript file
-        data_path = os.path.join(self.json_dir,'data.js')
-        template_data['data_path'] = 'json/data.js'
-        with open(data_path,'w') as f :
-            f.write('var detk = detk || {};')
-            f.write('detk.data = {};'.format(
-                        json.dumps(json_str,indent=2,cls=NumpyEncoder)
-                    )
-            )
-
-        # format the report
-        # do a scan through the json directory to pick up all the existing
-        # reports
-        module_names = set()
-        for module in json_str :
-            module_names.add(module.get('name'))
-
-        # load the module templates for the modules found in the report dir
-        for asset in ('js','css','html') :
-
-            logger.debug('preparing %s templates',asset)
-
-            dest_dir = pathlib.Path(os.path.join(self.report_dir,asset))
-            dest_dir.mkdir(parents=True, exist_ok=True)
-
-            # common assets
-            common_path = 'templates/{}/common.{}'.format(asset,asset)
-            logger.debug('looking for common %s template: %s',asset, common_path)
-            if pkg_resources.resource_exists('de_toolkit',common_path) :
-                logger.debug('found common asset, loading')
-                template_data['common'][asset] = \
-                    pkg_resources.resource_string('de_toolkit',common_path).decode()
-                # copy the asset
-                #shutil.copy(
-                #    pkg_resources.resource_filename(
-                #        'de_toolkit',common_path
-                #    ),
-                #    os.path.join(self.report_dir,asset,os.path.basename(common_path))
-                #)
-                # give the relative path to the asset
-                #template_data['common'][asset] = '{}/{}'.format(
-                #        asset,
-                #        os.path.basename(common_path)
-                #)
-
-            # module templates, loaded in as in production mode
-            d = template_data['templates'][asset] = {}
-            for name in module_names :
-                tmpl_path = 'templates/{}/{}.{}'.format(asset,name,asset)
-                if pkg_resources.resource_exists('de_toolkit',tmpl_path) :
-                    template_data['templates'][asset][name] = \
-                        pkg_resources.resource_string('de_toolkit',tmpl_path).decode()
-            # third party assets, copied as files instead of inserted into the
-            # page
-            template_data['assets'][asset] = {}
-            asset_dir = 'templates/{}/assets/'.format(asset)
-
-            if pkg_resources.resource_isdir('de_toolkit',asset_dir) :
-
-                for tmpl_path in walk(asset_dir) :
-                    dest_path_str = tmpl_path.replace('templates/','')
-                    dest_path = pathlib.Path(os.path.join(self.report_dir,dest_path_str))
-                    logger.debug('copying asset: %s -> %s',tmpl_path,dest_path)
-                    dest_path.parent.mkdir(parents=True, exist_ok=True)
-                    # copy the asset
-                    shutil.copy(
-                        pkg_resources.resource_filename('de_toolkit',tmpl_path),
-                        str(dest_path)
-                    )
-                    # give the relative path to the asset
-                    #rel_path = tmpl_path.replace('assets/','')
-                    #template_data['assets'][asset][rel_path] = dest_path_str
-
-        return template_data
 
 def main(argv=sys.argv) :
 
@@ -440,14 +284,10 @@ def main(argv=sys.argv) :
         set_logging(args)
         logger.info('cmd: %s',' '.join(argv))
 
-        report_class = DetkReport
         if args['--dev'] :
-            logger.info('generating development repot due to --dev')
-            report_class = DetkReportDev
-
-        # the context manager loads and writes, do nothing inside
-        with report_class(args['--report-dir']) :
-            pass
+            logger.info('pretty-printing embedded JSON due to --dev')
+        # standalone generation: collect existing module JSON and render once
+        DetkReport(args['--report-dir']).write(dev=bool(args['--dev']))
 
     elif cmd == 'clean' :
         args = docopt(cmd_opts_aug['clean'],argv)

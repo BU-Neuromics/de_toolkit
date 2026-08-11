@@ -110,6 +110,7 @@ class DESeq2Counts(DetkModule):
     ):
         self.count_obj = count_obj
         self["params"] = {
+            "design": count_obj.design,
             "normalized": normalized,
             "rda": rda,
             "all_coeff_results": all_coeff_results,
@@ -353,6 +354,8 @@ class FLGCounts(DetkModule):
             "rda": rda,
             "cores": cores,
         }
+        # record on the module so the report/provenance layer sees them
+        self["params"] = params
         logger.debug("logistf wrapr params:\n %s", pformat(params))
         script = """\
             library(logistf)

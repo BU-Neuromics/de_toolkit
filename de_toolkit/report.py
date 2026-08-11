@@ -35,9 +35,17 @@ import shutil
 import sys
 import time
 
-from .common import _cli_doc, set_logging
+from datetime import datetime, timezone
+
+from .common import _PROCESS_START, _cli_doc, set_logging
+from .crate import CRATE_FILENAME, write_crate
 from .report_specs import clean, view_for
 from .version import __version__
+
+# version of the module JSON document format (the envelope written by
+# DetkModuleJSON); bump on any backward-incompatible change and update
+# module_schema.json to match
+MODULE_SCHEMA_VERSION = "1.0"
 
 # setup logging, null on the library level
 logger = logging.getLogger(__name__)
@@ -139,8 +147,14 @@ class DetkModuleJSON:
             [
                 ("name", module.name),
                 ("id", module_id),
+                ("schema_version", MODULE_SCHEMA_VERSION),
                 ("detk_version", __version__),
                 ("last_modified", int(1000 * time.time())),
+                # start_time approximates process start (module import time);
+                # end_time is when the module was recorded
+                ("start_time", _PROCESS_START.isoformat()),
+                ("end_time", datetime.now(timezone.utc).isoformat()),
+                ("argv", list(sys.argv)),
                 ("in_file_path", in_file_path),
                 ("out_file_path", out_file_path),
                 ("column_data_path", column_data_path),
@@ -186,9 +200,14 @@ class DetkReport:
     template_name = "report.html"
     vega_assets = ("vega.min.js", "vega-lite.min.js", "vega-embed.min.js")
 
-    def __init__(self, report_dir="./detk_report"):
+    def __init__(self, report_dir="./detk_report", crate_dir=None):
         self.report_dir = os.path.realpath(report_dir)
         logger.debug("creating DetkReport at report dir: %s", self.report_dir)
+
+        # the Process Run Crate is rooted at the analysis working directory,
+        # so file references in the provenance resolve relative to where the
+        # tools ran; pass crate_dir to root it elsewhere
+        self.crate_dir = os.path.realpath(crate_dir) if crate_dir is not None else os.getcwd()
 
         self.json_dir = os.path.join(self.report_dir, "json")
         logger.debug("json dir: %s", self.json_dir)
@@ -277,6 +296,12 @@ class DetkReport:
             f.write(html)
         logger.info("wrote report (%d modules) to %s", len(modules), self.report_path)
 
+        # standards-facing provenance: a Process Run Crate describing every
+        # recorded invocation, rooted at the analysis working directory
+        crate_path = write_crate(list(raw.values()), self.crate_dir)
+        if crate_path:
+            logger.info("wrote provenance crate to %s", crate_path)
+
     def __enter__(self):
         return self
 
@@ -322,6 +347,11 @@ def main(argv=sys.argv):
         logger.info("cleaning report dir: %s", args["--report-dir"])
 
         shutil.rmtree(args["--report-dir"], ignore_errors=True)
+
+        # the provenance crate is derived from the report JSON, so it goes too
+        if os.path.exists(CRATE_FILENAME):
+            logger.info("removing provenance crate: %s", CRATE_FILENAME)
+            os.remove(CRATE_FILENAME)
 
     logger.info("done")
 

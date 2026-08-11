@@ -59,8 +59,11 @@ Options:
 ## The module JSON documents
 
 Each document contains the module's `name`, the `params` it was invoked with,
-its report-relevant `properties`, the detk version, and input/output file
-paths. For example (abbreviated):
+its report-relevant `properties`, the detk version, timing, the process
+argument vector, and input/output file paths. The document format is versioned
+(`schema_version`) and specified by a JSON Schema shipped inside the package
+(`de_toolkit/module_schema.json`); every emitted document is validated against
+it in detk's test suite. For example (abbreviated):
 
 ```json
 {
@@ -82,6 +85,44 @@ that wants to consume detk results programmatically — LIMS systems, QC
 dashboards, meta-analyses. The same JSON is also embedded verbatim inside the
 generated HTML, so a report file is self-certifying: the data behind every
 chart travels with it.
+
+## Standards-based provenance: the Process Run Crate
+
+Alongside the report, detk writes an `ro-crate-metadata.json` at the analysis
+working directory, describing every recorded invocation in community-standard
+terms: the [Process Run Crate] profile of [Workflow Run RO-Crate], built on
+[RO-Crate]. This is a second, standards-facing view of the same facts as the
+module JSON:
+
+- each detk invocation is a `CreateAction`, with start/end times
+- each subtool (e.g. `detk-norm deseq2`) is a `SoftwareApplication` with its
+  version
+- invocation parameters are `PropertyValue` entities
+- input and output files are shared `File` entities, so the chaining of tools
+  through files — the *implicit workflow* — is visible in the metadata graph
+
+Because the crate root is the working directory, the directory as a whole
+becomes a self-describing research object: standard RO-Crate tooling
+(`rocrate-validator`, `runcrate report`, WorkflowHub, Zenodo RO-Crate
+deposits) can inspect it without detk installed, and the crate maps to W3C
+PROV-O via the profile's published mapping. detk validates its emitted crates
+against the Process Run Crate profile in its test suite.
+
+The crate is derived entirely from the module JSON under
+`<report-dir>/json/`, is rewritten on every report generation, and is removed
+by `detk-report clean`. detk does not assert a license over your data — the
+crate's `license` field says so explicitly; replace it with your license when
+publishing.
+
+**Archiving:** if you publish the analysis directory to Zenodo/OSF (e.g. with
+a sync tool such as [datapin]), the deposit *is* a valid RO-Crate — the
+metadata file travels with the data, so the archived object remains
+machine-readable provenance, not just a pile of CSVs.
+
+[Process Run Crate]: https://www.researchobject.org/workflow-run-crate/profiles/process_run_crate/
+[Workflow Run RO-Crate]: https://www.researchobject.org/workflow-run-crate/
+[RO-Crate]: https://www.researchobject.org/ro-crate/
+[datapin]: https://github.com/BU-Neuromics/datapin
 
 ## Using reports in a workflow
 

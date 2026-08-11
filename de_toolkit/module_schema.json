@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BU-Neuromics/de_toolkit/blob/main/de_toolkit/module_schema.json",
+  "title": "detk module JSON document",
+  "description": "Envelope written by de_toolkit.report.DetkModuleJSON for every tool invocation. The params object records the module's invocation parameters; the properties object carries the module-specific results consumed by the report views.",
+  "type": "object",
+  "required": [
+    "name",
+    "id",
+    "schema_version",
+    "detk_version",
+    "last_modified",
+    "params",
+    "properties"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "module name; lowercased DetkModule subclass name"
+    },
+    "id": {
+      "type": "string",
+      "description": "content hash of (name, params, input file, detk version); stable across re-runs with identical inputs"
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "version of this envelope format",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "detk_version": {
+      "type": "string",
+      "description": "de_toolkit version that wrote this document"
+    },
+    "last_modified": {
+      "type": "integer",
+      "description": "unix timestamp in milliseconds when this document was written"
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC approximation of process start (module import time)"
+    },
+    "end_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC time the module was recorded"
+    },
+    "argv": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "process argument vector at recording time"
+    },
+    "in_file_path": {
+      "type": ["string", "null"],
+      "description": "primary input file path as given on the command line"
+    },
+    "out_file_path": {
+      "type": ["string", "null"],
+      "description": "primary output file path, if any"
+    },
+    "column_data_path": {
+      "type": ["string", "null"],
+      "description": "column data (sample metadata) file path, if any"
+    },
+    "workdir": {
+      "type": ["string", "null"],
+      "description": "working directory of the invocation"
+    },
+    "params": {
+      "type": "object",
+      "description": "module invocation parameters; empty only for modules that genuinely take none"
+    },
+    "properties": {
+      "type": "object",
+      "description": "module-specific results used by the report views"
+    }
+  }
+}

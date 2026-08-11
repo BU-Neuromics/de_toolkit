@@ -194,8 +194,10 @@ def deseq2_wrapr(count_obj):
 class DESeq2Norm(DetkModule):
     def __init__(self, count_obj):
         logger.info("running DESeq2 normalization")
+        self["params"] = {}
         count_mat = count_obj.counts.values
         sizeFactors = estimateSizeFactors(count_mat)
+        self.size_factors = dict(zip(count_obj.counts.columns, sizeFactors.tolist()))
         norm_cnts = count_mat / sizeFactors
         normalized = pandas.DataFrame(
             norm_cnts, index=count_obj.counts.index, columns=count_obj.counts.columns
@@ -209,7 +211,7 @@ class DESeq2Norm(DetkModule):
 
     @property
     def properties(self):
-        return {"num_kept": len(self.normalized)}
+        return {"num_kept": len(self.normalized), "size_factors": self.size_factors}
 
 
 def library_size(count_df):

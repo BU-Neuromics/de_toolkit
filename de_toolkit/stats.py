@@ -340,7 +340,7 @@ class BaseStats(DetkModule):
     """
 
     def __init__(self, count_mat):
-
+        self["params"] = {}
         self.count_mat = count_mat
 
     @property

@@ -74,6 +74,14 @@ jsonlite found: True
 
 Everything else works without R.
 
+## Stability
+
+The **command line interface is detk's stable, supported surface**: subcommand
+names, arguments, output formats, the module JSON schema (versioned), and the
+Process Run Crate provenance follow semantic versioning from 1.0 onward. The
+Python API (`de_toolkit.*` modules) is usable but not yet a compatibility
+promise — expect it to evolve.
+
 ## Development
 
 ```bash

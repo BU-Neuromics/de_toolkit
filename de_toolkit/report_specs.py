@@ -297,6 +297,473 @@ def build_rowdist(mod):
 
 
 # ---------------------------------------------------------------------------
+# filter module builders
+# ---------------------------------------------------------------------------
+
+
+def build_filtercounts(mod):
+    p = mod.get("properties", {})
+    kept, filtered = p.get("num_kept"), p.get("num_filtered")
+    if kept is None:
+        return {"type": "raw"}
+    total = (kept or 0) + (filtered or 0)
+    command = mod.get("params", {}).get("command")
+    return {
+        "type": "kv",
+        "items": [
+            {"label": "features in", "value": total},
+            {"label": "features kept", "value": kept},
+            {"label": "features removed", "value": filtered},
+            {
+                "label": "kept",
+                "value": f"{100.0 * kept / total:.1f}%" if total else "—",
+            },
+        ],
+        "note": f"filter command: {command}" if command else None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# enrich module builders
+# ---------------------------------------------------------------------------
+
+
+def build_fgseares(mod):
+    fg = mod["properties"].get("fgsea") or {}
+    pathways = fg.get("pathways") or []
+    if not pathways:
+        return {"type": "raw"}
+    rows = [dict(p) for p in pathways]
+    n = len(rows)
+    note = (
+        f"Top {n} gene sets by adjusted p-value "
+        f"({fg.get('num_sig')} significant at padj < {fg.get('sig_threshold')} "
+        f"of {mod['properties'].get('num_pathways')} tested). "
+        "The full table is in the tool's output file."
+    )
+    return {
+        "type": "vega",
+        "spec": {
+            "$schema": VEGA_LITE_SCHEMA,
+            "data": {"values": rows},
+            "layer": [
+                {
+                    "mark": {"type": "rule", "color": "#b0b0b0", "strokeDash": [4, 4]},
+                    "encoding": {"x": {"datum": 0}},
+                },
+                {
+                    "mark": {"type": "point", "filled": True, "opacity": 0.85},
+                    "encoding": {
+                        "x": {
+                            "field": "nes",
+                            "type": "quantitative",
+                            "title": "normalized enrichment score (NES)",
+                        },
+                        "y": {
+                            "field": "pathway",
+                            "type": "nominal",
+                            "sort": {"field": "nes", "order": "descending"},
+                            "title": None,
+                            "axis": {"labelLimit": 260},
+                        },
+                        "size": {
+                            "field": "size",
+                            "type": "quantitative",
+                            "title": "gene set size",
+                        },
+                        "color": {
+                            "field": "nlpadj",
+                            "type": "quantitative",
+                            "title": "-log10 padj",
+                            "scale": {"scheme": "viridis"},
+                        },
+                        "tooltip": [
+                            {"field": "pathway"},
+                            {"field": "nes", "type": "quantitative", "format": ".2f"},
+                            {"field": "padj_str", "title": "padj"},
+                            {"field": "size", "title": "genes"},
+                        ],
+                    },
+                },
+            ],
+            "width": "container",
+            "height": {"step": 18},
+        },
+        "note": note,
+    }
+
+
+# ---------------------------------------------------------------------------
+# norm module builders
+# ---------------------------------------------------------------------------
+
+
+def _sample_bar(rows, y_field, y_title, color, rule_at=None, y_fmt=None):
+    layers = [
+        {
+            "mark": {"type": "bar", "color": color},
+            "encoding": {
+                "x": {"field": "sample", "type": "nominal", "sort": "-y", "title": "sample"},
+                "y": {
+                    "field": y_field,
+                    "type": "quantitative",
+                    "title": y_title,
+                    **({"axis": {"format": y_fmt}} if y_fmt else {}),
+                },
+                "tooltip": [
+                    {"field": "sample"},
+                    {"field": y_field, "type": "quantitative", "format": ".3f"},
+                ],
+            },
+        }
+    ]
+    if rule_at is not None:
+        layers.append(
+            {
+                "mark": {"type": "rule", "color": _CAT[3], "strokeDash": [5, 4]},
+                "encoding": {"y": {"datum": rule_at}},
+            }
+        )
+    return _vl({"data": {"values": rows}, "layer": layers, "height": 300})
+
+
+def build_deseq2norm(mod):
+    sf = mod["properties"].get("size_factors") or {}
+    if not sf:
+        return {"type": "raw"}
+    rows = [{"sample": s, "size_factor": v} for s, v in sf.items()]
+    return _sample_bar(rows, "size_factor", "DESeq2 size factor", _CAT[0], rule_at=1.0)
+
+
+def build_librarysize(mod):
+    sizes = mod["properties"].get("library_sizes") or {}
+    if not sizes:
+        return {"type": "raw"}
+    rows = [{"sample": s, "library_size": v} for s, v in sizes.items()]
+    return _sample_bar(rows, "library_size", "library size (total counts)", _CAT[2], y_fmt="~s")
+
+
+def build_fpkmcounts(mod):
+    quantiles = mod["properties"].get("length_quantiles") or []
+    if not quantiles:
+        return {"type": "raw"}
+    return _vl(
+        {
+            "data": {"values": quantiles},
+            "mark": {"type": "line", "point": True, "color": _CAT[1]},
+            "encoding": {
+                "x": {"field": "q", "type": "quantitative", "title": "feature percentile"},
+                "y": {
+                    "field": "length",
+                    "type": "quantitative",
+                    "title": "feature length (bases)",
+                    "scale": {"type": "symlog", "constant": 1},
+                },
+                "tooltip": [
+                    {"field": "q", "title": "percentile"},
+                    {"field": "length", "type": "quantitative", "format": ",.0f"},
+                ],
+            },
+            "height": 300,
+        }
+    )
+
+
+# ---------------------------------------------------------------------------
+# transform module builders
+# ---------------------------------------------------------------------------
+
+
+def build_transform(mod):
+    t = mod["properties"].get("transform") or {}
+    dists, mean_sd = t.get("dists") or [], t.get("mean_sd") or []
+    if not dists:
+        return {"type": "raw"}
+
+    dist_panel = {
+        "data": {"values": dists},
+        "mark": {"type": "line", "opacity": 0.6, "strokeWidth": 1.2},
+        "encoding": {
+            "x": {"field": "q", "type": "quantitative", "title": "quantile (%)"},
+            "y": {
+                "field": "value",
+                "type": "quantitative",
+                "title": "count value",
+                "scale": {"type": "symlog", "constant": 1},
+            },
+            "color": {"field": "sample", "type": "nominal", "legend": None},
+            "facet": {
+                "field": "stage",
+                "type": "nominal",
+                "title": None,
+                "sort": ["before", "after"],
+            },
+        },
+        "resolve": {"scale": {"y": "independent"}},
+        "columns": 2,
+        "height": 260,
+        "width": 280,
+    }
+
+    charts = [dist_panel]
+    if mean_sd:
+        charts.append(
+            {
+                "data": {"values": mean_sd},
+                "mark": {"type": "point", "filled": True, "size": 14, "opacity": 0.5},
+                "encoding": {
+                    "x": {
+                        "field": "rank_pct",
+                        "type": "quantitative",
+                        "title": "features ranked by mean (%)",
+                    },
+                    "y": {
+                        "field": "sd",
+                        "type": "quantitative",
+                        "title": "per-feature standard deviation",
+                        "scale": {"type": "symlog", "constant": 0.1},
+                    },
+                    "color": {
+                        "field": "stage",
+                        "type": "nominal",
+                        "title": "stage",
+                        "scale": {"domain": ["before", "after"], "range": [_CAT[1], _CAT[0]]},
+                    },
+                    "tooltip": [
+                        {"field": "stage"},
+                        {"field": "rank_pct", "type": "quantitative", "format": ".1f"},
+                        {"field": "sd", "type": "quantitative", "format": ".3f"},
+                    ],
+                },
+                "width": "container",
+                "height": 280,
+            }
+        )
+
+    return {
+        "type": "vega",
+        "spec": {"$schema": VEGA_LITE_SCHEMA, "vconcat": charts},
+        "note": (
+            "Top: per-sample count distributions before and after the transform "
+            "(independent y scales). Bottom: per-feature standard deviation across "
+            "samples by mean rank — a flat 'after' trend is the goal of a "
+            "variance-stabilizing transform."
+        )
+        if mean_sd
+        else None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# de module builders
+# ---------------------------------------------------------------------------
+
+_SIG_SCALE = {"domain": ["down", "ns", "up"], "range": [_CAT[0], "#b0b0b0", _CAT[3]]}
+
+
+def _volcano_unit(effect_title):
+    return {
+        "mark": {"type": "point", "filled": True, "size": 26, "opacity": 0.65},
+        "encoding": {
+            "x": {"field": "effect", "type": "quantitative", "title": effect_title},
+            "y": {"field": "nlp", "type": "quantitative", "title": "-log10 p-value"},
+            "color": {
+                "field": "sig",
+                "type": "nominal",
+                "title": "significance",
+                "scale": _SIG_SCALE,
+            },
+            "tooltip": [
+                {"field": "feature"},
+                {"field": "effect", "type": "quantitative", "format": ".3f"},
+                {"field": "nlp", "type": "quantitative", "format": ".2f", "title": "-log10 p"},
+                {"field": "sig"},
+            ],
+        },
+        "width": "container",
+        "height": 330,
+    }
+
+
+def _ma_unit(effect_title):
+    return {
+        "mark": {"type": "point", "filled": True, "size": 26, "opacity": 0.65},
+        "encoding": {
+            "x": {
+                "field": "lmean",
+                "type": "quantitative",
+                "title": "log10 mean of normalized counts",
+            },
+            "y": {"field": "effect", "type": "quantitative", "title": effect_title},
+            "color": {
+                "field": "sig",
+                "type": "nominal",
+                "title": "significance",
+                "scale": _SIG_SCALE,
+            },
+            "tooltip": [
+                {"field": "feature"},
+                {"field": "lmean", "type": "quantitative", "format": ".2f", "title": "log10 mean"},
+                {"field": "effect", "type": "quantitative", "format": ".3f"},
+                {"field": "sig"},
+            ],
+        },
+        "width": "container",
+        "height": 300,
+    }
+
+
+def _build_de(mod, effect_title):
+    de = mod["properties"].get("de") or {}
+    terms = de.get("terms") or []
+    if not terms:
+        return {"type": "raw"}
+
+    rows, term_names, capped = [], [], []
+    for t in terms:
+        term_names.append(t["term"])
+        if t.get("shown", 0) < t.get("total", 0):
+            capped.append(f"{t['term']}: {t['shown']:,} of {t['total']:,}")
+        for p in t["points"]:
+            rows.append({**p, "term": t["term"]})
+
+    has_mean = any("lmean" in r for r in rows)
+
+    # very large point sets are rendered statically (#5); the dropdown is
+    # lost but the page stays responsive
+    from .static_plots import MAX_INTERACTIVE_POINTS, svg_view
+
+    if len(rows) > MAX_INTERACTIVE_POINTS:
+        t0 = terms[0]
+        first = [r for r in rows if r["term"] == t0["term"]]
+        note = (
+            f"Rendered statically ({len(first):,} points). "
+            f"Terms other than {t0['term']!r} are in the raw data."
+        )
+        return svg_view(
+            first,
+            "effect",
+            "nlp",
+            effect_title,
+            "-log10 p-value",
+            note=note,
+            title=f"volcano: {t0['term']}",
+        )
+
+    charts = [_volcano_unit(effect_title)]
+    if has_mean:
+        charts.append(_ma_unit(effect_title))
+
+    spec = {
+        "$schema": VEGA_LITE_SCHEMA,
+        "data": {"values": rows},
+        "params": [
+            {
+                "name": "sel_term",
+                "value": term_names[0],
+                "bind": {"input": "select", "options": term_names, "name": "model term: "},
+            }
+        ],
+        "transform": [{"filter": "datum.term === sel_term"}],
+        "vconcat": charts,
+    }
+    view = {"type": "vega", "spec": spec}
+    if capped:
+        view["note"] = (
+            "Showing all significant features plus a density-preserving sample "
+            "of the rest (" + "; ".join(capped) + "). Full results are in the "
+            "tool's output file."
+        )
+    return view
+
+
+def build_deseq2counts(mod):
+    return _build_de(mod, "log2 fold change")
+
+
+def build_flgcounts(mod):
+    return _build_de(mod, "Firth logistic beta")
+
+
+# ---------------------------------------------------------------------------
+# outlier module builders
+# ---------------------------------------------------------------------------
+
+
+def build_entropycounts(mod):
+    """Entropy percentile curve with the module's actual threshold marked
+    (the stats-family entropy chart shows an example threshold instead)."""
+    e = mod["properties"]["entropies"]
+    rows = [{"pct": pct, "entropy": val} for pct, val in zip(e["pct"], e["pctVal"])]
+    thresh = mod.get("params", {}).get("threshold")
+    flagged = mod["properties"].get("num_flagged")
+    ymax = max((r["entropy"] for r in rows if r["entropy"] is not None), default=0)
+    label = f"p{thresh} threshold" + (f" ({flagged} flagged)" if flagged is not None else "")
+    return _vl(
+        {
+            "data": {"values": rows},
+            "layer": [
+                {
+                    "mark": {"type": "area", "opacity": 0.25, "color": _CAT[0]},
+                    "encoding": {
+                        "x": {"field": "pct", "type": "quantitative"},
+                        "y": {"field": "entropy", "type": "quantitative"},
+                    },
+                },
+                {
+                    "mark": {"type": "line", "color": _CAT[0]},
+                    "encoding": {
+                        "x": {
+                            "field": "pct",
+                            "type": "quantitative",
+                            "title": "feature percentile",
+                        },
+                        "y": {
+                            "field": "entropy",
+                            "type": "quantitative",
+                            "title": "Shannon entropy",
+                        },
+                    },
+                },
+                {
+                    "mark": {"type": "rule", "color": _CAT[3], "strokeDash": [5, 4]},
+                    "encoding": {"x": {"datum": thresh}},
+                },
+                {
+                    "mark": {
+                        "type": "text",
+                        "align": "left",
+                        "dx": 5,
+                        "dy": -6,
+                        "color": _CAT[3],
+                        "fontSize": 11,
+                    },
+                    "encoding": {
+                        "x": {"datum": thresh},
+                        "y": {"datum": ymax},
+                        "text": {"datum": label},
+                    },
+                },
+            ],
+        }
+    )
+
+
+def build_shrink(mod):
+    p = mod.get("params", {})
+    props = mod.get("properties", {})
+    return {
+        "type": "kv",
+        "items": [
+            {"label": "features", "value": props.get("num_kept")},
+            {"label": "shrink factor", "value": p.get("shrink_factor")},
+            {"label": "max sample proportion (p_max)", "value": p.get("p_max") or "sqrt(1/n)"},
+            {"label": "iterations", "value": p.get("iters")},
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
 # registry
 # ---------------------------------------------------------------------------
 
@@ -339,22 +806,95 @@ REGISTRY = {
         "Samples on the first two principal components, coloured by a covariate.",
         build_pca,
     ),
+    # filter family
+    "filtercounts": (
+        "filter",
+        "Feature filter",
+        "How many features the filter command kept and removed.",
+        build_filtercounts,
+    ),
+    # enrich family
+    "fgseares": (
+        "enrich",
+        "fgsea gene-set enrichment",
+        "Top enriched gene sets by NES, coloured by adjusted p-value.",
+        build_fgseares,
+    ),
+    # norm family
+    "deseq2norm": (
+        "norm",
+        "DESeq2 normalization",
+        "Per-sample size factors from the median-of-ratios method.",
+        build_deseq2norm,
+    ),
+    "librarysize": (
+        "norm",
+        "Library-size normalization",
+        "Total counts per sample used as the normalization divisor.",
+        build_librarysize,
+    ),
+    "fpkmcounts": (
+        "norm",
+        "FPKM normalization",
+        "Distribution of the feature lengths used in the normalization.",
+        build_fpkmcounts,
+    ),
+    # transform family
+    "plogcounts": (
+        "transform",
+        "Pseudo-log transform",
+        "Count distributions and the mean-variance trend before vs after the transform.",
+        build_transform,
+    ),
+    "vstcounts": (
+        "transform",
+        "Variance-stabilizing transform",
+        "Count distributions and the mean-variance trend before vs after the transform.",
+        build_transform,
+    ),
+    "rlogcounts": (
+        "transform",
+        "Regularized-log transform",
+        "Count distributions and the mean-variance trend before vs after the transform.",
+        build_transform,
+    ),
+    # de family
+    "deseq2counts": (
+        "de",
+        "DESeq2 differential expression",
+        "Volcano and MA views per model term; all significant features shown.",
+        build_deseq2counts,
+    ),
+    "flgcounts": (
+        "de",
+        "Firth logistic differential expression",
+        "Volcano view per model term; all significant features shown.",
+        build_flgcounts,
+    ),
+    # outlier family
+    "entropycounts": (
+        "outlier",
+        "Entropy outlier flagging",
+        "Shannon entropy across feature percentiles with the flagging threshold marked.",
+        build_entropycounts,
+    ),
+    "shrinkcounts": (
+        "outlier",
+        "Outlier count shrinkage",
+        "Counts dominating a feature's mass shrunk toward the feature distribution.",
+        build_shrink,
+    ),
+    "pmftransform": (
+        "outlier",
+        "PMF transform",
+        "Probability-mass-function transform underlying outlier count shrinkage.",
+        build_shrink,
+    ),
 }
 
 # families for non-stats modules so nav grouping works and they are not dropped;
 # builders are added in later phases (they fall back to a raw-JSON view for now).
-_FALLBACK_FAMILIES = {
-    "deseq2counts": ("de", "DESeq2 differential expression"),
-    "flgcounts": ("de", "Firth logistic differential expression"),
-    "deseq2norm": ("norm", "DESeq2 normalization"),
-    "librarysize": ("norm", "Library-size normalization"),
-    "fpkmcounts": ("norm", "FPKM normalization"),
-    "plogcounts": ("transform", "Pseudo-log transform"),
-    "vstcounts": ("transform", "Variance-stabilizing transform"),
-    "rlogcounts": ("transform", "Regularized-log transform"),
-    "filtercounts": ("filter", "Feature filter"),
-    "fgseares": ("enrich", "fgsea gene-set enrichment"),
-}
+_FALLBACK_FAMILIES = {}
 
 
 def view_for(mod):

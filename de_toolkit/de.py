@@ -66,9 +66,99 @@ from .common import (
     make_cli_count_obj,
     write_output,
 )
+import numpy as np
+import pandas as pd
+
 from .wrapr import require_r, wrapr, require_r_package
 from .util import stub
 from .report import DetkReport
+
+# caps for the per-term point sets emitted into the report JSON: all
+# significant features up to DE_SIG_CAP, then a deterministic sample of the
+# rest up to DE_POINT_BUDGET total. The full result table is the tool's
+# primary output file; the report set only has to be visually faithful.
+DE_POINT_BUDGET = 5000
+DE_SIG_CAP = 2500
+DE_SIG_THRESHOLD = 0.05
+
+
+def _de_report_data(df, kind):
+    """Build capped, plot-ready volcano/MA data from a DE result DataFrame.
+
+    Emits coordinates rather than raw statistics (effect, -log10 p, log10
+    mean, significance class) because the module JSON encoder rounds floats
+    to 3 decimals, which would destroy small p-values.
+    """
+    if kind == "deseq2":
+        eff_suffix, p_suffix, padj_suffix = "__log2FoldChange", "__pvalue", "__padj"
+    else:
+        eff_suffix, p_suffix, padj_suffix = "__beta", "__p", "__padj"
+
+    feature_col = df.columns[0]
+    features = df[feature_col].astype(str)
+    lmean = None
+    if "baseMean" in df.columns:
+        lmean = np.log10(pd.to_numeric(df["baseMean"], errors="coerce") + 1)
+
+    terms = []
+    for col in df.columns:
+        if not col.endswith(eff_suffix):
+            continue
+        term = col[: -len(eff_suffix)]
+        if term == "Intercept":
+            continue
+        sub = pd.DataFrame(
+            {
+                "feature": features,
+                "effect": pd.to_numeric(df[col], errors="coerce"),
+                "p": pd.to_numeric(
+                    df.get(term + p_suffix, pd.Series(index=df.index, dtype=float)),
+                    errors="coerce",
+                ),
+                "padj": pd.to_numeric(
+                    df.get(term + padj_suffix, pd.Series(index=df.index, dtype=float)),
+                    errors="coerce",
+                ),
+            }
+        )
+        if lmean is not None:
+            sub["lmean"] = lmean
+        sub = sub.dropna(subset=["effect", "p"])
+        total = len(sub)
+        if total == 0:
+            continue
+
+        sig_mask = sub["padj"] < DE_SIG_THRESHOLD
+        sub["sig"] = "ns"
+        sub.loc[sig_mask & (sub["effect"] > 0), "sig"] = "up"
+        sub.loc[sig_mask & (sub["effect"] < 0), "sig"] = "down"
+        sub["nlp"] = -np.log10(sub["p"].clip(lower=1e-300))
+
+        sig = sub[sig_mask].nsmallest(DE_SIG_CAP, "padj")
+        rest = sub.loc[~sub.index.isin(sig.index)]
+        n_fill = max(0, DE_POINT_BUDGET - len(sig))
+        if len(rest) > n_fill:
+            # deterministic, density-preserving: evenly spaced over the
+            # p-sorted remainder
+            rest = rest.sort_values("p")
+            keep = np.unique(np.linspace(0, len(rest) - 1, n_fill).astype(int))
+            rest = rest.iloc[keep]
+        shown = pd.concat([sig, rest])
+
+        cols = ["feature", "effect", "nlp", "sig"] + (["lmean"] if lmean is not None else [])
+        terms.append(
+            {
+                "term": term,
+                "total": int(total),
+                "shown": int(len(shown)),
+                "num_sig": int(sig_mask.sum()),
+                "sig_threshold": DE_SIG_THRESHOLD,
+                "points": shown[cols].to_dict("records"),
+            }
+        )
+
+    return {"feature_col": feature_col, "kind": kind, "terms": terms}
+
 
 # setup logging, null on the library level
 logger = logging.getLogger(__name__)
@@ -308,7 +398,7 @@ class DESeq2Counts(DetkModule):
 
     @property
     def properties(self):
-        return {"num_length": len(self.wr_output)}
+        return {"num_length": len(self.wr_output), "de": _de_report_data(self.wr_output, "deseq2")}
 
 
 def firth_logistic_regression(count_obj, standardize=False, rda=None, cores=None, routput_dir=None):
@@ -452,7 +542,7 @@ class FLGCounts(DetkModule):
 
     @property
     def properties(self):
-        return {"num_length": len(self.wr_output)}
+        return {"num_length": len(self.wr_output), "de": _de_report_data(self.wr_output, "firth")}
 
 
 @stub

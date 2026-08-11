@@ -227,7 +227,10 @@ class LibrarySize(DetkModule):
         logger.info("running library size normalization")
         sizes = count_df.sum(axis=0)
         logger.info("min/max library size: %d/%d", sizes.min(), sizes.max())
-        self["params"] = {"sizes": sizes.tolist()}
+        self["params"] = {}
+        cols = getattr(count_df, "columns", None)
+        names = [str(c) for c in cols] if cols is not None else [str(i) for i in range(len(sizes))]
+        self.library_sizes = dict(zip(names, np.asarray(sizes).tolist()))
         self.count_df = count_df
         self.normalized = count_df / sizes
 
@@ -239,7 +242,7 @@ class LibrarySize(DetkModule):
 
     @property
     def properties(self):
-        return {"num_features": self.normalized.shape[0]}
+        return {"num_features": self.normalized.shape[0], "library_sizes": self.library_sizes}
 
 
 def fpkm(count_df, lengths):
@@ -259,7 +262,7 @@ class FPKMCounts(DetkModule):
         logger.info("running FPKM normalization")
         logger.info("number of feature lengths provided: %d", lengths.size)
 
-        self["params"] = {"lengths": lengths}
+        self["params"] = {}
         self.count_df = count_df
         self.lengths = lengths
 
@@ -282,7 +285,13 @@ class FPKMCounts(DetkModule):
 
     @property
     def properties(self):
-        return {"num_kept": len(self.res), "lengths": self.lengths}
+        # summarize the feature-length distribution rather than embedding the
+        # full lengths vector (previously a raw pandas Series, which broke
+        # JSON serialization of this module's report document)
+        qs = list(range(0, 101, 5))
+        lens = pandas.to_numeric(self.lengths, errors="coerce").dropna()
+        quantiles = [{"q": q, "length": float(v)} for q, v in zip(qs, np.percentile(lens, qs))]
+        return {"num_kept": len(self.res), "length_quantiles": quantiles}
 
 
 @stub

@@ -5,9 +5,9 @@ count datasets involving determining differential expression.
 
 # Documentation
 
-There is work-in-progress documentation at (readthedocs.org):
+Documentation is at:
 
-- [de_toolkit](http://de-toolkit.readthedocs.io/en/latest/)
+- [bu-neuromics.github.io/de_toolkit](https://bu-neuromics.github.io/de_toolkit/)
 
 # Installing
 
@@ -44,23 +44,17 @@ detk requires Python 3.10 or newer. First fork and/or clone this repo:
 git clone https://github.com/BU-Neuromics/de_toolkit.git
 ```
 
-We suggest working in a virtual environment, then installing the package in
-editable mode with its test dependencies:
+The project is managed with [uv](https://docs.astral.sh/uv/):
 
 ```
 cd de_toolkit
-python -m venv .venv
-source .venv/bin/activate
-pip install -e '.[test]'
+uv sync        # create .venv with the package and dev tools
+uv run pytest  # run the test suite
 ```
 
-This makes `detk` and its subtools available on the command line. Because the
-install is editable, code changes take effect without reinstalling. Run the
-test suite with:
-
-```
-pytest
-```
+If you don't use uv, a plain virtualenv works too: `pip install -e '.[test]'`,
+then `pytest`. Lint and format with `uv run ruff check .` and
+`uv run ruff format .`; docs preview with `uv run --group docs mkdocs serve`.
 
 Tests that require R (DESeq2, fgsea, logistf) are skipped automatically when R
 is not available.

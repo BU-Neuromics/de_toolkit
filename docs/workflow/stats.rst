@@ -1,2 +1,0 @@
-Calculating Counts Matrix Statistics
-====================================

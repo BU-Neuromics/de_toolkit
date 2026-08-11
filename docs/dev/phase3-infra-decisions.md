@@ -41,6 +41,13 @@ Considered and rejected:
   Python repo fails the "simpler" requirement.
 - **mdBook / Zola / raw Pages**: no Python API-reference story.
 
+Caveat noted at adoption time (2026-08): the MkDocs project itself has
+announced a backward-incompatible 2.0 rewrite that Material for MkDocs does
+not support. Material remains built against — and we pin — the MkDocs 1.x
+line (`mkdocs>=1.6,<2` in the docs dependency group). If the split worsens,
+Material is expected to absorb or replace the core; revisit only if a
+`uv sync --group docs` upgrade ever fails.
+
 ## 2. Packaging & tooling: uv + hatchling + ruff
 
 **Decision: adopt uv as the package/project manager, hatchling as the build

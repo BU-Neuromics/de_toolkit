@@ -1,0 +1,97 @@
+name: Release
+
+# Builds, sanity-checks, and publishes the package when a version tag is
+# pushed (e.g. `git tag v1.0.0 && git push origin v1.0.0`).
+#
+# Publishing uses PyPI Trusted Publishing (OIDC) — no stored token. This
+# requires one-time setup on PyPI (project de_toolkit -> repo
+# BU-Neuromics/de_toolkit, workflow release.yml, environment pypi) and a
+# `pypi` environment in the repo settings.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: build and sanity-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Install the wheel into a clean venv and import it
+        run: |
+          python3 -m venv /tmp/wheel-check
+          /tmp/wheel-check/bin/pip install --quiet dist/*.whl
+          /tmp/wheel-check/bin/python -c "import de_toolkit; print('de_toolkit', de_toolkit.__version__)"
+
+      - name: Verify the wheel ships the report templates
+        run: |
+          python3 - dist/*.whl <<'EOF'
+          import sys
+          import zipfile
+
+          names = zipfile.ZipFile(sys.argv[1]).namelist()
+          assert "de_toolkit/templates/report.html" in names, "report.html missing from wheel"
+          assert any(n.startswith("de_toolkit/templates/vega/") for n in names), (
+              "templates/vega/* missing from wheel"
+          )
+          print("wheel contains templates/report.html and templates/vega/*")
+          EOF
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*
+
+  publish:
+    name: publish to PyPI (Trusted Publishing)
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  attach-to-release:
+    name: attach dist to GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Upload dist files to the GitHub Release for this tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # Only runs if a GitHub Release already exists for the tag; creating
+        # the Release itself is a deliberate manual step.
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            echo "No GitHub Release exists for tag $GITHUB_REF_NAME; skipping upload."
+          fi

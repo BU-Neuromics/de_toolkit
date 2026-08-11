@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.0.0 (unreleased)
+
+DRAFT — finalize this heading (add the release date, drop "unreleased") when
+the 1.0.0 release is cut. Note: 0.9.12 on PyPI dates from 2020-01-18 and
+predates everything below.
+
+### Changed
+- Modernized to Python 3.10-3.13, numpy 2, and pandas 3
+- New toolchain: `pyproject.toml` with the hatchling build backend, uv for
+  environment/dependency management, ruff for lint and formatting
+- Documentation moved to MkDocs Material, published on GitHub Pages at
+  https://bu-neuromics.github.io/de_toolkit/
+- Report frontend rebuilt on vendored Vega-Lite, removing the Highcharts
+  licensing conflict; every module now has report views
+- Snakemake removed from the internal machinery
+- Many latent bug fixes, including: FLGCounts params were never recorded,
+  FPKM report emission was unserializable, and shadowed tests were revived
+
+### Added
+- Versioned module JSON schema for report data
+- Process Run Crate (RO-Crate) provenance for CLI runs
+
 ## [ 0.9.12 ]
 ### Added
 - --filter-unannotated to fgsea

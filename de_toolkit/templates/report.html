@@ -199,7 +199,10 @@
     if (v.type === "vega") {
       if (v.note) out.push(el("p", "desc", v.note));
       var vis = el("div", "chart");
-      vis.id = cardId + "-vis";
+      // "_vis", not "-vis": every domId output holds an even number of "_"
+      // (each one opens or closes an _<hex>_ escape), so an id ending in one
+      // more "_" can never equal a card id (#65)
+      vis.id = cardId + "_vis";
       vegaCharts.push({ id: vis.id, spec: v.spec });
       out.push(vis);
       return out;
@@ -260,7 +263,12 @@
       if (!target) return;
       target.textContent = "";
       vegaEmbed(target, c.spec, {
-        actions: { export: true, source: true, compiled: false, editor: false },
+        // export only. "View Source" and "View Compiled Vega" write
+        // the spec's JSON, unescaped, as HTML into a same-origin new window,
+        // so a sample or term name in the data would run as script there;
+        // "Open in Vega Editor" posts the spec, user data and all, to an
+        // outside site. "Show data" shows the module's JSON as text (#65).
+        actions: { export: true, source: false, compiled: false, editor: false },
         renderer: "canvas", config: cfg
       }).catch(function (err) { target.textContent = "chart error: " + err; });
     });

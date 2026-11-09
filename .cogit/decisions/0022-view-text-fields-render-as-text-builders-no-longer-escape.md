@@ -7,6 +7,8 @@ from: {node: release/view-text, step: s1}
 applies: [release/view-text]
 allowed_by: [reasonable]
 reason: "Option C of DETK-0014: the page sets every view text field as text, so no builder escapes and no user string becomes markup"
+revisions:
+  - {date: 2026-11-09, by: DETK/developer, change: "Chart actions export only: View Source and Compiled and Editor off; chart ids end in _vis so no card id can equal one; pca-1 id collision noted as a follow-up", why: review of s2}
 ---
 
 # View text fields render as text; builders no longer escape
@@ -78,17 +80,34 @@ is the static SVG (`view.svg`), which `static_plots` renders with
 matplotlib from numbers and escapes its own text. A module id is encoded as
 an injective fragment (letters, digits and `-` kept; any other code unit,
 `_` included, written `_<hex>_`), so registered modules keep their ids
-(`pca`, `deseq2counts-1`) and an unknown name cannot collide or break an
-attribute; `data-mod` keeps the original id, which keys the raw data.
+(`pca`, `deseq2counts-1`), two distinct ids never share a card id, and an
+unknown name cannot break an attribute; `data-mod` keeps the original id,
+which keys the raw data. A card's chart container is the card id plus
+`_vis`: every `domId` output holds an even number of `_`, so no card id can
+equal a chart id (with `-vis`, an unknown module named `pca-vis` took the
+PCA chart's id).
+
+The same rule reaches the charts' action menu. vega-embed's "View Source"
+and "View Compiled Vega" write the spec's JSON, unescaped, as HTML into a
+`window.open("")` page that shares the report's origin, so a sample name in
+a chart's data would run as script there; "Open in Vega Editor" posts the
+spec, with every sample and feature name, to vega.github.io. The page turns
+all three off and keeps only "Save as SVG" and "Save as PNG", which download
+a file and draw names as text (Vega's SVG renderer escapes them). "Show
+data" on each card is the way to see a module's data, as text.
 
 ## Consequences
 
-- No descriptor text field, module name or id can insert markup; the
-  template's only `innerHTML` assignment is the static SVG (a test checks
-  this). `tests/report/test_report_view_text.py` renders a report with a
-  hostile string in each field and runs the page's own script in jsdom:
-  zero injected elements and every string shown exactly as written; before
-  the change the same report injected twelve `img` elements.
+- No descriptor text field, module name or id can insert markup into the
+  page, and no chart action writes the spec as HTML; the template's only
+  `innerHTML` assignment is the static SVG and its vega-embed actions are
+  export only (template tests check both). `tests/report/test_report_view_text.py`
+  renders a report with a hostile string in each field and runs the page's
+  own script in jsdom, Vega charts included: zero injected elements, every
+  string shown exactly as written, no window opened when every chart action
+  is clicked, and unique ids across the page; before the change the same
+  report injected twelve `img` elements, and with View Source on, a
+  hostile counts header put 42 `img` elements into the source windows.
 - Builders and `view_for` return plain text; `report_specs.py`'s module
   docstring says so. A builder that escapes would now show `&lt;` to the
   user (a test checks the notes are unescaped).
@@ -97,5 +116,13 @@ attribute; `data-mod` keeps the original id, which keys the raw data.
   CI is a follow-up outside this node.
 - A real report's cards (nine modules from `detk-norm`, `detk-filter` and
   `detk-stats`) build the same DOM tree as before.
+- Follow-up outside this node: `report.py` numbers a second module of the
+  same name `{base}-{n}` (`pca-1`), which can equal a module really named
+  `pca-1`; the two cards then share an id and one's "Show data" shows the
+  other's JSON. `domId` cannot fix this, since its input is already
+  duplicated. Also outside it: a covariate name holding a quote, `.` or `[`
+  breaks the PCA chart's field access (a chart error, not injection), and
+  the checked-in `docs/example/detk_report.html` still has View Source on
+  until it is rebuilt.
 - Revisit if a view needs real markup in its text; add a separate,
   explicitly HTML field then rather than making text fields HTML again.

@@ -8,7 +8,9 @@ written and never parse them as HTML. Only the static SVG chart is markup.
 The DOM tests render a real report and run the page's own script in jsdom
 (``render_dom.js``). They need node and jsdom (``npm install jsdom``, then
 point ``NODE_PATH`` at its ``node_modules``) and are skipped without them; the
-template check below runs everywhere.
+template checks below run everywhere. The harness renders the Vega charts
+too (it stubs a canvas and ``structuredClone``), clicks every action in their
+menus and fails on any page error.
 """
 
 import json
@@ -90,12 +92,20 @@ def _write_report(tmp_path, mods):
     return rep.report_path
 
 
+# the only actions a chart's menu may offer: both download a file
+EXPORTS = ["Save as SVG", "Save as PNG"]
+ACTIONS = {"export": True, "source": False, "compiled": False, "editor": False}
+
+
 def _render(path):
     p = subprocess.run(
         ["node", HARNESS, path], capture_output=True, text=True, cwd=HERE, timeout=120
     )
-    assert p.returncode == 0, p.stderr
-    return json.loads(p.stdout)
+    # the harness exits non-zero on any page error, a failed chart included
+    assert p.returncode == 0, p.stderr[-2000:]
+    page = json.loads(p.stdout)
+    assert page["errors"] == []
+    return page
 
 
 def _no_markup(page):
@@ -105,6 +115,15 @@ def _no_markup(page):
     # the three vendored libraries, the two payloads and the app
     assert page["scripts"] == 6
     assert set(page["tags"]) <= BUILT, set(page["tags"]) - BUILT
+    # no chart asks for View Source, View Compiled Vega or Open in Vega
+    # Editor, and clicking every action that is offered opens no window
+    assert all(e["actions"] == ACTIONS for e in page["embeds"])
+    assert all(c["actions"] in ([], EXPORTS) for c in page["cards"])
+    assert page["opened"] == [] and page["written"] == []
+    for x in page["exports"]:
+        assert x["svg"] is None or x["svg"]["injected"] == x["svg"]["handlers"] == 0
+    # ids are unique across the whole page, chart containers included
+    assert len(set(page["ids"])) == len(page["ids"])
 
 
 def _card(page, module):
@@ -168,6 +187,17 @@ def test_template_inserts_markup_only_for_the_static_svg():
     assert "insertAdjacentHTML" not in page and "document.write" not in page
 
 
+def test_template_offers_no_chart_source_view():
+    # View Source and View Compiled Vega write the spec unescaped into a
+    # same-origin window; Open in Vega Editor sends it to an outside site
+    with open(TEMPLATE, encoding="utf-8") as f:
+        page = f.read()
+    (actions,) = re.findall(r"actions:\s*(\{[^}]*\})", page)
+    assert json.loads(re.sub(r"(\w+):", r'"\1":', actions)) == ACTIONS
+    # chart containers end in "_vis", which domId never produces
+    assert 'vis.id = cardId + "_vis";' in page
+
+
 def test_builders_leave_notes_unescaped(hostile_builders):
     # escaping is the page's job now: a builder that escaped would show
     # "&lt;" to the user
@@ -187,7 +217,8 @@ def test_hostile_view_text_renders_as_text(tmp_path, hostile_builders):
 
     de = _card(page, "deseq2counts")
     assert any(EVIL in s and "density-preserving" in s for s in de["desc"])
-    assert de["vis"] == ["deseq2counts-vis"]
+    assert de["vis"] == ["deseq2counts_vis"]
+    assert de["actions"] == EXPORTS  # the chart rendered
 
     ann = _card(page, "annotate")
     assert ann["desc"][-1] == f"columns added: {EVIL}; unmapped e.g.: {EVIL}"
@@ -237,3 +268,41 @@ def test_static_svg_still_renders_as_svg(tmp_path):
     assert svg["injected"] == 0
     # the note naming the term (as a Python repr) is text
     assert any(s.startswith("Rendered statically") and repr(EVIL) in s for s in card["desc"])
+
+
+@needs_jsdom
+def test_chart_actions_never_write_sample_names_as_markup(tmp_path):
+    # vega-embed's View Source document.writes the spec's JSON, sample names
+    # and all, unescaped into a same-origin window: the page must not offer it
+    names = [EVIL, "</code></pre><img src=x onerror=alert(3)>", "s3"]
+    dists = [{"name": n, "percentiles": [[0.0, 0], [0.5, 10], [1.0, 100]]} for n in names]
+    page = _render(_write_report(tmp_path, [_mod("coldist", {"dists": dists})]))
+    _no_markup(page)
+
+    (card,) = page["cards"]
+    assert card["vis"] == ["coldist_vis"]
+    assert card["actions"] == EXPORTS
+    (embed,) = page["embeds"]
+    assert embed["target"] == "coldist_vis"
+    # the SVG export draws the names as text
+    (svg,) = [x["svg"] for x in page["exports"] if x["svg"]]
+    assert svg["root"] == "svg"
+    assert all(n in svg["text"] for n in names)
+
+
+@needs_jsdom
+def test_unknown_module_named_like_a_chart_does_not_collide(tmp_path):
+    # domId keeps "-", so an unknown module "deseq2counts-vis" has that card
+    # id; the chart containers end in "_vis", which domId never produces
+    mods = [_mod("deseq2counts", _de_terms("t", 5)), _mod("deseq2counts-vis", {})]
+    page = _render(_write_report(tmp_path, mods))
+    _no_markup(page)
+
+    de = _card(page, "deseq2counts")
+    unk = _card(page, "deseq2counts-vis")
+    assert unk["id"] == "deseq2counts-vis"
+    assert de["vis"] == ["deseq2counts_vis"]
+    assert de["actions"] == EXPORTS
+    (link,) = [a for a in page["nav"] if a["target"] == "deseq2counts-vis"]
+    assert link["href"] == "#deseq2counts-vis"
+    assert page["ids"].count("deseq2counts-vis") == 1

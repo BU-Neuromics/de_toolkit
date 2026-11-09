@@ -75,7 +75,13 @@ predates everything below.
   term names, annotation and gather notes, a chart error, and an unknown
   module's name (in its card title, link, anchor and "Show data" button) can
   no longer insert markup into the page. Only the static SVG chart for very
-  large point sets is inserted as markup (#65)
+  large point sets is inserted as markup. The charts' menu no longer offers
+  "View Source", "View Compiled Vega" or "Open in Vega Editor": the first two
+  wrote the chart's data, sample names included, unescaped into a new page
+  of the report's origin, and the last sent it to an outside site. "Save as
+  SVG" and "Save as PNG" remain, and "Show data" shows each module's JSON.
+  An unknown module named like a chart (`pca-vis`) no longer shares the
+  chart's id (#65)
 
 ## [ 0.9.12 ]
 ### Added

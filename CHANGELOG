@@ -21,6 +21,8 @@ predates everything below.
 ### Added
 - Versioned module JSON schema for report data
 - Process Run Crate (RO-Crate) provenance for CLI runs
+- Agent skill `detk` under `skills/`, installable with
+  `npx skills add BU-Neuromics/de_toolkit`, and its docs page
 
 ## [ 0.9.12 ]
 ### Added

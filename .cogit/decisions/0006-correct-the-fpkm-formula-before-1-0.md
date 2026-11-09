@@ -51,8 +51,8 @@ cost of anyone who scripts `detk-norm fpkm`.
 
 ## Decision
 
-Open for Adam. Recommendation: Option A, before 1.0 is tagged, as its own
-issue so #24 stays about CPM and TPM.
+Option A, chosen by Adam on 2026-11-09: fix the formula before 1.0 is
+tagged, as its own node (`release/fpkm`), so #24 stays about CPM and TPM.
 
 ## Consequences
 

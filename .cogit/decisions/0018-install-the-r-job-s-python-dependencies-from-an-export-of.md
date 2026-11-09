@@ -7,13 +7,15 @@ from: {node: release/ci-lock, step: s1}
 applies: [release/ci-lock]
 allowed_by: [reasonable]
 reason: "the R job tested PyPI's latest pandas/matplotlib, not the locked set users get"
+revisions:
+  - {date: 2026-11-09, by: DETK/developer, change: the Python floor is 3.11 now that DETK-0016 is merged, why: review of s2}
 ---
 
 # Install the R job's Python dependencies from an export of uv.lock
 
 ## Background
 
-detk's CI has two kinds of test job. The `test` matrix (Python 3.10 to
+detk's CI has two kinds of test job. The `test` matrix (Python 3.11 to
 3.13) installs with `uv sync --locked --dev`, so it runs on exactly the
 versions `uv.lock` pins. It has no R, so the R-backed tests (DESeq2,
 fgsea, logistf) skip there. The `test-r` job gets R and the Bioconductor

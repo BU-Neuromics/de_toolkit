@@ -7,14 +7,16 @@ from: {node: release/ci-lock, step: s1}
 applies: [release/ci-lock]
 allowed_by: [reasonable]
 reason: the lock resolves for 3.14 but CI and classifiers stop at 3.13; 1.0 should promise only what CI tests
+revisions:
+  - {date: 2026-11-09, by: DETK/developer, change: the Python floor is 3.11 now that DETK-0016 is merged, why: review of s2}
 ---
 
 # Python 3.14 is best effort for 1.0
 
 ## Background
 
-detk 1.0 declares `requires-python = ">=3.10"` (a sibling change moves
-it to 3.11) and lists classifiers for Python 3.10 to 3.13; the CI test
+detk 1.0 declares `requires-python = ">=3.11"` (DETK-0016 dropped 3.10)
+and lists classifiers for Python 3.11 to 3.13; the CI test
 matrix runs exactly those versions. Python 3.14 was released in October
 2025. `uv.lock` already resolves for 3.14 (it has no upper bound), so
 `pip install detk` on 3.14 will try to install it. The question is
@@ -50,7 +52,7 @@ whether 1.0 promises that this works.
 ## Decision
 
 Option 1. The 1.0 promise covers the Python versions CI tests (those the
-classifiers list, 3.10 to 3.13, or 3.11 to 3.13 once the floor moves);
+classifiers list, 3.11 to 3.13);
 3.14 is best effort. No 3.14 classifier, no 3.14 CI entry, no upper cap,
 and the README keeps saying what `requires-python` says. The changelog
 states the stance so users know.

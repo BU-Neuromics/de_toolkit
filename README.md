@@ -48,7 +48,7 @@ install.packages("logistf")
 
 # Development
 
-detk requires Python 3.10 or newer. First fork and/or clone this repo:
+detk requires Python 3.11 or newer. First fork and/or clone this repo:
 
 ```
 git clone https://github.com/BU-Neuromics/de_toolkit.git

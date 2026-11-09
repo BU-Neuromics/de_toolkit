@@ -13,7 +13,7 @@ visited: fc05692
 
 ## Implementation plan
 
-- [ ] @developer Make the R job install from uv.lock; record the method and Python 3.14 as best effort (Provisional); open the PR <!-- s1 -->
+- [x] @developer Make the R job install from uv.lock; record the method and Python 3.14 as best effort (Provisional); open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR and the R job's run <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

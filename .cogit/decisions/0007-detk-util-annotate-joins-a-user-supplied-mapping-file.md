@@ -1,12 +1,14 @@
 ---
 template: adr
-state: Provisional
+state: Accepted
 authority: [DETK/developer]
 date: 2026-11-09
 from: {node: release/annotate, step: s1}
 applies: [release/annotate]
 allowed_by: [reasonable]
 reason: "Reproducible offline joins keep detk out of the annotation-database business, as #29 proposes"
+revisions:
+  - {date: 2026-11-09, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-09: accept with release/annotate"}
 ---
 
 # detk-util annotate joins a user-supplied mapping file, offline

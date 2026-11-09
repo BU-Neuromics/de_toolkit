@@ -3,6 +3,8 @@ Usage:
     detk-norm deseq2 [options] <counts_fn>
     detk-norm library [options] <counts_fn>
     detk-norm fpkm [options] <counts_fn> <lengths_fn>
+    detk-norm cpm [options] <counts_fn>
+    detk-norm tpm [options] <counts_fn> <lengths_fn>
 Options:
     -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
 """
@@ -54,6 +56,37 @@ Usage:
 Options:
     -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
 
+""",
+    "cpm": r"""
+Perform Counts Per Million normalization on the columns of the given counts
+matrix. Counts in each column are divided by the sum of that column and
+multiplied by one million, so every column of the output sums to 1e6.
+
+Usage:
+    detk-norm cpm [options] <counts_fn>
+
+Options:
+    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+""",
+    "tpm": r"""
+Perform Transcripts Per Million normalization on the given counts file. Each
+count is divided by its feature's length in kilobases, then each column is
+scaled so it sums to one million. <lengths_fn> is the same two column
+delimited file the fpkm subcommand takes: the first column is the name of a
+row in the counts file, the second its effective length in bases.
+
+*Note:* Program will throw an error and exit if there are genes/sequences
+in the counts file that are not found in the lengths file, or if any of
+their lengths is not a positive number.
+
+The order of names in the counts and lengths files do *not* have to be the
+same.
+
+Usage:
+    detk-norm tpm [options] <counts_fn> <lengths_fn>
+
+Options:
+    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
 """,
 }
 from docopt import docopt
@@ -294,6 +327,132 @@ class FPKMCounts(DetkModule):
         return {"num_kept": len(self.res), "length_quantiles": quantiles}
 
 
+def _length_quantiles(lengths):
+    "Summarize a feature-length vector as 5-percentile steps for the report."
+    qs = list(range(0, 101, 5))
+    lens = pandas.to_numeric(lengths, errors="coerce").dropna()
+    return [{"q": q, "length": float(v)} for q, v in zip(qs, np.percentile(lens, qs))]
+
+
+def _lengths_for(count_df, lengths):
+    """
+    Return *lengths* (a pandas.Series indexed by feature name) aligned to the
+    rows of *count_df*, raising NormalizationException when a feature has no
+    length or a length that is not a positive number.
+    """
+    missing_indices = count_df.index.difference(lengths.index)
+    if len(missing_indices) != 0:
+        raise NormalizationException(
+            f"{len(missing_indices)} indices in the counts matrix were "
+            + "not found in the lengths parameters, here are a couple: \n"
+            + "\n".join(str(_) for _ in list(missing_indices)[:5])
+        )
+    lens = pandas.to_numeric(lengths[count_df.index], errors="coerce")
+    bad = lens.index[~(lens > 0)]
+    if len(bad) != 0:
+        raise NormalizationException(
+            f"{len(bad)} features have a length that is not a positive number, "
+            + "here are a couple: \n"
+            + "\n".join(str(_) for _ in list(bad)[:5])
+        )
+    return lens
+
+
+def read_lengths(lengths_fn):
+    """
+    Read a two column delimited lengths file (feature name, length in bases;
+    the delimiter is sniffed) into a pandas.Series indexed by feature name. A
+    header line is allowed and detected by its second field not being a
+    number.
+    """
+    df = pandas.read_csv(lengths_fn, sep=None, engine="python", header=None, dtype=str)
+    if df.shape[1] < 2:
+        raise NormalizationException(
+            f"lengths file {lengths_fn} must have two columns, found {df.shape[1]}"
+        )
+    if len(df) and pandas.isna(pandas.to_numeric(df.iloc[0, 1], errors="coerce")):
+        df = df.iloc[1:]
+    return pandas.Series(
+        pandas.to_numeric(df.iloc[:, 1], errors="coerce").values, index=df.iloc[:, 0].values
+    )
+
+
+def cpm(count_df):
+    """
+    Counts Per Million: divide each count by its column sum and multiply by
+    1e6
+    """
+    obj = CPMCounts(count_df)
+    return obj.output
+
+
+class CPMCounts(DetkModule):
+    def __init__(self, count_df):
+        logger.info("running CPM normalization")
+        sizes = count_df.sum(axis=0)
+        logger.info("min/max library size: %d/%d", sizes.min(), sizes.max())
+        if (np.asarray(sizes) == 0).any():
+            logger.warning("some samples have zero total counts, their CPM values are NaN")
+        self["params"] = {}
+        cols = getattr(count_df, "columns", None)
+        names = [str(c) for c in cols] if cols is not None else [str(i) for i in range(len(sizes))]
+        self.library_sizes = dict(zip(names, np.asarray(sizes).tolist()))
+        self.normalized = count_df / sizes * 1e6
+        logger.info("CPM normalization done")
+
+    @property
+    def output(self):
+        return self.normalized
+
+    @property
+    def properties(self):
+        return {"num_features": self.normalized.shape[0], "library_sizes": self.library_sizes}
+
+
+def tpm(count_df, lengths):
+    """
+    Transcripts Per Million: divide each count by its feature length in
+    kilobases, then scale each column to sum to 1e6
+
+    *lengths* should be a pandas.Series of lengths in bases that has an index
+    value for every row name in the counts matrix. If no length is found for a
+    row in the counts matrix, or a length is not positive, an exception is
+    raised.
+    """
+    obj = TPMCounts(count_df, lengths)
+    return obj.output
+
+
+class TPMCounts(DetkModule):
+    def __init__(self, count_df, lengths):
+        logger.info("running TPM normalization")
+        logger.info("number of feature lengths provided: %d", lengths.size)
+
+        self["params"] = {}
+        lens = _lengths_for(count_df, lengths)
+        self.lengths = lens
+
+        rate = count_df.div(lens / 1e3, axis=0)
+        rate_sums = rate.sum(axis=0)
+        if (np.asarray(rate_sums) == 0).any():
+            logger.warning("some samples have zero total counts, their TPM values are NaN")
+        self.normalized = rate / rate_sums * 1e6
+
+        logger.info("TPM normalization done")
+
+    @property
+    def output(self):
+        return self.normalized
+
+    @property
+    def properties(self):
+        # summarized like FPKMCounts: the lengths actually used, as quantiles
+        return {
+            "num_features": self.normalized.shape[0],
+            "length_quantiles": _length_quantiles(self.lengths),
+        }
+
+
 @stub
 def custom_norm(count_mat, factors):
     pass
@@ -349,6 +508,21 @@ def main(argv=sys.argv):
 
         try:
             out = FPKMCounts(count_obj.counts, lengths)
+        except Exception as e:
+            logger.error(e)
+            sys.exit(1)
+
+    elif cmd == "cpm":
+        try:
+            out = CPMCounts(count_obj.counts)
+        except Exception as e:
+            logger.error(e)
+            sys.exit(1)
+
+    elif cmd == "tpm":
+        try:
+            lengths = read_lengths(args["<lengths_fn>"])
+            out = TPMCounts(count_obj.counts, lengths)
         except Exception as e:
             logger.error(e)
             sys.exit(1)

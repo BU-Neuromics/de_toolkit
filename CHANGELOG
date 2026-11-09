@@ -21,6 +21,8 @@ predates everything below.
 ### Added
 - Versioned module JSON schema for report data
 - Process Run Crate (RO-Crate) provenance for CLI runs
+- `detk-norm cpm` (counts per million) and `detk-norm tpm` (transcripts per
+  million, from the same lengths file as `fpkm`), each with a report view
 
 ## [ 0.9.12 ]
 ### Added

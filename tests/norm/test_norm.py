@@ -221,3 +221,168 @@ def test_fpkm_properties(fake_counts_obj, fake_counts_gene_lengths):
     import json
 
     json.dumps(props)  # must be serializable
+
+
+# --------------------------------------------------------------------------
+# CPM and TPM (#24)
+# --------------------------------------------------------------------------
+
+
+def _small_counts():
+    return pandas.DataFrame({"a": [1.0, 3.0, 0.0], "b": [2.0, 4.0, 4.0]}, index=["g1", "g2", "g3"])
+
+
+def _small_lengths():
+    # deliberately out of order and with an unused entry
+    return pandas.Series([4000, 1000, 2000, 99], index=["g3", "g1", "g2", "unused"])
+
+
+def test_cpm():
+    from de_toolkit.norm import cpm
+
+    cnts = _small_counts()
+    res = cpm(cnts)
+    assert np.allclose(res["a"], [0.25e6, 0.75e6, 0.0])
+    assert np.allclose(res["b"], [0.2e6, 0.4e6, 0.4e6])
+    assert np.allclose(res.sum(axis=0), 1e6)
+    # CPM is library size normalization scaled by one million
+    from de_toolkit.norm import library_size
+
+    assert np.allclose(res, library_size(cnts) * 1e6)
+
+
+def test_cpm_properties():
+    import json
+
+    from de_toolkit.norm import CPMCounts
+
+    obj = CPMCounts(_small_counts())
+    props = obj.properties
+    assert props["num_features"] == 3
+    assert props["library_sizes"] == {"a": 4.0, "b": 10.0}
+    assert obj.name == "cpmcounts"
+    json.dumps(props)
+
+
+def test_tpm():
+    from de_toolkit.norm import tpm
+
+    res = tpm(_small_counts(), _small_lengths())
+    # a: rates per kb 1, 1.5, 0 -> 1/2.5, 1.5/2.5, 0
+    assert np.allclose(res["a"], [0.4e6, 0.6e6, 0.0])
+    # b: rates per kb 2, 2, 1 -> 2/5, 2/5, 1/5
+    assert np.allclose(res["b"], [0.4e6, 0.4e6, 0.2e6])
+    assert np.allclose(res.sum(axis=0), 1e6)
+    assert list(res.index) == ["g1", "g2", "g3"]
+
+
+def test_tpm_equal_lengths_is_cpm():
+    from de_toolkit.norm import cpm, tpm
+
+    cnts = _small_counts()
+    lens = pandas.Series([1500] * 3, index=cnts.index)
+    assert np.allclose(tpm(cnts, lens), cpm(cnts))
+
+
+def test_tpm_missing_lens():
+    from de_toolkit.norm import tpm, NormalizationException
+
+    with pytest.raises(NormalizationException):
+        tpm(_small_counts(), pandas.Series([1, 2], index=["g1", "g2"]))
+
+
+@pytest.mark.parametrize("bad", [0, -5, float("nan")])
+def test_tpm_nonpositive_lens(bad):
+    from de_toolkit.norm import tpm, NormalizationException
+
+    lens = pandas.Series([1000, 1000, bad], index=["g1", "g2", "g3"])
+    with pytest.raises(NormalizationException):
+        tpm(_small_counts(), lens)
+
+
+def test_tpm_properties():
+    import json
+
+    from de_toolkit.norm import TPMCounts
+
+    obj = TPMCounts(_small_counts(), _small_lengths())
+    props = obj.properties
+    assert props["num_features"] == 3
+    assert obj.name == "tpmcounts"
+    qs = props["length_quantiles"]
+    # only the lengths of features in the counts matrix are summarized
+    assert qs[0]["length"] == 1000.0 and qs[-1]["length"] == 4000.0
+    json.dumps(props)
+
+
+@pytest.mark.parametrize("header", [False, True])
+@pytest.mark.parametrize("delim", [",", "\t"])
+def test_read_lengths(tmp_path, header, delim):
+    from de_toolkit.norm import read_lengths
+
+    fn = tmp_path / "lengths.txt"
+    lines = ([f"id{delim}length"] if header else []) + [f"g1{delim}1000", f"g2{delim}2500"]
+    fn.write_text("\n".join(lines) + "\n")
+    lens = read_lengths(str(fn))
+    assert list(lens.index) == ["g1", "g2"]
+    assert list(lens.values) == [1000, 2500]
+
+
+def _write_small_inputs(tmp_path):
+    counts_fn = tmp_path / "counts.csv"
+    _small_counts().rename_axis("gene").to_csv(counts_fn)
+    lengths_fn = tmp_path / "lengths.tsv"
+    lengths_fn.write_text("g3\t4000\ng1\t1000\ng2\t2000\n")
+    return str(counts_fn), str(lengths_fn)
+
+
+@pytest.mark.parametrize(
+    "cmd,expected",
+    [
+        ("cpm", [[0.25e6, 0.2e6], [0.75e6, 0.4e6], [0.0, 0.4e6]]),
+        ("tpm", [[0.4e6, 0.4e6], [0.6e6, 0.4e6], [0.0, 0.2e6]]),
+    ],
+)
+def test_norm_cli_cpm_tpm(tmp_path, cmd, expected):
+    import json
+
+    from de_toolkit.norm import main
+    from de_toolkit.report_specs import view_for
+
+    counts_fn, lengths_fn = _write_small_inputs(tmp_path)
+    out_fn = str(tmp_path / "out.csv")
+    report_dir = str(tmp_path / "report")
+    argv = ["detk-norm", cmd, f"--output={out_fn}", f"--report-dir={report_dir}", counts_fn]
+    if cmd == "tpm":
+        argv.append(lengths_fn)
+    main(argv)
+
+    res = pandas.read_csv(out_fn, index_col=0)
+    assert np.allclose(res.values, expected)
+
+    docs = [json.loads(p.read_text()) for p in (tmp_path / "report" / "json").glob("*.json")]
+    assert len(docs) == 1
+    family, _, _, view = view_for(docs[0])
+    assert family == "norm"
+    assert view["type"] == "vega"
+
+
+@pytest.mark.parametrize("name", ["cpmcounts", "tpmcounts"])
+def test_cpm_tpm_report_specs_compile(name):
+    import json
+
+    from de_toolkit.norm import CPMCounts, TPMCounts
+    from de_toolkit.report_specs import view_for
+
+    obj = (
+        CPMCounts(_small_counts())
+        if name == "cpmcounts"
+        else TPMCounts(_small_counts(), _small_lengths())
+    )
+    mod = {"name": name, "params": {}, "properties": obj.properties}
+    family, title, _, view = view_for(mod)
+    assert family == "norm"
+    assert view["type"] == "vega"
+    vlc = pytest.importorskip("vl_convert")
+    svg = vlc.vegalite_to_svg(json.dumps(view["spec"]))
+    assert "<svg" in svg[:300]

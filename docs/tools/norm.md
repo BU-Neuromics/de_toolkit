@@ -44,11 +44,24 @@ write.table(counts(dds, normalized=TRUE), norm.counts.fn)
 ## `library`
 
 Library size normalization: counts in each column are divided by the sum of
-that column.
+that column, so each column of the output sums to 1. Use [`cpm`](#cpm) for
+the same values scaled to counts per million.
 
 ```text
 Usage:
     detk-norm library [options] <counts_fn>
+```
+
+## `cpm`
+
+Counts Per Million: counts in each column are divided by the sum of that
+column and multiplied by one million, so each column of the output sums to
+1,000,000. This is `library` scaled by 10^6. A sample with zero total counts
+produces `NaN` values and a warning.
+
+```text
+Usage:
+    detk-norm cpm [options] <counts_fn>
 ```
 
 ## `fpkm`
@@ -67,4 +80,30 @@ and length in bases:
 ```text
 Usage:
     detk-norm fpkm [options] <counts_fn> <lengths_fn>
+```
+
+## `tpm`
+
+Transcripts Per Million: each count is divided by the feature's length in
+kilobases, giving a per-kilobase rate, and each column of rates is then
+scaled to sum to 1,000,000:
+
+```text
+rate[g, s] = count[g, s] / (length[g] / 1000)
+TPM[g, s]  = rate[g, s] / sum over g of rate[g, s] * 10^6
+```
+
+Unlike FPKM, TPM values sum to the same total in every sample, so the
+proportion of a sample's transcripts a feature represents is comparable
+across samples. When every feature has the same length, TPM equals CPM.
+
+`tpm` takes the same lengths file as [`fpkm`](#fpkm), with the same rules;
+in addition every length must be a positive number. A header line in the
+lengths file is allowed (it is recognized by its second field not being a
+number). The output has the same rows, in the same order, as the counts
+file.
+
+```text
+Usage:
+    detk-norm tpm [options] <counts_fn> <lengths_fn>
 ```

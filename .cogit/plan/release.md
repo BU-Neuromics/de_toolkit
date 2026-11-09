@@ -23,6 +23,10 @@ visited: f6503ed
 - [ ] [Gather quantifier outputs into a counts matrix](release/gather.md) <!-- s9 -->
 - [ ] [Agent skills](release/agent-skills.md) <!-- s10 -->
 - [ ] [Correct the FPKM formula](release/fpkm.md) <!-- s11 -->
+- [ ] [Escape the module JSON in the report](release/escape-json.md) <!-- s12 -->
+- [ ] [Read feature IDs as text](release/padded-ids.md) <!-- s13 -->
+- [ ] [Read single-column files](release/single-column.md) <!-- s14 -->
+- [ ] [Update locked dependencies](release/deps.md) <!-- s15 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
 

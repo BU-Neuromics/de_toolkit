@@ -76,6 +76,12 @@ The skill lives in the repository under
   commands' `--help` prints it.
 
 The skill describes the command line, detk's [stable interface](index.md#stability).
-detk's test suite (`tests/skills/test_skills.py`) checks every `detk-*`
-command line in the skill against the installed CLI's usage, so a change to a
-subcommand or option that is not carried into the skill fails CI.
+detk's test suite (`tests/skills/test_skills.py`) checks the skill against
+the installed CLI: every `detk-*` command line in its code blocks must parse
+with that command's own usage (so a missing argument or an unknown option
+fails), every command, subcommand and option it names in the prose must
+exist, and the usage copied into `references/commands.md` must match
+`--help`. A change to a subcommand or option that is not carried into the
+skill therefore fails CI. The test checks that the skill's commands are valid
+usage, not what they compute; that is checked by running the skill on the
+airway example.

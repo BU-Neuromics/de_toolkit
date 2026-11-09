@@ -5,6 +5,8 @@ acceptance:
   - the R job installs the locked dependencies (uv sync --locked or an export of uv.lock) into its R-enabled environment and the suite passes there
   - a Provisional record says Python 3.14 is best effort for 1.0, and the docs or classifiers do not promise it
 scope: [.github/workflows/ci.yml, pyproject.toml, README.md, +CHANGELOG]
+issue: 58
+visited: fc05692
 ---
 
 # Run the R tests on the locked environment

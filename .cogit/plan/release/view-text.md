@@ -8,6 +8,8 @@ acceptance:
   - 'the change from DETK-0014 (view text stays HTML that builders escape) is recorded: a record of this node supersedes or amends DETK-0014'
 scope: [de_toolkit/templates/report.html, de_toolkit/report_specs.py, tests/report/, +CHANGELOG]
 prev: [release/escape-json]
+issue: 65
+visited: 74632ba
 ---
 
 # Render all view text as plain text

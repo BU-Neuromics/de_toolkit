@@ -16,6 +16,7 @@ from copy import deepcopy
 from docopt import docopt
 import io
 import logging
+import os
 import pandas
 from pprint import pformat
 import sys
@@ -301,6 +302,21 @@ class CountMatrix:
         pass
 
 
+# the compression pandas infers from a path's extension, in pandas' order
+# (".tar.gz" before ".gz")
+_COMPRESSION_EXTS = {
+    ".tar": "tar",
+    ".tar.gz": "tar",
+    ".tar.bz2": "tar",
+    ".tar.xz": "tar",
+    ".gz": "gzip",
+    ".bz2": "bz2",
+    ".zip": "zip",
+    ".xz": "xz",
+    ".zst": "zstd",
+}
+
+
 def read_id_table(f):
     """
     Read a delimited table (the delimiter is sniffed) whose first column
@@ -312,17 +328,31 @@ def read_id_table(f):
     file; the other columns are typed as pandas infers them, so counts stay
     numeric. Empty IDs and pandas' missing-value tokens (``NA``, ``NaN``, ...)
     are missing, as before. *f* is a path (compression is inferred from the
-    name) or a file-like object.
+    name) or a file-like object. A path that can be read only once, such as
+    a FIFO, ``/dev/stdin`` or a shell process substitution ``<(zcat f.gz)``,
+    is read once into memory.
     """
+    source, compression = f, "infer"
     if hasattr(f, "read"):
         # the table is parsed twice below, so buffer a stream
         content = f.read()
         f = io.StringIO(content) if isinstance(content, str) else io.BytesIO(content)
+    elif not os.path.isfile(f):
+        # likewise a path that is not a regular file: it may be readable
+        # only once. The buffer has no name, so take the compression from
+        # the path's.
+        name = os.fspath(f)
+        compression = next(
+            (method for ext, method in _COMPRESSION_EXTS.items() if name.lower().endswith(ext)),
+            None,
+        )
+        with open(name, "rb") as fh:
+            f = io.BytesIO(fh.read())
 
     def read(**kwargs):
         if hasattr(f, "seek"):
             f.seek(0)
-        return pandas.read_csv(f, sep=None, engine="python", **kwargs)
+        return pandas.read_csv(f, sep=None, engine="python", compression=compression, **kwargs)
 
     table = read(index_col=0)
     # A second parse reads the first field of every line as text; below the
@@ -333,7 +363,7 @@ def read_id_table(f):
     if len(ids) == len(table):
         table.index = pandas.Index(ids.to_numpy(), name=table.index.name)
     else:
-        logger.warning("could not read the IDs of %s as text; pandas typed them", f)
+        logger.warning("could not read the IDs of %s as text; pandas typed them", source)
     return table
 
 

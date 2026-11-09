@@ -1,3 +1,4 @@
+import os
 import docopt
 import pandas
 import pytest
@@ -209,6 +210,88 @@ def test_read_id_table_stream_and_gzip(tmp_path):
     assert df.loc["0099"].tolist() == [3, 4, 5, 6]
 
 
+def _fifo_writer(path, data):
+    """Write *data* to the FIFO at *path* from a thread; returns the thread."""
+    import threading
+
+    def write():
+        with open(path, "wb") as f:
+            f.write(data)
+
+    t = threading.Thread(target=write, daemon=True)
+    t.start()
+    return t
+
+
+@pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="needs os.mkfifo")
+@pytest.mark.parametrize("name", ["counts.csv", "counts.csv.gz"])
+def test_read_id_table_fifo(tmp_path, name):
+    # a FIFO can be read only once, but the table is parsed twice
+    import gzip
+
+    from de_toolkit.common import read_id_table
+
+    data = _padded_counts_text().encode()
+    if name.endswith(".gz"):
+        data = gzip.compress(data)
+    fifo = tmp_path / name
+    os.mkfifo(fifo)
+    _fifo_writer(fifo, data)
+    # read in a thread: a reader that opens the FIFO twice blocks forever
+    import threading
+
+    result = {}
+    reader = threading.Thread(
+        target=lambda: result.update(df=read_id_table(str(fifo))), daemon=True
+    )
+    reader.start()
+    reader.join(timeout=30)
+    assert "df" in result, "read_id_table did not read the FIFO"
+    df = result["df"]
+    assert list(df.index) == _PADDED_IDS
+    assert df.loc["0099"].tolist() == [3, 4, 5, 6]
+
+
+@pytest.mark.skipif(not os.path.exists("/dev/stdin"), reason="needs /dev/stdin")
+def test_cli_reads_counts_from_dev_stdin(tmp_path):
+    # cat counts.csv | detk-norm deseq2 /dev/stdin
+    import subprocess
+    import sys
+
+    out_fn = tmp_path / "out.csv"
+    code = "import sys; from de_toolkit.norm import main; main(sys.argv)"
+    argv = ["deseq2", f"--output={out_fn}", "--no-report", "/dev/stdin"]
+    proc = subprocess.run(
+        [sys.executable, "-c", code, *argv],
+        input=_padded_counts_text(),
+        text=True,
+        capture_output=True,
+        cwd=tmp_path,
+    )
+    assert proc.returncode == 0, proc.stderr
+    ids = [line.split(",")[0] for line in out_fn.read_text().splitlines()[1:]]
+    assert ids == _PADDED_IDS
+
+
+def test_read_id_table_falls_back_when_parses_disagree(caplog):
+    # A degenerate table (found by fuzzing) whose last row has two more
+    # fields than the header: pandas makes the index a MultiIndex of one
+    # row, while the text parse sees two lines below the header. The rows
+    # cannot be paired, so the table is returned as pandas typed it, with
+    # a warning.
+    import io
+    import logging
+
+    from de_toolkit.common import read_id_table
+
+    text = ",,\n,\n,,,,"
+    expected = pandas.read_csv(io.StringIO(text), sep=None, engine="python", index_col=0)
+    with caplog.at_level(logging.WARNING, logger="de_toolkit.common"):
+        df = read_id_table(io.StringIO(text))
+    pandas.testing.assert_frame_equal(df, expected)
+    assert "could not read the IDs" in caplog.text
+
+
 def test_read_id_table_missing_ids_and_other_columns(tmp_path):
     from de_toolkit.common import read_id_table
 
@@ -257,7 +340,7 @@ def test_padded_ids_match_lengths_file(tmp_path, cmd):
     assert list(res.index) == _PADDED_IDS
     lens = np.array([1000, 2000, 1500, 3000, 500])
     if cmd == "fpkm":
-        expected = counts.values / (1e6 * lens[:, None])
+        expected = counts.values * 1e9 / (lens[:, None] * counts.values.sum(axis=0))
     else:
         rate = counts.values / lens[:, None]
         expected = rate / rate.sum(axis=0) * 1e6
@@ -320,3 +403,23 @@ def test_cli_output_keeps_padded_ids(tmp_path, module, args):
 
     ids = [line.split(",")[0] for line in out_fn.read_text().splitlines()[1:]]
     assert ids == _PADDED_IDS
+
+
+def test_gather_then_norm_keeps_padded_ids(tmp_path):
+    # detk-util gather reads its inputs as text; its matrix, read back by
+    # the shared reader, keeps 007 and the zero-padded sample names
+    for sample, counts in [("001", [10, 3, 5]), ("002", [12, 4, 6])]:
+        (tmp_path / sample).mkdir()
+        lines = [f"{i}\t{n}" for i, n in zip(["007", "42", "0099"], counts)]
+        (tmp_path / sample / "s.counts.txt").write_text("\n".join(lines + ["__no_feature\t1"]))
+    matrix_fn = tmp_path / "counts.csv"
+    _run_cli(
+        "util",
+        ["detk-util", "gather", "--name-from=/([0-9]+)/", f"--output={matrix_fn}", "--no-report"]
+        + [str(tmp_path / s / "s.counts.txt") for s in ("001", "002")],
+    )
+    out_fn = tmp_path / "out.csv"
+    _run_cli("norm", ["detk-norm", "cpm", f"--output={out_fn}", "--no-report", str(matrix_fn)])
+    lines = out_fn.read_text().splitlines()
+    assert lines[0].split(",")[1:] == ["001", "002"]
+    assert [line.split(",")[0] for line in lines[1:]] == ["007", "42", "0099"]

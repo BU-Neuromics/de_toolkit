@@ -356,6 +356,38 @@ def build_annotate(mod):
     return {"type": "kv", "items": items, "note": note}
 
 
+def build_gather(mod):
+    import html
+
+    p = mod.get("properties", {})
+    samples, features = p.get("num_samples"), p.get("num_features")
+    if samples is None or features is None:
+        return {"type": "raw"}
+    items = [
+        {"label": "format", "value": p.get("format")},
+        {"label": "column", "value": p.get("column") or "every count column"},
+        {"label": "samples", "value": samples},
+        {"label": "features", "value": features},
+    ]
+    if p.get("num_features_filled"):
+        items.append({"label": "features filled with 0", "value": p["num_features_filled"]})
+        items.append({"label": "values filled with 0", "value": p.get("num_values_filled", 0)})
+    if p.get("num_features_dropped"):
+        items.append({"label": "features dropped", "value": p["num_features_dropped"]})
+    notes = []
+    if p.get("samples"):
+        notes.append("samples: " + ", ".join(str(s["name"]) for s in p["samples"]))
+    if p.get("mismatch_examples"):
+        notes.append(
+            "not in every sample, e.g.: " + ", ".join(map(str, p["mismatch_examples"][:5]))
+        )
+    if p.get("htseq_counters"):
+        notes.append("htseq-count summary lines left out: " + ", ".join(p["htseq_counters"]))
+    # the template inserts the note as HTML; names and IDs are user data
+    note = html.escape("; ".join(notes)) if notes else None
+    return {"type": "kv", "items": items, "note": note}
+
+
 # ---------------------------------------------------------------------------
 # enrich module builders
 # ---------------------------------------------------------------------------
@@ -852,6 +884,12 @@ REGISTRY = {
         "Feature annotation",
         "How many result features the mapping table annotated.",
         build_annotate,
+    ),
+    "gather": (
+        "util",
+        "Gathered counts matrix",
+        "How many samples and features were gathered, and any filled or dropped.",
+        build_gather,
     ),
     # enrich family
     "fgseares": (

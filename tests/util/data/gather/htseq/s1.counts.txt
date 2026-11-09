@@ -1,0 +1,8 @@
+ENSG01	10
+ENSG02	0
+ENSG03	5
+__no_feature	100
+__ambiguous	3
+__too_low_aQual	0
+__not_aligned	7
+__alignment_not_unique	12

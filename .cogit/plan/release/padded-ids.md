@@ -7,6 +7,7 @@ acceptance:
 scope: [de_toolkit/common.py, tests/common/, docs/tools/norm.md, +CHANGELOG]
 issue: 48
 visited: b94644c
+prev: [DETK-0015]
 ---
 
 # Read feature IDs as text

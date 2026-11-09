@@ -1,6 +1,6 @@
 ---
 template: adr
-state: Provisional
+state: Accepted
 authority: [DETK/developer]
 date: 2026-11-09
 from: {node: release/annotate, step: s1}
@@ -9,6 +9,7 @@ allowed_by: [reasonable]
 reason: A result table must not gain or reorder rows when it is annotated
 revisions:
   - {date: 2026-11-09, by: DETK/developer, change: "CLI reads the result as text and keeps its column layout; 'mapped' needs a non-empty added value; missing IDs never join; distinct unmapped examples", why: review of s2}
+  - {date: 2026-11-09, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-09: accept with release/annotate"}
 ---
 
 # annotate keeps every result row: multi-mapped values joined with ';', clashing columns suffixed _annot

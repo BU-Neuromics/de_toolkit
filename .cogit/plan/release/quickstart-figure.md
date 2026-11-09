@@ -5,6 +5,8 @@ acceptance:
   - docs/simple_pipeline.svg and .png show detk-util gather as the first step, with no csvgather box or link
 scope: [docs/simple_pipeline.svg, docs/simple_pipeline.png, docs/quickstart.md]
 prev: [release/gather]
+issue: 59
+visited: c060d5a
 ---
 
 # Redraw the quickstart figure

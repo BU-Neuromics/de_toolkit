@@ -7,7 +7,8 @@ the 1.0.0 release is cut. Note: 0.9.12 on PyPI dates from 2020-01-18 and
 predates everything below.
 
 ### Changed
-- Modernized to Python 3.10-3.13, numpy 2, and pandas 3
+- Modernized to Python 3.11-3.13, numpy 2, and pandas 3
+- Python 3.10 is no longer supported (it reached end of life in October 2026)
 - New toolchain: `pyproject.toml` with the hatchling build backend, uv for
   environment/dependency management, ruff for lint and formatting
 - Documentation moved to MkDocs Material, published on GitHub Pages at

@@ -1,0 +1,5 @@
+# Program:featureCounts v2.0.6; Command:"featureCounts" "-a" "genes.gtf" "-o" "C.txt" "bam/C.bam" 
+Geneid	Chr	Start	End	Strand	Length	bam/C.bam
+ENSG01	chr1	100;300	200;400	+;+	202	13
+ENSG02	chr1	1000	1500	-	501	2
+ENSG03	chr2	50	90	+	41	4

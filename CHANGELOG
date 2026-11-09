@@ -43,6 +43,12 @@ predates everything below.
   for Ensembl version suffixes and a report of mapped and unmapped IDs (#29)
 - Agent skill `detk` under `skills/`, installable with
   `npx skills add BU-Neuromics/de_toolkit`, and its docs page
+- `detk-util gather`: combine per-sample salmon, kallisto, htseq-count or
+  featureCounts outputs into a counts matrix, with the format detected from
+  each file's header, sample names from the paths (or `--name-from`), an
+  error when the samples list different features (`--on-mismatch=fill` or
+  `drop` to go on) and a report of what was joined; it replaces csvgather in
+  the documented workflow (#25)
 
 ## [ 0.9.12 ]
 ### Added

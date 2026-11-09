@@ -47,8 +47,8 @@ predates everything below.
   works: it passed the counts and an intercept column to DESeq2, which adds
   its own intercept, and failed in R ("not full rank"); it now drops both,
   as `detk-de deseq2` does. The command line cannot reach it yet:
-  `detk-transform rlog --blind False` reads `False` as text, which counts as
-  blind
+  `detk-transform rlog --blind` passes its value to R as text, where DESeq2
+  stops; leave `--blind` out for a blind rlog
 - FPKM values change from 0.9.x: FPKM is now
   `count * 1e9 / (length * library size)` as documented, where 0.9.x computed
   `count / (1e6 * length)` and never divided by library size. In 0.9.x the

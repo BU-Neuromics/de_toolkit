@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
+<!--
+  simple_pipeline.png is rendered from this file at 72.024597 dpi
+  (629x846, transparent background). Inkscape's PNG export with the
+  settings below works. Without Inkscape, resvg does too (PyPI: resvg-py):
+  load the Ubuntu font for the sans text and Ubuntu Mono 0.80 for the
+  command boxes (google/fonts, ufl/ubuntumono); Ubuntu Mono 0.862 has
+  wider glyphs and the longer commands overflow their boxes.
+-->
 
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"

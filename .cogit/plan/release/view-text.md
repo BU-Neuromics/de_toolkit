@@ -16,7 +16,7 @@ visited: 74632ba
 
 ## Implementation plan
 
-- [ ] @developer Render every descriptor text field as text in the page's card builder; drop builders' own escaping; tests; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Render every descriptor text field as text in the page's card builder; drop builders' own escaping; tests; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

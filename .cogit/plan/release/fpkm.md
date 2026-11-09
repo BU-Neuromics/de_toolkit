@@ -8,6 +8,8 @@ acceptance:
 from: [DETK-0006]
 scope: [de_toolkit/norm.py, tests/norm/, docs/tools/norm.md, +CHANGELOG]
 prev: [release/tpm-cpm]
+issue: 50
+visited: a2140bc
 ---
 
 # Correct the FPKM formula

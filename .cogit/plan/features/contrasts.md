@@ -1,7 +1,7 @@
 ---
 kind: task
 objective: 'de: explicit contrasts for multi-level factors (tracks #27)'
-scope: [+de_toolkit/report_specs.py, de_toolkit/de.py, de_toolkit/patsy_lite.py, docs/tools/de.md, tests/de/]
+scope: [+de_toolkit/report_specs.py, +CHANGELOG, de_toolkit/de.py, de_toolkit/patsy_lite.py, docs/tools/de.md, tests/de/]
 ---
 
 # Explicit contrasts for multi-level factors

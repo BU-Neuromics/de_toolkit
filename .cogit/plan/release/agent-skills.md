@@ -4,8 +4,8 @@ objective: Agent skills for detk in this repository, installable with npx skills
 acceptance:
   - npx skills add BU-Neuromics/de_toolkit installs the skills into a fresh project
   - a skill takes an agent from a counts matrix and sample info through filter, norm, de and enrich to a detk report, on the airway example
-  - the docs say how to install and use them
-scope: [README.md, +mkdocs.yml, docs/]
+  - a docs page (new, under docs/) and the README say how to install and use them
+scope: [+README.md, +mkdocs.yml, +CHANGELOG]
 ---
 
 # Agent skills

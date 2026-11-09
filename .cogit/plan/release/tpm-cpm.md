@@ -1,7 +1,7 @@
 ---
 kind: task
 objective: 'norm: add TPM and CPM normalization (tracks #24)'
-scope: [+de_toolkit/report_specs.py, de_toolkit/norm.py, docs/tools/norm.md, tests/norm/]
+scope: [+de_toolkit/report_specs.py, +CHANGELOG, de_toolkit/norm.py, docs/tools/norm.md, tests/norm/]
 ---
 
 # TPM and CPM normalization

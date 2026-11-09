@@ -1,7 +1,7 @@
 ---
 kind: task
 objective: 'stats: a sample correlation and clustering QC module (tracks #28)'
-scope: [+de_toolkit/report_specs.py, de_toolkit/stats.py, docs/tools/stats.md, tests/stats/]
+scope: [+de_toolkit/report_specs.py, +CHANGELOG, de_toolkit/stats.py, docs/tools/stats.md, tests/stats/]
 ---
 
 # Sample correlation and clustering QC

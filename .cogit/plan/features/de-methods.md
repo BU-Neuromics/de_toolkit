@@ -1,7 +1,7 @@
 ---
 kind: exploration
 objective: 'de: which further DE methods detk offers through wrapr, edgeR quasi-likelihood, limma-voom or both (tracks #26)'
-scope: [+de_toolkit/report_specs.py, de_toolkit/de.py, de_toolkit/wrapr.py, docs/tools/de.md, tests/de/]
+scope: [+de_toolkit/report_specs.py, +CHANGELOG, de_toolkit/de.py, de_toolkit/wrapr.py, docs/tools/de.md, tests/de/]
 ---
 
 # Further DE methods: edgeR, limma-voom

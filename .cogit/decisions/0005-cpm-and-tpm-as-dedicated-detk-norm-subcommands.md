@@ -1,6 +1,6 @@
 ---
 template: adr
-state: Provisional
+state: Accepted
 authority: [DETK/developer]
 date: 2026-11-09
 from: {node: release/tpm-cpm, step: s1}
@@ -9,6 +9,7 @@ allowed_by: [reasonable]
 reason: "a subcommand per unit matches deseq2/library/fpkm and keeps library's output unchanged under the 1.0 CLI promise"
 revisions:
   - {date: 2026-11-09, by: DETK/developer, change: "Record the lengths-file rules tpm adds to the 1.0 surface: IDs matched as text, duplicate IDs refused, header only when the length field is non-numeric and not a missing-value token", why: review of s2}
+  - {date: 2026-11-09, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-09: accept with release/tpm-cpm"}
 ---
 
 # CPM and TPM as dedicated detk-norm subcommands

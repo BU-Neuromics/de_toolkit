@@ -51,7 +51,10 @@ predates everything below.
   result table from a user-supplied mapping file, with `--strip-versions`
   for Ensembl version suffixes and a report of mapped and unmapped IDs (#29)
 - Agent skill `detk` under `skills/`, installable with
-  `npx skills add BU-Neuromics/de_toolkit`, and its docs page
+  `npx skills add BU-Neuromics/de_toolkit`, and its docs page. It covers the
+  1.0 commands: `detk-util gather` from quantifier outputs, `detk-norm`
+  `deseq2`, `cpm`, `tpm`, `fpkm` and `library`, and `detk-util annotate` for
+  gene symbols (#62)
 - `detk-util gather`: combine per-sample salmon, kallisto, htseq-count or
   featureCounts outputs into a counts matrix, with the format detected from
   each file's header, sample names from the paths (or `--name-from`), an

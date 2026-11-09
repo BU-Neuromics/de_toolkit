@@ -1,6 +1,6 @@
 ---
 name: detk
-description: Run a bulk RNA-seq differential expression analysis with de_toolkit (detk), a suite of command line tools for count matrices. Use when given a counts matrix (genes x samples) and a sample information table and asked to filter, normalize, test for differential expression (DESeq2 or Firth logistic regression), run gene set enrichment (fgsea), or produce a self-contained HTML report with provenance. Covers installing detk and its R/Bioconductor dependencies.
+description: Run a bulk RNA-seq differential expression analysis with de_toolkit (detk), a suite of command line tools for count matrices. Use when given per-sample quantifier outputs (salmon, kallisto, htseq-count, featureCounts) or a counts matrix (genes x samples), and a sample information table, and asked to build a counts matrix, filter, normalize (DESeq2, CPM, TPM, FPKM, library size), test for differential expression (DESeq2 or Firth logistic regression), add gene symbols to results, run gene set enrichment (fgsea), or produce a self-contained HTML report with provenance. Covers installing detk and its R/Bioconductor dependencies.
 ---
 
 # detk: count matrix analysis from the command line
@@ -73,13 +73,62 @@ steps were skipped and why.
 ## 2. Inputs
 
 Two comma, tab or otherwise delimited files (detk sniffs the delimiter; it
-always writes commas):
+writes commas unless given `-d CHAR`):
 
 - **counts matrix**: first column holds unique feature IDs (e.g. Ensembl gene
   IDs), every other column is one sample, values are raw integer counts.
 - **sample info** (column data): first column holds sample names that match
   the counts column names; the other columns are covariates (condition,
   batch, cell line, ...).
+
+Feature IDs and sample names are read as text exactly as written, so a
+zero-padded ID such as `007` stays `007` through the commands that run in
+Python (`detk-filter`, `detk-norm`, `detk-stats`, `detk-util`). The R-backed
+commands (`detk-de`, `detk-transform vst` and `rlog`) still read such an ID
+as a number, so their output can show `7`; check the IDs in their output
+before joining it to another table.
+
+### Starting from quantifier outputs
+
+If the user has one output file per sample from a quantifier rather than a
+counts matrix, build the matrix with `detk-util gather`. It reads salmon
+(`quant.sf`, `quant.genes.sf`), kallisto (`abundance.tsv`), htseq-count and
+featureCounts outputs, detects the format from each file's header, and takes
+each format's count column (salmon `NumReads`, kallisto `est_counts`):
+
+```bash
+detk-util gather -o counts.csv salmon/*/quant.genes.sf
+detk-util gather --name-from='([^/]+)_quant/' -o counts.csv 'quant/*_quant/quant.sf'
+detk-util gather -o counts.csv htseq/*.counts
+detk-util gather -o counts.csv featurecounts.txt
+```
+
+- Sample names come from the file names without their last extension, or,
+  when those are all the same (`quant.sf`, `abundance.tsv`), from each
+  file's directory (the second line above names `quant/A_quant/quant.sf`
+  `A` rather than `A_quant`). A quoted pattern is expanded by gather, in
+  natural order (`s2` before `s10`). Pass `--name-from=REGEX` (its first
+  group is the name) when the default does not give the names used in the
+  sample info, and check the header of `counts.csv` against the sample info
+  before going on.
+- In featureCounts output each count column is a sample, named from the BAM
+  path in its header; one file can hold every sample.
+- gather extracts the column as written and does not aggregate transcripts
+  to genes. salmon `quant.sf` and kallisto `abundance.tsv` are per
+  transcript: for a gene-level analysis, gather salmon's `quant.genes.sf`
+  (written when salmon is given a transcript-to-gene map) or ask the user
+  how to summarize to genes.
+- Every sample must list the same features, or gather stops and names the
+  differences; `--on-mismatch=fill` (absent features get 0) or
+  `--on-mismatch=drop` (keep the features all samples share) go on. Ask the
+  user before choosing one, since a mismatch often means files from
+  different annotations.
+- htseq-count's summary lines (`__no_feature`, ...) are left out of the
+  matrix and recorded in the report.
+- salmon and kallisto counts are estimates with fractions; `detk-de deseq2`
+  rounds them, so they can go to it as they are.
+
+### Check the two files
 
 Look at both files first (`head`). Confirm the sample names agree. If the two
 files hold different or differently ordered samples, tidy them:
@@ -132,11 +181,40 @@ factors go into the report; no separate file is needed:
 detk-norm deseq2 -o norm_counts.csv counts_filtered.csv
 ```
 
-`detk-norm fpkm` (needs a feature lengths file) is the alternative. Do not
-use `detk-norm library` in this version: it fails on every input (`'CountMatrixFile'
-object has no attribute 'sum'`). Normalized counts are for
-inspection, plots and clustering. **Do not pass them to `detk-de deseq2`**,
-which expects raw counts and normalizes internally.
+`detk-norm` has five methods; pick by what the values are for:
+
+- `detk-norm deseq2`: the default for comparing a gene across samples
+  (clustering, PCA, heatmaps, Firth regression). Its size factors are robust
+  to a few very highly expressed genes changing between conditions.
+- `detk-norm cpm`: counts per million, each sample divided by its total
+  count and multiplied by 1e6. Simple and widely understood; use it for
+  expression thresholds and plots, or when the user asks for CPM. Unlike
+  deseq2 it is skewed when a few genes take up much of a library.
+- `detk-norm library`: the same scaling as cpm without the factor of 1e6,
+  so each sample sums to 1 (proportions of the library). Use it when the
+  next tool wants proportions.
+- `detk-norm tpm`: transcripts per million, each count divided by its
+  feature's length in kilobases and each sample then scaled to sum to 1e6.
+  Use it to compare genes within a sample, or when the user asks for TPM.
+  Needs a lengths file:
+  `detk-norm tpm -o tpm.csv counts_filtered.csv lengths.csv`.
+- `detk-norm fpkm`: fragments per kilobase per million,
+  `count * 1e9 / (length * library size)`, from the same lengths file.
+  Prefer TPM unless FPKM is asked for. FPKM values from detk 1.0 differ
+  from 0.9.x, which never divided by library size; this is a correction, so
+  do not compare them with FPKM from an older detk.
+
+The lengths file has two columns: the feature ID as written in the counts
+file and its (effective) length in bases; an optional header line is
+skipped. Every feature in the counts must be listed, once, with a positive
+length, or the command stops. featureCounts output carries a `Length`
+column to build it from; for salmon or kallisto, take `Name` and `Length`
+(or `EffectiveLength`) from one sample's file. Ask the user for one rather
+than guessing lengths.
+
+Normalized values of any method are for inspection, plots and clustering.
+**Do not pass normalized counts to `detk-de deseq2`**, which expects raw
+counts and normalizes internally.
 
 **Differential expression** with DESeq2, on the filtered raw counts:
 
@@ -188,10 +266,36 @@ detk-enrich fgsea -i gene -c condition__treated__log2FoldChange -o fgsea_results
 - The IDs in the GMT and in the results must be from the same system. Most
   GMTs (MSigDB, WikiPathways) use gene symbols or Entrez IDs, while counts are
   often keyed by Ensembl IDs. If they differ, map the IDs onto the results
-  table first (a small pandas or R join), and say which mapping you used.
-- `--filter-unannotated` drops genes absent from every gene set.
+  table first, with `detk-util annotate --drop-unmapped` (below) or a small
+  pandas or R join, and say which mapping you used. fgsea refuses an ID
+  that appears twice, so when several genes map to one ID keep one row per
+  ID (the airway example shows the join); an ID that maps to several values
+  gets them joined with `;` by annotate, which matches nothing in a GMT.
+- `detk-enrich fgsea --filter-unannotated` drops genes absent from every gene
+  set.
 - Ask the user for the gene set collection if none is given; do not invent
   one.
+
+**Gene symbols.** DE results keyed by Ensembl or other IDs are hard to read.
+Add symbols, or any other feature metadata, from a mapping table whose first
+column holds the result IDs:
+
+```bash
+detk-util annotate --map-to=symbol -o deseq2_results_annotated.csv deseq2_results.csv gene_map.csv
+```
+
+- The result keeps its rows and order; the added columns come last. An
+  unmapped ID gets empty columns (`--drop-unmapped` drops the row), and an ID
+  with several mapping rows gets the values joined with `;`.
+- `--map-from=COL` names the mapping column to join on (default the first),
+  `--map-to=COLS` the columns to add (default all others), and `-i` the ID
+  column of the result (default the first).
+- `--strip-versions` drops Ensembl version suffixes (`ENSG00000000003.15`)
+  on both sides before joining.
+- detk does not ship a mapping. Ask the user for one, or build it from the
+  annotation used for quantification (a GTF, or Bioconductor's
+  `org.*.eg.db` as in the airway example). Report how many IDs went
+  unmapped; detk logs it and records it in the report.
 
 **Report.** Render every step recorded so far:
 
@@ -211,14 +315,17 @@ duplicating it. `detk-report clean` deletes the report directory to start over.
 Tell the user: the commands run, how many genes the filter kept (detk logs
 `features kept after filtering`), the number of genes at `padj < 0.05` for the
 term of interest (DESeq2: `<term>__<level>__padj`; Firth: `<term>__padj`), the top enriched gene sets, and the paths to the result
-tables, the HTML report and the provenance crate. State any step skipped and
+tables (the annotated one if you added symbols), the HTML report and the
+provenance crate. State any step skipped and
 why.
 
 ## Worked example and reference
 
 - [references/airway.md](references/airway.md): the full pipeline on the
   public airway dataset (dexamethasone vs untreated, four cell lines), the
-  example detk's own documentation uses.
+  example detk's own documentation uses. It starts from a counts matrix
+  taken from the airway Bioconductor package, so it does not use
+  `detk-util gather`.
 - [references/commands.md](references/commands.md): the usage of every command
   above. `<command> <subcommand> --help` prints the authoritative usage for
   the installed version; check it when in doubt rather than guessing an

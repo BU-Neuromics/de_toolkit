@@ -66,7 +66,8 @@ Check the R bridge before running the R-backed steps:
 detk-wrapr check
 ```
 
-`detk-stats`, `detk-filter`, `detk-norm` and `detk-report` work without R. If
+`detk-stats`, `detk-filter`, `detk-norm`, `detk-outlier`, `detk-util` (including
+`gather` and `annotate`) and `detk-report` work without R. If
 R is missing and the user cannot install it, run those steps and say which
 steps were skipped and why.
 
@@ -84,8 +85,9 @@ writes commas unless given `-d CHAR`):
 Feature IDs and sample names are read as text exactly as written, so a
 zero-padded ID such as `007` stays `007` through the commands that run in
 Python (`detk-filter`, `detk-norm`, `detk-stats`, `detk-util`). The R-backed
-commands (`detk-de`, `detk-transform vst` and `rlog`) still read such an ID
-as a number, so their output can show `7`; check the IDs in their output
+commands (`detk-de`, `detk-transform vst` and `rlog`) and `detk-enrich fgsea`
+still read such an ID as a number when every ID in the column looks numeric,
+so their output can show `7`; check the IDs in their output
 before joining it to another table.
 
 ### Starting from quantifier outputs
@@ -104,9 +106,11 @@ detk-util gather -o counts.csv featurecounts.txt
 ```
 
 - Sample names come from the file names without their last extension, or,
-  when those are all the same (`quant.sf`, `abundance.tsv`), from each
-  file's directory (the second line above names `quant/A_quant/quant.sf`
-  `A` rather than `A_quant`). A quoted pattern is expanded by gather, in
+  when those are not unique (several `quant.sf` or `abundance.tsv`), from
+  each file's directory, for every file of the run (a single `quant.sf` is
+  named `quant`; use `--name-from` for names that do not depend on the other
+  files). The second line above names `quant/A_quant/quant.sf` `A` rather
+  than `A_quant`. A quoted pattern is expanded by gather, in
   natural order (`s2` before `s10`). Pass `--name-from=REGEX` (its first
   group is the name) when the default does not give the names used in the
   sample info, and check the header of `counts.csv` against the sample info
@@ -197,7 +201,11 @@ detk-norm deseq2 -o norm_counts.csv counts_filtered.csv
   feature's length in kilobases and each sample then scaled to sum to 1e6.
   Use it to compare genes within a sample, or when the user asks for TPM.
   Needs a lengths file:
-  `detk-norm tpm -o tpm.csv counts_filtered.csv lengths.csv`.
+
+  ```bash
+  detk-norm tpm -o tpm.csv counts_filtered.csv lengths.csv
+  ```
+
 - `detk-norm fpkm`: fragments per kilobase per million,
   `count * 1e9 / (length * library size)`, from the same lengths file.
   Prefer TPM unless FPKM is asked for. FPKM values from detk 1.0 differ

@@ -7,6 +7,8 @@ from: {node: release/tpm-cpm, step: s1}
 applies: [release/tpm-cpm]
 allowed_by: [reasonable]
 reason: "a subcommand per unit matches deseq2/library/fpkm and keeps library's output unchanged under the 1.0 CLI promise"
+revisions:
+  - {date: 2026-11-09, by: DETK/developer, change: "Record the lengths-file rules tpm adds to the 1.0 surface: IDs matched as text, duplicate IDs refused, header only when the length field is non-numeric and not a missing-value token", why: review of s2}
 ---
 
 # CPM and TPM as dedicated detk-norm subcommands
@@ -40,7 +42,11 @@ promised from 1.0 on.
 classes `CPMCounts`/`TPMCounts` (modules `cpmcounts`/`tpmcounts`). Output is
 the input matrix shape and row order, values in units per million, so every
 column sums to 1e6 (NaN for an all-zero sample, with a warning). Lengths are
-in bases, as for `fpkm`, and must be positive. Discoverable, consistent,
+in bases, as for `fpkm`, and must be positive. The lengths file, shared
+with `fpkm`, matches feature IDs as text (so numeric IDs work), refuses a
+feature listed twice, and may start with a header line, recognized only
+when its length field is text other than a missing-value token such as
+`NA`. Discoverable, consistent,
 leaves `library` untouched; two more names to keep stable.
 
 ### Option B: `library --scale=N`, plus a `tpm` subcommand

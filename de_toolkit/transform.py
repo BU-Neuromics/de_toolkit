@@ -174,7 +174,8 @@ class VstCounts(DetkModule):
         library(DESeq2)
         library(SummarizedExperiment)
 
-        cnts <- as.matrix(read.csv(counts.fn,row.names=1,check.names=FALSE))
+        # the IDs as text, as written (007 stays 007; see read.id.csv in wrapr)
+        cnts <- as.matrix(read.id.csv(counts.fn,row.names=TRUE))
         colData <- data.frame(name=seq(ncol(cnts)),check.names=FALSE)
         dds <- DESeqDataSetFromMatrix(countData = cnts,
             colData = colData,
@@ -238,7 +239,8 @@ class RlogCounts(DetkModule):
         library(DESeq2)
         library(SummarizedExperiment)
 
-        cnts <- as.matrix(read.csv(counts.fn,row.names=1,check.names=FALSE))
+        # the IDs as text, as written (007 stays 007; see read.id.csv in wrapr)
+        cnts <- as.matrix(read.id.csv(counts.fn,row.names=TRUE))
 
         rnames <- rownames(cnts)
 
@@ -251,7 +253,7 @@ class RlogCounts(DetkModule):
 
         # load design matrix
         if(file.info(metadata.fn)$size != 0) {
-            colData <- read.csv(metadata.fn,header=T,as.is=T,row.names=1,check.names=FALSE)
+            colData <- read.id.csv(metadata.fn,row.names=TRUE)
         } else {
             # just to convince DESeq2 that everything is ok when we're doing a
             # blind rlog

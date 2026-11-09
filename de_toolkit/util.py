@@ -136,6 +136,7 @@ from .common import (
     _cli_doc,
     make_cli_count_obj,
     read_delimited,
+    read_id_table,
     set_logging,
     write_output,
 )
@@ -806,10 +807,12 @@ def main(argv=sys.argv):
         set_logging(args)
         logger.info("cmd: %s", " ".join(argv))
 
-        # read in the counts and covs so we can compare
-        counts = read_delimited(args["<counts_fn>"], index_col=0)
+        # read in the counts and covs so we can compare; the IDs and sample
+        # names are read as text, as the counts header is, so a sample named
+        # 001 in the covariates matches the counts column 001
+        counts = read_id_table(args["<counts_fn>"])
         logger.info("shape of counts: %s", counts.shape)
-        covs = read_delimited(args["<cov_fn>"], index_col=0)
+        covs = read_id_table(args["<cov_fn>"])
         logger.info("shape of covs: %s", covs.shape)
 
         logger.info("shape of counts after merge: %s", count_obj.counts.shape)

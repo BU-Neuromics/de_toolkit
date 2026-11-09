@@ -8,6 +8,7 @@ applies: [release/padded-ids]
 revisions:
   - {date: 2026-11-09, by: DETK/developer, change: "Narrow to all-numeric ID columns; add enrich fgsea, util tidy-counts/tidy-covs and all-numeric versioned IDs", why: review of s2}
   - {date: 2026-11-09, by: DETK/developer, change: only detk-de deseq2 stops on zero-padded sample names, why: second review of s2}
+  - {date: 2026-11-09, by: DETK/developer, change: "the deseq2 check is de.py's own; vst reads no sample information", why: third review of s2}
 ---
 
 # Zero-padded IDs through the R-backed commands
@@ -45,9 +46,11 @@ output is therefore unchanged from before #48: `7`, not a regression.
 
 Sample names behave the same way: a sample-info file with `001` now
 matches a counts header `001` in Python (before #48 it failed there), but
-the R scripts read the metadata with `read.csv(row.names=1)` and DESeq2's
-`stopifnot(colnames(cnts) == rownames(design.mat))` would compare `001`
-with `1` and stop. Plain numeric sample names (`1`, `2`) now work end to
+the R script of `detk-de deseq2` reads the metadata with
+`read.csv(row.names=1)`, and its own check in `de.py`,
+`stopifnot(colnames(cnts) == rownames(design.mat))`, would compare `001`
+with `1` and stop. `firth` has no such check, `vst` reads no sample
+information, and `rlog` reads it without comparing names. Plain numeric sample names (`1`, `2`) now work end to
 end, where before #48 they failed in Python.
 
 The same gap outside R (found in the review of #56, step s2):
@@ -96,9 +99,9 @@ Until it is settled, `detk-de deseq2`/`firth` and `detk-transform
 vst`/`rlog` write an all-numeric column of zero-padded IDs as `7` (as
 before), all-numeric versioned IDs stop on duplicate row names, and
 zero-padded sample names stop `detk-de deseq2` at its sample check
-(`stopifnot` in `de.py`); `firth` has no such check, and `vst`/`rlog`
-build the dataset with `DESeqDataSetFromMatrix`, which matches samples
-by position here (read from DESeq2's source, not run); the CHANGELOG
+(`stopifnot` in `de.py`); `firth` has no such check, `vst` reads no sample information
+(`transform.py` builds its colData from column positions), and `rlog`
+reads it without comparing names (read from the source, not run); the CHANGELOG
 entry for #48 says so for the R-backed commands. `detk-enrich fgsea`
 loses `007` in an all-numeric result column and `detk-util
 tidy-counts`/`tidy-covs` stop on zero-padded sample names, as before #48.

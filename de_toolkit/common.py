@@ -340,8 +340,8 @@ def read_id_table(f):
     elif os.path.exists(f) and not os.path.isfile(f):
         # likewise a local path that is not a regular file: it may be
         # readable only once. Anything else (a URL, an unexpanded ~, a
-        # missing path) goes to pandas as before. The buffer has no name, so take the compression from
-        # the path's.
+        # missing path) goes to pandas as before. The buffer has no name,
+        # so take the compression from the path's.
         name = os.fspath(f)
         compression = next(
             (method for ext, method in _COMPRESSION_EXTS.items() if name.lower().endswith(ext)),

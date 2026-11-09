@@ -8,6 +8,8 @@ scope: [de_toolkit/common.py, tests/common/, docs/tools/norm.md, +CHANGELOG]
 issue: 48
 visited: b94644c
 prev: [DETK-0015]
+status: done
+done: 4a89f47
 ---
 
 # Read feature IDs as text
@@ -16,7 +18,7 @@ prev: [DETK-0015]
 
 - [x] @developer Fix it with tests and a CHANGELOG entry; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

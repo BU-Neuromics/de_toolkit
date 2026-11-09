@@ -68,3 +68,19 @@ then `pytest`. Lint and format with `uv run ruff check .` and
 
 Tests that require R (DESeq2, fgsea, logistf) are skipped automatically when R
 is not available.
+
+# Agent skills
+
+detk ships an
+[agent skill](https://github.com/BU-Neuromics/de_toolkit/tree/main/skills/detk)
+that lets a coding agent (Claude Code, Codex, Cursor and others) run a detk
+analysis from a counts matrix and sample table through filter, norm, de and
+enrich to a detk report.
+Install it into your project with:
+
+```
+npx skills add BU-Neuromics/de_toolkit
+```
+
+See [Agent skills](https://bu-neuromics.github.io/de_toolkit/agent-skills/)
+in the documentation.

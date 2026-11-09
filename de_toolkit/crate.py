@@ -63,6 +63,7 @@ SUBTOOLS = {
     "deseq2counts": ("detk-de", "deseq2"),
     "flgcounts": ("detk-de", "firth"),
     "fgseares": ("detk-enrich", "fgsea"),
+    "annotate": ("detk-util", "annotate"),
     "pmftransform": ("detk-outlier", "shrink"),
     "shrinkcounts": ("detk-outlier", "shrink"),
     "entropycounts": ("detk-outlier", "entropy"),

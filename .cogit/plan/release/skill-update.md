@@ -6,6 +6,8 @@ acceptance:
   - the skill starts from quantifier outputs with detk-util gather where the airway example allows
 scope: [skills/, docs/agent-skills.md, tests/skills/, +CHANGELOG]
 prev: [release/gather, release/padded-ids]
+issue: 62
+visited: a328c16
 ---
 
 # Bring the agent skill up to date

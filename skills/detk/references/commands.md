@@ -52,6 +52,24 @@ Options:
                                      command line argument instead
 ```
 
+## `detk-util gather`
+
+```text
+Usage:
+    detk-util gather [options] <files>...
+
+Options:
+    --format=FMT           salmon, kallisto, htseq, featurecounts or auto
+                           [default: auto]
+    --column=COL           Column to extract from each file, by name or 0-based
+                           position (default: the format's count column)
+    --name-from=REGEX      Regular expression deriving each sample name from
+                           its file path (the first group, or the whole match)
+    --on-mismatch=WHAT     What to do when the samples list different features:
+                           error, fill (with 0) or drop [default: error]
+    -o FILE --output=FILE  Destination of the counts matrix [default: stdout]
+```
+
 ## `detk-util tidy`
 
 ```text
@@ -82,6 +100,36 @@ Options:
 ```text
 Usage:
     detk-norm fpkm [options] <counts_fn> <lengths_fn>
+
+Options:
+    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+```
+
+## `detk-norm library`
+
+```text
+Usage:
+    detk-norm library [options] <counts_fn>
+
+Options:
+    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+```
+
+## `detk-norm cpm`
+
+```text
+Usage:
+    detk-norm cpm [options] <counts_fn>
+
+Options:
+    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+```
+
+## `detk-norm tpm`
+
+```text
+Usage:
+    detk-norm tpm [options] <counts_fn> <lengths_fn>
 
 Options:
     -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
@@ -192,6 +240,26 @@ Options:
                               debuggin out
     --rda=FILE                write out the fgsea result to the provide file
                               using saveRDS() in R
+```
+
+## `detk-util annotate`
+
+```text
+Usage:
+    detk-util annotate [options] <result_fn> <mapping_fn>
+
+Options:
+    -i FIELD --idcol=FIELD  Column in the result file holding the feature IDs to
+                            join on [default: 0]
+    --map-from=COL          Column in the mapping file matching the result IDs
+                            [default: 0]
+    --map-to=COLS           Comma-separated mapping columns to add, or 'all' for
+                            every column but --map-from [default: all]
+    --strip-versions        Strip trailing .N version suffixes from Ensembl-style
+                            IDs on both sides before joining
+    --drop-unmapped         Drop result rows with no mapping instead of leaving
+                            their added columns empty
+    -o FILE --output=FILE   Destination of the annotated table [default: stdout]
 ```
 
 ## `detk-report generate`

@@ -4,9 +4,10 @@ detk ships an [agent skill](https://agentskills.io/) so that a coding agent
 (Claude Code, Codex, Cursor, OpenCode and the others the
 [`skills`](https://github.com/vercel-labs/skills) installer supports) can run
 a detk analysis for you: install detk and its R packages, check the inputs,
-and drive the command line from a counts matrix and a sample information table
-through filtering, normalization, differential expression and gene set
-enrichment to a [detk report](report.md).
+and drive the command line from per-sample quantifier outputs (salmon,
+kallisto, htseq-count, featureCounts) or a counts matrix, and a sample
+information table, through filtering, normalization, differential expression,
+gene symbol annotation and gene set enrichment to a [detk report](report.md).
 
 ## Install the skill
 
@@ -48,9 +49,13 @@ name it (in Claude Code, `/detk`). The agent then:
 
 1. checks that detk and R are installed (`detk-wrapr check`), installing what
    is missing if you let it;
-2. looks at the two files and, if needed, tidies them with `detk-util tidy`;
-3. runs `detk-stats summary`, `detk-filter`, `detk-norm deseq2`,
-   `detk-de deseq2` and `detk-enrich fgsea` with your design formula;
+2. builds the counts matrix with `detk-util gather` if you give it
+   quantifier outputs, looks at the counts and the sample table and, if
+   needed, tidies them with `detk-util tidy`;
+3. runs `detk-stats summary`, `detk-filter`, `detk-norm deseq2` (or `cpm`,
+   `tpm`, `fpkm` or `library` when you ask for those units),
+   `detk-de deseq2`, `detk-util annotate` when you give it a gene symbol
+   mapping, and `detk-enrich fgsea` with your design formula;
 4. runs `detk-report generate`, and reports the result tables, the number of
    significant genes, the top gene sets, and the paths to
    `detk_report/detk_report.html` and `ro-crate-metadata.json`.

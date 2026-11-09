@@ -10,6 +10,12 @@ https://bu-neuromics.github.io/de_toolkit/example/ (script:
 Use it to check that an installation works end to end, or as the template for
 a two-condition design with a blocking covariate.
 
+The airway counts come as a matrix in a Bioconductor package, so this
+example has no `detk-util gather` step. When the user has per-sample
+salmon, kallisto, htseq-count or featureCounts outputs instead, build
+`counts.csv` from them with `detk-util gather` (SKILL.md, section 2) and go
+on from step 2 here with their own sample info.
+
 ## Requirements
 
 detk installed, and R with `airway`, `org.Hs.eg.db`, `DESeq2`, `fgsea`,
@@ -79,10 +85,20 @@ the `dex__trt__*` columns of `deseq2_results.csv`
 (`dex__trt__log2FoldChange`, `dex__trt__padj`, ...); the `cell__*` columns
 hold the cell line terms.
 
+Add gene symbols from the map written in step 1, for reading the results
+(Ensembl IDs without a symbol get an empty `symbol`):
+
+```bash
+detk-util annotate --map-to=symbol -o deseq2_results_symbols.csv deseq2_results.csv gene_map.csv
+```
+
 ## 3. Gene set enrichment
 
 WikiPathways GMT files are keyed by Entrez gene ID, the results by Ensembl
-ID, so join the map onto the results first. The join needs pandas, which detk
+ID, so join the map onto the results first. `detk-util annotate` would add
+the `entrez` column, but several Ensembl genes map to one Entrez ID and
+fgsea refuses an ID that appears twice, so this join also keeps one row per
+Entrez ID (the first, as `examples/airway/run.sh` does). It needs pandas, which detk
 itself depends on, so run it with the Python detk is installed in (the
 `python` on `PATH` may lack pandas when detk was installed with
 `uv tool install` or pipx); `examples/airway/run.sh` does the same:

@@ -5,6 +5,8 @@ scope: [+de_toolkit/report_specs.py, +CHANGELOG, de_toolkit/util.py, docs/tools/
 prev: [release/annotate]
 issue: 25
 visited: 969f2b7
+status: done
+done: 86e169f
 ---
 
 # Gather quantifier outputs into a counts matrix
@@ -13,6 +15,6 @@ visited: 969f2b7
 
 - [x] @developer Implement with tests, a report view, the docs page and a CHANGELOG entry; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes

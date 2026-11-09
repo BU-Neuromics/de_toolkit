@@ -490,7 +490,7 @@ def main(argv=sys.argv):
 
     elif cmd == "library":
         try:
-            out = LibrarySize(count_obj)
+            out = LibrarySize(count_obj.counts)
         except Exception as e:
             logger.error(e)
             sys.exit(1)
@@ -501,7 +501,7 @@ def main(argv=sys.argv):
         # providing the lengths that should be used for each ID in the counts
         # file
         try:
-            lengths = pandas.read_csv(args["<lengths_fn>"], sep=None, engine="python")
+            lengths = read_lengths(args["<lengths_fn>"])
         except Exception as e:
             logger.error(e)
             sys.exit(1)

@@ -339,11 +339,12 @@ def _write_small_inputs(tmp_path):
 @pytest.mark.parametrize(
     "cmd,expected",
     [
+        ("library", [[0.25, 0.2], [0.75, 0.4], [0.0, 0.4]]),
         ("cpm", [[0.25e6, 0.2e6], [0.75e6, 0.4e6], [0.0, 0.4e6]]),
         ("tpm", [[0.4e6, 0.4e6], [0.6e6, 0.4e6], [0.0, 0.2e6]]),
     ],
 )
-def test_norm_cli_cpm_tpm(tmp_path, cmd, expected):
+def test_norm_cli_cpm_tpm_library(tmp_path, cmd, expected):
     import json
 
     from de_toolkit.norm import main
@@ -365,6 +366,16 @@ def test_norm_cli_cpm_tpm(tmp_path, cmd, expected):
     family, _, _, view = view_for(docs[0])
     assert family == "norm"
     assert view["type"] == "vega"
+
+
+def test_norm_cli_fpkm_reads_lengths(tmp_path):
+    # the fpkm subcommand shares the lengths reader with tpm
+    from de_toolkit.norm import main
+
+    counts_fn, lengths_fn = _write_small_inputs(tmp_path)
+    out_fn = str(tmp_path / "out.csv")
+    main(["detk-norm", "fpkm", f"--output={out_fn}", "--no-report", counts_fn, lengths_fn])
+    assert pandas.read_csv(out_fn, index_col=0).shape == (3, 2)
 
 
 @pytest.mark.parametrize("name", ["cpmcounts", "tpmcounts"])

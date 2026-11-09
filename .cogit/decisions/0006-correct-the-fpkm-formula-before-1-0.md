@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-09
 from: {node: release/tpm-cpm, step: s1}
 applies: [release/tpm-cpm]
+revisions:
+  - {date: 2026-11-09, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A: fix the FPKM formula before 1.0, as its own node"}
 ---
 
 # Correct the FPKM formula before 1.0

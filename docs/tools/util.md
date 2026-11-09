@@ -76,14 +76,25 @@ Options:
     -o FILE --output=FILE   Destination of the annotated table [default: stdout]
 ```
 
-Columns are named by header or by 0-based position. The result keeps its rows,
-their order and their original IDs:
+Columns are named by header or by 0-based position. The result table is read
+and written back as text, so it keeps its rows, their order, its columns and
+their order, and every value as written, including numeric IDs such as Entrez
+IDs with leading zeros (`007` stays `007` and matches `007` in the mapping).
+The added columns come after the result's own; with `-i` naming a column other
+than the first, that column stays where it was.
 
-- an ID with no mapping row gets empty added columns, unless `--drop-unmapped`
-  removes the row;
-- an ID with several mapping rows (one Ensembl gene with two Entrez IDs, say)
-  gets the distinct values of each added column joined with `;`;
-- an added column whose name the result table already has is renamed with the
+- An ID is **mapped** when at least one mapping row gives it a non-empty value
+  in one of the added columns. A mapping row whose added columns are all empty
+  is ignored, so with `--map-to=hgnc_symbol` an ID whose only rows have no
+  symbol is unmapped, even though the mapping lists it.
+- An unmapped ID gets empty added columns, unless `--drop-unmapped` removes
+  the row.
+- An empty or missing ID (an empty cell, `NA`, `NaN` and the other strings
+  pandas reads as missing) is never joined: it counts as unmapped, and the
+  report counts these rows separately.
+- An ID with several mapping rows (one Ensembl gene with two Entrez IDs, say)
+  gets the distinct values of each added column joined with `;`.
+- An added column whose name the result table already has is renamed with the
   suffix `_annot`.
 
 Version suffixes are the most common reason a join silently finds nothing:
@@ -96,6 +107,7 @@ detk-util annotate --strip-versions --map-to=hgnc_symbol \
     -o de_results_annotated.csv de_results.csv biomart_export.tsv
 ```
 
-The report records how many features were mapped, left unmapped, matched
-several mapping rows or were dropped, the columns added and a few of the
-unmapped IDs.
+The report records how many result rows were mapped, left unmapped, had an
+empty or missing ID, matched several mapping rows or were dropped (these count
+rows, so a duplicated ID counts once per row), the columns added and up to ten
+distinct unmapped IDs.

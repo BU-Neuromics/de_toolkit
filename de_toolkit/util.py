@@ -49,10 +49,13 @@ Options:
 
 Annotate a result table (e.g. the output of detk-de) with feature metadata,
 such as gene symbols, from a user-supplied mapping table. Both files are
-delimited text files whose delimiter is sniffed. Rows of the result table keep
-their order and number: an ID with several mapping rows gets the distinct
-values joined with ';', and an ID with no mapping row gets empty columns
-unless --drop-unmapped is given. Columns are given by name or by 0-based
+delimited text files whose delimiter is sniffed; the result is read and
+written back as text, so IDs such as 007 are kept as written. Rows and
+columns of the result table keep their order and number, and the added
+columns come last: an ID with several mapping rows gets the distinct values
+joined with ';', and an ID with no mapping row (or only rows whose added
+columns are empty), or an empty or NA ID, gets empty columns; to drop it,
+use the option --drop-unmapped. Columns are given by name or by 0-based
 position.
 
 Usage:
@@ -122,6 +125,32 @@ def stub(f):
 
 _VERSION_SUFFIX = r"\.\d+$"
 
+# the strings pandas.read_csv reads as missing by default; an ID cell holding
+# one of them (or nothing) is a missing ID and is never joined
+_MISSING_IDS = frozenset(
+    [
+        "",
+        "#N/A",
+        "#N/A N/A",
+        "#NA",
+        "-1.#IND",
+        "-1.#QNAN",
+        "-NaN",
+        "-nan",
+        "1.#IND",
+        "1.#QNAN",
+        "<NA>",
+        "N/A",
+        "NA",
+        "NULL",
+        "NaN",
+        "None",
+        "n/a",
+        "nan",
+        "null",
+    ]
+)
+
 
 def _resolve_column(df, col, what):
     """Return the name of column *col* of *df*: a column name, or else a
@@ -140,7 +169,7 @@ def _strip_versions(ids):
 
 
 def _join_distinct(values):
-    vals = [v for v in pandas.unique(values) if not pandas.isna(v)]
+    vals = [v for v in pandas.unique(values) if not pandas.isna(v) and str(v).strip() != ""]
     return ";".join(str(v) for v in vals) if vals else None
 
 
@@ -150,7 +179,14 @@ class Annotate(DetkModule):
     feature IDs.
 
     The rows of *result* keep their order and, unless *drop_unmapped*, their
-    number. An ID with several mapping rows gets the distinct values of each
+    number; its columns keep their order, the first one becomes the index of
+    the output and the added columns come last. IDs are compared as text, so
+    pass an ID column of strings (the CLI reads the result file as text). An
+    empty or missing ID (``NA``, ``NaN``, ...) is never joined.
+
+    A mapping row counts only if at least one of the added columns has a
+    value in it: an ID is mapped when some mapping row gives it a non-empty
+    value. An ID with several such rows gets the distinct values of each
     added column joined with ``;``. An added column whose name is already a
     column of *result* is renamed with the suffix ``_annot``.
     """
@@ -187,9 +223,14 @@ class Annotate(DetkModule):
         logger.info("joining result column %r to mapping column %r", id_name, from_name)
         logger.info("adding mapping columns: %s", to_names)
 
-        result_keys = result[id_name].astype(str)
+        ids = result[id_name]
+        missing = (ids.isna() | ids.astype(str).str.strip().isin(_MISSING_IDS)).to_numpy()
+        result_keys = ids.astype(str).where(~missing)
         mapping = mapping[[from_name] + to_names].dropna(subset=[from_name])
         mapping[from_name] = mapping[from_name].astype(str)
+        # a mapping row with no value in any added column maps nothing
+        values = mapping[to_names].apply(lambda c: c.where(c.astype(str).str.strip() != ""))
+        mapping = mapping.loc[values.notna().any(axis=1)]
         if strip_versions:
             result_keys = _strip_versions(result_keys)
             mapping[from_name] = _strip_versions(mapping[from_name])
@@ -201,25 +242,28 @@ class Annotate(DetkModule):
         added = collapsed.reindex(result_keys.values).rename(columns=renamed)
         added.index = result.index
 
-        mapped = result_keys.isin(collapsed.index).to_numpy()
+        mapped = (result_keys.isin(collapsed.index) & ~missing).to_numpy()
         out = pandas.concat([result, added], axis=1)
         if drop_unmapped:
             out = out.loc[mapped]
-        out = out.set_index(id_name)
-        if str(id_name).startswith("Unnamed: "):
+        # the result's first column stays the index, whichever column is joined
+        first = result.columns[0]
+        out = out.set_index(first)
+        if str(first).startswith("Unnamed: "):
             # an unnamed index column, as pandas writes it, stays unnamed
             out.index.name = None
         self._output = out
 
-        unmapped_ids = result.loc[~mapped, id_name].astype(str)
+        unmapped_ids = result.loc[~mapped & ~missing, id_name].astype(str)
         self["properties"] = {
             "num_features": int(result.shape[0]),
             "num_mapped": int(mapped.sum()),
             "num_unmapped": int((~mapped).sum()),
+            "num_missing_ids": int(missing.sum()),
             "num_multimapped": int(result_keys[mapped].map(counts).gt(1).sum()),
             "num_dropped": int((~mapped).sum()) if drop_unmapped else 0,
             "columns_added": list(renamed.values()),
-            "unmapped_examples": unmapped_ids.head(10).tolist(),
+            "unmapped_examples": unmapped_ids.drop_duplicates().head(10).tolist(),
         }
         logger.info(
             "features mapped: %d of %d (%d with several mapping rows)",
@@ -227,10 +271,15 @@ class Annotate(DetkModule):
             self["properties"]["num_features"],
             self["properties"]["num_multimapped"],
         )
-        if self["properties"]["num_unmapped"]:
+        if self["properties"]["num_missing_ids"]:
+            logger.warning(
+                "%d result rows have an empty or missing ID and stay unmapped",
+                self["properties"]["num_missing_ids"],
+            )
+        if self["properties"]["unmapped_examples"]:
             logger.warning(
                 "%d features had no mapping, e.g. %s%s",
-                self["properties"]["num_unmapped"],
+                self["properties"]["num_unmapped"] - self["properties"]["num_missing_ids"],
                 ", ".join(self["properties"]["unmapped_examples"][:3]),
                 "" if strip_versions else " (try --strip-versions if the IDs carry .N suffixes)",
             )
@@ -251,7 +300,11 @@ def _annotate_main(args):
     from .report import DetkReport
 
     try:
-        result = pandas.read_csv(args["<result_fn>"], sep=None, engine="python")
+        # read as text, so numeric IDs keep their leading zeros and every
+        # value is written back as it was read
+        result = pandas.read_csv(
+            args["<result_fn>"], sep=None, engine="python", dtype=str, keep_default_na=False
+        )
         mapping = pandas.read_csv(args["<mapping_fn>"], sep=None, engine="python", dtype=str)
         logger.info("shape of result: %s", result.shape)
         logger.info("shape of mapping: %s", mapping.shape)

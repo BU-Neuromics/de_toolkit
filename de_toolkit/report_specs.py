@@ -342,6 +342,8 @@ def build_annotate(mod):
         {"label": "several mapping rows", "value": p.get("num_multimapped", 0)},
         {"label": "mapped %", "value": f"{100.0 * mapped / total:.1f}%" if total else "—"},
     ]
+    if p.get("num_missing_ids"):
+        items.append({"label": "empty or missing IDs", "value": p["num_missing_ids"]})
     if p.get("num_dropped"):
         items.append({"label": "unmapped rows dropped", "value": p["num_dropped"]})
     notes = []

@@ -5,6 +5,8 @@ scope: [+de_toolkit/report_specs.py, +CHANGELOG, de_toolkit/norm.py, docs/tools/
 issue: 24
 visited: f6503ed
 prev: [DETK-0006]
+status: done
+done: e40fda1
 ---
 
 # TPM and CPM normalization
@@ -13,6 +15,6 @@ prev: [DETK-0006]
 
 - [x] @developer Implement with tests, a report view, the docs page and a CHANGELOG entry; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes

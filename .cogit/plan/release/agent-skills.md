@@ -6,6 +6,8 @@ acceptance:
   - a skill takes an agent from a counts matrix and sample info through filter, norm, de and enrich to a detk report, on the airway example
   - a docs page (new, under docs/) and the README say how to install and use them
 scope: [+README.md, +mkdocs.yml, +CHANGELOG]
+issue: 38
+visited: cfe262f
 ---
 
 # Agent skills

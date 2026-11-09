@@ -148,7 +148,8 @@ def test_annotate_report_view(result, mapping):
     labels = {it["label"]: it["value"] for it in view["items"]}
     assert labels["features in"] == 3
     assert labels["mapped"] == 0
-    assert "<b>" not in view["note"]  # user IDs are escaped for the HTML note
+    # the note is plain text (the page renders it as text, #65): IDs as written
+    assert "<b>" in view["note"] and "&lt;" not in view["note"]
 
 
 def test_annotate_report_view_without_properties_is_raw():

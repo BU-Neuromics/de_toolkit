@@ -149,53 +149,102 @@
     (families[m.family] = families[m.family] || []).push(m);
   });
 
+  // Every descriptor text field (title, desc, note, kv labels and values,
+  // table cells, error) and every module name or id is user data or may
+  // carry it, so it is set as text, never parsed as markup (#65, DETK-0022).
+  // The one exception is v.svg, the server-rendered static chart.
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+
+  // a module id as a safe, unique fragment: letters, digits and "-" stay,
+  // any other UTF-16 code unit (including "_") becomes _<hex>_
+  function domId(id) {
+    return String(id).replace(/[^A-Za-z0-9-]/g, function (c) {
+      return "_" + c.charCodeAt(0).toString(16) + "_";
+    });
+  }
+
   Object.keys(families).forEach(function (fam) {
-    var h = document.createElement("div");
-    h.className = "fam"; h.textContent = fam; nav.appendChild(h);
+    nav.appendChild(el("div", "fam", fam));
     families[fam].forEach(function (m) {
-      var a = document.createElement("a");
-      a.href = "#" + m.id; a.textContent = m.title; a.dataset.target = m.id;
+      var cardId = domId(m.id);
+      var a = el("a", null, m.title);
+      a.setAttribute("href", "#" + cardId);
+      a.dataset.target = cardId;
       nav.appendChild(a);
 
-      var card = document.createElement("section");
-      card.className = "card"; card.id = m.id;
-      var body = '<h2>' + m.title + '</h2>';
-      if (m.desc) body += '<p class="desc">' + m.desc + '</p>';
-      body += renderView(m);
-      body += '<div class="tools"><button data-mod="' + m.id +
-              '">Show data (' + m.module + '.json)</button></div>' +
-              '<pre class="data"></pre>';
-      card.innerHTML = body;
+      var card = el("section", "card");
+      card.id = cardId;
+      card.appendChild(el("h2", null, m.title));
+      if (m.desc) card.appendChild(el("p", "desc", m.desc));
+      renderView(m, cardId).forEach(function (n) { card.appendChild(n); });
+      var tools = el("div", "tools");
+      var btn = el("button", null, "Show data (" + m.module + ".json)");
+      btn.setAttribute("data-mod", m.id);
+      tools.appendChild(btn);
+      card.appendChild(tools);
+      card.appendChild(el("pre", "data"));
       main.appendChild(card);
     });
   });
 
-  function renderView(m) {
+  // the view's nodes, in order
+  function renderView(m, cardId) {
     var v = m.view || { type: "raw" };
-    var note = v.note ? '<p class="desc">' + v.note + '</p>' : '';
+    var out = [];
     if (v.type === "vega") {
-      vegaCharts.push({ id: m.id + "-vis", spec: v.spec });
-      return note + '<div class="chart" id="' + m.id + '-vis"></div>';
+      if (v.note) out.push(el("p", "desc", v.note));
+      var vis = el("div", "chart");
+      vis.id = cardId + "-vis";
+      vegaCharts.push({ id: vis.id, spec: v.spec });
+      out.push(vis);
+      return out;
     }
     if (v.type === "svg") {
-      return note + '<div class="chart chart-static">' + v.svg + '</div>';
+      if (v.note) out.push(el("p", "desc", v.note));
+      var box = el("div", "chart chart-static");
+      // the static scatter plot is markup made by report_specs (matplotlib),
+      // not user text: the only descriptor field inserted as HTML
+      box.innerHTML = v.svg;
+      out.push(box);
+      return out;
     }
     if (v.type === "kv") {
-      return note + '<div class="kv">' + v.items.map(function (it) {
-        return '<div class="item"><div class="val">' + fmt(it.value) +
-               '</div><div class="lab">' + it.label + '</div></div>';
-      }).join("") + '</div>';
+      if (v.note) out.push(el("p", "desc", v.note));
+      var kv = el("div", "kv");
+      v.items.forEach(function (it) {
+        var item = el("div", "item");
+        item.appendChild(el("div", "val", fmt(it.value)));
+        item.appendChild(el("div", "lab", it.label));
+        kv.appendChild(item);
+      });
+      out.push(kv);
+      return out;
     }
     if (v.type === "table") {
-      var head = '<tr>' + v.columns.map(function (c) { return '<th>' + c + '</th>'; }).join("") + '</tr>';
-      var rows = v.rows.map(function (r) {
-        return '<tr>' + r.map(function (c) { return '<td>' + fmt(c) + '</td>'; }).join("") + '</tr>';
-      }).join("");
-      return '<table class="detk">' + head + rows + '</table>';
+      var table = el("table", "detk");
+      var head = el("tr");
+      v.columns.forEach(function (c) { head.appendChild(el("th", null, c)); });
+      // the same tree the HTML parser built: every row in one tbody
+      var tbody = el("tbody");
+      tbody.appendChild(head);
+      v.rows.forEach(function (r) {
+        var tr = el("tr");
+        r.forEach(function (c) { tr.appendChild(el("td", null, fmt(c))); });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      out.push(table);
+      return out;
     }
     // raw fallback
-    var note = v.error ? '<p class="desc">chart error: ' + v.error + '</p>' : '';
-    return note + '<p class="desc">Raw module data (use “Show data” below).</p>';
+    if (v.error) out.push(el("p", "desc", "chart error: " + v.error));
+    out.push(el("p", "desc", "Raw module data (use “Show data” below)."));
+    return out;
   }
 
   function fmt(x) {
@@ -207,13 +256,13 @@
   function embedAll() {
     var cfg = vegaConfig();
     vegaCharts.forEach(function (c) {
-      var el = document.getElementById(c.id);
-      if (!el) return;
-      el.innerHTML = "";
-      vegaEmbed("#" + c.id, c.spec, {
+      var target = document.getElementById(c.id);
+      if (!target) return;
+      target.textContent = "";
+      vegaEmbed(target, c.spec, {
         actions: { export: true, source: true, compiled: false, editor: false },
         renderer: "canvas", config: cfg
-      }).catch(function (err) { el.textContent = "chart error: " + err; });
+      }).catch(function (err) { target.textContent = "chart error: " + err; });
     });
   }
 

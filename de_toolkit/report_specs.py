@@ -7,7 +7,16 @@ that JSON into a "view" that the report SPA renders. A view is one of:
 - {"type": "vega",  "spec": <Vega-Lite spec dict>}   an interactive chart
 - {"type": "kv",    "items": [{"label","value"}...]} summary stat tiles
 - {"type": "table", "columns": [...], "rows": [[...]]} a data table
+- {"type": "svg",   "svg": <SVG markup>}              a static chart (very large
+                                                      point sets, static_plots)
 - {"type": "raw"}                                     fall back to raw JSON
+
+Every view may carry a ``note``; a raw view may carry an ``error``. All text in
+a view (``note``, ``error``, kv labels and values, table columns and cells) and
+the entry's ``title`` and ``desc`` are plain text: the report page sets them as
+text, never as HTML, so a builder passes user strings (feature IDs, sample
+names, a filter command) through unescaped (#65, DETK-0022). The only markup is
+an svg view's ``svg``, which ``static_plots`` renders.
 
 Builders are looked up by module name in ``REGISTRY``. Each registry entry
 carries the ``family`` (top-level nav grouping), a human ``title``, a short
@@ -329,8 +338,6 @@ def build_filtercounts(mod):
 
 
 def build_annotate(mod):
-    import html
-
     p = mod.get("properties", {})
     total, mapped = p.get("num_features"), p.get("num_mapped")
     if total is None or mapped is None:
@@ -351,14 +358,12 @@ def build_annotate(mod):
         notes.append("columns added: " + ", ".join(map(str, p["columns_added"])))
     if p.get("unmapped_examples"):
         notes.append("unmapped e.g.: " + ", ".join(map(str, p["unmapped_examples"][:5])))
-    # the template inserts the note as HTML; IDs and column names are user data
-    note = html.escape("; ".join(notes)) if notes else None
+    # plain text: the page renders every view text field as text (#65)
+    note = "; ".join(notes) if notes else None
     return {"type": "kv", "items": items, "note": note}
 
 
 def build_gather(mod):
-    import html
-
     p = mod.get("properties", {})
     samples, features = p.get("num_samples"), p.get("num_features")
     if samples is None or features is None:
@@ -383,8 +388,8 @@ def build_gather(mod):
         )
     if p.get("htseq_counters"):
         notes.append("htseq-count summary lines left out: " + ", ".join(p["htseq_counters"]))
-    # the template inserts the note as HTML; names and IDs are user data
-    note = html.escape("; ".join(notes)) if notes else None
+    # plain text: the page renders every view text field as text (#65)
+    note = "; ".join(notes) if notes else None
     return {"type": "kv", "items": items, "note": note}
 
 

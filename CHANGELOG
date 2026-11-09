@@ -68,6 +68,11 @@ predates everything below.
   longer breaks the report or injects markup; object keys (such as sample
   names) holding a quote or backslash no longer make the payload invalid
   JSON (#46)
+- The report page shows every view's text as text: a filter command, DE
+  term names, annotation and gather notes, a chart error, and an unknown
+  module's name (in its card title, link, anchor and "Show data" button) can
+  no longer insert markup into the page. Only the static SVG chart for very
+  large point sets is inserted as markup (#65)
 
 ## [ 0.9.12 ]
 ### Added

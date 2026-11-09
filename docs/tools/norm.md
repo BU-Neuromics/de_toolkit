@@ -74,8 +74,16 @@ two-column character-delimited file (format is sniffed) of feature identifier
 and length in bases:
 
 - every feature in the counts file must have an entry in the lengths file
+- each feature may be listed only once; a lengths file that lists a feature
+  twice is refused
 - the lengths file may contain unused entries
 - the two files do not need to be in the same order
+- feature identifiers are matched as text, so numeric identifiers (such as
+  Entrez gene IDs) match, and appear in the output as in the counts file
+- an optional header line is allowed: the first line is skipped as a header
+  only when its length field is text that is neither a number nor a
+  missing-value token (empty, `NA`, `NaN`, `N/A`, `NULL`, `None`); otherwise it
+  is read as a feature
 
 ```text
 Usage:
@@ -97,11 +105,13 @@ Unlike FPKM, TPM values sum to the same total in every sample, so the
 proportion of a sample's transcripts a feature represents is comparable
 across samples. When every feature has the same length, TPM equals CPM.
 
-`tpm` takes the same lengths file as [`fpkm`](#fpkm), with the same rules;
-in addition every length must be a positive number. A header line in the
-lengths file is allowed (it is recognized by its second field not being a
-number). The output has the same rows, in the same order, as the counts
-file.
+`tpm` takes the same lengths file as [`fpkm`](#fpkm), with the same rules
+(including the optional header line and the refusal of duplicated feature
+identifiers); in addition every length must be a positive number, and a
+missing or non-numeric length is reported as not a positive number. The
+output has the same rows, in the same order, as the counts file. A sample
+whose counts are all zero has no TPM (or CPM) values: its column is empty
+(NaN) and a warning is logged.
 
 ```text
 Usage:

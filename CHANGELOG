@@ -25,7 +25,12 @@ predates everything below.
 - Versioned module JSON schema for report data
 - Process Run Crate (RO-Crate) provenance for CLI runs
 - `detk-norm cpm` (counts per million) and `detk-norm tpm` (transcripts per
-  million, from the same lengths file as `fpkm`), each with a report view
+  million, from the same lengths file as `fpkm`), each with a report view.
+  The lengths file (for `tpm` and `fpkm`) may start with a header line, which
+  is recognized only when its length field is text other than a missing-value
+  token such as `NA`; a feature listed twice is refused; feature IDs are
+  matched as text, so numeric IDs work; `tpm` requires every length to be a
+  positive number
 
 ## [ 0.9.12 ]
 ### Added

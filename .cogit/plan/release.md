@@ -22,6 +22,7 @@ visited: f6503ed
 - [ ] [Annotate results with feature metadata](release/annotate.md) <!-- s8 -->
 - [ ] [Gather quantifier outputs into a counts matrix](release/gather.md) <!-- s9 -->
 - [ ] [Agent skills](release/agent-skills.md) <!-- s10 -->
+- [ ] [Fpkm](release/fpkm.md) <!-- s11 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
 

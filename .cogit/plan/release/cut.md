@@ -6,7 +6,7 @@ acceptance:
   - the GitHub Release v1.0.0 carries the sdist and wheel, and Zenodo minted a DOI
   - the README shows the concept-DOI badge and the PyPI badge reads 1.0.0
 scope: [de_toolkit/version.py, pyproject.toml, CHANGELOG, README.md]
-prev: [DETK-0001, DETK-0002, release/tpm-cpm, release/annotate, release/gather, release/agent-skills]
+prev: [DETK-0001, DETK-0002, release/tpm-cpm, release/annotate, release/gather, release/agent-skills, release/fpkm]
 ---
 
 # Cut 1.0.0

@@ -14,6 +14,7 @@ Usage:
 from collections import OrderedDict
 from copy import deepcopy
 from docopt import docopt
+import csv
 import io
 import logging
 import os
@@ -317,43 +318,142 @@ _COMPRESSION_EXTS = {
 }
 
 
+# the delimiters a table's first line is sniffed for (comma, tab, semicolon,
+# pipe, space); a first line with none of them is a one-column table. (The
+# csv sniffer, left to any character, splits a bare list of IDs on a letter
+# of its header: ``gene_id`` became ``g``, ``n``, ``_id``.)
+SNIFF_DELIMITERS = ",\t;| "
+
+# the separator a one-column table is read with: a control character that
+# does not occur in text, so each line is one field
+_ONE_COLUMN = "\x1f"
+
+
+def sniff_delimiter(line):
+    """
+    Return the delimiter of the table whose first line is *line*, one of
+    ``SNIFF_DELIMITERS``, or None when the line has none of them, as in a
+    one-column table such as a bare list of IDs.
+    """
+    try:
+        sep = csv.Sniffer().sniff(line, delimiters=SNIFF_DELIMITERS).delimiter
+    except csv.Error:
+        return None
+    if sep == " ":
+        # the sniffer prefers space to pipe, so ``g|sample 1|sample 2`` was
+        # split on its spaces: a delimiter other than space that splits the
+        # line outside quotes wins over space
+        for other in SNIFF_DELIMITERS.replace(" ", ""):
+            if len(next(csv.reader([line], delimiter=other))) > 1:
+                return other
+    return sep
+
+
+def _rewindable(f):
+    """
+    Return *f* in a form that can be read more than once, and the
+    compression to read it with: a file-like object, a URL pandas would
+    fetch (``http``, ``https``, ``ftp``, ``file``, ``s3`` and the other
+    fsspec protocols) or a local path that is not a regular file (a FIFO,
+    ``/dev/stdin``, a shell process substitution ``<(zcat f.gz)``) is read
+    once into memory, so a URL is fetched once; anything else (a regular
+    file, an unexpanded ~, a missing path) is returned as it is, for pandas.
+    """
+    if hasattr(f, "read"):
+        content = f.read()
+        return (io.StringIO(content) if isinstance(content, str) else io.BytesIO(content)), "infer"
+    name = os.fspath(f)
+    is_url = pandas.io.common.is_url(name) or pandas.io.common.is_fsspec_url(name)
+    if is_url or (os.path.exists(name) and not os.path.isfile(name)):
+        # the buffer has no name, so take the compression from the path's
+        compression = next(
+            (method for ext, method in _COMPRESSION_EXTS.items() if name.lower().endswith(ext)),
+            None,
+        )
+        if is_url:
+            # pandas' own opener decompresses as pandas would read the URL:
+            # by the name, and undoing an HTTP Content-Encoding without
+            # decompressing twice, so the buffer is plain
+            with pandas.io.common.get_handle(name, "rb", compression="infer", is_text=False) as h:
+                return io.BytesIO(h.handle.read()), None
+        with open(name, "rb") as fh:
+            return io.BytesIO(fh.read()), compression
+    return f, "infer"
+
+
+def _first_line(f, compression, skiprows=None):
+    "The first line of *f* (after *skiprows*), as written, or '' when there is none."
+    if hasattr(f, "seek"):
+        f.seek(0)
+    try:
+        line = pandas.read_csv(
+            f,
+            sep=_ONE_COLUMN,
+            engine="python",
+            header=None,
+            nrows=1,
+            skiprows=skiprows,
+            quoting=csv.QUOTE_NONE,
+            dtype=str,
+            keep_default_na=False,
+            compression=compression,
+        )
+    except pandas.errors.EmptyDataError:
+        return ""
+    return _ONE_COLUMN.join(line.iloc[0]) if len(line) else ""
+
+
+def read_delimited(f, **kwargs):
+    """
+    Read the delimited table *f* with pandas.read_csv, passing on *kwargs*,
+    its delimiter sniffed from its first line among ``SNIFF_DELIMITERS``
+    (comma, tab, semicolon, pipe, then space). A first line with none of them
+    makes a one-column table, read as one column, so a bare list of IDs is
+    not split on a letter of its header. *f* is a path or URL (compression
+    is inferred from the name) or a file-like object; a URL, or a path that
+    can be read only once, is read once into memory.
+    """
+    f, compression = _rewindable(f)
+    sep = sniff_delimiter(_first_line(f, compression, kwargs.get("skiprows")))
+    return _read_with(f, compression, sep, **kwargs)
+
+
+def _read_with(f, compression, sep, **kwargs):
+    """
+    Read *f*, as :func:`_rewindable` returned it, with the sniffed
+    delimiter *sep* (None for one column).
+    """
+    if hasattr(f, "seek"):
+        f.seek(0)
+    return pandas.read_csv(
+        f, sep=sep or _ONE_COLUMN, engine="python", compression=compression, **kwargs
+    )
+
+
 def read_id_table(f):
     """
-    Read a delimited table (the delimiter is sniffed) whose first column
-    holds IDs, such as a counts file (feature IDs) or a sample-info file
-    (sample names), into a pandas.DataFrame indexed by that column.
+    Read a delimited table (the delimiter is sniffed, see
+    :func:`read_delimited`) whose first column holds IDs, such as a counts
+    file (feature IDs) or a sample-info file (sample names), into a
+    pandas.DataFrame indexed by that column.
 
     The IDs are read as text, exactly as written, so ``007`` stays ``007``
     rather than becoming the number 7, and matches the same ID in another
     file; the other columns are typed as pandas infers them, so counts stay
     numeric. Empty IDs and pandas' missing-value tokens (``NA``, ``NaN``, ...)
-    are missing, as before. *f* is a path (compression is inferred from the
-    name) or a file-like object. A path that can be read only once, such as
-    a FIFO, ``/dev/stdin`` or a shell process substitution ``<(zcat f.gz)``,
-    is read once into memory.
+    are missing, as before. *f* is a path or URL (compression is inferred
+    from the name) or a file-like object. A URL, or a path that can be read
+    only once, such as a FIFO, ``/dev/stdin`` or a shell process
+    substitution ``<(zcat f.gz)``, is read once into memory.
     """
-    source, compression = f, "infer"
-    if hasattr(f, "read"):
-        # the table is parsed twice below, so buffer a stream
-        content = f.read()
-        f = io.StringIO(content) if isinstance(content, str) else io.BytesIO(content)
-    elif os.path.exists(f) and not os.path.isfile(f):
-        # likewise a local path that is not a regular file: it may be
-        # readable only once. Anything else (a URL, an unexpanded ~, a
-        # missing path) goes to pandas as before. The buffer has no name,
-        # so take the compression from the path's.
-        name = os.fspath(f)
-        compression = next(
-            (method for ext, method in _COMPRESSION_EXTS.items() if name.lower().endswith(ext)),
-            None,
-        )
-        with open(name, "rb") as fh:
-            f = io.BytesIO(fh.read())
+    source = f
+    # the table is parsed twice below, so make it rewindable (and fetch a
+    # URL) once here, and sniff its delimiter once
+    f, compression = _rewindable(f)
+    sep = sniff_delimiter(_first_line(f, compression))
 
     def read(**kwargs):
-        if hasattr(f, "seek"):
-            f.seek(0)
-        return pandas.read_csv(f, sep=None, engine="python", compression=compression, **kwargs)
+        return _read_with(f, compression, sep, **kwargs)
 
     table = read(index_col=0)
     # A second parse reads the first field of every line as text; below the

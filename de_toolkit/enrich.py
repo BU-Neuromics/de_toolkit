@@ -72,7 +72,7 @@ from pprint import pformat
 import tempfile
 import sys
 import warnings
-from .common import DetkModule, _cli_doc, set_logging, write_output
+from .common import DetkModule, _cli_doc, read_delimited, set_logging, write_output
 from .wrapr import require_r, wrapr
 from .report import DetkReport
 
@@ -383,7 +383,7 @@ def main(argv=sys.argv):
 
         logger.info("reading in results file %s", args["<result_fn>"])
         try:
-            res_df = pandas.read_csv(args["<result_fn>"], sep=None, engine="python")
+            res_df = read_delimited(args["<result_fn>"])
         except Exception as e:
             logger.error(e)
             sys.exit(1)

@@ -88,7 +88,7 @@ path = "de_toolkit/version.py"
 packages = ["de_toolkit"]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 100
 
 [tool.ruff.lint]

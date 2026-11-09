@@ -30,7 +30,7 @@ import json
 import os
 import pathlib
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from .version import __version__
 
@@ -219,7 +219,7 @@ def build_crate(docs, crate_root):
         "license": (
             "Not specified -- rights to the data described by this crate remain with its owner."
         ),
-        "datePublished": datetime.now(timezone.utc).isoformat(),
+        "datePublished": datetime.now(UTC).isoformat(),
         "hasPart": has_part,
         "mentions": [{"@id": a["@id"]} for a in actions],
     }

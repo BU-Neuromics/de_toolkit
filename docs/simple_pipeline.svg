@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
+<!--
+  simple_pipeline.png is rendered from this file at 72.024597 dpi
+  (629x846, transparent background). Inkscape's PNG export with the
+  settings below works. Without Inkscape, resvg does too (PyPI: resvg-py):
+  load the Ubuntu font for the sans text and Ubuntu Mono 0.80 for the
+  command boxes (google/fonts, ufl/ubuntumono); Ubuntu Mono 0.862 has
+  wider glyphs and the longer commands overflow their boxes.
+-->
 
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
@@ -209,8 +217,7 @@
          id="tspan1490">From Many Samples</tspan></text>
     <g
        id="g3244"
-       transform="translate(0,1.6290561)"
-       style="opacity:0.5">
+       transform="translate(0,1.6290561)">
       <rect
          style="fill:#e6f2fa;fill-opacity:1;stroke:#6aaedd;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
          id="rect1721"
@@ -224,24 +231,13 @@
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#333333;fill-opacity:1;stroke:none;stroke-width:0.26458332"
          x="96.514786"
-         y="50.115051"
+         y="52.650177"
          id="text1725"><tspan
            sodipodi:role="line"
            id="tspan1723"
            x="96.514786"
-           y="50.115051"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.64444447px;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';text-align:center;text-anchor:middle;fill:#333333;stroke-width:0.26458332">csvgather</tspan></text>
-      <text
-         id="text1743"
-         y="55.055599"
-         x="96.514786"
-         style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#333333;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-         xml:space="preserve"><tspan
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';text-align:center;text-anchor:middle;fill:#333333;stroke-width:0.26458332"
-           y="55.055599"
-           x="96.514786"
-           id="tspan1741"
-           sodipodi:role="line">bitbucket.org/adamlabadorf/csvgather</tspan></text>
+           y="52.650177"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.64444447px;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';text-align:center;text-anchor:middle;fill:#333333;stroke-width:0.26458332">detk-util gather</tspan></text>
     </g>
     <g
        id="g1027"

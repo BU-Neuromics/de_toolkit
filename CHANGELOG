@@ -24,6 +24,14 @@ predates everything below.
   `detk-norm library` and `detk-norm fpkm` failed on every CLI run (the
   library command was handed the count object, the lengths file was read as
   a table) and now run
+- Feature IDs in a counts file, and sample names in a sample-info file, are
+  read as text exactly as written, so a zero-padded ID such as `007` is no
+  longer read as the number 7: it matches a lengths or mapping file that
+  writes `007`, and the tools that run in Python write it back as `007`
+  (#48); the R-backed commands (`detk-de deseq2` and `firth`,
+  `detk-transform vst` and `rlog`) still read it as 7 in R (DETK-0015).
+  The IDs are kept exactly as written, including whitespace: `" 007"` stays
+  `" 007"`, where it used to become 7 (text IDs always kept it)
 - FPKM values change from 0.9.x: FPKM is now
   `count * 1e9 / (length * library size)` as documented, where 0.9.x computed
   `count / (1e6 * length)` and never divided by library size. In 0.9.x the

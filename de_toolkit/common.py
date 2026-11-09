@@ -14,7 +14,9 @@ Usage:
 from collections import OrderedDict
 from copy import deepcopy
 from docopt import docopt
+import io
 import logging
+import os
 import pandas
 from pprint import pformat
 import sys
@@ -300,19 +302,80 @@ class CountMatrix:
         pass
 
 
+# the compression pandas infers from a path's extension, in pandas' order
+# (".tar.gz" before ".gz")
+_COMPRESSION_EXTS = {
+    ".tar": "tar",
+    ".tar.gz": "tar",
+    ".tar.bz2": "tar",
+    ".tar.xz": "tar",
+    ".gz": "gzip",
+    ".bz2": "bz2",
+    ".zip": "zip",
+    ".xz": "xz",
+    ".zst": "zstd",
+}
+
+
+def read_id_table(f):
+    """
+    Read a delimited table (the delimiter is sniffed) whose first column
+    holds IDs, such as a counts file (feature IDs) or a sample-info file
+    (sample names), into a pandas.DataFrame indexed by that column.
+
+    The IDs are read as text, exactly as written, so ``007`` stays ``007``
+    rather than becoming the number 7, and matches the same ID in another
+    file; the other columns are typed as pandas infers them, so counts stay
+    numeric. Empty IDs and pandas' missing-value tokens (``NA``, ``NaN``, ...)
+    are missing, as before. *f* is a path (compression is inferred from the
+    name) or a file-like object. A path that can be read only once, such as
+    a FIFO, ``/dev/stdin`` or a shell process substitution ``<(zcat f.gz)``,
+    is read once into memory.
+    """
+    source, compression = f, "infer"
+    if hasattr(f, "read"):
+        # the table is parsed twice below, so buffer a stream
+        content = f.read()
+        f = io.StringIO(content) if isinstance(content, str) else io.BytesIO(content)
+    elif os.path.exists(f) and not os.path.isfile(f):
+        # likewise a local path that is not a regular file: it may be
+        # readable only once. Anything else (a URL, an unexpanded ~, a
+        # missing path) goes to pandas as before. The buffer has no name,
+        # so take the compression from the path's.
+        name = os.fspath(f)
+        compression = next(
+            (method for ext, method in _COMPRESSION_EXTS.items() if name.lower().endswith(ext)),
+            None,
+        )
+        with open(name, "rb") as fh:
+            f = io.BytesIO(fh.read())
+
+    def read(**kwargs):
+        if hasattr(f, "seek"):
+            f.seek(0)
+        return pandas.read_csv(f, sep=None, engine="python", compression=compression, **kwargs)
+
+    table = read(index_col=0)
+    # A second parse reads the first field of every line as text; below the
+    # header line, those are the IDs as written. (pandas applies no dtype to
+    # the index column when the header leaves its name empty or omits its
+    # field, so the IDs cannot come from a typed parse of the index.)
+    ids = read(header=None, usecols=[0], dtype=str).iloc[1:, 0]
+    if len(ids) == len(table):
+        table.index = pandas.Index(ids.to_numpy(), name=table.index.name)
+    else:
+        logger.warning("could not read the IDs of %s as text; pandas typed them", source)
+    return table
+
+
 class CountMatrixFile(CountMatrix):
     def __init__(self, count_f, column_data_f=None, design=None, **kwargs):
 
-        counts = pandas.read_csv(
-            count_f,
-            sep=None,  # sniff the format automatically
-            engine="python",
-            index_col=0,
-        )
+        counts = read_id_table(count_f)
 
         column_data = None
         if column_data_f is not None:
-            column_data = pandas.read_csv(column_data_f, sep=None, engine="python", index_col=0)
+            column_data = read_id_table(column_data_f)
 
         CountMatrix.__init__(self, counts, column_data=column_data, design=design, **kwargs)
 

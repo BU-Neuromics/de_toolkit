@@ -9,6 +9,7 @@ allowed_by: [reasonable]
 reason: "Option C of DETK-0014: the page sets every view text field as text, so no builder escapes and no user string becomes markup"
 revisions:
   - {date: 2026-11-09, by: DETK/developer, change: "Chart actions export only: View Source and Compiled and Editor off; chart ids end in _vis so no card id can equal one; pca-1 id collision noted as a follow-up", why: review of s2}
+  - {date: 2026-11-09, by: DETK/developer, change: "Tooltip written as text by the page's own handler instead of vega-tooltip; card ids never equal the page's or vega-embed's reserved ids; harness awaits exports; old example report rebuild noted as a release task", why: second review of s2}
 ---
 
 # View text fields render as text; builders no longer escape
@@ -82,7 +83,14 @@ an injective fragment (letters, digits and `-` kept; any other code unit,
 `_` included, written `_<hex>_`), so registered modules keep their ids
 (`pca`, `deseq2counts-1`), two distinct ids never share a card id, and an
 unknown name cannot break an attribute; `data-mod` keeps the original id,
-which keys the raw data. A card's chart container is the card id plus
+which keys the raw data. A module named like one of the ids the page or
+vega-embed give their own elements (`main`, `nav`, `meta`, `tray-toggle`,
+`theme-toggle`, `theme-icon`, `theme-label`, `detk-modules`, `detk-raw`,
+`detk-tooltip`, `vg-tooltip-element`, `vega-embed-style`,
+`vega-tooltip-style`) also has its first character escaped (`main` becomes
+`_6d_ain`); a letter is otherwise never escaped, so the encoding stays
+injective and no card can take one of those ids. No registered module's
+id is reserved, so theirs are unchanged. A card's chart container is the card id plus
 `_vis`: every `domId` output holds an even number of `_`, so no card id can
 equal a chart id (with `-vis`, an unknown module named `pca-vis` took the
 PCA chart's id).
@@ -96,18 +104,36 @@ all three off and keeps only "Save as SVG" and "Save as PNG", which download
 a file and draw names as text (Vega's SVG renderer escapes them). "Show
 data" on each card is the way to see a module's data, as text.
 
+The charts' tooltip is the same sink. vega-embed's default tooltip handler
+(vega-tooltip, in the vendored vega-embed 6.29.0) sets `innerHTML` from a
+formatter that escapes only `&` and `<` and turns a field named `image`
+into `<img src="...">`; a `data:` URL keeps its `"`, so a covariate column
+named `image` (the PCA chart puts every covariate in its tooltip) could add
+an `onerror` handler that runs on hover. The page passes its own tooltip
+handler instead: it writes every key and value as text with `textContent`,
+gives no key special meaning and loads nothing.
+
 ## Consequences
 
-- No descriptor text field, module name or id can insert markup into the
-  page, and no chart action writes the spec as HTML; the template's only
-  `innerHTML` assignment is the static SVG and its vega-embed actions are
-  export only (template tests check both). `tests/report/test_report_view_text.py`
+- No descriptor text field, module name or id is inserted as markup by
+  the card builder, no chart action writes the spec as HTML, and the chart
+  tooltip writes text only; the template's only `innerHTML` assignment is
+  the static SVG, its vega-embed actions are export only and its embed call
+  passes the page's tooltip handler (template tests check all three). This
+  covers the page's own code and the vega-embed paths it leaves on; Vega's
+  own canvas and SVG drawing of chart text is relied on, not re-checked. `tests/report/test_report_view_text.py`
   renders a report with a hostile string in each field and runs the page's
   own script in jsdom, Vega charts included: zero injected elements, every
-  string shown exactly as written, no window opened when every chart action
-  is clicked, and unique ids across the page; before the change the same
+  string shown exactly as written, every tooltip (driven through the view's
+  own tooltip handler for every mark that has one) shown as `key: value`
+  text with no element but `div` and `span` and no handler, no window
+  opened when every chart action is clicked, every export awaited and
+  checked, and unique ids across the page, modules named like the
+  reserved ids included; before the change the same
   report injected twelve `img` elements, and with View Source on, a
-  hostile counts header put 42 `img` elements into the source windows.
+  hostile counts header put 42 `img` elements into the source windows, and
+  with vega-embed's default tooltip a covariate column named `image` put an
+  `img[onerror]` into each of six PCA tooltips (six handlers ran).
 - Builders and `view_for` return plain text; `report_specs.py`'s module
   docstring says so. A builder that escapes would now show `&lt;` to the
   user (a test checks the notes are unescaped).
@@ -121,8 +147,15 @@ data" on each card is the way to see a module's data, as text.
   `pca-1`; the two cards then share an id and one's "Show data" shows the
   other's JSON. `domId` cannot fix this, since its input is already
   duplicated. Also outside it: a covariate name holding a quote, `.` or `[`
-  breaks the PCA chart's field access (a chart error, not injection), and
-  the checked-in `docs/example/detk_report.html` still has View Source on
-  until it is rebuilt.
+  breaks the PCA chart's field access (a chart error, not injection).
+- The checked-in `docs/example/detk_report.html` was built with the old
+  template: `innerHTML` cards, View Source on and vega-embed's default
+  tooltip. Its data is the fixed airway example with no markup in it, so it
+  is not exploitable as published, but it should be rebuilt before the 1.0
+  cut so the published example matches this template; that is a separate
+  release task, not this node.
+- The tooltip behaviour above depends on the vendored vega-embed version
+  (6.29.0; its README says only "6.x"). Pinning it there is outside this
+  node.
 - Revisit if a view needs real markup in its text; add a separate,
   explicitly HTML field then rather than making text fields HTML again.

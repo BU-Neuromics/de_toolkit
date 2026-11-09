@@ -62,7 +62,8 @@ const dom = new JSDOM(html, {
       set(f) {
         embed = function (el, spec, opts) {
           const p = f.apply(this, arguments);
-          embeds.push({ target: el.id, actions: (opts || {}).actions, done: p });
+          const o = opts || {};
+          embeds.push({ target: el.id, actions: o.actions, tooltip: typeof o.tooltip, done: p });
           return p;
         };
       },
@@ -84,12 +85,23 @@ function readBlob(b) {
 async function main() {
   // the page builds its cards synchronously while the document is parsed; the
   // charts embed asynchronously
+  // every export the menus start: vega-embed sets the link's href when its
+  // view.toImageURL promise settles
+  const imageURLs = [];
   for (const e of embeds) {
     try {
-      await e.done;
+      e.result = await e.done;
     } catch (err) {
       errors.push("embed " + e.target + ": " + String(err && err.message));
+      continue;
     }
+    const view = e.result.view;
+    const toImageURL = view.toImageURL.bind(view);
+    view.toImageURL = (...args) => {
+      const p = toImageURL(...args);
+      imageURLs.push(p);
+      return p;
+    };
   }
   const text = (n) => (n ? n.textContent : null);
   const all = (root, sel) => Array.from(root.querySelectorAll(sel));
@@ -144,18 +156,60 @@ async function main() {
     };
   });
 
+  // hover every mark that has a tooltip: call the view's own tooltip
+  // handler, as a pointer move over it does, and record what it shows
+  const tooltips = [];
+  function withTooltip(node, out) {
+    if (!node) return out;
+    if (node.tooltip !== undefined && node.tooltip !== null) out.push(node);
+    (node.items || []).forEach((c) => withTooltip(c, out));
+    return out;
+  }
+  for (const e of embeds) {
+    if (!e.result) continue;
+    const view = e.result.view;
+    const handler = view.tooltip();
+    for (const item of withTooltip(view.scenegraph().root, [])) {
+      const ev = new w.MouseEvent("pointermove", { clientX: 5, clientY: 5 });
+      handler.call(view, view._handler, ev, item, item.tooltip);
+      const tip = d.getElementById("detk-tooltip") || d.getElementById("vg-tooltip-element");
+      if (!tip) {
+        tooltips.push({ target: e.target, shown: false });
+        continue;
+      }
+      const els = all(tip, "*");
+      tooltips.push({
+        target: e.target,
+        shown: true,
+        rows: all(tip, ".tip-row").map(text),
+        tags: [...new Set(els.map((x) => x.tagName.toLowerCase()))].sort(),
+        injected: all(tip, "img, script, iframe, object, embed, svg, a").length,
+        handlers: els.filter((x) => [...x.attributes].some((a) => /^on/i.test(a.name))).length,
+      });
+      // a broken image's error event is what runs an injected onerror
+      all(tip, "img").forEach((img) => img.dispatchEvent(new w.Event("error")));
+    }
+  }
+
   // click every action in every chart menu: none may open a window
   for (const a of all(d, ".vega-actions a")) {
     a.dispatchEvent(new w.MouseEvent("mousedown", { bubbles: true }));
     a.click();
   }
-  await new Promise((r) => setTimeout(r, 100));
+  // wait for every export to finish (its href is set when its promise
+  // settles), so none is skipped below
+  await Promise.allSettled(imageURLs);
+  await new Promise((r) => setTimeout(r, 0));
   // an export link's href is now a Blob URL to download; an SVG export holds
   // the chart's text, which must stay text there too
   const exports = [];
   for (const a of all(d, ".vega-actions a[download]")) {
-    const m = /^blob:detk\/(\d+)$/.exec(a.getAttribute("href") || "");
+    const href = a.getAttribute("href") || "";
+    const m = /^blob:detk\/(\d+)$/.exec(href);
     if (!m) {
+      // a PNG export is a data URL; anything else is an export that never
+      // finished
+      if (!href.startsWith("data:image/png")) errors.push("export not done: " + a.download);
       exports.push({ download: a.getAttribute("download"), svg: null });
       continue;
     }
@@ -190,7 +244,8 @@ async function main() {
       handlers,
       alerts: w.__alerts,
       ids: all(d, "[id]").map((e) => e.id),
-      embeds: embeds.map((e) => ({ target: e.target, actions: e.actions })),
+      embeds: embeds.map((e) => ({ target: e.target, actions: e.actions, tooltip: e.tooltip })),
+      tooltips,
       opened,
       written,
       exports,

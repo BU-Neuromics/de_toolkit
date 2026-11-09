@@ -77,6 +77,11 @@
   footer { color:var(--muted-solid); font-size:12px; padding:0 32px 40px; text-align:center; }
   .vega-embed .vega-actions a { color:var(--fg) !important; }
   .vega-embed summary { border-color:var(--border) !important; }
+  #detk-tooltip { position:fixed; z-index:30; display:none; pointer-events:none; max-width:420px;
+                  background:var(--bg); color:var(--fg); border:1px solid var(--border); border-radius:6px;
+                  padding:6px 9px; font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,.15);
+                  white-space:pre-wrap; overflow-wrap:anywhere; }
+  #detk-tooltip .tip-key { color:var(--muted-solid); }
 </style>
 </head>
 <body>
@@ -160,12 +165,26 @@
     return e;
   }
 
+  // ids the page or vega-embed (or the tooltip below) give their own
+  // elements: no card may take one (#65)
+  var RESERVED_IDS = ["main", "nav", "meta", "tray-toggle", "theme-toggle", "theme-icon",
+    "theme-label", "detk-modules", "detk-raw", "detk-tooltip", "vg-tooltip-element",
+    "vega-embed-style", "vega-tooltip-style"];
+
   // a module id as a safe, unique fragment: letters, digits and "-" stay,
-  // any other UTF-16 code unit (including "_") becomes _<hex>_
+  // any other UTF-16 code unit (including "_") becomes _<hex>_. A reserved
+  // id has its first character escaped too ("main" becomes "_6d_ain"):
+  // a letter is otherwise never escaped, so the result is still unique,
+  // still has an even number of "_", and equals no reserved id
   function domId(id) {
-    return String(id).replace(/[^A-Za-z0-9-]/g, function (c) {
+    var s = String(id);
+    var out = s.replace(/[^A-Za-z0-9-]/g, function (c) {
       return "_" + c.charCodeAt(0).toString(16) + "_";
     });
+    if (RESERVED_IDS.indexOf(s) >= 0) {
+      out = "_" + s.charCodeAt(0).toString(16) + "_" + out.slice(1);
+    }
+    return out;
   }
 
   Object.keys(families).forEach(function (fam) {
@@ -256,6 +275,49 @@
     return String(x);
   }
 
+  // the charts' tooltip. vega-embed's default (vega-tooltip) writes the
+  // tooltip with innerHTML, escaping only "&" and "<", and turns a field
+  // named "image" into an <img> (so a covariate column "image" could run
+  // script on hover). This one writes every key and value as text, with no
+  // special keys and nothing loaded (#65, DETK-0022).
+  var tip = null;
+  function tipText(x) {
+    if (x === null || x === undefined) return "—";
+    if (typeof x === "object") {
+      try { return JSON.stringify(x); } catch (e) { return String(x); }
+    }
+    return String(x);
+  }
+  function showTooltip(handler, event, item, value) {
+    if (!tip) {
+      tip = el("div");
+      tip.id = "detk-tooltip";
+      tip.setAttribute("role", "tooltip");
+      document.body.appendChild(tip);
+    }
+    if (value === null || value === undefined || value === "") {
+      tip.style.display = "none";
+      return;
+    }
+    tip.textContent = "";
+    if (typeof value === "object" && !Array.isArray(value)) {
+      Object.keys(value).forEach(function (k) {
+        var row = el("div", "tip-row");
+        row.appendChild(el("span", "tip-key", k + ": "));
+        row.appendChild(el("span", "tip-val", tipText(value[k])));
+        tip.appendChild(row);
+      });
+    } else {
+      tip.appendChild(el("div", "tip-row", tipText(value)));
+    }
+    tip.style.display = "block";
+    var x = (event && event.clientX) || 0, y = (event && event.clientY) || 0;
+    var w = tip.offsetWidth || 0, h = tip.offsetHeight || 0;
+    var vw = window.innerWidth || 0, vh = window.innerHeight || 0;
+    tip.style.left = Math.max(0, x + 12 + w > vw ? x - 12 - w : x + 12) + "px";
+    tip.style.top = Math.max(0, y + 12 + h > vh ? y - 12 - h : y + 12) + "px";
+  }
+
   function embedAll() {
     var cfg = vegaConfig();
     vegaCharts.forEach(function (c) {
@@ -269,6 +331,7 @@
         // "Open in Vega Editor" posts the spec, user data and all, to an
         // outside site. "Show data" shows the module's JSON as text (#65).
         actions: { export: true, source: false, compiled: false, editor: false },
+        tooltip: showTooltip,
         renderer: "canvas", config: cfg
       }).catch(function (err) { target.textContent = "chart error: " + err; });
     });

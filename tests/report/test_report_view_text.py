@@ -9,8 +9,9 @@ The DOM tests render a real report and run the page's own script in jsdom
 (``render_dom.js``). They need node and jsdom (``npm install jsdom``, then
 point ``NODE_PATH`` at its ``node_modules``) and are skipped without them; the
 template checks below run everywhere. The harness renders the Vega charts
-too (it stubs a canvas and ``structuredClone``), clicks every action in their
-menus and fails on any page error.
+too (it stubs a canvas and ``structuredClone``), hovers every mark that has a
+tooltip (through the view's own tooltip handler), clicks every action in their
+menus, waits for every export and fails on any page error.
 """
 
 import json
@@ -118,12 +119,20 @@ def _no_markup(page):
     # no chart asks for View Source, View Compiled Vega or Open in Vega
     # Editor, and clicking every action that is offered opens no window
     assert all(e["actions"] == ACTIONS for e in page["embeds"])
+    # every chart uses the page's own tooltip, which writes text only
+    assert all(e["tooltip"] == "function" for e in page["embeds"])
+    for t in page["tooltips"]:
+        assert t["shown"], t
+        assert t["injected"] == t["handlers"] == 0, t
+        assert set(t["tags"]) <= {"div", "span"}, t
     assert all(c["actions"] in ([], EXPORTS) for c in page["cards"])
     assert page["opened"] == [] and page["written"] == []
     for x in page["exports"]:
         assert x["svg"] is None or x["svg"]["injected"] == x["svg"]["handlers"] == 0
     # ids are unique across the whole page, chart containers included
     assert len(set(page["ids"])) == len(page["ids"])
+    for x in page["exports"]:
+        assert x["download"] in ("visualization.svg", "visualization.png"), x
 
 
 def _card(page, module):
@@ -196,6 +205,17 @@ def test_template_offers_no_chart_source_view():
     assert json.loads(re.sub(r"(\w+):", r'"\1":', actions)) == ACTIONS
     # chart containers end in "_vis", which domId never produces
     assert 'vis.id = cardId + "_vis";' in page
+
+
+def test_template_sets_its_own_tooltip():
+    # vega-embed's default tooltip (vega-tooltip) writes innerHTML and turns
+    # an "image" field into an <img>: the page passes a handler that writes
+    # text (and the innerHTML check above covers that handler too)
+    with open(TEMPLATE, encoding="utf-8") as f:
+        page = f.read()
+    assert re.findall(r"\btooltip:\s*([^,\s]+)", page) == ["showTooltip"]
+    (body,) = re.findall(r"function showTooltip\(.*?\n  \}\n", page, re.S)
+    assert "textContent" in body and "innerHTML" not in body and "<img" not in body
 
 
 def test_builders_leave_notes_unescaped(hostile_builders):
@@ -306,3 +326,88 @@ def test_unknown_module_named_like_a_chart_does_not_collide(tmp_path):
     (link,) = [a for a in page["nav"] if a["target"] == "deseq2counts-vis"]
     assert link["href"] == "#deseq2counts-vis"
     assert page["ids"].count("deseq2counts-vis") == 1
+
+
+def _pca(covs):
+    samples = ["s1", "s2", "s3"]
+    return _mod(
+        "pca",
+        {
+            "column_names": samples,
+            "column_variables": {
+                "sample_names": samples,
+                "columns": [{"column": c, "values": v} for c, v in covs.items()],
+            },
+            "components": [
+                {"name": "PC1", "scores": [1.0, -2.0, 0.5], "perc_variance": 0.4},
+                {"name": "PC2", "scores": [0.2, 0.1, -0.3], "perc_variance": 0.2},
+            ],
+        },
+    )
+
+
+@needs_jsdom
+def test_tooltip_shows_a_normal_point_as_key_value_text(tmp_path):
+    page = _render(_write_report(tmp_path, [_pca({"status": ["A", "B", "A"]})]))
+    _no_markup(page)
+    tips = [t for t in page["tooltips"] if t["target"] == "pca_vis"]
+    assert len(tips) == 3
+    assert ["sample: s1", "PC1: 1.00", "PC2: 0.20", "status: A"] in [t["rows"] for t in tips]
+
+
+@needs_jsdom
+def test_tooltip_writes_hostile_fields_as_text(tmp_path):
+    # a covariate column named "image" became <img src="..."> in vega-tooltip,
+    # and a data: URL keeps its '"', so this value added an onerror handler
+    img = 'data:x"onerror="alert(document.domain)//'
+    # a column name with a quote, "." or "[" breaks Vega's field path (out of
+    # scope here), so the hostile name has none
+    name = "<img src=x onerror=alert(7)><b>x</b>"
+    covs = {"image": [img] * 3, "title": [EVIL] * 3, name: [EVIL] * 3}
+    page = _render(_write_report(tmp_path, [_pca(covs)]))
+    _no_markup(page)
+    tips = [t for t in page["tooltips"] if t["target"] == "pca_vis"]
+    assert len(tips) == 3
+    for t in tips:
+        assert t["rows"][3:] == [f"image: {img}", f"title: {EVIL}", f"{name}: {EVIL}"]
+    assert page["alerts"] == []
+
+
+# the ids the page and vega-embed give their own elements
+RESERVED = [
+    "main",
+    "nav",
+    "meta",
+    "tray-toggle",
+    "theme-toggle",
+    "theme-icon",
+    "theme-label",
+    "detk-modules",
+    "detk-raw",
+    "detk-tooltip",
+    "vg-tooltip-element",
+    "vega-embed-style",
+    "vega-tooltip-style",
+]
+
+
+@needs_jsdom
+def test_module_named_like_a_page_element_gets_another_id(tmp_path):
+    mods = [_pca({"status": ["A", "B", "A"]})] + [_mod(n, {}) for n in RESERVED]
+    mods.append(_mod("_6d_ain", {}))  # what "main" becomes, written out
+    page = _render(_write_report(tmp_path, mods))
+    _no_markup(page)
+    for n in RESERVED:
+        card = _card(page, n)
+        assert card["id"] not in RESERVED
+        assert card["id"] == f"_{ord(n[0]):x}_{n[1:]}"
+        assert card["shownName"] == n
+        (link,) = [a for a in page["nav"] if a["text"] == n]
+        assert link["href"] == "#" + card["id"]
+    assert _card(page, "main")["id"] == "_6d_ain"
+    assert _card(page, "_6d_ain")["id"] == "_5f_6d_5f_ain"
+    # the page's own elements and the tooltip keep their ids
+    for n in ["main", "nav", "meta", "theme-icon", "theme-toggle", "detk-raw", "detk-tooltip"]:
+        assert page["ids"].count(n) == 1, n
+    # registered modules keep their plain ids
+    assert _card(page, "pca")["id"] == "pca"

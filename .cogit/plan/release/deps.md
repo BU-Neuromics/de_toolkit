@@ -4,7 +4,7 @@ objective: uv.lock carries the patched Pillow and certifi, so the Dependabot ale
 acceptance:
   - the Dependabot alerts for Pillow and certifi on main are closed by the update
   - the full test suite, with R, passes on the updated lock
-scope: [uv.lock, pyproject.toml]
+scope: [uv.lock, pyproject.toml, README.md, docs/index.md, docs/agent-skills.md, .github/workflows/ci.yml, +CHANGELOG]
 issue: 53
 visited: b94644c
 prev: [DETK-0016]

@@ -66,8 +66,8 @@ but release/deps' acceptance is not met.
 
 ## Decision
 
-Pending Adam's answer. Recommended: Option A, since 3.10 is past end of
-life and 1.0 is the natural point to set the floor.
+Option A, chosen by Adam on 2026-11-09: drop Python 3.10 in 1.0, so the
+lock carries only the patched Pillow and its alerts close.
 
 ## Consequences
 

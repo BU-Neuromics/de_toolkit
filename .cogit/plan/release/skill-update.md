@@ -14,7 +14,7 @@ visited: a328c16
 
 ## Implementation plan
 
-- [ ] @developer Add the new commands to the skill and its references, restore `detk-norm library`; open the PR <!-- s1 -->
+- [x] @developer Add the new commands to the skill and its references, restore `detk-norm library`; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

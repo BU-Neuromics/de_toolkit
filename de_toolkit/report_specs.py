@@ -879,6 +879,18 @@ REGISTRY = {
         "Distribution of the feature lengths used in the normalization.",
         build_fpkmcounts,
     ),
+    "cpmcounts": (
+        "norm",
+        "CPM normalization",
+        "Total counts per sample, the divisor before scaling to counts per million.",
+        build_librarysize,
+    ),
+    "tpmcounts": (
+        "norm",
+        "TPM normalization",
+        "Distribution of the feature lengths used before scaling to transcripts per million.",
+        build_fpkmcounts,
+    ),
     # transform family
     "plogcounts": (
         "transform",

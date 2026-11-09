@@ -44,11 +44,24 @@ write.table(counts(dds, normalized=TRUE), norm.counts.fn)
 ## `library`
 
 Library size normalization: counts in each column are divided by the sum of
-that column.
+that column, so each column of the output sums to 1. Use [`cpm`](#cpm) for
+the same values scaled to counts per million.
 
 ```text
 Usage:
     detk-norm library [options] <counts_fn>
+```
+
+## `cpm`
+
+Counts Per Million: counts in each column are divided by the sum of that
+column and multiplied by one million, so each column of the output sums to
+1,000,000. This is `library` scaled by 10^6. A sample with zero total counts
+produces `NaN` values and a warning.
+
+```text
+Usage:
+    detk-norm cpm [options] <counts_fn>
 ```
 
 ## `fpkm`
@@ -61,10 +74,46 @@ two-column character-delimited file (format is sniffed) of feature identifier
 and length in bases:
 
 - every feature in the counts file must have an entry in the lengths file
+- each feature may be listed only once; a lengths file that lists a feature
+  twice is refused
 - the lengths file may contain unused entries
 - the two files do not need to be in the same order
+- feature identifiers are matched as text, so numeric identifiers (such as
+  Entrez gene IDs) match, and appear in the output as in the counts file
+- an optional header line is allowed: the first line is skipped as a header
+  only when its length field is text that is neither a number nor a
+  missing-value token (empty, `NA`, `NaN`, `N/A`, `NULL`, `None`); otherwise it
+  is read as a feature
 
 ```text
 Usage:
     detk-norm fpkm [options] <counts_fn> <lengths_fn>
+```
+
+## `tpm`
+
+Transcripts Per Million: each count is divided by the feature's length in
+kilobases, giving a per-kilobase rate, and each column of rates is then
+scaled to sum to 1,000,000:
+
+```text
+rate[g, s] = count[g, s] / (length[g] / 1000)
+TPM[g, s]  = rate[g, s] / sum over g of rate[g, s] * 10^6
+```
+
+Unlike FPKM, TPM values sum to the same total in every sample, so the
+proportion of a sample's transcripts a feature represents is comparable
+across samples. When every feature has the same length, TPM equals CPM.
+
+`tpm` takes the same lengths file as [`fpkm`](#fpkm), with the same rules
+(including the optional header line and the refusal of duplicated feature
+identifiers); in addition every length must be a positive number, and a
+missing or non-numeric length is reported as not a positive number. The
+output has the same rows, in the same order, as the counts file. A sample
+whose counts are all zero has no TPM (or CPM) values: its column is empty
+(NaN) and a warning is logged.
+
+```text
+Usage:
+    detk-norm tpm [options] <counts_fn> <lengths_fn>
 ```

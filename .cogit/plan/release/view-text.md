@@ -10,6 +10,8 @@ scope: [de_toolkit/templates/report.html, de_toolkit/report_specs.py, tests/repo
 prev: [release/escape-json]
 issue: 65
 visited: 74632ba
+status: done
+done: 87d4c4c
 ---
 
 # Render all view text as plain text
@@ -18,7 +20,7 @@ visited: 74632ba
 
 - [x] @developer Render every descriptor text field as text in the page's card builder; drop builders' own escaping; tests; CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

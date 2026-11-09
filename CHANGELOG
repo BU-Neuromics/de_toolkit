@@ -71,6 +71,15 @@ predates everything below.
   longer breaks the report or injects markup; object keys (such as sample
   names) holding a quote or backslash no longer make the payload invalid
   JSON (#46)
+- A one-column input file, such as a bare list of IDs, is read as one
+  column; the delimiter sniffer no longer splits it on a letter of its
+  header (`gene_id` became `g`, `n`, `_id`). The delimiter of every sniffed
+  input (counts and column data, `detk-util annotate`, `tidy`,
+  `tidy-counts`, `tidy-covs`, `detk-enrich fgsea` results) is now one of
+  comma, tab, semicolon, pipe or space, taken from the first line, with
+  space used only when no other splits it (a pipe table with a space in a
+  header, such as a BioMart export, is no longer split on the spaces). A
+  URL input is fetched once (#47)
 
 ## [ 0.9.12 ]
 ### Added

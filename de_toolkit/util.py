@@ -50,14 +50,15 @@ Options:
 
 Annotate a result table (e.g. the output of detk-de) with feature metadata,
 such as gene symbols, from a user-supplied mapping table. Both files are
-delimited text files whose delimiter is sniffed; the result is read and
-written back as text, so IDs such as 007 are kept as written. Rows and
-columns of the result table keep their order and number, and the added
-columns come last: an ID with several mapping rows gets the distinct values
-joined with ';', and an ID with no mapping row (or only rows whose added
-columns are empty), or an empty or NA ID, gets empty columns; to drop it,
-use the option --drop-unmapped. Columns are given by name or by 0-based
-position.
+delimited text files whose delimiter (comma, tab, semicolon, pipe or space)
+is sniffed from the first line, a file with none being one column; the
+result is read and written back as text, so IDs such as 007 are kept as
+written. Rows and columns of the result table keep their order and number,
+and the added columns come last: an ID with several mapping rows gets the
+distinct values joined with ';', and an ID with no mapping row (or only rows
+whose added columns are empty), or an empty or NA ID, gets empty columns; to
+drop it, use the option --drop-unmapped. Columns are given by name or by
+0-based position.
 
 Usage:
     detk-util annotate [options] <result_fn> <mapping_fn>
@@ -130,7 +131,14 @@ import pandas
 import re
 import sys
 
-from .common import DetkModule, _cli_doc, set_logging, make_cli_count_obj, write_output
+from .common import (
+    DetkModule,
+    _cli_doc,
+    make_cli_count_obj,
+    read_delimited,
+    set_logging,
+    write_output,
+)
 
 # setup logging, null on the library level
 logger = logging.getLogger(__name__)
@@ -351,10 +359,8 @@ def _annotate_main(args):
     try:
         # read as text, so numeric IDs keep their leading zeros and every
         # value is written back as it was read
-        result = pandas.read_csv(
-            args["<result_fn>"], sep=None, engine="python", dtype=str, keep_default_na=False
-        )
-        mapping = pandas.read_csv(args["<mapping_fn>"], sep=None, engine="python", dtype=str)
+        result = read_delimited(args["<result_fn>"], dtype=str, keep_default_na=False)
+        mapping = read_delimited(args["<mapping_fn>"], dtype=str)
         logger.info("shape of result: %s", result.shape)
         logger.info("shape of mapping: %s", mapping.shape)
         annotated = Annotate(
@@ -801,9 +807,9 @@ def main(argv=sys.argv):
         logger.info("cmd: %s", " ".join(argv))
 
         # read in the counts and covs so we can compare
-        counts = pandas.read_csv(args["<counts_fn>"], index_col=0, sep=None, engine="python")
+        counts = read_delimited(args["<counts_fn>"], index_col=0)
         logger.info("shape of counts: %s", counts.shape)
-        covs = pandas.read_csv(args["<cov_fn>"], index_col=0, sep=None, engine="python")
+        covs = read_delimited(args["<cov_fn>"], index_col=0)
         logger.info("shape of covs: %s", covs.shape)
 
         logger.info("shape of counts after merge: %s", count_obj.counts.shape)

@@ -206,7 +206,6 @@ def test_read_delimited_gzipped_url(tmp_path):
     assert list(read_id_table(fn.as_uri()).index) == _IDS
 
 
-
 @pytest.mark.parametrize("name", ["counts.csv.gz", "counts.csv"])
 def test_url_with_content_encoding_gzip(name):
     # a server (S3 with ContentEncoding=gzip, say) may send gzip bytes with
@@ -237,6 +236,7 @@ def test_url_with_content_encoding_gzip(name):
     finally:
         server.shutdown()
         server.server_close()
+
 
 # the CLI readers in util and enrich
 

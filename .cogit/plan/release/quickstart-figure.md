@@ -13,7 +13,7 @@ visited: c060d5a
 
 ## Implementation plan
 
-- [ ] @developer Redraw the SVG with detk-util gather, regenerate the PNG; open the PR <!-- s1 -->
+- [x] @developer Redraw the SVG with detk-util gather, regenerate the PNG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

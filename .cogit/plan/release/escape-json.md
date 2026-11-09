@@ -6,6 +6,8 @@ acceptance:
 scope: [de_toolkit/templates/report.html, de_toolkit/report.py, tests/report/, +CHANGELOG]
 issue: 46
 visited: b94644c
+status: done
+done: 782af8f
 ---
 
 # Escape the module JSON in the report
@@ -14,7 +16,7 @@ visited: b94644c
 
 - [x] @developer Fix it with tests and a CHANGELOG entry; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

@@ -3,6 +3,8 @@ Usage:
     detk-norm deseq2 [options] <counts_fn>
     detk-norm library [options] <counts_fn>
     detk-norm fpkm [options] <counts_fn> <lengths_fn>
+    detk-norm cpm [options] <counts_fn>
+    detk-norm tpm [options] <counts_fn> <lengths_fn>
 Options:
     -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
 """
@@ -43,7 +45,10 @@ being the name of one of the rows in the counts file and the second is the
 effective length of the gene/sequence/etc to use in the normalization.
 
 *Note:* Program will throw an error and exit if there are genes/sequences
-in the counts file that are not found in the lengths file.
+in the counts file that are not found in the lengths file, or if a name is
+listed more than once in the lengths file. Names are matched as text. The
+first line of the lengths file is skipped as a header only when its second
+field is text that is not a number or a missing value such as NA.
 
 The order of names in the counts and lengths files do *not* have to be the
 same.
@@ -54,6 +59,40 @@ Usage:
 Options:
     -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
 
+""",
+    "cpm": r"""
+Perform Counts Per Million normalization on the columns of the given counts
+matrix. Counts in each column are divided by the sum of that column and
+multiplied by one million, so every column of the output sums to 1e6.
+
+Usage:
+    detk-norm cpm [options] <counts_fn>
+
+Options:
+    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+""",
+    "tpm": r"""
+Perform Transcripts Per Million normalization on the given counts file. Each
+count is divided by its feature's length in kilobases, then each column is
+scaled so it sums to one million. <lengths_fn> is the same two column
+delimited file the fpkm subcommand takes: the first column is the name of a
+row in the counts file, the second its effective length in bases.
+
+*Note:* Program will throw an error and exit if there are genes/sequences
+in the counts file that are not found in the lengths file, if any of
+their lengths is not a positive number, or if a name is listed more than
+once in the lengths file. Names are matched as text. The first line of the
+lengths file is skipped as a header only when its second field is text that
+is not a number or a missing value such as NA.
+
+The order of names in the counts and lengths files do *not* have to be the
+same.
+
+Usage:
+    detk-norm tpm [options] <counts_fn> <lengths_fn>
+
+Options:
+    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
 """,
 }
 from docopt import docopt
@@ -266,14 +305,7 @@ class FPKMCounts(DetkModule):
         self.count_df = count_df
         self.lengths = lengths
 
-        missing_indices = count_df.index.difference(lengths.index)
-        if len(missing_indices) != 0:
-            raise NormalizationException(
-                f"{len(missing_indices)} indices in the counts matrix were "
-                + "not found in the lengths parameters, here are a couple: \n"
-                + "\n".join(_ for _ in list(missing_indices)[:5])
-            )
-        lens = lengths[count_df.index]
+        lens = _align_lengths(count_df, lengths)
         res = count_df.div(1e6 * lens, axis=0)
         self.res = res
 
@@ -292,6 +324,177 @@ class FPKMCounts(DetkModule):
         lens = pandas.to_numeric(self.lengths, errors="coerce").dropna()
         quantiles = [{"q": q, "length": float(v)} for q, v in zip(qs, np.percentile(lens, qs))]
         return {"num_kept": len(self.res), "length_quantiles": quantiles}
+
+
+def _length_quantiles(lengths):
+    "Summarize a feature-length vector as 5-percentile steps for the report."
+    qs = list(range(0, 101, 5))
+    lens = pandas.to_numeric(lengths, errors="coerce").dropna()
+    return [{"q": q, "length": float(v)} for q, v in zip(qs, np.percentile(lens, qs))]
+
+
+def _align_lengths(count_df, lengths):
+    """
+    Return *lengths* (a pandas.Series indexed by feature name) aligned to the
+    rows of *count_df*, indexed like *count_df*. Feature names are matched as
+    strings, so numeric IDs (e.g. Entrez gene IDs, read as integers from the
+    counts file) match the same IDs in the lengths file. Raises
+    NormalizationException when a feature name appears more than once in
+    *lengths* or a feature of *count_df* has no length.
+    """
+    lengths = pandas.Series(lengths.values, index=lengths.index.astype(str))
+    dups = lengths.index[lengths.index.duplicated()].unique()
+    if len(dups) != 0:
+        raise NormalizationException(
+            f"{len(dups)} feature names appear more than once in the lengths "
+            + "parameters, here are a couple: \n"
+            + "\n".join(list(dups)[:5])
+        )
+    keys = count_df.index.astype(str)
+    missing = ~keys.isin(lengths.index)
+    if missing.any():
+        missing_indices = count_df.index[missing]
+        raise NormalizationException(
+            f"{len(missing_indices)} indices in the counts matrix were "
+            + "not found in the lengths parameters, here are a couple: \n"
+            + "\n".join(str(_) for _ in list(missing_indices)[:5])
+        )
+    return pandas.Series(lengths[keys].values, index=count_df.index)
+
+
+def _lengths_for(count_df, lengths):
+    """
+    Like _align_lengths, and also raise NormalizationException when a
+    feature's length is not a positive number.
+    """
+    lens = pandas.to_numeric(_align_lengths(count_df, lengths), errors="coerce")
+    bad = lens.index[~(lens > 0)]
+    if len(bad) != 0:
+        raise NormalizationException(
+            f"{len(bad)} features have a length that is not a positive number, "
+            + "here are a couple: \n"
+            + "\n".join(str(_) for _ in list(bad)[:5])
+        )
+    return lens
+
+
+def read_lengths(lengths_fn):
+    """
+    Read a two column delimited lengths file (feature name, length in bases;
+    the delimiter is sniffed) into a pandas.Series indexed by feature name
+    (as a string). The first line is taken as a header, and skipped, only
+    when its second field is neither a number nor a missing-value token
+    (empty, NA, NaN, N/A, NULL, None); otherwise it is a feature row, so a
+    bad first length is reported like any other. A feature name that
+    appears more than once raises NormalizationException.
+    """
+    df = pandas.read_csv(
+        lengths_fn, sep=None, engine="python", header=None, dtype=str, keep_default_na=False
+    )
+    if df.shape[1] < 2:
+        raise NormalizationException(
+            f"lengths file {lengths_fn} must have two columns, found {df.shape[1]}"
+        )
+    if len(df) and _looks_like_header(df.iloc[0, 1]):
+        df = df.iloc[1:]
+    ids = df.iloc[:, 0].str.strip()
+    dups = ids[ids.duplicated()].unique()
+    if len(dups) != 0:
+        raise NormalizationException(
+            f"lengths file {lengths_fn} lists {len(dups)} feature names more than "
+            + "once, here are a couple: \n"
+            + "\n".join(list(dups)[:5])
+        )
+    return pandas.Series(
+        pandas.to_numeric(df.iloc[:, 1].str.strip(), errors="coerce").values, index=ids.values
+    )
+
+
+_MISSING_TOKENS = {"", "NA", "NAN", "N/A", "NULL", "NONE"}
+
+
+def _looks_like_header(field):
+    "A lengths-file first line is a header when its length field is text."
+    field = str(field).strip()
+    if field.upper() in _MISSING_TOKENS:
+        return False
+    return pandas.isna(pandas.to_numeric(field, errors="coerce"))
+
+
+def cpm(count_df):
+    """
+    Counts Per Million: divide each count by its column sum and multiply by
+    1e6
+    """
+    obj = CPMCounts(count_df)
+    return obj.output
+
+
+class CPMCounts(DetkModule):
+    def __init__(self, count_df):
+        logger.info("running CPM normalization")
+        sizes = count_df.sum(axis=0)
+        logger.info("min/max library size: %d/%d", sizes.min(), sizes.max())
+        if (np.asarray(sizes) == 0).any():
+            logger.warning("some samples have zero total counts, their CPM values are NaN")
+        self["params"] = {}
+        cols = getattr(count_df, "columns", None)
+        names = [str(c) for c in cols] if cols is not None else [str(i) for i in range(len(sizes))]
+        self.library_sizes = dict(zip(names, np.asarray(sizes).tolist()))
+        self.normalized = count_df / sizes * 1e6
+        logger.info("CPM normalization done")
+
+    @property
+    def output(self):
+        return self.normalized
+
+    @property
+    def properties(self):
+        return {"num_features": self.normalized.shape[0], "library_sizes": self.library_sizes}
+
+
+def tpm(count_df, lengths):
+    """
+    Transcripts Per Million: divide each count by its feature length in
+    kilobases, then scale each column to sum to 1e6
+
+    *lengths* should be a pandas.Series of lengths in bases that has an index
+    value for every row name in the counts matrix. If no length is found for a
+    row in the counts matrix, or a length is not positive, an exception is
+    raised.
+    """
+    obj = TPMCounts(count_df, lengths)
+    return obj.output
+
+
+class TPMCounts(DetkModule):
+    def __init__(self, count_df, lengths):
+        logger.info("running TPM normalization")
+        logger.info("number of feature lengths provided: %d", lengths.size)
+
+        self["params"] = {}
+        lens = _lengths_for(count_df, lengths)
+        self.lengths = lens
+
+        rate = count_df.div(lens / 1e3, axis=0)
+        rate_sums = rate.sum(axis=0)
+        if (np.asarray(rate_sums) == 0).any():
+            logger.warning("some samples have zero total counts, their TPM values are NaN")
+        self.normalized = rate / rate_sums * 1e6
+
+        logger.info("TPM normalization done")
+
+    @property
+    def output(self):
+        return self.normalized
+
+    @property
+    def properties(self):
+        # summarized like FPKMCounts: the lengths actually used, as quantiles
+        return {
+            "num_features": self.normalized.shape[0],
+            "length_quantiles": _length_quantiles(self.lengths),
+        }
 
 
 @stub
@@ -331,7 +534,7 @@ def main(argv=sys.argv):
 
     elif cmd == "library":
         try:
-            out = LibrarySize(count_obj)
+            out = LibrarySize(count_obj.counts)
         except Exception as e:
             logger.error(e)
             sys.exit(1)
@@ -342,13 +545,28 @@ def main(argv=sys.argv):
         # providing the lengths that should be used for each ID in the counts
         # file
         try:
-            lengths = pandas.read_csv(args["<lengths_fn>"], sep=None, engine="python")
+            lengths = read_lengths(args["<lengths_fn>"])
         except Exception as e:
             logger.error(e)
             sys.exit(1)
 
         try:
             out = FPKMCounts(count_obj.counts, lengths)
+        except Exception as e:
+            logger.error(e)
+            sys.exit(1)
+
+    elif cmd == "cpm":
+        try:
+            out = CPMCounts(count_obj.counts)
+        except Exception as e:
+            logger.error(e)
+            sys.exit(1)
+
+    elif cmd == "tpm":
+        try:
+            lengths = read_lengths(args["<lengths_fn>"])
+            out = TPMCounts(count_obj.counts, lengths)
         except Exception as e:
             logger.error(e)
             sys.exit(1)

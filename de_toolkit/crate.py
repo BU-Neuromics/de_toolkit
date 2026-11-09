@@ -55,6 +55,8 @@ SUBTOOLS = {
     "deseq2norm": ("detk-norm", "deseq2"),
     "librarysize": ("detk-norm", "library"),
     "fpkmcounts": ("detk-norm", "fpkm"),
+    "cpmcounts": ("detk-norm", "cpm"),
+    "tpmcounts": ("detk-norm", "tpm"),
     "plogcounts": ("detk-transform", "plog"),
     "vstcounts": ("detk-transform", "vst"),
     "rlogcounts": ("detk-transform", "rlog"),

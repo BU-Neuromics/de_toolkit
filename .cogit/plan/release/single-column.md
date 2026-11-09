@@ -7,6 +7,8 @@ scope: [de_toolkit/common.py, de_toolkit/enrich.py, de_toolkit/util.py, tests/co
 prev: [release/padded-ids, release/gather]
 issue: 47
 visited: a328c16
+status: done
+done: ec56f05
 ---
 
 # Read single-column files
@@ -15,7 +17,7 @@ visited: a328c16
 
 - [x] @developer Fix it with tests and a CHANGELOG entry; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

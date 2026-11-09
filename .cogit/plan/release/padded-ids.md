@@ -5,6 +5,8 @@ acceptance:
   - the counts reader reads the ID column as text; 007 is kept in every tool's output and matches a lengths or mapping file, with tests
   - docs/tools/norm.md's sentence on numeric IDs holds for zero-padded IDs
 scope: [de_toolkit/common.py, tests/common/, docs/tools/norm.md, +CHANGELOG]
+issue: 48
+visited: b94644c
 ---
 
 # Read feature IDs as text

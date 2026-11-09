@@ -337,8 +337,10 @@ def _align_lengths(count_df, lengths):
     """
     Return *lengths* (a pandas.Series indexed by feature name) aligned to the
     rows of *count_df*, indexed like *count_df*. Feature names are matched as
-    strings, so numeric IDs (e.g. Entrez gene IDs, read as integers from the
-    counts file) match the same IDs in the lengths file. Raises
+    strings. The counts and lengths file readers already give text IDs, so
+    ``007`` matches only ``007``; the conversion here is for a *count_df* or
+    *lengths* built in Python with integer IDs (e.g. Entrez gene IDs), which
+    then match the same IDs written as text. Raises
     NormalizationException when a feature name appears more than once in
     *lengths* or a feature of *count_df* has no length.
     """

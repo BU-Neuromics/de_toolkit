@@ -20,9 +20,11 @@ predates everything below.
   `detk-norm library` and `detk-norm fpkm` failed on every CLI run (the
   library command was handed the count object, the lengths file was read as
   a table) and now run
-- `detk-norm fpkm` output values change from 0.9.x: FPKM is now
+- FPKM values change from 0.9.x: FPKM is now
   `count * 1e9 / (length * library size)` as documented, where 0.9.x computed
-  `count / (1e6 * length)` and never divided by library size. This is a
+  `count / (1e6 * length)` and never divided by library size. In 0.9.x the
+  wrong values reached users through the Python function
+  `de_toolkit.norm.fpkm()`; the `detk-norm fpkm` command failed outright. This is a
   correction. `fpkm` now also refuses missing, zero and negative lengths, as
   `tpm` does
 

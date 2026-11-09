@@ -21,3 +21,12 @@ visited: a2140bc
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes
+
+Review of PR #51 (approve, 2026-11-09), minor findings noted rather than
+fixed, on Adam's word: `test_all_zero_sample` checks only the NaN column
+for `fpkm`, not the other columns' values; `test_fpkm_nonpositive_lens`
+has no non-numeric length in an in-memory Series (the CLI refuses it;
+`tpm`'s test has the same gap); `test_cpm_tpm_report_specs_compile` leaves
+out `fpkmcounts` (covered in tests/report). The CHANGELOG finding was
+folded in. Open question: should the FPKM report record `library_sizes`,
+as CPM's does?

@@ -97,8 +97,10 @@ and length in bases:
   twice is refused
 - the lengths file may contain unused entries
 - the two files do not need to be in the same order
-- feature identifiers are matched as text, so numeric identifiers (such as
-  Entrez gene IDs) match, and appear in the output as in the counts file
+- feature identifiers are read and matched as text, exactly as written:
+  numeric identifiers (such as Entrez gene IDs) match, a zero-padded `007`
+  matches only `007` (not `7`), and every identifier appears in the output as
+  in the counts file
 - an optional header line is allowed: the first line is skipped as a header
   only when its length field is text that is neither a number nor a
   missing-value token (empty, `NA`, `NaN`, `N/A`, `NULL`, `None`); otherwise it

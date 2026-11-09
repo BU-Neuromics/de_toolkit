@@ -7,6 +7,8 @@ scope: [docs/simple_pipeline.svg, docs/simple_pipeline.png, docs/quickstart.md]
 prev: [release/gather]
 issue: 59
 visited: c060d5a
+status: done
+done: e9541b0
 ---
 
 # Redraw the quickstart figure
@@ -15,7 +17,7 @@ visited: c060d5a
 
 - [x] @developer Redraw the SVG with detk-util gather, regenerate the PNG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

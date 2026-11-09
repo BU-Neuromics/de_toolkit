@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-09
 from: {node: release/deps, step: s1}
 applies: [release/deps]
+revisions:
+  - {date: 2026-11-09, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-09: option A, drop Python 3.10 in 1.0"}
 ---
 
 # Drop Python 3.10 so the lock can carry only patched Pillow

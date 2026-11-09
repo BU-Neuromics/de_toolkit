@@ -5,6 +5,8 @@ acceptance:
   - the Dependabot alerts for Pillow and certifi on main are closed by the update
   - the full test suite, with R, passes on the updated lock
 scope: [uv.lock, pyproject.toml]
+issue: 53
+visited: b94644c
 ---
 
 # Update locked dependencies

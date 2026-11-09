@@ -371,9 +371,11 @@ def _rewindable(f):
             None,
         )
         if is_url:
-            # pandas' own opener, which also undoes an HTTP Content-Encoding
-            with pandas.io.common.get_handle(name, "rb", compression=None, is_text=False) as h:
-                return io.BytesIO(h.handle.read()), compression
+            # pandas' own opener decompresses as pandas would read the URL:
+            # by the name, and undoing an HTTP Content-Encoding without
+            # decompressing twice, so the buffer is plain
+            with pandas.io.common.get_handle(name, "rb", compression="infer", is_text=False) as h:
+                return io.BytesIO(h.handle.read()), None
         with open(name, "rb") as fh:
             return io.BytesIO(fh.read()), compression
     return f, "infer"

@@ -206,6 +206,38 @@ def test_read_delimited_gzipped_url(tmp_path):
     assert list(read_id_table(fn.as_uri()).index) == _IDS
 
 
+
+@pytest.mark.parametrize("name", ["counts.csv.gz", "counts.csv"])
+def test_url_with_content_encoding_gzip(name):
+    # a server (S3 with ContentEncoding=gzip, say) may send gzip bytes with
+    # Content-Encoding: gzip; pandas undoes the encoding, so a .gz name must
+    # not be decompressed a second time
+    body = gzip.compress(("gene,s1,s2\n" + "".join(f"{i},1,2\n" for i in _IDS)).encode())
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/octet-stream")
+            self.send_header("Content-Encoding", "gzip")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *args):
+            pass
+
+    server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        url = f"http://127.0.0.1:{server.server_port}/{name}"
+        main = pandas.read_csv(url, index_col=0, dtype={0: str})
+        assert list(read_delimited(url)["gene"]) == _IDS
+        assert list(read_id_table(url).index) == _IDS
+        assert read_id_table(url).shape == main.shape
+    finally:
+        server.shutdown()
+        server.server_close()
+
 # the CLI readers in util and enrich
 
 

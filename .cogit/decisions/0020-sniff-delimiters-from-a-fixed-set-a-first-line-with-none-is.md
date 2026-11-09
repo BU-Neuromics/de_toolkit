@@ -9,6 +9,7 @@ allowed_by: [reasonable]
 reason: csv.Sniffer left to any character splits a bare list of IDs on a letter of its header
 revisions:
   - {date: 2026-11-09, by: DETK/developer, change: Prefer pipe (any non-space delimiter splitting the line) over space; a URL is buffered and fetched once; the second-line check for space is an open question, why: review of s2}
+  - {date: 2026-11-09, by: DETK/developer, change: record the pipe-over-space trade-off and how a URL is decompressed, why: second review of s2}
 ---
 
 # Sniff delimiters from a fixed set; a first line with none is one column
@@ -87,3 +88,11 @@ BioMart's `Gene stable ID|Gene name`) was split on the spaces.
   `file`, `s3` and the other fsspec protocols), so `read_delimited` and
   `read_id_table` each fetch a URL once (main fetched it once and twice).
   `read_id_table` sniffs once and parses the buffer twice.
+
+- Preferring pipe over space costs one case main read: a space-separated
+  file whose first line holds an unquoted `|` (R's `write.table(quote=FALSE)`
+  with a sample named `a|b`) now splits on the pipe. Quoted `write.table`
+  output is unaffected; such names are rare.
+- A URL is buffered through pandas' own opener with pandas' compression
+  rules (by name, and an HTTP Content-Encoding undone once), so a `.gz` URL
+  served with `Content-Encoding: gzip` reads as on main.

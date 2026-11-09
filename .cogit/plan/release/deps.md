@@ -14,7 +14,7 @@ prev: [DETK-0016]
 
 ## Implementation plan
 
-- [ ] @developer Update uv.lock (`uv lock --upgrade-package pillow --upgrade-package certifi`, and any other package an open alert names), run the suite; open the PR <!-- s1 -->
+- [x] @developer Update uv.lock (`uv lock --upgrade-package pillow --upgrade-package certifi`, and any other package an open alert names), run the suite; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

@@ -1,12 +1,14 @@
 ---
 template: adr
-state: Provisional
+state: Accepted
 authority: [DETK/developer]
 date: 2026-11-09
 from: {node: release/escape-json, step: s1}
 applies: [release/escape-json]
 allowed_by: [reasonable]
 reason: "the script-block break is closed where the payload is made; moving view-text escaping into the template would change annotate's contract outside this node"
+revisions:
+  - {date: 2026-11-09, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-09: accept with release/escape-json"}
 ---
 
 # Escape the report payload at serialization; view text stays HTML that builders escape

@@ -16,3 +16,4 @@ htmlcov/
 dist/
 site/
 /ro-crate-metadata.json
+.cogit/journal/.return

@@ -1,0 +1,14 @@
+# Project identity (ADR 0001) and the .cogit/ settings of ADR 0020.
+# key and suffix were minted once; never recompute them.
+key: DETK
+suffix: cea4
+forge: github.com
+repo: BU-Neuromics/de_toolkit
+decisions: reasonable      # the default decision prompt (ADR 0019): ask, reasonable or full
+# decision_dir: docs/adr   # where decision records live, inside the repository; default .cogit/decisions
+# prompt_guard: tripwire   # how cogit step done checks a step left the decision prompts alone: tripwire, github or off (ADR 0057)
+# collisions: advise       # nodes whose scopes overlap: advise names them, refuse also stops cogit next on one that collides with a node in progress (ADR 0058)
+# branch_protection: suggest  # cogit doctor, status and init suggest protecting the base branch; dismiss turns the suggestion off
+# merge: never             # the merge policy under which an agent merges a done node's PR: never, accepted-and-green, reviewed or one of .cogit/policies/ (ADR 0087)
+# repos:                   # repositories in scope (ADR 0019 Decision 3)
+#   - {name: owner/name, access: read}

@@ -3,7 +3,7 @@ kind: action
 time: 2026-11-09T17:42:33Z
 by: adamlabadorf
 action: node-new
-node: features/tpm-cpm
+node: release/tpm-cpm
 ---
 
 # New node features/tpm-cpm

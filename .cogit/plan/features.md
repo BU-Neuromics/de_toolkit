@@ -1,17 +1,15 @@
 ---
 kind: outcome
-objective: detk covers the common steps of a bulk RNA-seq differential expression analysis, from quantifier outputs to annotated results, without other tools
+objective: 'detk covers more of a bulk RNA-seq DE analysis after 1.0: explicit contrasts, sample QC, and DE methods beyond DESeq2'
 acceptance:
-  - 'the feature candidates of the Phase 3 review (#24 to #29) are each done or set aside with a reason'
+  - 'the feature candidates of the Phase 3 review not taken into 1.0 (#26, #27, #28) are each done or set aside with a reason'
+prev: [release]
 ---
 
-# Features: a complete bulk RNA-seq DE toolkit
+# Features after 1.0
 
 ## Implementation plan
 
-- [ ] [TPM and CPM](features/tpm-cpm.md) <!-- s1 -->
-- [ ] [Annotate results](features/annotate.md) <!-- s2 -->
-- [ ] [Gather quantifier outputs](features/gather.md) <!-- s3 -->
 - [ ] [Contrasts](features/contrasts.md) <!-- s4 -->
 - [ ] [Sample QC](features/sample-qc.md) <!-- s5 -->
 - [ ] [DE methods](features/de-methods.md) <!-- s6 -->
@@ -19,5 +17,5 @@ acceptance:
 
 ## Notes
 
-From the Phase 3 feature review (#23): not gating 1.0 unless promoted; #24 and #29 have
-the best value for effort. Ordered here by that judgement.
+From the Phase 3 feature review (#23): after 1.0. #24, #29 and #25 moved into `release`
+(Adam, 2026-11-09).

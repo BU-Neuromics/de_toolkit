@@ -3,7 +3,7 @@ kind: action
 time: 2026-11-09T17:42:33Z
 by: adamlabadorf
 action: node-new
-node: features/gather
+node: release/gather
 ---
 
 # New node features/gather

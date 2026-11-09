@@ -14,7 +14,7 @@ visited: a328c16
 ## Implementation plan
 
 - [x] @developer Fix it with tests and a CHANGELOG entry; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR <!-- s2 -->
+- [x] @reviewer Review the PR <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes

@@ -3,6 +3,7 @@ Usage:
     detk-util tidy [options] <counts_fn> <cov_fn>
     detk-util tidy-counts [options] <counts_fn> <cov_fn>
     detk-util tidy-covs [options] <counts_fn> <cov_fn>
+    detk-util annotate [options] <result_fn> <mapping_fn>
 """
 
 cmd_opts = {
@@ -44,6 +45,35 @@ Usage:
 Options:
     -o FILE --output=FILE  Destination of tidied column data [default: stdout]
 """,
+    "annotate": r"""
+
+Annotate a result table (e.g. the output of detk-de) with feature metadata,
+such as gene symbols, from a user-supplied mapping table. Both files are
+delimited text files whose delimiter is sniffed; the result is read and
+written back as text, so IDs such as 007 are kept as written. Rows and
+columns of the result table keep their order and number, and the added
+columns come last: an ID with several mapping rows gets the distinct values
+joined with ';', and an ID with no mapping row (or only rows whose added
+columns are empty), or an empty or NA ID, gets empty columns; to drop it,
+use the option --drop-unmapped. Columns are given by name or by 0-based
+position.
+
+Usage:
+    detk-util annotate [options] <result_fn> <mapping_fn>
+
+Options:
+    -i FIELD --idcol=FIELD  Column in the result file holding the feature IDs to
+                            join on [default: 0]
+    --map-from=COL          Column in the mapping file matching the result IDs
+                            [default: 0]
+    --map-to=COLS           Comma-separated mapping columns to add, or 'all' for
+                            every column but --map-from [default: all]
+    --strip-versions        Strip trailing .N version suffixes from Ensembl-style
+                            IDs on both sides before joining
+    --drop-unmapped         Drop result rows with no mapping instead of leaving
+                            their added columns empty
+    -o FILE --output=FILE   Destination of the annotated table [default: stdout]
+""",
 }
 
 from docopt import docopt
@@ -51,7 +81,7 @@ import logging
 import pandas
 import sys
 
-from .common import _cli_doc, set_logging, make_cli_count_obj, write_output
+from .common import DetkModule, _cli_doc, set_logging, make_cli_count_obj, write_output
 
 # setup logging, null on the library level
 logger = logging.getLogger(__name__)
@@ -89,6 +119,226 @@ def stub(f):
     return stub
 
 
+# ---------------------------------------------------------------------------
+# annotate: join feature metadata onto a result table (#29)
+# ---------------------------------------------------------------------------
+
+_VERSION_SUFFIX = r"\.\d+$"
+
+# the strings pandas.read_csv reads as missing by default; an ID cell holding
+# one of them (or nothing) is a missing ID and is never joined
+_MISSING_IDS = frozenset(
+    [
+        "",
+        "#N/A",
+        "#N/A N/A",
+        "#NA",
+        "-1.#IND",
+        "-1.#QNAN",
+        "-NaN",
+        "-nan",
+        "1.#IND",
+        "1.#QNAN",
+        "<NA>",
+        "N/A",
+        "NA",
+        "NULL",
+        "NaN",
+        "None",
+        "n/a",
+        "nan",
+        "null",
+    ]
+)
+
+
+def _resolve_column(df, col, what):
+    """Return the name of column *col* of *df*: a column name, or else a
+    0-based position given as an int or a string of digits."""
+    if col in df.columns:
+        return col
+    if isinstance(col, int) or (isinstance(col, str) and col.isdigit()):
+        pos = int(col)
+        if pos < df.shape[1]:
+            return df.columns[pos]
+    raise ValueError(f"{what} column {col!r} not found; columns are {list(df.columns)}")
+
+
+def _strip_versions(ids):
+    return ids.str.replace(_VERSION_SUFFIX, "", regex=True)
+
+
+def _join_distinct(values):
+    vals = [v for v in pandas.unique(values) if not pandas.isna(v) and str(v).strip() != ""]
+    return ";".join(str(v) for v in vals) if vals else None
+
+
+class Annotate(DetkModule):
+    """
+    Annotate the rows of *result* with columns of *mapping*, joined on the
+    feature IDs.
+
+    The rows of *result* keep their order and, unless *drop_unmapped*, their
+    number; its columns keep their order, the first one becomes the index of
+    the output and the added columns come last. IDs are compared as text, so
+    pass an ID column of strings (the CLI reads the result file as text). An
+    empty or missing ID (``NA``, ``NaN``, ...) is never joined.
+
+    A mapping row counts only if at least one of the added columns has a
+    value in it: an ID is mapped when some mapping row gives it a non-empty
+    value. An ID with several such rows gets the distinct values of each
+    added column joined with ``;``. An added column whose name is already a
+    column of *result* is renamed with the suffix ``_annot``.
+    """
+
+    def __init__(
+        self,
+        result,
+        mapping,
+        idcol=0,
+        map_from=0,
+        map_to="all",
+        strip_versions=False,
+        drop_unmapped=False,
+    ):
+        self["params"] = {
+            "idcol": idcol,
+            "map_from": map_from,
+            "map_to": map_to,
+            "strip_versions": strip_versions,
+            "drop_unmapped": drop_unmapped,
+        }
+
+        id_name = _resolve_column(result, idcol, "--idcol")
+        from_name = _resolve_column(mapping, map_from, "--map-from")
+        if map_to == "all" or map_to is None:
+            to_names = [c for c in mapping.columns if c != from_name]
+        else:
+            if isinstance(map_to, str):
+                map_to = [c.strip() for c in map_to.split(",") if c.strip()]
+            to_names = [_resolve_column(mapping, c, "--map-to") for c in map_to]
+        to_names = [c for c in to_names if c != from_name]
+        if not to_names:
+            raise ValueError("no mapping columns to add")
+        logger.info("joining result column %r to mapping column %r", id_name, from_name)
+        logger.info("adding mapping columns: %s", to_names)
+
+        ids = result[id_name]
+        missing = (ids.isna() | ids.astype(str).str.strip().isin(_MISSING_IDS)).to_numpy()
+        result_keys = ids.astype(str).where(~missing)
+        mapping = mapping[[from_name] + to_names].dropna(subset=[from_name])
+        mapping[from_name] = mapping[from_name].astype(str)
+        # a mapping row with no value in any added column maps nothing
+        values = mapping[to_names].apply(lambda c: c.where(c.astype(str).str.strip() != ""))
+        mapping = mapping.loc[values.notna().any(axis=1)]
+        if strip_versions:
+            result_keys = _strip_versions(result_keys)
+            mapping[from_name] = _strip_versions(mapping[from_name])
+
+        counts = mapping[from_name].value_counts()
+        collapsed = mapping.groupby(from_name, sort=False)[to_names].agg(_join_distinct)
+
+        renamed = {c: f"{c}_annot" if c in result.columns else c for c in to_names}
+        added = collapsed.reindex(result_keys.values).rename(columns=renamed)
+        added.index = result.index
+
+        mapped = (result_keys.isin(collapsed.index) & ~missing).to_numpy()
+        out = pandas.concat([result, added], axis=1)
+        if drop_unmapped:
+            out = out.loc[mapped]
+        # the result's first column stays the index, whichever column is joined
+        first = result.columns[0]
+        out = out.set_index(first)
+        if str(first).startswith("Unnamed: "):
+            # an unnamed index column, as pandas writes it, stays unnamed
+            out.index.name = None
+        self._output = out
+
+        unmapped_ids = result.loc[~mapped & ~missing, id_name].astype(str)
+        self["properties"] = {
+            "num_features": int(result.shape[0]),
+            "num_mapped": int(mapped.sum()),
+            "num_unmapped": int((~mapped).sum()),
+            "num_missing_ids": int(missing.sum()),
+            "num_multimapped": int(result_keys[mapped].map(counts).gt(1).sum()),
+            "num_dropped": int((~mapped).sum()) if drop_unmapped else 0,
+            "columns_added": list(renamed.values()),
+            "unmapped_examples": unmapped_ids.drop_duplicates().head(10).tolist(),
+        }
+        logger.info(
+            "features mapped: %d of %d (%d with several mapping rows)",
+            self["properties"]["num_mapped"],
+            self["properties"]["num_features"],
+            self["properties"]["num_multimapped"],
+        )
+        if self["properties"]["num_missing_ids"]:
+            logger.warning(
+                "%d result rows have an empty or missing ID and stay unmapped",
+                self["properties"]["num_missing_ids"],
+            )
+        if self["properties"]["unmapped_examples"]:
+            logger.warning(
+                "%d features had no mapping, e.g. %s%s",
+                self["properties"]["num_unmapped"] - self["properties"]["num_missing_ids"],
+                ", ".join(self["properties"]["unmapped_examples"][:3]),
+                "" if strip_versions else " (try --strip-versions if the IDs carry .N suffixes)",
+            )
+
+    @property
+    def output(self):
+        return self._output
+
+
+def annotate(result, mapping, **kwargs):
+    "Return *result* with the columns of *mapping* added; see :class:`Annotate`."
+    return Annotate(result, mapping, **kwargs).output
+
+
+def _annotate_main(args):
+    import os
+
+    from .report import DetkReport
+
+    try:
+        # read as text, so numeric IDs keep their leading zeros and every
+        # value is written back as it was read
+        result = pandas.read_csv(
+            args["<result_fn>"], sep=None, engine="python", dtype=str, keep_default_na=False
+        )
+        mapping = pandas.read_csv(args["<mapping_fn>"], sep=None, engine="python", dtype=str)
+        logger.info("shape of result: %s", result.shape)
+        logger.info("shape of mapping: %s", mapping.shape)
+        annotated = Annotate(
+            result,
+            mapping,
+            idcol=args["--idcol"],
+            map_from=args["--map-from"],
+            map_to=args["--map-to"],
+            strip_versions=args["--strip-versions"],
+            drop_unmapped=args["--drop-unmapped"],
+        )
+    except Exception as e:
+        logger.error(e)
+        sys.exit(1)
+
+    write_output(annotated.output, args)
+
+    if not args["--no-report"]:
+        # the module JSON has no slot for a second input file; keep the
+        # mapping file's path with the parameters so the provenance names it
+        annotated["params"]["mapping_fn"] = args["<mapping_fn>"]
+        logging.info("writing report to %s", args["--report-dir"])
+        with DetkReport(args["--report-dir"]) as r:
+            r.add_module(
+                annotated,
+                in_file_path=args["<result_fn>"],
+                out_file_path=args["--output"],
+                workdir=os.getcwd(),
+            )
+
+    logging.info("done")
+
+
 def main(argv=sys.argv):
 
     if "--version" in argv:
@@ -108,6 +358,12 @@ def main(argv=sys.argv):
         cmd_opts_aug[k] = _cli_doc(v)
 
     args = docopt(cmd_opts_aug[cmd], argv)
+
+    if cmd == "annotate":
+        set_logging(args)
+        logger.info("cmd: %s", " ".join(argv))
+        return _annotate_main(args)
+
     count_obj = make_cli_count_obj(args)
     set_logging(args)
     logger.info("cmd: %s", " ".join(argv))

@@ -9,6 +9,8 @@ scope: [skills/, docs/agent-skills.md, tests/skills/, +CHANGELOG]
 prev: [release/gather, release/padded-ids]
 issue: 62
 visited: a328c16
+status: done
+done: a1d39ce
 ---
 
 # Bring the agent skill up to date
@@ -17,7 +19,7 @@ visited: a328c16
 
 - [x] @developer Add the new commands to the skill and its references, restore `detk-norm library`; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

@@ -77,6 +77,11 @@
   footer { color:var(--muted-solid); font-size:12px; padding:0 32px 40px; text-align:center; }
   .vega-embed .vega-actions a { color:var(--fg) !important; }
   .vega-embed summary { border-color:var(--border) !important; }
+  #detk-tooltip { position:fixed; z-index:30; display:none; pointer-events:none; max-width:420px;
+                  background:var(--bg); color:var(--fg); border:1px solid var(--border); border-radius:6px;
+                  padding:6px 9px; font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,.15);
+                  white-space:pre-wrap; overflow-wrap:anywhere; }
+  #detk-tooltip .tip-key { color:var(--muted-solid); }
 </style>
 </head>
 <body>
@@ -149,53 +154,119 @@
     (families[m.family] = families[m.family] || []).push(m);
   });
 
+  // Every descriptor text field (title, desc, note, kv labels and values,
+  // table cells, error) and every module name or id is user data or may
+  // carry it, so it is set as text, never parsed as markup (#65, DETK-0022).
+  // The one exception is v.svg, the server-rendered static chart.
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+
+  // ids the page or vega-embed (or the tooltip below) give their own
+  // elements: no card may take one (#65)
+  var RESERVED_IDS = ["main", "nav", "meta", "tray-toggle", "theme-toggle", "theme-icon",
+    "theme-label", "detk-modules", "detk-raw", "detk-tooltip", "vg-tooltip-element",
+    "vega-embed-style", "vega-tooltip-style"];
+
+  // a module id as a safe, unique fragment: letters, digits and "-" stay,
+  // any other UTF-16 code unit (including "_") becomes _<hex>_. A reserved
+  // id has its first character escaped too ("main" becomes "_6d_ain"):
+  // a letter is otherwise never escaped, so the result is still unique,
+  // still has an even number of "_", and equals no reserved id
+  function domId(id) {
+    var s = String(id);
+    var out = s.replace(/[^A-Za-z0-9-]/g, function (c) {
+      return "_" + c.charCodeAt(0).toString(16) + "_";
+    });
+    if (RESERVED_IDS.indexOf(s) >= 0) {
+      out = "_" + s.charCodeAt(0).toString(16) + "_" + out.slice(1);
+    }
+    return out;
+  }
+
   Object.keys(families).forEach(function (fam) {
-    var h = document.createElement("div");
-    h.className = "fam"; h.textContent = fam; nav.appendChild(h);
+    nav.appendChild(el("div", "fam", fam));
     families[fam].forEach(function (m) {
-      var a = document.createElement("a");
-      a.href = "#" + m.id; a.textContent = m.title; a.dataset.target = m.id;
+      var cardId = domId(m.id);
+      var a = el("a", null, m.title);
+      a.setAttribute("href", "#" + cardId);
+      a.dataset.target = cardId;
       nav.appendChild(a);
 
-      var card = document.createElement("section");
-      card.className = "card"; card.id = m.id;
-      var body = '<h2>' + m.title + '</h2>';
-      if (m.desc) body += '<p class="desc">' + m.desc + '</p>';
-      body += renderView(m);
-      body += '<div class="tools"><button data-mod="' + m.id +
-              '">Show data (' + m.module + '.json)</button></div>' +
-              '<pre class="data"></pre>';
-      card.innerHTML = body;
+      var card = el("section", "card");
+      card.id = cardId;
+      card.appendChild(el("h2", null, m.title));
+      if (m.desc) card.appendChild(el("p", "desc", m.desc));
+      renderView(m, cardId).forEach(function (n) { card.appendChild(n); });
+      var tools = el("div", "tools");
+      var btn = el("button", null, "Show data (" + m.module + ".json)");
+      btn.setAttribute("data-mod", m.id);
+      tools.appendChild(btn);
+      card.appendChild(tools);
+      card.appendChild(el("pre", "data"));
       main.appendChild(card);
     });
   });
 
-  function renderView(m) {
+  // the view's nodes, in order
+  function renderView(m, cardId) {
     var v = m.view || { type: "raw" };
-    var note = v.note ? '<p class="desc">' + v.note + '</p>' : '';
+    var out = [];
     if (v.type === "vega") {
-      vegaCharts.push({ id: m.id + "-vis", spec: v.spec });
-      return note + '<div class="chart" id="' + m.id + '-vis"></div>';
+      if (v.note) out.push(el("p", "desc", v.note));
+      var vis = el("div", "chart");
+      // "_vis", not "-vis": every domId output holds an even number of "_"
+      // (each one opens or closes an _<hex>_ escape), so an id ending in one
+      // more "_" can never equal a card id (#65)
+      vis.id = cardId + "_vis";
+      vegaCharts.push({ id: vis.id, spec: v.spec });
+      out.push(vis);
+      return out;
     }
     if (v.type === "svg") {
-      return note + '<div class="chart chart-static">' + v.svg + '</div>';
+      if (v.note) out.push(el("p", "desc", v.note));
+      var box = el("div", "chart chart-static");
+      // the static scatter plot is markup made by report_specs (matplotlib),
+      // not user text: the only descriptor field inserted as HTML
+      box.innerHTML = v.svg;
+      out.push(box);
+      return out;
     }
     if (v.type === "kv") {
-      return note + '<div class="kv">' + v.items.map(function (it) {
-        return '<div class="item"><div class="val">' + fmt(it.value) +
-               '</div><div class="lab">' + it.label + '</div></div>';
-      }).join("") + '</div>';
+      if (v.note) out.push(el("p", "desc", v.note));
+      var kv = el("div", "kv");
+      v.items.forEach(function (it) {
+        var item = el("div", "item");
+        item.appendChild(el("div", "val", fmt(it.value)));
+        item.appendChild(el("div", "lab", it.label));
+        kv.appendChild(item);
+      });
+      out.push(kv);
+      return out;
     }
     if (v.type === "table") {
-      var head = '<tr>' + v.columns.map(function (c) { return '<th>' + c + '</th>'; }).join("") + '</tr>';
-      var rows = v.rows.map(function (r) {
-        return '<tr>' + r.map(function (c) { return '<td>' + fmt(c) + '</td>'; }).join("") + '</tr>';
-      }).join("");
-      return '<table class="detk">' + head + rows + '</table>';
+      var table = el("table", "detk");
+      var head = el("tr");
+      v.columns.forEach(function (c) { head.appendChild(el("th", null, c)); });
+      // the same tree the HTML parser built: every row in one tbody
+      var tbody = el("tbody");
+      tbody.appendChild(head);
+      v.rows.forEach(function (r) {
+        var tr = el("tr");
+        r.forEach(function (c) { tr.appendChild(el("td", null, fmt(c))); });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      out.push(table);
+      return out;
     }
     // raw fallback
-    var note = v.error ? '<p class="desc">chart error: ' + v.error + '</p>' : '';
-    return note + '<p class="desc">Raw module data (use “Show data” below).</p>';
+    if (v.error) out.push(el("p", "desc", "chart error: " + v.error));
+    out.push(el("p", "desc", "Raw module data (use “Show data” below)."));
+    return out;
   }
 
   function fmt(x) {
@@ -204,16 +275,65 @@
     return String(x);
   }
 
+  // the charts' tooltip. vega-embed's default (vega-tooltip) writes the
+  // tooltip with innerHTML, escaping only "&" and "<", and turns a field
+  // named "image" into an <img> (so a covariate column "image" could run
+  // script on hover). This one writes every key and value as text, with no
+  // special keys and nothing loaded (#65, DETK-0022).
+  var tip = null;
+  function tipText(x) {
+    if (x === null || x === undefined) return "—";
+    if (typeof x === "object") {
+      try { return JSON.stringify(x); } catch (e) { return String(x); }
+    }
+    return String(x);
+  }
+  function showTooltip(handler, event, item, value) {
+    if (!tip) {
+      tip = el("div");
+      tip.id = "detk-tooltip";
+      tip.setAttribute("role", "tooltip");
+      document.body.appendChild(tip);
+    }
+    if (value === null || value === undefined || value === "") {
+      tip.style.display = "none";
+      return;
+    }
+    tip.textContent = "";
+    if (typeof value === "object" && !Array.isArray(value)) {
+      Object.keys(value).forEach(function (k) {
+        var row = el("div", "tip-row");
+        row.appendChild(el("span", "tip-key", k + ": "));
+        row.appendChild(el("span", "tip-val", tipText(value[k])));
+        tip.appendChild(row);
+      });
+    } else {
+      tip.appendChild(el("div", "tip-row", tipText(value)));
+    }
+    tip.style.display = "block";
+    var x = (event && event.clientX) || 0, y = (event && event.clientY) || 0;
+    var w = tip.offsetWidth || 0, h = tip.offsetHeight || 0;
+    var vw = window.innerWidth || 0, vh = window.innerHeight || 0;
+    tip.style.left = Math.max(0, x + 12 + w > vw ? x - 12 - w : x + 12) + "px";
+    tip.style.top = Math.max(0, y + 12 + h > vh ? y - 12 - h : y + 12) + "px";
+  }
+
   function embedAll() {
     var cfg = vegaConfig();
     vegaCharts.forEach(function (c) {
-      var el = document.getElementById(c.id);
-      if (!el) return;
-      el.innerHTML = "";
-      vegaEmbed("#" + c.id, c.spec, {
-        actions: { export: true, source: true, compiled: false, editor: false },
+      var target = document.getElementById(c.id);
+      if (!target) return;
+      target.textContent = "";
+      vegaEmbed(target, c.spec, {
+        // export only. "View Source" and "View Compiled Vega" write
+        // the spec's JSON, unescaped, as HTML into a same-origin new window,
+        // so a sample or term name in the data would run as script there;
+        // "Open in Vega Editor" posts the spec, user data and all, to an
+        // outside site. "Show data" shows the module's JSON as text (#65).
+        actions: { export: true, source: false, compiled: false, editor: false },
+        tooltip: showTooltip,
         renderer: "canvas", config: cfg
-      }).catch(function (err) { el.textContent = "chart error: " + err; });
+      }).catch(function (err) { target.textContent = "chart error: " + err; });
     });
   }
 

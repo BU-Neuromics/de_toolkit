@@ -71,6 +71,21 @@ predates everything below.
   longer breaks the report or injects markup; object keys (such as sample
   names) holding a quote or backslash no longer make the payload invalid
   JSON (#46)
+- The report page shows every view's text as text: a filter command, DE
+  term names, annotation and gather notes, a chart error, and an unknown
+  module's name (in its card title, link, anchor and "Show data" button) are
+  no longer inserted as markup by the page. Only the static SVG chart for
+  very large point sets is inserted as markup. The charts' tooltips are
+  written as text too: vega-embed's default tooltip wrote them as HTML and
+  turned a field named `image` into an image, so a covariate column named
+  `image` in a PCA chart could run script on hover. The charts' menu no longer offers
+  "View Source", "View Compiled Vega" or "Open in Vega Editor": the first two
+  wrote the chart's data, sample names included, unescaped into a new page
+  of the report's origin, and the last sent it to an outside site. "Save as
+  SVG" and "Save as PNG" remain, and "Show data" shows each module's JSON.
+  An unknown module named like a chart (`pca-vis`) or like one of the
+  page's own elements (`main`, `nav`, `vg-tooltip-element`, ...) no longer
+  shares that element's id (#65)
 - A one-column input file, such as a bare list of IDs, is read as one
   column; the delimiter sniffer no longer splits it on a letter of its
   header (`gene_id` became `g`, `n`, `_id`). The delimiter of every sniffed

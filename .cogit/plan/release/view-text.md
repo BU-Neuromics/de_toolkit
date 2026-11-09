@@ -8,15 +8,19 @@ acceptance:
   - 'the change from DETK-0014 (view text stays HTML that builders escape) is recorded: a record of this node supersedes or amends DETK-0014'
 scope: [de_toolkit/templates/report.html, de_toolkit/report_specs.py, tests/report/, +CHANGELOG]
 prev: [release/escape-json]
+issue: 65
+visited: 74632ba
+status: done
+done: 87d4c4c
 ---
 
 # Render all view text as plain text
 
 ## Implementation plan
 
-- [ ] @developer Render every descriptor text field as text in the page's card builder; drop builders' own escaping; tests; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Render every descriptor text field as text in the page's card builder; drop builders' own escaping; tests; CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

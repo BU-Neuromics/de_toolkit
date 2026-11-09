@@ -16,7 +16,7 @@ visited: 194bd2a
 ## Implementation plan
 
 - [x] @developer Read IDs and sample names as text at the R boundary (the R scripts in de.py and transform.py, wrapr's read-back) and in enrich and the tidy commands; R-gated round-trip tests; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR, including the R-gated tests in CI <!-- s2 -->
+- [x] @reviewer Review the PR, including the R-gated tests in CI <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes

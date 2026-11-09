@@ -23,3 +23,10 @@ visited: cfe262f
 Added by Adam (2026-11-09). Skills describe the CLI, which DETK-0001 makes the 1.0
 promise, so they land before the cut; they wait on no other node, though the
 new commands of #24, #29 and #25 belong in them once merged.
+
+The R half of the skill's airway run (VST, DESeq2 with the `dex__trt__*`
+columns, the Entrez join, fgsea, the full report with DE and enrichment
+views) is not verified: R is not installed where the reviews ran. It
+stays Adam's to check (his answer, 2026-11-09); the non-R half ran on
+the reproduced airway inputs and matched (24,706 genes kept, DESeq2 size
+factors).

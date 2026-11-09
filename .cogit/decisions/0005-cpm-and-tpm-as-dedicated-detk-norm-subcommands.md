@@ -13,20 +13,57 @@ reason: "a subcommand per unit matches deseq2/library/fpkm and keeps library's o
 
 ## Background
 
-<!-- What a reader who has not seen the codebase, or has been away for a month, needs to know to read this record: the thing it concerns, in plain words, and why it matters. No decision here. -->
+`detk-norm` normalizes count matrices through one subcommand per method
+(`deseq2`, `library`, `fpkm`), each emitting a report module of the `norm`
+family. Issue #24 adds counts per million (CPM) and transcripts per million
+(TPM) and leaves open whether CPM is a new subcommand or a `--scale` option
+on `library`. Under DETK-0001 (Proposed) the subcommand names, arguments and
+output formats are the 1.0 stable surface, so the shape chosen here is
+promised from 1.0 on.
 
 ## Context
 
-<!-- What forces are at play: the problem, the constraints, and the criteria the decision is judged against. -->
+- `library` already computes the CPM divisor (column sums) and outputs
+  proportions; existing pipelines may rely on that output.
+- TPM needs the same two-column lengths file `fpkm` consumes.
+- Report views and RO-Crate provenance key on the module name, the
+  lowercased class name (`SUBTOOLS` in `crate.py`, the registry in
+  `report_specs.py`).
+- Criteria: discoverability in `detk-norm --help`, no change to existing
+  outputs, consistency with the existing subcommands, cost of the promise.
 
 ## Options
 
-<!-- At least two real options, each scored against the criteria. -->
+### Option A: `cpm` and `tpm` subcommands (chosen)
+
+`detk-norm cpm <counts_fn>` and `detk-norm tpm <counts_fn> <lengths_fn>`,
+classes `CPMCounts`/`TPMCounts` (modules `cpmcounts`/`tpmcounts`). Output is
+the input matrix shape and row order, values in units per million, so every
+column sums to 1e6 (NaN for an all-zero sample, with a warning). Lengths are
+in bases, as for `fpkm`, and must be positive. Discoverable, consistent,
+leaves `library` untouched; two more names to keep stable.
+
+### Option B: `library --scale=N`, plus a `tpm` subcommand
+
+One fewer subcommand, but CPM is then spelled `library --scale=1e6`, which
+nobody searches for, and an option on `library` is as much a promise as a
+subcommand.
+
+### Option C: a single `--units` option across subcommands
+
+Over-general for two units and would reshape the existing commands.
 
 ## Decision
 
-<!-- The option chosen and the one or two reasons that decided it. -->
+Option A, the CLI the issue suggests. A subcommand per unit is how the tool
+is already organized and keeps `library`'s output exactly as it was. The
+report views reuse the existing builders (library-size bars for `cpm`,
+feature-length quantiles for `tpm`).
 
 ## Consequences
 
-<!-- What becomes easier or harder, the follow-up work, and what would make us revisit. -->
+- `cpm`, `tpm`, their arguments and the per-million output are part of the
+  1.0 surface once DETK-0001 is accepted.
+- `library` remains, producing proportions; the docs point from it to `cpm`.
+- Revisit if a `--scale` on `library` is wanted for other factors, which
+  could be added later without breaking `cpm`.

@@ -64,6 +64,7 @@ SUBTOOLS = {
     "flgcounts": ("detk-de", "firth"),
     "fgseares": ("detk-enrich", "fgsea"),
     "annotate": ("detk-util", "annotate"),
+    "gather": ("detk-util", "gather"),
     "pmftransform": ("detk-outlier", "shrink"),
     "shrinkcounts": ("detk-outlier", "shrink"),
     "entropycounts": ("detk-outlier", "entropy"),

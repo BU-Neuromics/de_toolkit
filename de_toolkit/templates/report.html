@@ -99,6 +99,8 @@
 <script>{{ vegaembed_js|safe }}</script>
 
 <!-- embedded report payload -->
+{# |safe is correct only because report.script_json escapes <, > and & in the
+   payload, so no string in it can end these script elements (#46) #}
 <script type="application/json" id="detk-modules">{{ modules_json|safe }}</script>
 <script type="application/json" id="detk-raw">{{ raw_json|safe }}</script>
 

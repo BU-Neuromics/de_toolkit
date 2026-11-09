@@ -21,6 +21,13 @@ predates everything below.
   `detk-norm library` and `detk-norm fpkm` failed on every CLI run (the
   library command was handed the count object, the lengths file was read as
   a table) and now run
+- FPKM values change from 0.9.x: FPKM is now
+  `count * 1e9 / (length * library size)` as documented, where 0.9.x computed
+  `count / (1e6 * length)` and never divided by library size. In 0.9.x the
+  wrong values reached users through the Python function
+  `de_toolkit.norm.fpkm()`; the `detk-norm fpkm` command failed outright. This is a
+  correction. `fpkm` now also refuses missing, zero and negative lengths, as
+  `tpm` does
 
 ### Added
 - Versioned module JSON schema for report data
@@ -30,13 +37,26 @@ predates everything below.
   The lengths file (for `tpm` and `fpkm`) may start with a header line, which
   is recognized only when its length field is text other than a missing-value
   token such as `NA`; a feature listed twice is refused; feature IDs are
-  matched as text, so numeric IDs work; `tpm` requires every length to be a
-  positive number
+  matched as text, so numeric IDs work; `tpm` and `fpkm` require every length
+  to be a positive number
 - `detk-util annotate`: join feature metadata such as gene symbols onto a
   result table from a user-supplied mapping file, with `--strip-versions`
   for Ensembl version suffixes and a report of mapped and unmapped IDs (#29)
 - Agent skill `detk` under `skills/`, installable with
   `npx skills add BU-Neuromics/de_toolkit`, and its docs page
+- `detk-util gather`: combine per-sample salmon, kallisto, htseq-count or
+  featureCounts outputs into a counts matrix, with the format detected from
+  each file's header, sample names from the paths (or `--name-from`), an
+  error when the samples list different features (`--on-mismatch=fill` or
+  `drop` to go on) and a report of what was joined; it replaces csvgather in
+  the documented workflow (#25)
+
+### Fixed
+- The report embeds its module JSON with `<`, `>` and `&` escaped, so a
+  feature ID, sample name or annotation value containing `</script>` no
+  longer breaks the report or injects markup; object keys (such as sample
+  names) holding a quote or backslash no longer make the payload invalid
+  JSON (#46)
 
 ## [ 0.9.12 ]
 ### Added

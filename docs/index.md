@@ -28,7 +28,7 @@ the [worked example](example.md) for a real analysis ending in a
 
 ## Installation
 
-detk requires Python 3.10 or newer.
+detk requires Python 3.11 or newer.
 
 ```bash
 pip install de_toolkit

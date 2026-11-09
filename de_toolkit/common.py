@@ -26,9 +26,9 @@ from .version import __version__
 
 # process start time, recorded at import for provenance (a CLI invocation
 # imports this module at startup, so this approximates the run's startTime)
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
-_PROCESS_START = datetime.now(timezone.utc)
+_PROCESS_START = datetime.now(UTC)
 
 # setup logging, null on the library level
 logger = logging.getLogger(__name__)

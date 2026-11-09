@@ -30,7 +30,7 @@ installed, `npx skills update` brings it up to date with the repository, and
 `npx skills remove detk` removes it.
 
 The skill teaches the agent to use detk; it does not install detk itself until
-the agent follows its instructions. Python 3.10 or newer is needed, and R with
+the agent follows its instructions. Python 3.11 or newer is needed, and R with
 DESeq2, fgsea and logistf for the R-backed steps (see
 [Installation](index.md#installation)).
 

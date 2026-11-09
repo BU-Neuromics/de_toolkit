@@ -35,7 +35,7 @@ import shutil
 import sys
 import time
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from .common import _PROCESS_START, _cli_doc, set_logging
 from .crate import CRATE_FILENAME, write_crate
@@ -98,9 +98,35 @@ class NumpyEncoder(json.JSONEncoder):
         elif isinstance(obj, Mapping):
             vals = []
             for k in sorted(obj):
-                vals.append(f'"{k}": {self.encode(obj[k])}')
+                # keys are user data too (sample names, feature IDs): encode
+                # them as JSON strings so a quote or backslash stays valid
+                key = json.JSONEncoder.encode(self, k if isinstance(k, str) else str(k))
+                vals.append(f"{key}: {self.encode(obj[k])}")
             return "{" + ", ".join(vals) + "}"
         return json.JSONEncoder.encode(self, obj)
+
+
+# characters that could end or alter the HTML <script> block a JSON payload is
+# embedded in ("</script>", "<!--"), plus U+2028/U+2029, which old JavaScript
+# parsers treat as line breaks; JSON reads the \uXXXX forms back identically
+_SCRIPT_JSON_ESCAPES = {
+    "<": "\\u003c",
+    ">": "\\u003e",
+    "&": "\\u0026",
+    "\u2028": "\\u2028",
+    "\u2029": "\\u2029",
+}
+_SCRIPT_JSON_TRANS = str.maketrans(_SCRIPT_JSON_ESCAPES)
+
+
+def script_json(obj, indent=None):
+    """Serialize ``obj`` as JSON that is safe to embed in an HTML ``<script>``
+    element: no string in it can close the element or open markup (#46).
+
+    The escaped characters can only occur inside JSON string literals, so the
+    whole serialized text is translated; ``JSON.parse`` (and ``json.loads``)
+    return the original strings."""
+    return json.dumps(obj, cls=NumpyEncoder, indent=indent).translate(_SCRIPT_JSON_TRANS)
 
 
 def hash_str(st):
@@ -153,7 +179,7 @@ class DetkModuleJSON:
                 # start_time approximates process start (module import time);
                 # end_time is when the module was recorded
                 ("start_time", _PROCESS_START.isoformat()),
-                ("end_time", datetime.now(timezone.utc).isoformat()),
+                ("end_time", datetime.now(UTC).isoformat()),
                 ("argv", list(sys.argv)),
                 ("in_file_path", in_file_path),
                 ("out_file_path", out_file_path),
@@ -286,8 +312,10 @@ class DetkReport:
 
         template = jinja2.Template(_asset("templates", self.template_name))
         html = template.render(
-            modules_json=json.dumps(clean(modules), cls=NumpyEncoder, indent=indent),
-            raw_json=json.dumps(clean(raw), cls=NumpyEncoder, indent=indent),
+            # the payload goes inside <script> elements: escape it so no
+            # user string (feature ID, sample name, annotation) can end them
+            modules_json=script_json(clean(modules), indent=indent),
+            raw_json=script_json(clean(raw), indent=indent),
             vega_js=vega["vega"],
             vegalite_js=vega["vegalite"],
             vegaembed_js=vega["vegaembed"],

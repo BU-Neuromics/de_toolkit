@@ -7,7 +7,8 @@ the 1.0.0 release is cut. Note: 0.9.12 on PyPI dates from 2020-01-18 and
 predates everything below.
 
 ### Changed
-- Modernized to Python 3.10-3.13, numpy 2, and pandas 3
+- Modernized to Python 3.11-3.13, numpy 2, and pandas 3
+- Python 3.10 is no longer supported (it reached end of life in October 2026)
 - New toolchain: `pyproject.toml` with the hatchling build backend, uv for
   environment/dependency management, ruff for lint and formatting
 - Documentation moved to MkDocs Material, published on GitHub Pages at
@@ -57,6 +58,13 @@ predates everything below.
   error when the samples list different features (`--on-mismatch=fill` or
   `drop` to go on) and a report of what was joined; it replaces csvgather in
   the documented workflow (#25)
+
+### Fixed
+- The report embeds its module JSON with `<`, `>` and `&` escaped, so a
+  feature ID, sample name or annotation value containing `</script>` no
+  longer breaks the report or injects markup; object keys (such as sample
+  names) holding a quote or backslash no longer make the payload invalid
+  JSON (#46)
 
 ## [ 0.9.12 ]
 ### Added

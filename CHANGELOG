@@ -50,6 +50,13 @@ predates everything below.
   `drop` to go on) and a report of what was joined; it replaces csvgather in
   the documented workflow (#25)
 
+### Fixed
+- The report embeds its module JSON with `<`, `>` and `&` escaped, so a
+  feature ID, sample name or annotation value containing `</script>` no
+  longer breaks the report or injects markup; object keys (such as sample
+  names) holding a quote or backslash no longer make the payload invalid
+  JSON (#46)
+
 ## [ 0.9.12 ]
 ### Added
 - --filter-unannotated to fgsea

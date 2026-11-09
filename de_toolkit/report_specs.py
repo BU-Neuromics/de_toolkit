@@ -324,6 +324,37 @@ def build_filtercounts(mod):
 
 
 # ---------------------------------------------------------------------------
+# util module builders
+# ---------------------------------------------------------------------------
+
+
+def build_annotate(mod):
+    import html
+
+    p = mod.get("properties", {})
+    total, mapped = p.get("num_features"), p.get("num_mapped")
+    if total is None or mapped is None:
+        return {"type": "raw"}
+    items = [
+        {"label": "features in", "value": total},
+        {"label": "mapped", "value": mapped},
+        {"label": "unmapped", "value": p.get("num_unmapped", total - mapped)},
+        {"label": "several mapping rows", "value": p.get("num_multimapped", 0)},
+        {"label": "mapped %", "value": f"{100.0 * mapped / total:.1f}%" if total else "—"},
+    ]
+    if p.get("num_dropped"):
+        items.append({"label": "unmapped rows dropped", "value": p["num_dropped"]})
+    notes = []
+    if p.get("columns_added"):
+        notes.append("columns added: " + ", ".join(map(str, p["columns_added"])))
+    if p.get("unmapped_examples"):
+        notes.append("unmapped e.g.: " + ", ".join(map(str, p["unmapped_examples"][:5])))
+    # the template inserts the note as HTML; IDs and column names are user data
+    note = html.escape("; ".join(notes)) if notes else None
+    return {"type": "kv", "items": items, "note": note}
+
+
+# ---------------------------------------------------------------------------
 # enrich module builders
 # ---------------------------------------------------------------------------
 
@@ -812,6 +843,13 @@ REGISTRY = {
         "Feature filter",
         "How many features the filter command kept and removed.",
         build_filtercounts,
+    ),
+    # util family
+    "annotate": (
+        "util",
+        "Feature annotation",
+        "How many result features the mapping table annotated.",
+        build_annotate,
     ),
     # enrich family
     "fgseares": (

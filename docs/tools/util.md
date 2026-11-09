@@ -1,9 +1,10 @@
-# `util` — counts and column data file utilities
+# `util` — counts, column data and result file utilities
 
 Functions for tidying up counts and [column data](../concepts.md) files —
 mostly subsetting one or the other so the sample IDs and their order match.
 Combined with `csvgrep` from [csvkit], this is useful for extracting subsets
-of samples for downstream differential expression analysis.
+of samples for downstream differential expression analysis. `annotate` adds
+feature metadata, such as gene symbols, to a result table.
 
 [csvkit]: https://csvkit.readthedocs.io
 
@@ -48,3 +49,53 @@ Usage:
 Options:
     -o FILE --output=FILE  Destination of tidied column data [default: stdout]
 ```
+
+## `annotate`
+
+Add feature metadata, such as gene symbols, to a result table (for example
+the output of `detk-de`) by joining it with a mapping table on the feature
+IDs. The mapping is a plain delimited file you supply, so the result does not
+depend on a network service or on when it was run: a BioMart export, a table
+derived from a GTF, or a dump of a Bioconductor `org.*.db` package all work.
+
+```text
+Usage:
+    detk-util annotate [options] <result_fn> <mapping_fn>
+
+Options:
+    -i FIELD --idcol=FIELD  Column in the result file holding the feature IDs to
+                            join on [default: 0]
+    --map-from=COL          Column in the mapping file matching the result IDs
+                            [default: 0]
+    --map-to=COLS           Comma-separated mapping columns to add, or 'all' for
+                            every column but --map-from [default: all]
+    --strip-versions        Strip trailing .N version suffixes from Ensembl-style
+                            IDs on both sides before joining
+    --drop-unmapped         Drop result rows with no mapping instead of leaving
+                            their added columns empty
+    -o FILE --output=FILE   Destination of the annotated table [default: stdout]
+```
+
+Columns are named by header or by 0-based position. The result keeps its rows,
+their order and their original IDs:
+
+- an ID with no mapping row gets empty added columns, unless `--drop-unmapped`
+  removes the row;
+- an ID with several mapping rows (one Ensembl gene with two Entrez IDs, say)
+  gets the distinct values of each added column joined with `;`;
+- an added column whose name the result table already has is renamed with the
+  suffix `_annot`.
+
+Version suffixes are the most common reason a join silently finds nothing:
+`ENSG00000141510.17` in the counts does not match `ENSG00000141510` in a
+BioMart export. `--strip-versions` removes them before joining, and the log
+warns with example IDs when some features stay unmapped.
+
+```bash
+detk-util annotate --strip-versions --map-to=hgnc_symbol \
+    -o de_results_annotated.csv de_results.csv biomart_export.tsv
+```
+
+The report records how many features were mapped, left unmapped, matched
+several mapping rows or were dropped, the columns added and a few of the
+unmapped IDs.

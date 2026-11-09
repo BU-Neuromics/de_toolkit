@@ -21,6 +21,9 @@ predates everything below.
 ### Added
 - Versioned module JSON schema for report data
 - Process Run Crate (RO-Crate) provenance for CLI runs
+- `detk-util annotate`: join feature metadata such as gene symbols onto a
+  result table from a user-supplied mapping file, with `--strip-versions`
+  for Ensembl version suffixes and a report of mapped and unmapped IDs (#29)
 
 ## [ 0.9.12 ]
 ### Added

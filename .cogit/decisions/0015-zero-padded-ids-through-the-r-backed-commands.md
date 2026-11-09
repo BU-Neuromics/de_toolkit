@@ -1,6 +1,6 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-09
 from: {node: release/padded-ids, step: s1}
@@ -9,6 +9,7 @@ revisions:
   - {date: 2026-11-09, by: DETK/developer, change: "Narrow to all-numeric ID columns; add enrich fgsea, util tidy-counts/tidy-covs and all-numeric versioned IDs", why: review of s2}
   - {date: 2026-11-09, by: DETK/developer, change: only detk-de deseq2 stops on zero-padded sample names, why: second review of s2}
   - {date: 2026-11-09, by: DETK/developer, change: "the deseq2 check is de.py's own; vst reads no sample information", why: third review of s2}
+  - {date: 2026-11-09, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-09: option 2, narrow padded-ids and add release/r-ids"}
 ---
 
 # Zero-padded IDs through the R-backed commands

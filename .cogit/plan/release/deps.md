@@ -7,6 +7,7 @@ acceptance:
 scope: [uv.lock, pyproject.toml]
 issue: 53
 visited: b94644c
+prev: [DETK-0016]
 ---
 
 # Update locked dependencies

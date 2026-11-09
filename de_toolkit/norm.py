@@ -45,7 +45,10 @@ being the name of one of the rows in the counts file and the second is the
 effective length of the gene/sequence/etc to use in the normalization.
 
 *Note:* Program will throw an error and exit if there are genes/sequences
-in the counts file that are not found in the lengths file.
+in the counts file that are not found in the lengths file, or if a name is
+listed more than once in the lengths file. Names are matched as text. The
+first line of the lengths file is skipped as a header only when its second
+field is text that is not a number or a missing value such as NA.
 
 The order of names in the counts and lengths files do *not* have to be the
 same.
@@ -76,8 +79,11 @@ delimited file the fpkm subcommand takes: the first column is the name of a
 row in the counts file, the second its effective length in bases.
 
 *Note:* Program will throw an error and exit if there are genes/sequences
-in the counts file that are not found in the lengths file, or if any of
-their lengths is not a positive number.
+in the counts file that are not found in the lengths file, if any of
+their lengths is not a positive number, or if a name is listed more than
+once in the lengths file. Names are matched as text. The first line of the
+lengths file is skipped as a header only when its second field is text that
+is not a number or a missing value such as NA.
 
 The order of names in the counts and lengths files do *not* have to be the
 same.
@@ -299,14 +305,7 @@ class FPKMCounts(DetkModule):
         self.count_df = count_df
         self.lengths = lengths
 
-        missing_indices = count_df.index.difference(lengths.index)
-        if len(missing_indices) != 0:
-            raise NormalizationException(
-                f"{len(missing_indices)} indices in the counts matrix were "
-                + "not found in the lengths parameters, here are a couple: \n"
-                + "\n".join(_ for _ in list(missing_indices)[:5])
-            )
-        lens = lengths[count_df.index]
+        lens = _align_lengths(count_df, lengths)
         res = count_df.div(1e6 * lens, axis=0)
         self.res = res
 
@@ -334,20 +333,41 @@ def _length_quantiles(lengths):
     return [{"q": q, "length": float(v)} for q, v in zip(qs, np.percentile(lens, qs))]
 
 
-def _lengths_for(count_df, lengths):
+def _align_lengths(count_df, lengths):
     """
     Return *lengths* (a pandas.Series indexed by feature name) aligned to the
-    rows of *count_df*, raising NormalizationException when a feature has no
-    length or a length that is not a positive number.
+    rows of *count_df*, indexed like *count_df*. Feature names are matched as
+    strings, so numeric IDs (e.g. Entrez gene IDs, read as integers from the
+    counts file) match the same IDs in the lengths file. Raises
+    NormalizationException when a feature name appears more than once in
+    *lengths* or a feature of *count_df* has no length.
     """
-    missing_indices = count_df.index.difference(lengths.index)
-    if len(missing_indices) != 0:
+    lengths = pandas.Series(lengths.values, index=lengths.index.astype(str))
+    dups = lengths.index[lengths.index.duplicated()].unique()
+    if len(dups) != 0:
+        raise NormalizationException(
+            f"{len(dups)} feature names appear more than once in the lengths "
+            + "parameters, here are a couple: \n"
+            + "\n".join(list(dups)[:5])
+        )
+    keys = count_df.index.astype(str)
+    missing = ~keys.isin(lengths.index)
+    if missing.any():
+        missing_indices = count_df.index[missing]
         raise NormalizationException(
             f"{len(missing_indices)} indices in the counts matrix were "
             + "not found in the lengths parameters, here are a couple: \n"
             + "\n".join(str(_) for _ in list(missing_indices)[:5])
         )
-    lens = pandas.to_numeric(lengths[count_df.index], errors="coerce")
+    return pandas.Series(lengths[keys].values, index=count_df.index)
+
+
+def _lengths_for(count_df, lengths):
+    """
+    Like _align_lengths, and also raise NormalizationException when a
+    feature's length is not a positive number.
+    """
+    lens = pandas.to_numeric(_align_lengths(count_df, lengths), errors="coerce")
     bad = lens.index[~(lens > 0)]
     if len(bad) != 0:
         raise NormalizationException(
@@ -361,20 +381,44 @@ def _lengths_for(count_df, lengths):
 def read_lengths(lengths_fn):
     """
     Read a two column delimited lengths file (feature name, length in bases;
-    the delimiter is sniffed) into a pandas.Series indexed by feature name. A
-    header line is allowed and detected by its second field not being a
-    number.
+    the delimiter is sniffed) into a pandas.Series indexed by feature name
+    (as a string). The first line is taken as a header, and skipped, only
+    when its second field is neither a number nor a missing-value token
+    (empty, NA, NaN, N/A, NULL, None); otherwise it is a feature row, so a
+    bad first length is reported like any other. A feature name that
+    appears more than once raises NormalizationException.
     """
-    df = pandas.read_csv(lengths_fn, sep=None, engine="python", header=None, dtype=str)
+    df = pandas.read_csv(
+        lengths_fn, sep=None, engine="python", header=None, dtype=str, keep_default_na=False
+    )
     if df.shape[1] < 2:
         raise NormalizationException(
             f"lengths file {lengths_fn} must have two columns, found {df.shape[1]}"
         )
-    if len(df) and pandas.isna(pandas.to_numeric(df.iloc[0, 1], errors="coerce")):
+    if len(df) and _looks_like_header(df.iloc[0, 1]):
         df = df.iloc[1:]
+    ids = df.iloc[:, 0].str.strip()
+    dups = ids[ids.duplicated()].unique()
+    if len(dups) != 0:
+        raise NormalizationException(
+            f"lengths file {lengths_fn} lists {len(dups)} feature names more than "
+            + "once, here are a couple: \n"
+            + "\n".join(list(dups)[:5])
+        )
     return pandas.Series(
-        pandas.to_numeric(df.iloc[:, 1], errors="coerce").values, index=df.iloc[:, 0].values
+        pandas.to_numeric(df.iloc[:, 1].str.strip(), errors="coerce").values, index=ids.values
     )
+
+
+_MISSING_TOKENS = {"", "NA", "NAN", "N/A", "NULL", "NONE"}
+
+
+def _looks_like_header(field):
+    "A lengths-file first line is a header when its length field is text."
+    field = str(field).strip()
+    if field.upper() in _MISSING_TOKENS:
+        return False
+    return pandas.isna(pandas.to_numeric(field, errors="coerce"))
 
 
 def cpm(count_df):

@@ -328,6 +328,91 @@ def test_read_lengths(tmp_path, header, delim):
     assert list(lens.values) == [1000, 2500]
 
 
+@pytest.mark.parametrize("first", ["NA", "", "nan"])
+def test_read_lengths_missing_first_length_is_not_header(tmp_path, first):
+    # a headerless file whose first length is missing keeps that feature, so
+    # tpm reports it as "not a positive number", not as "not found"
+    from de_toolkit.norm import read_lengths, tpm, NormalizationException
+
+    fn = tmp_path / "lengths.tsv"
+    fn.write_text(f"g1\t{first}\ng2\t2000\ng3\t4000\n")
+    lens = read_lengths(str(fn))
+    assert list(lens.index) == ["g1", "g2", "g3"]
+    assert np.isnan(lens["g1"])
+    with pytest.raises(NormalizationException, match="not a positive number"):
+        tpm(_small_counts(), lens)
+
+
+def test_read_lengths_duplicate_ids(tmp_path):
+    from de_toolkit.norm import read_lengths, NormalizationException
+
+    fn = tmp_path / "lengths.tsv"
+    fn.write_text("id\tlength\ng1\t1000\ng2\t2000\ng1\t1500\ng3\t4000\n")
+    with pytest.raises(NormalizationException, match="more than once"):
+        read_lengths(str(fn))
+
+
+@pytest.mark.parametrize("norm", ["tpm", "fpkm"])
+def test_duplicate_lens_series(norm):
+    # a duplicated name in an in-memory lengths Series is refused too, rather
+    # than adding a row to the output
+    from de_toolkit import norm as norm_mod
+
+    lens = pandas.Series([1000, 2000, 4000, 1500], index=["g1", "g2", "g3", "g1"])
+    with pytest.raises(norm_mod.NormalizationException, match="more than once"):
+        getattr(norm_mod, norm)(_small_counts(), lens)
+
+
+def test_tpm_numeric_ids():
+    # integer feature IDs (as read from a counts file of Entrez IDs) match the
+    # string IDs of a lengths file, and the output keeps the integer index
+    from de_toolkit.norm import tpm
+
+    cnts = _small_counts()
+    cnts.index = [101, 102, 103]
+    lens = pandas.Series([4000, 1000, 2000], index=["103", "101", "102"])
+    res = tpm(cnts, lens)
+    assert list(res.index) == [101, 102, 103]
+    assert np.allclose(res["a"], [0.4e6, 0.6e6, 0.0])
+    assert np.allclose(res["b"], [0.4e6, 0.4e6, 0.2e6])
+
+
+@pytest.mark.parametrize("cmd", ["tpm", "fpkm"])
+def test_norm_cli_numeric_ids(tmp_path, cmd):
+    from de_toolkit.norm import main
+
+    counts_fn = tmp_path / "counts.csv"
+    cnts = _small_counts()
+    cnts.index = [101, 102, 103]
+    cnts.rename_axis("gene").to_csv(counts_fn)
+    lengths_fn = tmp_path / "lengths.tsv"
+    lengths_fn.write_text("103\t4000\n101\t1000\n102\t2000\n")
+    out_fn = tmp_path / "out.csv"
+    main(["detk-norm", cmd, f"--output={out_fn}", "--no-report", str(counts_fn), str(lengths_fn)])
+    res = pandas.read_csv(out_fn, index_col=0)
+    assert list(res.index) == [101, 102, 103]
+    if cmd == "tpm":
+        assert np.allclose(res.values, [[0.4e6, 0.4e6], [0.6e6, 0.4e6], [0.0, 0.2e6]])
+    assert "101" in out_fn.read_text().splitlines()[1]
+
+
+@pytest.mark.parametrize("norm", ["cpm", "tpm"])
+def test_all_zero_sample(norm, caplog):
+    # a sample with no counts has NaN output and a warning
+    import logging
+
+    from de_toolkit import norm as norm_mod
+
+    cnts = _small_counts()
+    cnts["z"] = 0.0
+    args = (cnts,) if norm == "cpm" else (cnts, _small_lengths())
+    with caplog.at_level(logging.WARNING):
+        res = getattr(norm_mod, norm)(*args)
+    assert res["z"].isna().all()
+    assert np.allclose(res[["a", "b"]].sum(axis=0), 1e6)
+    assert "zero total counts" in caplog.text
+
+
 def _write_small_inputs(tmp_path):
     counts_fn = tmp_path / "counts.csv"
     _small_counts().rename_axis("gene").to_csv(counts_fn)

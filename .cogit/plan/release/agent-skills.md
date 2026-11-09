@@ -15,7 +15,7 @@ visited: cfe262f
 ## Implementation plan
 
 - [x] @developer Write the skills under `skills/` in the layout `npx skills` reads, check `npx skills add` installs them, document them; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR, and run a skill on the airway example from a fresh project <!-- s2 -->
+- [x] @reviewer Review the PR, and run a skill on the airway example from a fresh project <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes

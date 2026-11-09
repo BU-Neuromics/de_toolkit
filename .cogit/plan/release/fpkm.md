@@ -9,7 +9,7 @@ scope: [de_toolkit/norm.py, tests/norm/, docs/tools/norm.md, +CHANGELOG]
 prev: [release/tpm-cpm]
 ---
 
-# Fpkm
+# Correct the FPKM formula
 
 ## Implementation plan
 

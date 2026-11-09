@@ -9,6 +9,8 @@ scope: [skills/detk/SKILL.md, de_toolkit/de.py, de_toolkit/transform.py, de_tool
 prev: [release/padded-ids]
 issue: 67
 visited: 194bd2a
+status: done
+done: b54dd41
 ---
 
 # Keep IDs as written through R and the other readers
@@ -17,7 +19,7 @@ visited: 194bd2a
 
 - [x] @developer Read IDs and sample names as text at the R boundary (the R scripts in de.py and transform.py, wrapr's read-back) and in enrich and the tidy commands; R-gated round-trip tests; CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR, including the R-gated tests in CI <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

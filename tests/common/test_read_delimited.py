@@ -2,8 +2,10 @@
 is read as one column, not split on a letter of its header."""
 
 import gzip
+import http.server
 import io
 import logging
+import threading
 
 import pandas
 import pytest
@@ -27,6 +29,13 @@ _IDS = ["ENSG01", "ENSG02", "ENSG03"]
         ("id|score", "|"),
         ("id score", " "),
         ("gene id,score", ","),
+        # pipe wins over the spaces in a header (BioMart's export)
+        ("g|sample 1|sample 2", "|"),
+        ("Gene stable ID|Gene name", "|"),
+        # R's write.table default: quoted, space-separated
+        ('"s1" "s2"', " "),
+        # a comma inside quotes does not beat space
+        ('"gene, id" s1 s2', " "),
     ],
 )
 def test_sniff_delimiter(line, expected):
@@ -109,6 +118,92 @@ def test_read_id_table_still_splits_on_delimiters(tmp_path, sep):
     assert list(df.index) == _IDS
     assert list(df.columns) == ["s1", "s2"]
     assert df.loc["ENSG02"].tolist() == [1, 2]
+
+
+def test_read_delimited_pipe_with_spaces_in_headers(tmp_path):
+    fn = tmp_path / "mart.txt"
+    fn.write_text("Gene stable ID|Gene name\nENSG01|A B\nENSG02|C\n")
+    df = read_delimited(str(fn))
+    assert list(df.columns) == ["Gene stable ID", "Gene name"]
+    assert list(df["Gene name"]) == ["A B", "C"]
+
+
+def test_read_id_table_pipe_with_spaces_in_headers(tmp_path):
+    fn = tmp_path / "counts.txt"
+    fn.write_text(
+        "g|sample 1|sample 2\n" + "".join(f"{i}|{n}|{n + 1}\n" for n, i in enumerate(_IDS))
+    )
+    df = read_id_table(str(fn))
+    assert list(df.index) == _IDS
+    assert list(df.columns) == ["sample 1", "sample 2"]
+    assert df.loc["ENSG02"].tolist() == [1, 2]
+
+
+def test_read_id_table_r_write_table(tmp_path):
+    # R's write.table(counts) default: quoted, space-separated, and the
+    # header omits the row names' field
+    fn = tmp_path / "counts.txt"
+    fn.write_text('"s1" "s2"\n' + "".join(f'"{i}" {n} {n + 1}\n' for n, i in enumerate(_IDS)))
+    df = read_id_table(str(fn))
+    assert list(df.index) == _IDS
+    assert list(df.columns) == ["s1", "s2"]
+    assert df.loc["ENSG02"].tolist() == [1, 2]
+    assert list(read_delimited(str(fn)).columns) == ["s1", "s2"]
+
+
+@pytest.fixture
+def http_table():
+    """
+    Serve a counts table over HTTP from a local server in a thread; yield
+    its URL and the list of request paths the server received.
+    """
+    body = ("gene,s1,s2\n" + "".join(f"{i},{n},{n + 1}\n" for n, i in enumerate(_IDS))).encode()
+    requests = []
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            requests.append(self.path)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/csv")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *args):
+            pass
+
+    server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_port}/counts.csv", requests
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_read_delimited_fetches_a_url_once(http_table):
+    url, requests = http_table
+    df = read_delimited(url)
+    assert list(df.columns) == ["gene", "s1", "s2"]
+    assert requests == ["/counts.csv"]
+
+
+def test_read_id_table_fetches_a_url_once(http_table):
+    url, requests = http_table
+    df = read_id_table(url)
+    assert list(df.index) == _IDS
+    assert df.loc["ENSG02"].tolist() == [1, 2]
+    assert requests == ["/counts.csv"]
+
+
+def test_read_delimited_gzipped_url(tmp_path):
+    # a file:// URL is fetched by pandas' opener too, and its compression is
+    # taken from its name
+    fn = tmp_path / "ids.txt.gz"
+    fn.write_bytes(gzip.compress(("gene_id\n" + "\n".join(_IDS) + "\n").encode()))
+    assert list(read_delimited(fn.as_uri())["gene_id"]) == _IDS
+    assert list(read_id_table(fn.as_uri()).index) == _IDS
 
 
 # the CLI readers in util and enrich

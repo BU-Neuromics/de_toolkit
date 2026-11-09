@@ -70,7 +70,10 @@ predates everything below.
   header (`gene_id` became `g`, `n`, `_id`). The delimiter of every sniffed
   input (counts and column data, `detk-util annotate`, `tidy`,
   `tidy-counts`, `tidy-covs`, `detk-enrich fgsea` results) is now one of
-  comma, tab, semicolon, pipe or space, taken from the first line (#47)
+  comma, tab, semicolon, pipe or space, taken from the first line, with
+  space used only when no other splits it (a pipe table with a space in a
+  header, such as a BioMart export, is no longer split on the spaces). A
+  URL input is fetched once (#47)
 
 ## [ 0.9.12 ]
 ### Added

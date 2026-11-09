@@ -7,6 +7,8 @@ from: {node: release/single-column, step: s1}
 applies: [release/single-column]
 allowed_by: [reasonable]
 reason: csv.Sniffer left to any character splits a bare list of IDs on a letter of its header
+revisions:
+  - {date: 2026-11-09, by: DETK/developer, change: Prefer pipe (any non-space delimiter splitting the line) over space; a URL is buffered and fetched once; the second-line check for space is an open question, why: review of s2}
 ---
 
 # Sniff delimiters from a fixed set; a first line with none is one column
@@ -55,9 +57,12 @@ Option 1: `de_toolkit.common.read_delimited` (and `sniff_delimiter`)
 sniff the first line, as pandas did, for `SNIFF_DELIMITERS = ",\t;| "`;
 with none of them the file is read as a single column. Every reader that
 used `sep=None` in common, util and enrich goes through it. Space stays
-in the set so whitespace-separated tables still read; comma, tab and
-semicolon are preferred over it, as the sniffer's own preference order
-has them.
+in the set so whitespace-separated tables still read (R's `write.table`
+default output is quoted and space-separated), but any other delimiter in
+the set that splits the first line outside quotes is preferred over it:
+the sniffer's own order prefers comma, tab and semicolon to space but not
+pipe, so a pipe table with a space in a header (`g|sample 1|sample 2`,
+BioMart's `Gene stable ID|Gene name`) was split on the spaces.
 
 ## Consequences
 
@@ -67,9 +72,18 @@ has them.
   `gene id`) is read as two columns; a table delimited by any character
   outside the set (`:`) is read as one column. Revisit if a user reports
   either.
+- Open question (for Adam, from the review of s2): should space count as
+  the delimiter only when the second line splits into the same number of
+  fields, or one more (R-style counts)? That would read `gene id` and
+  BioMart's `Gene stable ID` as one column and keep `write.table` output,
+  and would also catch a one-sample R-style counts file. Not adopted here.
 - New readers should call `read_delimited` instead of `sep=None`.
   `de_toolkit/norm.py`'s `read_lengths` still uses `sep=None` (outside this
   node's scope); a lengths file must have two columns, so a one-column file
   there still fails, but with a wrong column count rather than one column.
-- The first line is read once more before the table: a URL is fetched
-  twice; a stream or FIFO is buffered first, as `read_id_table` already did.
+- The first line is read once more before the table, so anything that
+  cannot be re-read cheaply is buffered in memory first: a stream or FIFO,
+  as `read_id_table` already did, and a URL (`http`, `https`, `ftp`,
+  `file`, `s3` and the other fsspec protocols), so `read_delimited` and
+  `read_id_table` each fetch a URL once (main fetched it once and twice).
+  `read_id_table` sniffs once and parses the buffer twice.

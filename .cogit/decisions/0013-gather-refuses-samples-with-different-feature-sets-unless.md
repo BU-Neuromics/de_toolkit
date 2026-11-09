@@ -1,12 +1,14 @@
 ---
 template: adr
-state: Provisional
+state: Accepted
 authority: [DETK/developer]
 date: 2026-11-09
 from: {node: release/gather, step: s1}
 applies: [release/gather]
 allowed_by: [reasonable]
 reason: A feature-set difference almost always means mixed annotations; silent filling would hide it
+revisions:
+  - {date: 2026-11-09, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-09: accept with release/gather"}
 ---
 
 # gather refuses samples with different feature sets unless --on-mismatch=fill or drop

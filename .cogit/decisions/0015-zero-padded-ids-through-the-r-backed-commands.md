@@ -7,6 +7,7 @@ from: {node: release/padded-ids, step: s1}
 applies: [release/padded-ids]
 revisions:
   - {date: 2026-11-09, by: DETK/developer, change: "Narrow to all-numeric ID columns; add enrich fgsea, util tidy-counts/tidy-covs and all-numeric versioned IDs", why: review of s2}
+  - {date: 2026-11-09, by: DETK/developer, change: only detk-de deseq2 stops on zero-padded sample names, why: second review of s2}
 ---
 
 # Zero-padded IDs through the R-backed commands
@@ -94,7 +95,10 @@ is Adam's call, not the developer's.
 Until it is settled, `detk-de deseq2`/`firth` and `detk-transform
 vst`/`rlog` write an all-numeric column of zero-padded IDs as `7` (as
 before), all-numeric versioned IDs stop on duplicate row names, and
-zero-padded sample names stop at DESeq2's sample check; the CHANGELOG
+zero-padded sample names stop `detk-de deseq2` at its sample check
+(`stopifnot` in `de.py`); `firth` has no such check, and `vst`/`rlog`
+build the dataset with `DESeqDataSetFromMatrix`, which matches samples
+by position here (read from DESeq2's source, not run); the CHANGELOG
 entry for #48 says so for the R-backed commands. `detk-enrich fgsea`
 loses `007` in an all-numeric result column and `detk-util
 tidy-counts`/`tidy-covs` stop on zero-padded sample names, as before #48.

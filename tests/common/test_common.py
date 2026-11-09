@@ -223,6 +223,17 @@ def _fifo_writer(path, data):
     return t
 
 
+def test_read_id_table_tilde_path_goes_to_pandas(tmp_path, monkeypatch):
+    # a path the shell did not expand (~/...) is not a local file, but pandas
+    # expands it, as on main; it must not be opened directly
+    from de_toolkit.common import read_id_table
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    (tmp_path / "counts.csv").write_text(",a,b\n007,1,2\n008,3,4\n")
+    df = read_id_table("~/counts.csv")
+    assert list(df.index) == ["007", "008"]
+
+
 @pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="needs os.mkfifo")
 @pytest.mark.parametrize("name", ["counts.csv", "counts.csv.gz"])
 def test_read_id_table_fifo(tmp_path, name):

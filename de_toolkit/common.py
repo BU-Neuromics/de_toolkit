@@ -337,9 +337,10 @@ def read_id_table(f):
         # the table is parsed twice below, so buffer a stream
         content = f.read()
         f = io.StringIO(content) if isinstance(content, str) else io.BytesIO(content)
-    elif not os.path.isfile(f):
-        # likewise a path that is not a regular file: it may be readable
-        # only once. The buffer has no name, so take the compression from
+    elif os.path.exists(f) and not os.path.isfile(f):
+        # likewise a local path that is not a regular file: it may be
+        # readable only once. Anything else (a URL, an unexpanded ~, a
+        # missing path) goes to pandas as before. The buffer has no name, so take the compression from
         # the path's.
         name = os.fspath(f)
         compression = next(

@@ -4,6 +4,7 @@ objective: 'norm: add TPM and CPM normalization (tracks #24)'
 scope: [+de_toolkit/report_specs.py, +CHANGELOG, de_toolkit/norm.py, docs/tools/norm.md, tests/norm/]
 issue: 24
 visited: f6503ed
+prev: [DETK-0006]
 ---
 
 # TPM and CPM normalization

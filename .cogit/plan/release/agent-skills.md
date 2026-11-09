@@ -8,6 +8,8 @@ acceptance:
 scope: [+README.md, +mkdocs.yml, +CHANGELOG]
 issue: 38
 visited: cfe262f
+status: done
+done: fba651a
 ---
 
 # Agent skills
@@ -16,7 +18,7 @@ visited: cfe262f
 
 - [x] @developer Write the skills under `skills/` in the layout `npx skills` reads, check `npx skills add` installs them, document them; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR, and run a skill on the airway example from a fresh project <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

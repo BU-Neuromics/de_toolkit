@@ -43,10 +43,12 @@ predates everything below.
   metadata with the IDs as text. The IDs are kept exactly as written,
   including whitespace: `" 007"` stays `" 007"`, where it used to become 7
   (text IDs always kept it)
-- `detk-transform rlog` with a design (not blind) works: it passed the
-  counts and an intercept column to DESeq2, which adds its own intercept,
-  and failed in R ("not full rank"); it now drops both, as `detk-de deseq2`
-  does
+- `de_toolkit.transform.rlog(count_obj, blind=False)`, rlog with a design,
+  works: it passed the counts and an intercept column to DESeq2, which adds
+  its own intercept, and failed in R ("not full rank"); it now drops both,
+  as `detk-de deseq2` does. The command line cannot reach it yet:
+  `detk-transform rlog --blind False` reads `False` as text, which counts as
+  blind
 - FPKM values change from 0.9.x: FPKM is now
   `count * 1e9 / (length * library size)` as documented, where 0.9.x computed
   `count / (1e6 * length)` and never divided by library size. In 0.9.x the

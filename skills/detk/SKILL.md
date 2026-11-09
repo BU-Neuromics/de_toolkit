@@ -83,12 +83,12 @@ writes commas unless given `-d CHAR`):
   batch, cell line, ...).
 
 Feature IDs and sample names are read as text exactly as written, so a
-zero-padded ID such as `007` stays `007` through the commands that run in
-Python (`detk-filter`, `detk-norm`, `detk-stats`, `detk-util`). The R-backed
-commands (`detk-de`, `detk-transform vst` and `rlog`) and `detk-enrich fgsea`
-still read such an ID as a number when every ID in the column looks numeric,
-so their output can show `7`; check the IDs in their output
-before joining it to another table.
+zero-padded ID such as `007` stays `007`, and a sample named `001` stays
+`001`, through every detk command, the R-backed ones (`detk-de`,
+`detk-transform vst` and `rlog`) and `detk-enrich fgsea` included. Two IDs
+that differ only as text (`1.10` and `1.1`) stay distinct. The R-backed
+commands stop on a counts file that lists the same ID twice; the Python
+commands do not check, so look for duplicate IDs before running them.
 
 ### Starting from quantifier outputs
 

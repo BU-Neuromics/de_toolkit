@@ -416,3 +416,75 @@ def test_firth_w_huge_data_cov(fake_huge_counts_obj):
     fake_huge_counts_obj.add_design("category ~ cont_cov")
 
     firth_logistic_regression(fake_huge_counts_obj)
+
+
+# Zero-padded and versioned all-numeric IDs, and zero-padded sample names
+# (DETK-0015, #67): R's read.csv would read 007 as 7 and both 1.10 and 1.1 as
+# 1.1; each must come back from R as written.
+PADDED_IDS = ["007", "010", "1.10", "1.1"] + [f"{_:03d}" for _ in range(20, 28)]
+PADDED_SAMPLES = [f"{_:03d}" for _ in range(1, 7)]
+
+
+@pytest.fixture
+def padded_ids_csvs(tmp_path):
+    rng = numpy.random.default_rng(67)
+    means = rng.integers(20, 500, size=len(PADDED_IDS))
+    counts = pandas.DataFrame(
+        rng.poisson(means[:, None] * [1, 1, 1, 2, 2, 2]),
+        index=pandas.Index(PADDED_IDS, name="gene"),
+        columns=PADDED_SAMPLES,
+    )
+    covs = pandas.DataFrame(
+        {"category": ["cont"] * 3 + ["case"] * 3, "cont_cov": [0.1, 1.0, 10.0, 2.0, 0.5, 5.0]},
+        index=pandas.Index(PADDED_SAMPLES, name="sample"),
+    )
+    counts_fn, covs_fn = tmp_path / "counts.csv", tmp_path / "covs.csv"
+    counts.to_csv(counts_fn)
+    covs.to_csv(covs_fn)
+    return str(counts_fn), str(covs_fn)
+
+
+def _ids_as_written(fn):
+    "The first column of the CSV *fn*, as written."
+    return pandas.read_csv(fn, dtype=str, keep_default_na=False).iloc[:, 0].tolist()
+
+
+@r_test
+@deseq2_test
+def test_deseq2_keeps_padded_ids(padded_ids_csvs, tmp_path):
+    counts_fn, covs_fn = padded_ids_csvs
+    out_fn = str(tmp_path / "out.csv")
+    main(
+        [
+            "detk-de",
+            "deseq2",
+            "--gene-wise-disp",
+            "--no-report",
+            "counts ~ category[cont]",
+            counts_fn,
+            covs_fn,
+            "-o",
+            out_fn,
+        ]
+    )
+    assert _ids_as_written(out_fn) == PADDED_IDS
+
+
+@r_test
+@logistf_test
+def test_firth_keeps_padded_ids(padded_ids_csvs, tmp_path):
+    counts_fn, covs_fn = padded_ids_csvs
+    out_fn = str(tmp_path / "out.csv")
+    main(
+        [
+            "detk-de",
+            "firth",
+            "--no-report",
+            "category ~ counts",
+            counts_fn,
+            covs_fn,
+            "-o",
+            out_fn,
+        ]
+    )
+    assert _ids_as_written(out_fn) == PADDED_IDS

@@ -193,3 +193,35 @@ def test_wrapr_fail():
 
     with wrapr.wrapr("thisisanerror", raise_on_error=False) as wr:
         assert not wr.success
+
+
+@r_test
+def test_wrapr_keeps_ids_as_written():
+    # read.id.csv reads the first column as text and types the rest as
+    # read.csv does, and wrapr reads R's output with its first column as
+    # text: 007, 010, 1.10 and 1.1 come back as written (DETK-0015, #67)
+    import pandas
+
+    ids = ["007", "010", "1.10", "1.1"]
+    samples = ["001", "002"]
+    counts = pandas.DataFrame(
+        [[1, 2], [3, 4], [5, 6], [7, 8]], index=pandas.Index(ids, name="gene"), columns=samples
+    )
+    meta = pandas.DataFrame(
+        {"x": [0.5, 1.5], "y": ["a", "b"]}, index=pandas.Index(samples, name="sample")
+    )
+    script = """
+    cnts <- read.id.csv(counts.fn, row.names=TRUE)
+    stopifnot(identical(rownames(cnts), c("007", "010", "1.10", "1.1")))
+    stopifnot(is.numeric(cnts[["001"]]))
+    meta <- read.id.csv(metadata.fn, row.names=TRUE)
+    stopifnot(identical(rownames(meta), colnames(cnts)))
+    stopifnot(is.numeric(meta$x), is.character(meta$y))
+    write.csv(cnts, out.fn)
+    write.csv(meta, metadata.out.fn)
+    """
+    with wrapr.wrapr(script, counts=counts, metadata=meta, raise_on_error=True) as wr:
+        assert wr.output.index.tolist() == ids
+        assert wr.output.columns.tolist() == samples
+        assert (wr.output.to_numpy() == counts.to_numpy()).all()
+        assert wr.metadata_out.index.tolist() == samples

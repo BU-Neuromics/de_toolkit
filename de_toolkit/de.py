@@ -245,7 +245,8 @@ class DESeq2Counts(DetkModule):
         logger.debug("DESeq2 wrapr params:\n %s", pformat(params))
         script = """\
             library(DESeq2)
-            cnts <- read.csv(counts.fn,header=T,as.is=T,check.names=FALSE)
+            # the IDs as text, as written (007 stays 007; see read.id.csv in wrapr)
+            cnts <- read.id.csv(counts.fn)
             index.name <- names(cnts)[1]
 
             # first column name is blank
@@ -279,13 +280,8 @@ class DESeq2Counts(DetkModule):
             form <- params$design
 
             # load design matrix
-            design.mat <- read.csv(
-                metadata.fn,
-                header=T,
-                as.is=T,
-                row.names=1,
-                check.names=FALSE
-            )
+            # the sample names as text, as in the counts header (001 stays 001)
+            design.mat <- read.id.csv(metadata.fn,row.names=TRUE)
 
             # make sure the counts and design matrix samples line up
             stopifnot(colnames(cnts) == rownames(design.mat))
@@ -449,7 +445,8 @@ class FLGCounts(DetkModule):
         logger.debug("logistf wrapr params:\n %s", pformat(params))
         script = """\
             library(logistf)
-            cnts <- read.csv(counts.fn,header=T,as.is=T,check.names=FALSE)
+            # the IDs as text, as written (007 stays 007; see read.id.csv in wrapr)
+            cnts <- read.id.csv(counts.fn)
             index.name <- names(cnts)[1]
 
             # first column name is blank
@@ -475,7 +472,8 @@ class FLGCounts(DetkModule):
             form <- params$design
 
             # load design matrix
-            design.mat <- read.csv(metadata.fn,header=T,as.is=T,row.names=1,check.names=FALSE)
+            # the sample names as text, as in the counts header (001 stays 001)
+            design.mat <- read.id.csv(metadata.fn,row.names=TRUE)
 
             fit <- NULL
 

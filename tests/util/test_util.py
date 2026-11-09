@@ -138,3 +138,42 @@ def test_tidy_covs_cli(fake_tidy_counts_csv, fake_untidy_counts_csv, fake_untidy
                 fake_untidy_column_data_csv,
             ]
         )
+
+
+# zero-padded feature IDs and sample names (DETK-0015, #67)
+@pytest.fixture
+def padded_csvs(tmp_path):
+    counts_fn = tmp_path / "counts.csv"
+    counts_fn.write_text("gene,001,002,003,004\n007,1,2,3,4\n010,5,6,7,8\n1.10,0,1,0,1\n")
+    covs_fn = tmp_path / "covs.csv"
+    covs_fn.write_text("sample,group\n003,b\n001,a\n002,a\n")
+    return str(counts_fn), str(covs_fn)
+
+
+def _as_written(fn):
+    return pandas.read_csv(fn, dtype=str, keep_default_na=False)
+
+
+def test_tidy_counts_keeps_padded_ids(padded_csvs, tmp_path):
+    counts_fn, covs_fn = padded_csvs
+    out_fn = str(tmp_path / "out.csv")
+    main(["detk-util", "tidy-counts", counts_fn, covs_fn, "-o", out_fn])
+    out = _as_written(out_fn)
+    assert out.iloc[:, 0].tolist() == ["007", "010", "1.10"]
+    assert out.columns[1:].tolist() == ["001", "002", "003"]
+
+
+def test_tidy_covs_keeps_padded_ids(padded_csvs, tmp_path):
+    counts_fn, covs_fn = padded_csvs
+    # the counts lose sample 004, so every counts column is a covariates row
+    tidy_counts_fn = tmp_path / "tidy_counts.csv"
+    tidy_counts_fn.write_text("gene,002,001,003\n007,1,2,3\n")
+    out_fn = str(tmp_path / "out.csv")
+    main(["detk-util", "tidy-covs", str(tidy_counts_fn), covs_fn, "-o", out_fn])
+    out = _as_written(out_fn)
+    assert out.iloc[:, 0].tolist() == ["002", "001", "003"]
+    assert out["group"].tolist() == ["a", "a", "b"]
+
+    # sample 004 of the counts is not in the covariates
+    with pytest.raises(SystemExit):
+        main(["detk-util", "tidy-covs", counts_fn, covs_fn, "-o", out_fn])

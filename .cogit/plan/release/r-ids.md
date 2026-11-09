@@ -5,17 +5,21 @@ acceptance:
   - detk-de deseq2 and firth, detk-transform vst and rlog keep 007 in their output and accept 001-style sample names, shown by an R-gated test that round-trips them
   - detk-enrich fgsea and detk-util tidy-counts/tidy-covs keep 007 and 001, with tests
 from: [DETK-0015]
-scope: [de_toolkit/de.py, de_toolkit/transform.py, de_toolkit/wrapr.py, de_toolkit/enrich.py, de_toolkit/util.py, tests/de/, tests/transform/, tests/wrapr/, tests/enrich/, tests/util/, +CHANGELOG]
+scope: [skills/detk/SKILL.md, de_toolkit/de.py, de_toolkit/transform.py, de_toolkit/wrapr.py, de_toolkit/enrich.py, de_toolkit/util.py, tests/de/, tests/transform/, tests/wrapr/, tests/enrich/, tests/util/, +CHANGELOG]
 prev: [release/padded-ids]
+issue: 67
+visited: 194bd2a
+status: done
+done: b54dd41
 ---
 
 # Keep IDs as written through R and the other readers
 
 ## Implementation plan
 
-- [ ] @developer Read IDs and sample names as text at the R boundary (the R scripts in de.py and transform.py, wrapr's read-back) and in enrich and the tidy commands; R-gated round-trip tests; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR, including the R-gated tests in CI <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Read IDs and sample names as text at the R boundary (the R scripts in de.py and transform.py, wrapr's read-back) and in enrich and the tidy commands; R-gated round-trip tests; CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR, including the R-gated tests in CI <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

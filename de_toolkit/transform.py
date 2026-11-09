@@ -174,7 +174,8 @@ class VstCounts(DetkModule):
         library(DESeq2)
         library(SummarizedExperiment)
 
-        cnts <- as.matrix(read.csv(counts.fn,row.names=1,check.names=FALSE))
+        # the IDs as text, as written (007 stays 007; see read.id.csv in wrapr)
+        cnts <- as.matrix(read.id.csv(counts.fn,row.names=TRUE))
         colData <- data.frame(name=seq(ncol(cnts)),check.names=FALSE)
         dds <- DESeqDataSetFromMatrix(countData = cnts,
             colData = colData,
@@ -238,7 +239,8 @@ class RlogCounts(DetkModule):
         library(DESeq2)
         library(SummarizedExperiment)
 
-        cnts <- as.matrix(read.csv(counts.fn,row.names=1,check.names=FALSE))
+        # the IDs as text, as written (007 stays 007; see read.id.csv in wrapr)
+        cnts <- as.matrix(read.id.csv(counts.fn,row.names=TRUE))
 
         rnames <- rownames(cnts)
 
@@ -251,7 +253,7 @@ class RlogCounts(DetkModule):
 
         # load design matrix
         if(file.info(metadata.fn)$size != 0) {
-            colData <- read.csv(metadata.fn,header=T,as.is=T,row.names=1,check.names=FALSE)
+            colData <- read.id.csv(metadata.fn,row.names=TRUE)
         } else {
             # just to convince DESeq2 that everything is ok when we're doing a
             # blind rlog
@@ -277,6 +279,11 @@ class RlogCounts(DetkModule):
         logger.debug("VST R script:\n%s", script)
         column_data = None
         if not blind and count_obj.column_data is not None:
+            # as detk-de deseq2 does: DESeq2 adds its own intercept and takes
+            # the counts from countData, so neither belongs in the design
+            # (with both, the model matrix is not full rank)
+            count_obj.design_matrix.drop_from_lhs("counts", quiet=True)
+            count_obj.design_matrix.drop_from_rhs("Intercept", quiet=True)
             column_data = count_obj.design_matrix.full_matrix
 
         params = {"design": "~ 1" if blind else count_obj.design, "blind": blind}

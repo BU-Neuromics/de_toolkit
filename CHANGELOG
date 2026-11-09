@@ -27,11 +27,28 @@ predates everything below.
 - Feature IDs in a counts file, and sample names in a sample-info file, are
   read as text exactly as written, so a zero-padded ID such as `007` is no
   longer read as the number 7: it matches a lengths or mapping file that
-  writes `007`, and the tools that run in Python write it back as `007`
-  (#48); the R-backed commands (`detk-de deseq2` and `firth`,
-  `detk-transform vst` and `rlog`) still read it as 7 in R (DETK-0015).
-  The IDs are kept exactly as written, including whitespace: `" 007"` stays
-  `" 007"`, where it used to become 7 (text IDs always kept it)
+  writes `007`, and every command writes it back as `007` (#48). This holds
+  through R too: `detk-de deseq2` and `firth` and `detk-transform vst` and
+  `rlog` read the IDs and sample names as text in R and wrapr reads R's
+  output back the same way, so `007` and sample names such as `001` are
+  kept, `detk-de deseq2` no longer stops on `001`-style sample names, and
+  all-numeric versioned IDs such as `1.10` and `1.1` no longer collapse to
+  one duplicate row name; `detk-enrich fgsea` reads the result's ID column
+  as text, so `007` matches `007` in the GMT file, and `detk-util
+  tidy-counts` and `tidy-covs` match `001`-style sample names, where they
+  used to exit 1 (#67, DETK-0015). For R scripts run through
+  `de_toolkit.wrapr`, the `output` and `metadata_out` tables are indexed by
+  their first column read as text (they were typed by pandas), and the
+  script can call `read.id.csv(fn, row.names=TRUE)` to read the counts or
+  metadata with the IDs as text. The IDs are kept exactly as written,
+  including whitespace: `" 007"` stays `" 007"`, where it used to become 7
+  (text IDs always kept it)
+- `de_toolkit.transform.rlog(count_obj, blind=False)`, rlog with a design,
+  works: it passed the counts and an intercept column to DESeq2, which adds
+  its own intercept, and failed in R ("not full rank"); it now drops both,
+  as `detk-de deseq2` does. The command line cannot reach it yet:
+  `detk-transform rlog --blind` passes its value to R as text, where DESeq2
+  stops; leave `--blind` out for a blind rlog
 - FPKM values change from 0.9.x: FPKM is now
   `count * 1e9 / (length * library size)` as documented, where 0.9.x computed
   `count / (1e6 * length)` and never divided by library size. In 0.9.x the

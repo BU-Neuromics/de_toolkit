@@ -349,6 +349,68 @@ class FGSEARes(DetkModule):
         return self.gsea_res
 
 
+def _numeric_or_text(col):
+    "*col* (text) as numbers when every value parses as one, else unchanged."
+    try:
+        return pandas.to_numeric(col)
+    except (ValueError, TypeError):
+        return col
+
+
+def _resolve_result_column(res_df, col, what):
+    "The name of column *col* of *res_df*: a column name or a 0-based index."
+    if col in res_df.columns:
+        return col
+    try:
+        pos = int(col)
+    except (TypeError, ValueError):
+        pos = None
+    if pos is None or not 0 <= pos < len(res_df.columns):
+        raise ValueError(
+            f"{what} column {col} could not be found in the results or "
+            "interpreted as an integer index, aborting"
+        )
+    return res_df.columns[pos]
+
+
+def read_result_stat(result_fn, idcol=0, statcol=None):
+    """
+    Read the result table *result_fn* (any delimited file, see
+    :func:`de_toolkit.common.read_delimited`) and return the ranking
+    statistic for fgsea: a pandas.Series of column *statcol* (a column name
+    or 0-based index; by default the last numeric column) indexed by the IDs
+    in column *idcol* (a name or 0-based index, by default the first).
+
+    The IDs are read as text, exactly as written, so ``007`` stays ``007``
+    and matches ``007`` in the GMT file even when every ID in the column
+    looks like a number; the other columns are numbers when every value in
+    them parses as one.
+    """
+    res_df = read_delimited(result_fn, dtype=str)
+    logger.info("result data frame shape: %s", res_df.shape)
+    idcol = _resolve_result_column(res_df, 0 if idcol is None else idcol, "ID")
+    for c in res_df.columns:
+        if c != idcol:
+            res_df[c] = _numeric_or_text(res_df[c])
+    logger.info("using %s as identifier column", idcol)
+
+    if statcol is not None:
+        statcol = _resolve_result_column(res_df, statcol, "Stat")
+    else:
+        # pick the last numeric column
+        numeric = [
+            c for c in res_df.columns if c != idcol and pandas.api.types.is_numeric_dtype(res_df[c])
+        ]
+        if not numeric:
+            raise ValueError("no numeric column found in the results to use as the statistic")
+        statcol = numeric[-1]
+    logger.info("using %s as statistic column", statcol)
+
+    stat = pandas.to_numeric(res_df[statcol])
+    stat.index = pandas.Index(res_df[idcol], name=idcol)
+    return stat
+
+
 def main(argv=sys.argv):
 
     if "--version" in argv:
@@ -383,12 +445,12 @@ def main(argv=sys.argv):
 
         logger.info("reading in results file %s", args["<result_fn>"])
         try:
-            res_df = read_delimited(args["<result_fn>"])
+            stat = read_result_stat(
+                args["<result_fn>"], idcol=args["--idcol"], statcol=args["--statcol"]
+            )
         except Exception as e:
             logger.error(e)
             sys.exit(1)
-
-        logger.info("result data frame shape: %s", res_df.shape)
 
         cores = args["--cores"]
         if cores is not None:
@@ -398,54 +460,9 @@ def main(argv=sys.argv):
                 logger.error(Exception("The cores argument to fgsea must be an integer"))
                 sys.exit(1)
 
-        def get_col_or_idcol(res_df, col):
-            if col not in res_df.columns:
-                col = int(col)
-                if col >= len(res_df.columns):
-                    raise ValueError()
-                col = res_df.columns[col]
-            return col
-
-        col = args["--statcol"]
-        if col is not None:
-            # check that the provided column is either in the column names
-            # of the results df, or else is a valid integer index into it
-
-            try:
-                col = get_col_or_idcol(res_df, col)
-            except ValueError:
-                logger.error(
-                    Exception(
-                        f"Stat column {col} could not be found in results result "
-                        "or interpreted as an integer index, aborting"
-                    )
-                )
-                sys.exit(1)
-        else:
-            # pick the last numeric column
-            col = res_df.columns[res_df.dtypes.apply(pandas.api.types.is_numeric_dtype)][-1]
-        logger.info("using %s as statistic column", col)
-
-        stat = res_df[col]
         if args["--abs"]:
             logger.info("taking absolute value of statistic column due to --abs")
             stat = stat.abs()
-
-        idcol = args["--idcol"]
-        if idcol is not None:
-            try:
-                idcol = get_col_or_idcol(res_df, idcol)
-            except ValueError:
-                logger.error(
-                    Exception(
-                        f"ID column {idcol} could not be found in results dataframe "
-                        "or interpreted as an integer index, aborting"
-                    )
-                )
-                sys.exit(1)
-
-            stat.index = res_df[idcol]
-        logger.info("using %s as identifier column", idcol)
 
         if args["--ascending"]:
             logger.info("sorting statistic into ascending order due to --ascending")

@@ -465,3 +465,83 @@ def test_fgsea_matches_numeric_ids():
         # without R this raises before fgsea runs, but never the ID-mismatch
         # error the bug produced
         assert "No features map" not in str(e)
+
+
+# an all-numeric ID column with zero-padded and versioned IDs (DETK-0015, #67)
+PADDED_IDS = ["007", "010", "1.10", "1.1"]
+
+
+@pytest.fixture
+def padded_result_csv(tmp_path):
+    fn = tmp_path / "result.csv"
+    fn.write_text(
+        "gene,baseMean,log2FoldChange,label\n007,10,1.5,a\n010,20,-2,b\n1.10,30,0.5,c\n1.1,40,3,d\n"
+    )
+    return str(fn)
+
+
+def test_read_result_stat_keeps_ids_as_written(padded_result_csv):
+    from de_toolkit.enrich import read_result_stat
+
+    stat = read_result_stat(padded_result_csv)
+    assert stat.index.tolist() == PADDED_IDS
+    # the last numeric column, as numbers
+    assert stat.name == "log2FoldChange"
+    assert stat.tolist() == [1.5, -2.0, 0.5, 3.0]
+
+    stat = read_result_stat(padded_result_csv, idcol="gene", statcol="baseMean")
+    assert stat.index.tolist() == PADDED_IDS
+    assert stat.tolist() == [10, 20, 30, 40]
+
+    stat = read_result_stat(padded_result_csv, idcol="0", statcol="1")
+    assert stat.index.tolist() == PADDED_IDS
+    assert stat.name == "baseMean"
+
+
+def test_read_result_stat_id_not_first(tmp_path):
+    from de_toolkit.enrich import read_result_stat
+
+    fn = tmp_path / "result.tsv"
+    fn.write_text("stat\tid\n1.5\t007\n-2\t010\n")
+    stat = read_result_stat(str(fn), idcol="id")
+    assert stat.index.tolist() == ["007", "010"]
+    assert stat.tolist() == [1.5, -2.0]
+
+
+def test_read_result_stat_bad_columns(padded_result_csv):
+    from de_toolkit.enrich import read_result_stat
+
+    with pytest.raises(ValueError, match="ID column"):
+        read_result_stat(padded_result_csv, idcol="nope")
+    with pytest.raises(ValueError, match="Stat column"):
+        read_result_stat(padded_result_csv, statcol="9")
+
+
+def test_fgsea_cli_passes_ids_as_written(monkeypatch, tmp_path, padded_result_csv):
+    # the CLI hands fgsea the IDs as written, so 007 matches 007 in the GMT
+    from de_toolkit import enrich
+
+    gmt_fn = tmp_path / "sets.gmt"
+    gmt_fn.write_text("set1\tset1\t007\t1.10\nset2\tset2\t010\t1.1\n")
+    seen = {}
+
+    class FakeFGSEARes:
+        def __init__(self, gmt, stat, **kwargs):
+            seen["stat"] = stat
+            seen["gmt_ids"] = {i for s in gmt.values() for i in s.ids}
+            self.output = pandas.DataFrame({"pval": [0.5]}, index=["set1"])
+
+    monkeypatch.setattr(enrich, "FGSEARes", FakeFGSEARes)
+    enrich.main(
+        [
+            "detk-enrich",
+            "fgsea",
+            "--no-report",
+            str(gmt_fn),
+            padded_result_csv,
+            "-o",
+            str(tmp_path / "out.csv"),
+        ]
+    )
+    assert seen["stat"].index.tolist() == PADDED_IDS
+    assert set(seen["stat"].index) == seen["gmt_ids"]

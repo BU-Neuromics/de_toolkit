@@ -34,7 +34,7 @@ from pprint import pformat
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from .common import CountMatrixFile, _cli_doc, set_logging
+from .common import CountMatrixFile, _cli_doc, read_id_table, set_logging
 from .util import which
 
 # setup logging, null on the library level
@@ -176,6 +176,24 @@ params <- if(nchar(json) > 0) {{
     list()
 }}
 
+# Read the CSV *fn*, written by pandas, with its first column (feature IDs or
+# sample names) as text, exactly as written: read.csv's type.convert would
+# turn an all-numeric ID column into numbers, so 007 became 7 and the
+# versioned IDs 1.10 and 1.1 both became 1.1. The other columns are typed as
+# read.csv types them. With row.names=TRUE the IDs become the row names.
+read.id.csv <- function(fn, row.names=FALSE) {{
+    df <- read.csv(fn, colClasses="character", check.names=FALSE)
+    if(ncol(df) > 1) {{
+        df[-1] <- lapply(df[-1], type.convert, as.is=TRUE)
+    }}
+    if(row.names) {{
+        ids <- df[[1]]
+        df <- df[-1]
+        rownames(df) <- ids
+    }}
+    df
+}}
+
 {script}
 """
 
@@ -222,10 +240,13 @@ class WrapR:
     ----------
 
     output : pandas.DataFrame
-        dataframe of the tabular output created by R script
+        dataframe of the tabular output created by R script, indexed by its
+        first column read as text (see :func:`de_toolkit.common.read_id_table`),
+        so an ID such as ``007`` is kept as written
 
     metadata_out : pandas.DataFrame
-        dataframe of the tabular metadata output created by R script
+        dataframe of the tabular metadata output created by R script, indexed
+        by its first column read as text
 
     params_out : dict
         dict of the output parameters list created by R script
@@ -441,14 +462,14 @@ class WrapR:
         # read in the outputs
         if os.path.exists(self._paths["output"]):
             try:
-                self.output = pd.read_csv(self._paths["output"], index_col=0)
+                self.output = read_id_table(self._paths["output"])
             except pd.errors.EmptyDataError:
                 logger.debug("No output was found, continuing")
                 pass
 
         if os.path.exists(self._paths["meta_out"]):
             try:
-                self.metadata_out = pd.read_csv(self._paths["meta_out"], index_col=0)
+                self.metadata_out = read_id_table(self._paths["meta_out"])
             except pd.errors.EmptyDataError:
                 logger.debug("No metadata output was found, continuing")
                 pass

@@ -23,15 +23,22 @@ Documentation: https://bu-neuromics.github.io/de_toolkit/
 detk needs Python 3.10 or newer.
 
 ```bash
-pip install de_toolkit          # or: uv tool install de_toolkit
+pip install 'de_toolkit>=1.0'        # or: uv tool install 'de_toolkit>=1.0'
 ```
 
-If the installed version has no `detk-report generate` (PyPI served only the
-old 0.9.12 release until 1.0 was published), install from GitHub instead:
+If pip finds no version 1.0 or newer, install from GitHub instead:
 
 ```bash
 pip install git+https://github.com/BU-Neuromics/de_toolkit.git
+# or: uv tool install git+https://github.com/BU-Neuromics/de_toolkit.git
 ```
+
+Never install a plain `de_toolkit` without the version bound: PyPI's old 0.9.12
+release cannot run on Python 3.10 or newer. Its sign is that every command dies
+on start with `ImportError: cannot import name 'Mapping' from 'collections'`.
+If you see that error, reinstall from GitHub as above; do not downgrade Python
+or patch the installed package. (`--version` cannot tell the two apart: until
+1.0 is released the GitHub build also reports 0.9.12.)
 
 `detk-de`, `detk-enrich`, and `detk-transform rlog`/`vst` call R. They need R
 (`Rscript` on `PATH`) with these packages:
@@ -108,18 +115,26 @@ detk-filter 'nonzero(all) >= 0.5' -o counts_filtered.csv counts.csv
 
 Other forms: `'mean(all) > 10'`, `'mean(all) > 10 and zero(all) < 0.5'`, and,
 with the sample info as a third argument, per-group rules such as
-`'nonzero(condition) > 0.5'` (kept if any group passes). Always quote the
-expression.
+`'nonzero(condition) > 0.5'` (kept if any group passes) or, for one group
+only, `'nonzero(condition[treated]) >= 0.5'`. Always quote the expression.
 
-**Normalize** with the DESeq2 median-of-ratios method (pure Python), writing
-the size factors for the report:
+For `zero` and `nonzero`, a threshold strictly between 0 and 1 is a
+**fraction** of samples, and 0 or anything of 1 or more is a **count** of
+samples. So `nonzero(all) >= 1` keeps genes nonzero in at least one sample,
+not in every sample; to require every sample, give the number of samples
+(`nonzero(all) >= 8` for eight samples). Column names used in an expression
+must be at least two characters long.
+
+**Normalize** with the DESeq2 median-of-ratios method (pure Python). The size
+factors go into the report; no separate file is needed:
 
 ```bash
-detk-norm deseq2 -o norm_counts.csv --size-factors=size_factors.tsv counts_filtered.csv
+detk-norm deseq2 -o norm_counts.csv counts_filtered.csv
 ```
 
-`detk-norm library` (divide by column sums) and `detk-norm fpkm` (needs a
-feature lengths file) are the alternatives. Normalized counts are for
+`detk-norm fpkm` (needs a feature lengths file) is the alternative. Do not
+use `detk-norm library` in this version: it fails on every input (`'CountMatrixFile'
+object has no attribute 'sum'`). Normalized counts are for
 inspection, plots and clustering. **Do not pass them to `detk-de deseq2`**,
 which expects raw counts and normalizes internally.
 
@@ -149,6 +164,10 @@ takes normalized counts:
 detk-de firth -o firth_results.csv "condition[control] ~ counts" norm_counts.csv sample_info.csv
 ```
 
+Firth output has a `status` column and, for each model term, the columns
+`<term>__beta`, `<term>__p` and `<term>__padj`; the term of interest is
+`counts` (`counts__beta`, `counts__padj`).
+
 **Gene set enrichment** with fgsea, ranking genes by a statistic column of the
 DE results against a GMT file of gene sets:
 
@@ -157,8 +176,15 @@ detk-enrich fgsea -i gene -c condition__treated__log2FoldChange -o fgsea_results
 ```
 
 - `-i` is the column holding feature IDs (default: the first column) and `-c`
-  the ranking statistic (default: the last numeric column). Use the full
-  output column name from the DE results.
+  the column whose values rank the genes, highest first. Always pass `-c`
+  with the full output column name from the DE results: without it detk
+  ranks by the last numeric column, which in DESeq2 output is the last
+  term's `__padj`, so the ranking would be by the wrong quantity and in the
+  wrong direction.
+- This example, like detk's published airway example, ranks by
+  `__log2FoldChange`. The Wald statistic (`__stat`) is the other common
+  choice; it down-weights noisy low-count genes that unshrunk fold changes
+  put at the extremes. Say which column you ranked by.
 - The IDs in the GMT and in the results must be from the same system. Most
   GMTs (MSigDB, WikiPathways) use gene symbols or Entrez IDs, while counts are
   often keyed by Ensembl IDs. If they differ, map the IDs onto the results
@@ -175,6 +201,8 @@ detk-report generate
 
 This writes `detk_report/detk_report.html` (self-contained, works offline) and
 `ro-crate-metadata.json` (Process Run Crate provenance of every invocation).
+The crate is written in the directory where `detk-report generate` runs, not
+under `detk_report/`.
 Re-running a command with the same parameters replaces its entry rather than
 duplicating it. `detk-report clean` deletes the report directory to start over.
 
@@ -182,7 +210,7 @@ duplicating it. `detk-report clean` deletes the report directory to start over.
 
 Tell the user: the commands run, how many genes the filter kept (detk logs
 `features kept after filtering`), the number of genes at `padj < 0.05` for the
-term of interest, the top enriched gene sets, and the paths to the result
+term of interest (DESeq2: `<term>__<level>__padj`; Firth: `<term>__padj`), the top enriched gene sets, and the paths to the result
 tables, the HTML report and the provenance crate. State any step skipped and
 why.
 

@@ -77,16 +77,6 @@ Options:
                                  column is the size factor
 ```
 
-## `detk-norm library`
-
-```text
-Usage:
-    detk-norm library [options] <counts_fn>
-
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
-```
-
 ## `detk-norm fpkm`
 
 ```text

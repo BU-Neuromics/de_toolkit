@@ -63,8 +63,8 @@ detk-stats summary --log --color-col=dex -o raw_summary_stats.csv counts.csv sam
 # keep genes with nonzero counts in at least half the samples
 detk-filter 'nonzero(all) >= 0.5' -o counts_filtered.csv counts.csv
 
-# DESeq2 median-of-ratios normalization, with size factors for the report
-detk-norm deseq2 -o norm_counts.csv --size-factors=size_factors.tsv counts_filtered.csv
+# DESeq2 median-of-ratios normalization (the size factors go into the report)
+detk-norm deseq2 -o norm_counts.csv counts_filtered.csv
 
 # optional: variance-stabilizing transform and entropy outlier flags
 detk-transform vst -o vst_counts.csv counts_filtered.csv
@@ -82,10 +82,15 @@ hold the cell line terms.
 ## 3. Gene set enrichment
 
 WikiPathways GMT files are keyed by Entrez gene ID, the results by Ensembl
-ID, so join the map onto the results first:
+ID, so join the map onto the results first. The join needs pandas, which detk
+itself depends on, so run it with the Python detk is installed in (the
+`python` on `PATH` may lack pandas when detk was installed with
+`uv tool install` or pipx); `examples/airway/run.sh` does the same:
 
 ```bash
-python - <<'PY'
+DETK_PY="$(dirname "$(command -v detk-de)")/python3"
+[ -x "$DETK_PY" ] || DETK_PY=python3
+"$DETK_PY" - <<'PY'
 import pandas as pd
 res = pd.read_csv("deseq2_results.csv")
 gmap = pd.read_csv("gene_map.csv", dtype=str)
@@ -104,6 +109,12 @@ detk-enrich fgsea --filter-unannotated -i entrez -c 'dex__trt__log2FoldChange' \
     -o fgsea_results.csv wikipathways.gmt deseq2_results_entrez.csv
 ```
 
+`-c` names the ranking column; without it detk would rank by the last
+numeric column, the last term's adjusted p-value (`dex__trt__padj`), which
+ranks by the wrong quantity and in the wrong direction. This
+ranks by fold change, as detk's published example does; the Wald statistic
+`dex__trt__stat` is the other common choice.
+
 Without network access, skip this step and say so.
 
 ## 4. Report
@@ -112,7 +123,8 @@ Without network access, skip this step and say so.
 detk-report generate
 ```
 
-Open `detk_report/detk_report.html`. Compare it with the published report at
+This writes `detk_report/detk_report.html` and, in the current directory,
+`ro-crate-metadata.json`. Open `detk_report/detk_report.html`. Compare it with the published report at
 https://bu-neuromics.github.io/de_toolkit/example/detk_report.html: samples
 separate by treatment on one principal component and by cell line on
 another, and the volcano plot's term menu switches between `dex__trt` and the

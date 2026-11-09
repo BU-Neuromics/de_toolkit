@@ -84,17 +84,22 @@ written, without any aggregation (e.g. transcripts to genes). Feature IDs and
 values are kept as written. The format is detected from each file's header
 unless given with --format, and every file must have the same format. A file
 argument that does not exist but holds a wildcard (*, ? or [) is expanded as a
-glob, so a quoted pattern works too.
+glob, so a quoted pattern works too; its matches are taken in natural order
+(s2 before s10).
 
 The column is given by name or 0-based position; by default it is NumReads
 for salmon, est_counts for kallisto, the count column for htseq and every
-count column for featureCounts. htseq-count's summary lines (__no_feature,
-__ambiguous, ...) are not features: they are left out of the matrix and
-recorded in the report.
+count column for featureCounts. An htseq-count file with several count
+columns (htseq-count run on several BAMs) is refused unless --column is given,
+since it has no header naming them. Every value must be a plain finite number
+(digits, an optional sign, fraction and exponent); nan, inf and the like are
+errors. htseq-count's summary lines (__no_feature, __ambiguous, ...) are not
+features: they are left out of the matrix and recorded in the report.
 
 Sample names come from each file's path: its file name without the last
-extension, or, when those are not unique (quant.sf, abundance.tsv), the name
-of the directory holding it. With --name-from, the name is the first group of
+extension, or, when those are not unique among the files given (quant.sf,
+abundance.tsv), every file's directory name; a single quant.sf is therefore
+named quant. With --name-from, the name is the first group of
 the regular expression, or else its whole match, searched in the path. In
 featureCounts output each count column is a sample, named the same way from
 the column's header (the BAM file's path) rather than the file's path.
@@ -122,6 +127,7 @@ Options:
 from docopt import docopt
 import logging
 import pandas
+import re
 import sys
 
 from .common import DetkModule, _cli_doc, set_logging, make_cli_count_obj, write_output
@@ -423,12 +429,14 @@ def _first_line(path, skip=0):
     return ""
 
 
+# a plain finite decimal number, as quantifiers write counts and abundances:
+# an optional sign, digits with an optional fraction, an optional exponent;
+# not nan, inf, padding, digit separators or non-ASCII digits
+_NUMBER = re.compile(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
+
+
 def _is_number(text):
-    try:
-        float(text)
-    except ValueError:
-        return False
-    return True
+    return _NUMBER.fullmatch(text) is not None
 
 
 def detect_format(path):
@@ -450,7 +458,7 @@ def detect_format(path):
         return "kallisto"
     if header[: len(_FEATURECOUNTS_ANNOT)] == _FEATURECOUNTS_ANNOT and len(header) > 6:
         return "featurecounts"
-    if len(header) >= 2 and all(f.strip().lstrip("-").isdigit() for f in header[1:]):
+    if len(header) >= 2 and all(re.fullmatch(r"-?[0-9]+", f) for f in header[1:]):
         return "htseq"
     raise ValueError(
         f"could not detect the format of {path}: its first line is not a salmon, "
@@ -468,7 +476,9 @@ def _read_quant(path, fmt):
 
 def _default_names(sources):
     """Sample names from *sources* (paths): the file name without its last
-    extension, or the parent directory's name when those are not unique."""
+    extension, or, when those are not unique among *sources*, every sample's
+    parent directory name (all or nothing, so a name can depend on the other
+    files in the run: a lone ``s1/quant.sf`` is ``quant``)."""
     import os
 
     stems = [os.path.splitext(os.path.basename(s))[0] for s in sources]
@@ -484,8 +494,6 @@ def _default_names(sources):
 
 
 def _names_from(sources, pattern):
-    import re
-
     regex = re.compile(pattern)
     names = []
     for s in sources:
@@ -508,8 +516,10 @@ class Gather(DetkModule):
     :func:`detect_format`; every file must have the same format). *column*
     names the column to extract, by name or 0-based position; by default the
     format's count column (``NumReads``, ``est_counts``, the htseq count, or
-    every count column of a featureCounts file). Feature IDs and values are
-    kept as text, as written; every value must be a number. htseq-count's
+    every count column of a featureCounts file); an htseq file with more than
+    one count column is refused unless *column* is given. Feature IDs and
+    values are kept as text, as written; every value must be a plain finite
+    decimal number (see ``_NUMBER``). htseq-count's
     summary lines (IDs starting with ``__``) are left out and recorded in the
     properties.
 
@@ -553,6 +563,7 @@ class Gather(DetkModule):
         elif fmt not in GATHER_FORMATS:
             raise ValueError(f"--format must be auto or one of {', '.join(GATHER_FORMATS)}")
         logger.info("format: %s", fmt)
+        column_given = column is not None
         if column is None:
             column = _DEFAULT_COLUMN[fmt]
 
@@ -563,6 +574,16 @@ class Gather(DetkModule):
             if df.shape[1] < 2:
                 raise ValueError(f"{path} has fewer than two columns; is it {fmt} output?")
             ids = df.iloc[:, 0]
+            if fmt == "htseq" and df.shape[1] > 2 and not column_given:
+                # htseq-count 0.13+ given several BAMs writes a count column
+                # per BAM and no header to name them: refuse rather than
+                # keep the first and lose the others
+                raise ValueError(
+                    f"{path} has {df.shape[1] - 1} count columns (htseq-count run on "
+                    "several BAM files), and htseq-count writes no header naming "
+                    "them; pass --column=N to gather the count column at 0-based "
+                    "position N, or run htseq-count once per sample"
+                )
             if column is None:  # every featureCounts count column
                 names = list(df.columns[len(_FEATURECOUNTS_ANNOT) :])
                 if not names:
@@ -674,16 +695,22 @@ def gather(paths, **kwargs):
     return Gather(paths, **kwargs).output
 
 
+def _natural_key(text):
+    "Sort key comparing runs of digits in *text* as numbers."
+    return [(0, int(t), t) if t.isdigit() else (1, 0, t) for t in re.split(r"([0-9]+)", text)]
+
+
 def _expand_paths(args):
     """The paths given on the command line, with any argument that is not a
-    file but holds a wildcard expanded as a sorted glob."""
+    file but holds a wildcard expanded as a glob in natural order (runs of
+    digits compare as numbers, so ``s2`` comes before ``s10``)."""
     import glob
     import os
 
     paths = []
     for arg in args:
         if not os.path.exists(arg) and any(c in arg for c in "*?["):
-            matched = sorted(glob.glob(arg))
+            matched = sorted(glob.glob(arg), key=_natural_key)
             if not matched:
                 raise ValueError(f"no files match {arg!r}")
             paths.extend(matched)

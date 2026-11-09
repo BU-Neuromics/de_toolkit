@@ -230,3 +230,49 @@ def test_gather_report_view():
 def test_gather_report_view_without_properties_is_raw():
     _, _, _, view = report_specs.view_for({"name": "gather", "properties": {}})
     assert view["type"] == "raw"
+
+
+def test_gather_htseq_several_count_columns_refused(tmp_path):
+    # htseq-count 0.13+ run on several BAMs: one count column per BAM, no header
+    a = tmp_path / "multi.txt"
+    a.write_text("g1\t1\t2\t3\ng2\t4\t5\t6\n__no_feature\t0\t0\t0\n")
+    assert detect_format(a) == "htseq"
+    with pytest.raises(ValueError, match="3 count columns.*--column"):
+        Gather([a])
+    with pytest.raises(SystemExit):
+        main(["detk-util", "gather", "--no-report", str(a)])
+    # --column picks one of them explicitly
+    out = gather([a], column="2")
+    assert out["multi"].tolist() == ["2", "5"]
+
+
+@pytest.mark.parametrize(
+    "value", ["nan", "NaN", "inf", "-inf", "Infinity", "1_000", " 5", "5 ", "1,000", "٣", "0x10"]
+)
+def test_gather_refuses_values_that_are_not_plain_numbers(tmp_path, value):
+    a = tmp_path / "a.txt"
+    a.write_text(f"g1\t1\ng2\t{value}\n")
+    with pytest.raises(ValueError, match="non-numeric"):
+        Gather([a], fmt="htseq")
+
+
+@pytest.mark.parametrize("value", ["0", "42", "-3", "+3", "9.512", "42.", ".5", "1.5e-06", "2E+3"])
+def test_gather_accepts_plain_numbers(tmp_path, value):
+    a = tmp_path / "a.txt"
+    a.write_text(f"g1\t1\ng2\t{value}\n")
+    assert gather([a], fmt="htseq").loc["g2", "a"] == value
+
+
+def test_gather_default_names_fall_back_for_the_whole_run():
+    # a lone quant.sf keeps its stem; beside another, every sample takes its directory
+    assert gather(SALMON[:1]).columns.tolist() == ["quant"]
+    assert gather(SALMON).columns.tolist() == [p.parent.name for p in SALMON]
+
+
+def test_gather_glob_natural_order(tmp_path):
+    from de_toolkit.util import _expand_paths
+
+    for n in (1, 2, 10, 11):
+        (tmp_path / f"s{n}.txt").write_text("g1\t1\n")
+    got = [pathlib.Path(p).name for p in _expand_paths([str(tmp_path / "s*.txt")])]
+    assert got == ["s1.txt", "s2.txt", "s10.txt", "s11.txt"]

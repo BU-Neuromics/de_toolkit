@@ -56,22 +56,40 @@ for `--format`.
 | `htseq`         | the count column (`1`)      |                      |
 | `featurecounts` | every count column          | one BAM's column     |
 
-Pick another with `--column`, by header name or 0-based position. Feature IDs
-and values are kept exactly as written (`9.512` stays `9.512`, `007` stays
-`007`); a value that is not a number, or a feature listed twice in one file,
-is an error. htseq-count's summary lines (`__no_feature`, `__ambiguous`, ...)
+Pick another with `--column`, by header name or 0-based position.
+htseq-count 0.13 and later, given several BAM files, writes one count column
+per BAM and no header naming them; such a file is refused unless `--column`
+picks one of its columns (`--column=2` for the second BAM), so that no sample
+is lost silently. Run htseq-count once per sample to gather them all.
+
+Feature IDs and values are kept exactly as written (`9.512` stays `9.512`,
+`007` stays `007`). Every value must be a plain finite number as quantifiers
+write them: digits with an optional sign, decimal fraction and exponent
+(`42`, `9.512`, `1.5e-06`). Anything else, including `NA`, `nan`, `inf`,
+padded values and digit separators (`1_000`, `1,000`), is an error, as is a
+feature listed twice in one file. htseq-count's summary lines (`__no_feature`, `__ambiguous`, ...)
 are not features: they are left out of the matrix and their values recorded
 in the report. `gather` does no aggregation: transcript-level salmon or
 kallisto output gives a transcript-level matrix.
 
 **Sample names.** By default a sample is named after its file, without the
-last extension (`s1.counts.txt` becomes `s1.counts`); when those names are not
-unique, as with salmon's `quant.sf` and kallisto's `abundance.tsv`, it is
-named after the directory holding the file. With `--name-from`, the name is
+last extension (`s1.counts.txt` becomes `s1.counts`). When those names are not
+unique among the files given, as with salmon's `quant.sf` and kallisto's
+`abundance.tsv`, every sample is named after the directory holding its file
+instead, all or nothing. A default name therefore depends on the other files
+in the run: a single `s1/quant.sf` is named `quant`, but `s1` when gathered
+with `s2/quant.sf`. Use `--name-from` for names that never change. With `--name-from`, the name is
 the first group of the regular expression, or else its whole match, searched
 in the path as given. In featureCounts output each count column is a sample,
 named the same way from the column header (the BAM file's path), so
 `bam/A.bam` becomes `A`. Two samples with the same name are an error.
+
+**Order.** The samples are written in the order of the files on the command
+line (featureCounts' columns in their order within the file). A quoted glob
+that gather expands itself is taken in natural order, comparing runs of
+digits as numbers, so `s2` comes before `s10`; a glob the shell expands is in
+the shell's order, which is usually `s1, s10, s2`. detk's other tools match
+samples by name, so the order rarely matters.
 
 **Features.** The rows follow the first sample's features. Samples quantified
 against the same index or annotation list the same features, so by default a

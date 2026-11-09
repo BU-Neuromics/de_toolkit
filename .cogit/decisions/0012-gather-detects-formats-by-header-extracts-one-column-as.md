@@ -7,6 +7,8 @@ from: {node: release/gather, step: s1}
 applies: [release/gather]
 allowed_by: [reasonable]
 reason: "Files get renamed but headers do not; extraction is faithful text; names come from the paths users already organize by sample"
+revisions:
+  - {date: 2026-11-09, by: DETK/developer, change: htseq files with several count columns are refused unless --column is given; values must be plain finite decimal numbers; the default-naming rationale now says the directory fallback is all or nothing per run; quoted globs expand in natural order, why: review of s2}
 ---
 
 # gather detects formats by header, extracts one column as written, names samples from paths
@@ -50,7 +52,9 @@ Format detection:
 Values:
 
 1. **Read as text and write as written** (`9.512` stays `9.512`, `007`
-   stays `007`), checking only that each value is a number. Faithful;
+   stays `007`), checking only that each value is a plain finite decimal
+   number (optional sign, digits, optional fraction and exponent), as
+   quantifiers write them. Faithful;
    consistent with annotate.
 2. **Parse as numbers**: a numeric frame for the Python API, but floats
    are rewritten (`42.000` becomes `42.0`) and numeric IDs lose leading
@@ -69,7 +73,8 @@ Sample names:
    asks for "regex/substitution", and a capture group covers the
    documented cases.
 3. **Strip the common prefix and suffix of all paths.** Clever, but a
-   name then depends on which other files are in the run.
+   name then depends, character by character, on which other files are
+   in the run, and is hard to predict.
 
 ## Decision
 
@@ -78,21 +83,40 @@ names from the path with `--name-from` as a regex whose first group is
 the name (option 1). Detection by content cannot be defeated by a
 rename; text keeps the matrix faithful and matches annotate. The
 default naming gives the directory name for salmon and kallisto and the
-file stem for htseq, which is how those layouts name samples, and is the
-same for a file whichever others are gathered with it. Duplicate sample
-names, a non-matching `--name-from`, a value that is not a number and a
-feature listed twice in one file are errors. The output's index (first)
+file stem for htseq, which is how those layouts name samples. It is not
+independent of the other files: the fallback to directory names is all
+or nothing per run, taken when the file stems are not unique among the
+files given, so a lone `s1/quant.sf` is named `quant` but `s1` beside
+`s2/quant.sf`, and two `counts.txt` in different directories switch
+every sample of that run to its directory name. Unlike option 3, the
+rule is one coarse switch that is easy to state and predict, and
+`--name-from` gives names that never depend on the run. Duplicate sample
+names, a non-matching `--name-from`, a value that is not a plain finite
+decimal number (so `NA`, `nan`, `inf`, padded values and `1_000` are
+refused) and a feature listed twice in one file are errors. The output's index (first)
 column is unnamed, as pandas writes an unnamed index, whatever the
 source's ID column was called (`Name`, `target_id`, `Geneid`).
 
 Default column: salmon `NumReads`, kallisto `est_counts`, htseq the
 count column, featureCounts every count column (one sample per BAM);
-`--column` picks another by name or 0-based position. htseq-count's
+`--column` picks another by name or 0-based position. An htseq-count
+file with more than one count column (htseq-count 0.13+ run on several
+BAMs) has no default: it is refused unless `--column` is given, because
+htseq-count writes no header to name the columns and taking the first
+would drop the other samples silently. One sample per column with a
+positional naming rule was considered and not taken: the names would be
+invented rather than read from the file, and the per-sample layout
+(one htseq-count run per sample) is the common one. htseq-count's
 `__` summary lines are left out of the matrix and recorded in the
 report (`htseq_counters`). No transcript-to-gene aggregation.
 
 ## Consequences
 
+- A multi-BAM htseq-count file is gathered one column per run
+  (`--column=N`); gathering all its columns at once would need a naming
+  rule and is left for a later version.
+- Glob patterns gather expands itself are taken in natural order
+  (`s2` before `s10`); shell-expanded globs keep the shell's order.
 - htseq-count 2.x output written with `--with-header` is not detected;
   `--format=htseq` then reads the header as a feature and fails on the
   non-numeric value. A later version could skip such a header.

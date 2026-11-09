@@ -1,6 +1,6 @@
 ---
 template: adr
-state: Provisional
+state: Accepted
 authority: [DETK/developer]
 date: 2026-11-09
 from: {node: release/gather, step: s1}
@@ -9,6 +9,7 @@ allowed_by: [reasonable]
 reason: "Files get renamed but headers do not; extraction is faithful text; names come from the paths users already organize by sample"
 revisions:
   - {date: 2026-11-09, by: DETK/developer, change: htseq files with several count columns are refused unless --column is given; values must be plain finite decimal numbers; the default-naming rationale now says the directory fallback is all or nothing per run; quoted globs expand in natural order, why: review of s2}
+  - {date: 2026-11-09, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-09: accept with release/gather"}
 ---
 
 # gather detects formats by header, extracts one column as written, names samples from paths

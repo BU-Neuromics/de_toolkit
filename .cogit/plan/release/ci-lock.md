@@ -7,6 +7,8 @@ acceptance:
 scope: [.github/workflows/ci.yml, pyproject.toml, README.md, +CHANGELOG]
 issue: 58
 visited: fc05692
+status: done
+done: bff07c1
 ---
 
 # Run the R tests on the locked environment
@@ -15,7 +17,7 @@ visited: fc05692
 
 - [x] @developer Make the R job install from uv.lock; record the method and Python 3.14 as best effort (Provisional); open the PR <!-- s1 -->
 - [x] @reviewer Review the PR and the R job's run <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

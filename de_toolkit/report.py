@@ -35,7 +35,7 @@ import shutil
 import sys
 import time
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from .common import _PROCESS_START, _cli_doc, set_logging
 from .crate import CRATE_FILENAME, write_crate
@@ -179,7 +179,7 @@ class DetkModuleJSON:
                 # start_time approximates process start (module import time);
                 # end_time is when the module was recorded
                 ("start_time", _PROCESS_START.isoformat()),
-                ("end_time", datetime.now(timezone.utc).isoformat()),
+                ("end_time", datetime.now(UTC).isoformat()),
                 ("argv", list(sys.argv)),
                 ("in_file_path", in_file_path),
                 ("out_file_path", out_file_path),

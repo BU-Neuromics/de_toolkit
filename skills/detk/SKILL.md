@@ -20,7 +20,7 @@ Documentation: https://bu-neuromics.github.io/de_toolkit/
 
 ## 1. Install
 
-detk needs Python 3.10 or newer.
+detk needs Python 3.11 or newer.
 
 ```bash
 pip install 'de_toolkit>=1.0'        # or: uv tool install 'de_toolkit>=1.0'

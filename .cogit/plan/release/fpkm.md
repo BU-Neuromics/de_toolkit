@@ -16,7 +16,7 @@ visited: a2140bc
 
 ## Implementation plan
 
-- [ ] @developer Fix the formula, the test and the CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Fix the formula, the test and the CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

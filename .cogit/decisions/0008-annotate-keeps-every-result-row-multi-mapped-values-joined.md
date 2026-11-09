@@ -7,6 +7,8 @@ from: {node: release/annotate, step: s1}
 applies: [release/annotate]
 allowed_by: [reasonable]
 reason: A result table must not gain or reorder rows when it is annotated
+revisions:
+  - {date: 2026-11-09, by: DETK/developer, change: "CLI reads the result as text and keeps its column layout; 'mapped' needs a non-empty added value; missing IDs never join; distinct unmapped examples", why: review of s2}
 ---
 
 # annotate keeps every result row: multi-mapped values joined with ';', clashing columns suffixed _annot
@@ -45,9 +47,24 @@ avoid.
 Option 1. It keeps the result's shape, loses nothing, and the report
 counts multi-mapped and unmapped IDs (`num_multimapped`,
 `num_unmapped`, `unmapped_examples`) so the user sees what happened.
-The result's own (possibly versioned) IDs stay the index;
+The result's own (possibly versioned) IDs are kept as written;
 `--strip-versions` affects only the join keys. A clashing column is
 renamed rather than overwritten so the result's data is never replaced.
+
+Amended after the review of s2:
+
+- The CLI reads the result table as text and writes it back as read,
+  so numeric IDs (Entrez) join as strings, keep leading zeros and are
+  never turned into floats. The result's columns keep their order and
+  its first column stays the index, whichever column `-i` joins on;
+  the added columns come last.
+- An ID is mapped when at least one mapping row gives it a non-empty
+  value in an added column; a mapping row whose added columns are all
+  empty is ignored, so `--drop-unmapped` drops such IDs too.
+- An empty or missing result ID (empty cell, `NA`, `NaN` and the other
+  strings pandas reads as missing) is never joined; it counts as
+  unmapped and the report counts it as `num_missing_ids`.
+- `unmapped_examples` lists distinct IDs; the counts stay per row.
 
 ## Consequences
 

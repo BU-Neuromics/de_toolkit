@@ -1,6 +1,6 @@
 ---
 template: adr
-state: Provisional
+state: Accepted
 authority: [DETK/developer]
 date: 2026-11-09
 from: {node: release/agent-skills, step: s1}
@@ -9,6 +9,7 @@ allowed_by: [reasonable]
 reason: skill command lines are parsed with each command's docopt usage, prose commands and options are checked, and copied usage blocks are matched against the installed CLI in CI, so drift fails a build rather than misleading an agent
 revisions:
   - {date: 2026-11-09, by: DETK/developer, change: "The test now parses block command lines with docopt and checks commands and options named in prose, in any fence but text", why: review of s2}
+  - {date: 2026-11-09, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-09: accept with release/agent-skills"}
 ---
 
 # Keep the agent skill in step with the CLI through a test against --help

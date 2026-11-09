@@ -40,15 +40,19 @@ Options:
 """,
     "fpkm": r"""
 Perform Fragments Per Kilobase per Million normalization on the given counts
-file. <lengths_fn> should be a delimited file with two columns, the first
+file. Each count is divided by its feature's length in kilobases and by its
+sample's total count in millions: count * 1e9 / (length * library size).
+<lengths_fn> should be a delimited file with two columns, the first
 being the name of one of the rows in the counts file and the second is the
-effective length of the gene/sequence/etc to use in the normalization.
+effective length in bases of the gene/sequence/etc to use in the
+normalization.
 
 *Note:* Program will throw an error and exit if there are genes/sequences
-in the counts file that are not found in the lengths file, or if a name is
-listed more than once in the lengths file. Names are matched as text. The
-first line of the lengths file is skipped as a header only when its second
-field is text that is not a number or a missing value such as NA.
+in the counts file that are not found in the lengths file, if any of
+their lengths is not a positive number, or if a name is listed more than
+once in the lengths file. Names are matched as text. The first line of the
+lengths file is skipped as a header only when its second field is text that
+is not a number or a missing value such as NA.
 
 The order of names in the counts and lengths files do *not* have to be the
 same.
@@ -286,11 +290,14 @@ class LibrarySize(DetkModule):
 
 def fpkm(count_df, lengths):
     """
-    Calculate Fragments Per Kilobase per Million reads
+    Calculate Fragments Per Kilobase per Million reads: divide each count by
+    its feature length in kilobases and by its column's total count (the
+    library size) in millions, i.e. count * 1e9 / (length * library size)
 
-    *lengths* should be a pandas.Series object that has an index value for
-    every row name in the counts matrix. If no length is found for a row in the
-    counts matrix, an exception is raised.
+    *lengths* should be a pandas.Series of lengths in bases that has an index
+    value for every row name in the counts matrix. If no length is found for a
+    row in the counts matrix, or a length is not positive, an exception is
+    raised.
     """
     obj = FPKMCounts(count_df, lengths)
     return obj.output
@@ -303,13 +310,18 @@ class FPKMCounts(DetkModule):
 
         self["params"] = {}
         self.count_df = count_df
-        self.lengths = lengths
+        lens = _lengths_for(count_df, lengths)
+        self.lengths = lens
 
-        lens = _align_lengths(count_df, lengths)
-        res = count_df.div(1e6 * lens, axis=0)
-        self.res = res
+        sizes = count_df.sum(axis=0)
+        logger.info("min/max library size: %d/%d", sizes.min(), sizes.max())
+        if (np.asarray(sizes) == 0).any():
+            logger.warning("some samples have zero total counts, their FPKM values are NaN")
+        # count / (length in kb) / (library size in millions)
+        #   = count * 1e9 / (length * library size)
+        self.res = count_df.div(lens / 1e3, axis=0) / (sizes / 1e6)
 
-        logger.info("running FPKM normalization")
+        logger.info("FPKM normalization done")
 
     @property
     def output(self):
@@ -317,13 +329,10 @@ class FPKMCounts(DetkModule):
 
     @property
     def properties(self):
-        # summarize the feature-length distribution rather than embedding the
-        # full lengths vector (previously a raw pandas Series, which broke
-        # JSON serialization of this module's report document)
-        qs = list(range(0, 101, 5))
-        lens = pandas.to_numeric(self.lengths, errors="coerce").dropna()
-        quantiles = [{"q": q, "length": float(v)} for q, v in zip(qs, np.percentile(lens, qs))]
-        return {"num_kept": len(self.res), "length_quantiles": quantiles}
+        # summarize the lengths actually used, rather than embedding the full
+        # lengths vector (previously a raw pandas Series, which broke JSON
+        # serialization of this module's report document)
+        return {"num_kept": len(self.res), "length_quantiles": _length_quantiles(self.lengths)}
 
 
 def _length_quantiles(lengths):
@@ -492,7 +501,7 @@ class TPMCounts(DetkModule):
 
     @property
     def properties(self):
-        # summarized like FPKMCounts: the lengths actually used, as quantiles
+        # summarized as in FPKMCounts: the lengths actually used, as quantiles
         return {
             "num_features": self.normalized.shape[0],
             "length_quantiles": _length_quantiles(self.lengths),

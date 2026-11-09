@@ -200,10 +200,57 @@ def test_fpkm_missing_lens(fake_counts_obj, fake_counts_gene_lengths):
 def test_fpkm(fake_counts_obj, fake_counts_gene_lengths):
     from de_toolkit.norm import fpkm
 
+    # FPKM = count * 1e9 / (length * library size), worked by hand on
+    # _small_counts and _small_lengths (lengths g1 1000, g2 2000, g3 4000):
+    #   a = [1, 3, 0], library size 4:
+    #     g1: 1 * 1e9 / (1000 * 4) = 250,000
+    #     g2: 3 * 1e9 / (2000 * 4) = 375,000
+    #     g3: 0
+    #   b = [2, 4, 4], library size 10:
+    #     g1: 2 * 1e9 / (1000 * 10) = 200,000
+    #     g2: 4 * 1e9 / (2000 * 10) = 200,000
+    #     g3: 4 * 1e9 / (4000 * 10) = 100,000
+    res = fpkm(_small_counts(), _small_lengths())
+    assert list(res.index) == ["g1", "g2", "g3"]
+    assert np.allclose(res["a"], [250_000.0, 375_000.0, 0.0])
+    assert np.allclose(res["b"], [200_000.0, 200_000.0, 100_000.0])
+
+    # the fixture: lengths 2..6, column a equals the length, b its square and
+    # c its cube, with library sizes 20, 90 and 440
     res = fpkm(fake_counts_obj.counts, fake_counts_gene_lengths)
-    assert np.allclose(res["a"], [1e-6] * res.shape[0])
-    assert np.allclose(res["b"], list(np.arange(2, res.shape[0] + 2) / 1e6))
-    assert np.allclose(res["c"], list(np.arange(2, res.shape[0] + 2) ** 2 / 1e6))
+    lens = np.arange(2, res.shape[0] + 2)
+    assert np.allclose(res["a"], 1e9 / 20)
+    assert np.allclose(res["b"], lens * 1e9 / 90)
+    assert np.allclose(res["c"], lens**2 * 1e9 / 440)
+
+
+def test_fpkm_is_cpm_per_kb():
+    # FPKM is CPM divided by the length in kilobases
+    from de_toolkit.norm import cpm, fpkm
+
+    cnts = _small_counts()
+    lens = pandas.Series([1000.0, 2000.0, 4000.0], index=cnts.index)
+    assert np.allclose(fpkm(cnts, lens), cpm(cnts).div(lens / 1e3, axis=0))
+
+
+@pytest.mark.parametrize("bad", [0, -5, float("nan")])
+def test_fpkm_nonpositive_lens(bad):
+    # fpkm refuses missing, zero and negative lengths, as tpm does
+    from de_toolkit.norm import fpkm, NormalizationException
+
+    lens = pandas.Series([1000, 1000, bad], index=["g1", "g2", "g3"])
+    with pytest.raises(NormalizationException, match="not a positive number"):
+        fpkm(_small_counts(), lens)
+
+
+def test_fpkm_missing_first_length_from_file(tmp_path):
+    # a missing length read from a lengths file is refused, not "not found"
+    from de_toolkit.norm import read_lengths, fpkm, NormalizationException
+
+    fn = tmp_path / "lengths.tsv"
+    fn.write_text("g1\tNA\ng2\t2000\ng3\t4000\n")
+    with pytest.raises(NormalizationException, match="not a positive number"):
+        fpkm(_small_counts(), read_lengths(str(fn)))
 
 
 def test_fpkm_properties(fake_counts_obj, fake_counts_gene_lengths):
@@ -393,10 +440,12 @@ def test_norm_cli_numeric_ids(tmp_path, cmd):
     assert list(res.index) == [101, 102, 103]
     if cmd == "tpm":
         assert np.allclose(res.values, [[0.4e6, 0.4e6], [0.6e6, 0.4e6], [0.0, 0.2e6]])
+    else:
+        assert np.allclose(res.values, [[2.5e5, 2e5], [3.75e5, 2e5], [0.0, 1e5]])
     assert "101" in out_fn.read_text().splitlines()[1]
 
 
-@pytest.mark.parametrize("norm", ["cpm", "tpm"])
+@pytest.mark.parametrize("norm", ["cpm", "tpm", "fpkm"])
 def test_all_zero_sample(norm, caplog):
     # a sample with no counts has NaN output and a warning
     import logging
@@ -409,7 +458,8 @@ def test_all_zero_sample(norm, caplog):
     with caplog.at_level(logging.WARNING):
         res = getattr(norm_mod, norm)(*args)
     assert res["z"].isna().all()
-    assert np.allclose(res[["a", "b"]].sum(axis=0), 1e6)
+    if norm != "fpkm":
+        assert np.allclose(res[["a", "b"]].sum(axis=0), 1e6)
     assert "zero total counts" in caplog.text
 
 
@@ -460,7 +510,10 @@ def test_norm_cli_fpkm_reads_lengths(tmp_path):
     counts_fn, lengths_fn = _write_small_inputs(tmp_path)
     out_fn = str(tmp_path / "out.csv")
     main(["detk-norm", "fpkm", f"--output={out_fn}", "--no-report", counts_fn, lengths_fn])
-    assert pandas.read_csv(out_fn, index_col=0).shape == (3, 2)
+    res = pandas.read_csv(out_fn, index_col=0)
+    assert res.shape == (3, 2)
+    # the values worked by hand in test_fpkm
+    assert np.allclose(res.values, [[2.5e5, 2e5], [3.75e5, 2e5], [0.0, 1e5]])
 
 
 @pytest.mark.parametrize("name", ["cpmcounts", "tpmcounts"])

@@ -10,7 +10,7 @@ This workflow performs the following, all without any custom code:
 
 1. Takes the output from read counting (e.g. [htseq-count]) or expression
    estimation software (e.g. [salmon] or [kallisto]) and combines them into a
-   single counts matrix using the [csvgather] tool
+   single counts matrix with [`detk-util gather`](tools/util.md#gather)
 2. Calculates statistics on the zero-ness of genes to guide feature filtering
    with [`detk-stats rowzero`](tools/stats.md#rowzero)
 3. Filters out rows with half or more zero counts with
@@ -59,9 +59,8 @@ rule gather_counts:
     output: 'raw_counts.csv'
     shell:
         '''
-        csvgather -j 0 -f NumReads -f "s:NumReads:{{dir}}:" \
-            -f "s:__salmon_counts::" -o {output} \
-            {input}
+        detk-util gather --name-from="([^/]+)__salmon_counts/" \
+            -o {output} {input}
         '''
 
 rule raw_rowzero:
@@ -121,7 +120,6 @@ shell.
 [htseq-count]: https://htseq.readthedocs.io
 [salmon]: https://combine-lab.github.io/salmon/
 [kallisto]: https://pachterlab.github.io/kallisto/
-[csvgather]: https://bitbucket.org/adamlabadorf/csvgather/
 [csvkit]: https://csvkit.readthedocs.io
 [Snakemake]: https://snakemake.readthedocs.io/en/stable/
 [Nextflow]: https://www.nextflow.io/

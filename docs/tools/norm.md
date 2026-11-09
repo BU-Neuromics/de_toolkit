@@ -67,13 +67,32 @@ Usage:
 ## `fpkm`
 
 Fragments Per Kilobase per Million reads: each count is divided by the
-feature's length in kilobases, then by the sample's total reads in millions.
+feature's length in kilobases, then by the sample's library size (the total
+of its column of counts) in millions:
+
+```text
+FPKM[g, s] = count[g, s] / (length[g] / 1000) / (library_size[s] / 10^6)
+           = count[g, s] * 10^9 / (length[g] * library_size[s])
+library_size[s] = sum over g of count[g, s]
+```
+
+For example, a feature 2,000 bases long with 3 counts, in a sample whose
+counts total 4, has FPKM 3 × 10^9 / (2000 × 4) = 375,000. FPKM is CPM divided
+by the length in kilobases. A sample whose counts are all zero has no FPKM
+values: its column is empty (NaN) and a warning is logged.
+
+!!! note "Changed in 1.0"
+    Before 1.0 (0.9.x), `fpkm` computed `count / (10^6 × length)`, without
+    dividing by library size. Values from 1.0 on differ from 0.9.x output and
+    are the documented FPKM.
 
 detk must be given the length of every feature in the counts file, as a
 two-column character-delimited file (format is sniffed) of feature identifier
 and length in bases:
 
 - every feature in the counts file must have an entry in the lengths file
+- every length must be a positive number; a zero, negative, missing or
+  non-numeric length is refused (reported as not a positive number)
 - each feature may be listed only once; a lengths file that lists a feature
   twice is refused
 - the lengths file may contain unused entries
@@ -109,9 +128,8 @@ across samples. When every feature has the same length, TPM equals CPM.
 
 `tpm` takes the same lengths file as [`fpkm`](#fpkm), with the same rules
 (including the optional header line and the refusal of duplicated feature
-identifiers); in addition every length must be a positive number, and a
-missing or non-numeric length is reported as not a positive number. The
-output has the same rows, in the same order, as the counts file. A sample
+identifiers, and the requirement that every length be a positive number).
+The output has the same rows, in the same order, as the counts file. A sample
 whose counts are all zero has no TPM (or CPM) values: its column is empty
 (NaN) and a warning is logged.
 

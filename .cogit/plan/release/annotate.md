@@ -10,7 +10,7 @@ visited: f6503ed
 
 ## Implementation plan
 
-- [ ] @developer Implement with tests, a report view, the docs page and a CHANGELOG entry; open the PR <!-- s1 -->
+- [x] @developer Implement with tests, a report view, the docs page and a CHANGELOG entry; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

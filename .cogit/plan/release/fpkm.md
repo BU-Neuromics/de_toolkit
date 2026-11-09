@@ -10,6 +10,8 @@ scope: [de_toolkit/norm.py, tests/norm/, docs/tools/norm.md, +CHANGELOG]
 prev: [release/tpm-cpm]
 issue: 50
 visited: a2140bc
+status: done
+done: 4f47522
 ---
 
 # Correct the FPKM formula
@@ -18,7 +20,7 @@ visited: a2140bc
 
 - [x] @developer Fix the formula, the test and the CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

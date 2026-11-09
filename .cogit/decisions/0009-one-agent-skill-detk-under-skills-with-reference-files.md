@@ -1,12 +1,14 @@
 ---
 template: adr
-state: Provisional
+state: Accepted
 authority: [DETK/developer]
 date: 2026-11-09
 from: {node: release/agent-skills, step: s1}
 applies: [release/agent-skills]
 allowed_by: [reasonable]
 reason: "npx skills reads skills/<name>/SKILL.md; one skill with references loads on any detk request and keeps install and flow together"
+revisions:
+  - {date: 2026-11-09, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-09: accept with release/agent-skills"}
 ---
 
 # One agent skill, detk, under skills/ with reference files

@@ -6,6 +6,8 @@ acceptance:
   - the v1.0.0 tag and GitHub Release exist, and Zenodo has minted a concept DOI shown in the README
   - TPM and CPM (#24), result annotation (#29), gathering quantifier outputs (#25) and agent skills ship in 1.0
   - the interface promise of 1.0 (#18) and the history question (#22) are decided and recorded
+issue: 23
+visited: f6503ed
 ---
 
 # Release 1.0.0

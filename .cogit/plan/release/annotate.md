@@ -2,6 +2,8 @@
 kind: task
 objective: 'util: annotate result tables with feature metadata, ID to symbol (tracks #29)'
 scope: [+de_toolkit/report_specs.py, +CHANGELOG, de_toolkit/util.py, docs/tools/util.md, tests/util/]
+issue: 29
+visited: f6503ed
 ---
 
 # Annotate results with feature metadata

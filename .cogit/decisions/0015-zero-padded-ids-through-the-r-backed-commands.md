@@ -89,9 +89,10 @@ acceptance says `007` is kept in every tool's output.
 
 ## Decision
 
-Proposed, for Adam: option 2. The Python side is fixed and tested here;
-the R side needs its own test run with R, and widening this node's scope
-is Adam's call, not the developer's.
+Option 2, chosen by Adam on 2026-11-09: this node keeps to the commands
+that read counts in Python, and a follow-up node before 1.0
+(`release/r-ids`) carries `007` through the R-backed commands, `detk-enrich
+fgsea` and `detk-util tidy-counts`/`tidy-covs`, with an R-gated test.
 
 ## Consequences
 

@@ -2,7 +2,7 @@
 kind: task
 objective: 'Zero-padded feature IDs survive the shared counts reader: 007 stays 007 and matches other files (tracks #48)'
 acceptance:
-  - the counts reader reads the ID column as text; 007 is kept in every tool's output and matches a lengths or mapping file, with tests
+  - the counts reader reads the ID column as text; 007 is kept in the output of every command that reads counts in Python and matches a lengths or mapping file, with tests (the R-backed commands, fgsea and tidy-counts/tidy-covs are release/r-ids, DETK-0015)
   - docs/tools/norm.md's sentence on numeric IDs holds for zero-padded IDs
 scope: [de_toolkit/common.py, tests/common/, docs/tools/norm.md, +CHANGELOG]
 issue: 48

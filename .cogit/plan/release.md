@@ -27,6 +27,7 @@ visited: f6503ed
 - [ ] [Read feature IDs as text](release/padded-ids.md) <!-- s13 -->
 - [ ] [Read single-column files](release/single-column.md) <!-- s14 -->
 - [ ] [Update locked dependencies](release/deps.md) <!-- s15 -->
+- [ ] [Keep IDs as written through R and the other readers](release/r-ids.md) <!-- s16 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
 

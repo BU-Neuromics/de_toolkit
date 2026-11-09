@@ -5,6 +5,8 @@ acceptance:
   - a bare list of IDs reads as one column in every reader that sniffs the delimiter (common, enrich, util), with tests
 scope: [de_toolkit/common.py, de_toolkit/enrich.py, de_toolkit/util.py, tests/common/, +CHANGELOG]
 prev: [release/padded-ids, release/gather]
+issue: 47
+visited: a328c16
 ---
 
 # Read single-column files

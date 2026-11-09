@@ -8,6 +8,9 @@ predates everything below.
 
 ### Changed
 - Modernized to Python 3.10-3.13, numpy 2, and pandas 3
+- Python 3.14 is best effort for 1.0: detk is expected to install and run
+  on it, but it is not tested in CI or listed in the classifiers, and 1.0
+  promises only the versions CI tests
 - New toolchain: `pyproject.toml` with the hatchling build backend, uv for
   environment/dependency management, ruff for lint and formatting
 - Documentation moved to MkDocs Material, published on GitHub Pages at

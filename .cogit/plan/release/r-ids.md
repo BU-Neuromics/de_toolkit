@@ -5,7 +5,7 @@ acceptance:
   - detk-de deseq2 and firth, detk-transform vst and rlog keep 007 in their output and accept 001-style sample names, shown by an R-gated test that round-trips them
   - detk-enrich fgsea and detk-util tidy-counts/tidy-covs keep 007 and 001, with tests
 from: [DETK-0015]
-scope: [de_toolkit/de.py, de_toolkit/transform.py, de_toolkit/wrapr.py, de_toolkit/enrich.py, de_toolkit/util.py, tests/de/, tests/transform/, tests/wrapr/, tests/enrich/, tests/util/, +CHANGELOG]
+scope: [skills/detk/SKILL.md, de_toolkit/de.py, de_toolkit/transform.py, de_toolkit/wrapr.py, de_toolkit/enrich.py, de_toolkit/util.py, tests/de/, tests/transform/, tests/wrapr/, tests/enrich/, tests/util/, +CHANGELOG]
 prev: [release/padded-ids]
 issue: 67
 visited: 194bd2a

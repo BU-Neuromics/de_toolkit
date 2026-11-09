@@ -279,6 +279,11 @@ class RlogCounts(DetkModule):
         logger.debug("VST R script:\n%s", script)
         column_data = None
         if not blind and count_obj.column_data is not None:
+            # as detk-de deseq2 does: DESeq2 adds its own intercept and takes
+            # the counts from countData, so neither belongs in the design
+            # (with both, the model matrix is not full rank)
+            count_obj.design_matrix.drop_from_lhs("counts", quiet=True)
+            count_obj.design_matrix.drop_from_rhs("Intercept", quiet=True)
             column_data = count_obj.design_matrix.full_matrix
 
         params = {"design": "~ 1" if blind else count_obj.design, "blind": blind}

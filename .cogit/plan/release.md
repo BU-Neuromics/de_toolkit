@@ -46,5 +46,7 @@ visited: f6503ed
 Tracking issue #23 (the roadmap) and milestone v1.0.0. DETK-0002 (#22), Proposed and
 Adam's, gates the cut. DETK-0001 (#18) was accepted on 2026-11-18 as option B: migrate off
 docopt-ng and patsy before the tag (cli-pin, formula-pin, cli-migrate, formula-migrate,
-cli-docs); the migrations wait on DETK-0023 (parser) and DETK-0024 (formula library), Adam's. Adam promoted #24, #29
+cli-docs). DETK-0023 accepted argparse; DETK-0024 (formulaic or keeping patsy for 1.0) and
+DETK-0025 (what --help promises; Adam put help text in the promise if it helps agents) are
+Proposed and Adam's. Adam promoted #24, #29
 and #25 into 1.0 and added agent skills (2026-11-09); the other candidates wait in `features`.

@@ -9,8 +9,7 @@ applies: [release/cli-migrate, release/cli-docs]
 
 # The command-line parser that replaces docopt-ng
 
-- Proposed by: the planning session for DETK-0001 Option B, 2026-11-18;
-  Adam has not chosen a library
+- Proposed by: the planning session for DETK-0001 Option B, 2026-11-18
 
 ## Background
 
@@ -68,7 +67,10 @@ indirection. Listed so the choice is not only between A and B.
 
 ## Decision
 
-Open for Adam. No option is recommended by the planning session.
+Option A, argparse, chosen by Adam on 2026-11-18 (relayed by the driver
+session): "Let's use argparse and formulaic, though I'd like to see how
+much work the migration from patsy to formulaic will be before formally
+deciding." The formulaic half is DETK-0024 and stays open.
 
 ## Consequences
 

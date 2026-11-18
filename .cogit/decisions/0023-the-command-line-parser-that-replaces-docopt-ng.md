@@ -4,7 +4,7 @@ state: Proposed
 authority: [human]
 date: 2026-11-18
 from: {node: release}
-applies: [release]
+applies: [release/cli-migrate, release/cli-docs]
 ---
 
 # The command-line parser that replaces docopt-ng

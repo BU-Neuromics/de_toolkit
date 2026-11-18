@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-18
 from: {node: release}
 applies: [release/cli-migrate, release/cli-docs]
+revisions:
+  - {date: 2026-11-18, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-18: option A, argparse"}
 ---
 
 # The command-line parser that replaces docopt-ng

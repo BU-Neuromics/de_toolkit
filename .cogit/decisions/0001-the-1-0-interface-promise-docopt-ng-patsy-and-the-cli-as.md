@@ -80,3 +80,7 @@ describe the docstring-as-interface pattern and copy usage blocks
 (`release/cli-docs`). DETK-0010's skill test, which parses with docopt,
 moves to the new parser in `release/cli-migrate`. patsy stays installed
 through statsmodels 0.14.
+
+## Replies
+
+- 2026-11-18, adamlabadorf: Adam, 2026-11-18 (relayed by the driver session), on whether --help is part of the promise: "I think a fully featured CLI should be promised for 1.0, including help text if that will enhance the agentic coding flow." What exactly help promises is DETK-0025 (Proposed, his).

@@ -4,12 +4,13 @@ objective: 'Every detk-* command parses its command line with the library chosen
 acceptance:
   - 'all 11 entry points (detk and detk-norm, -de, -enrich, -transform, -filter, -stats, -outlier, -wrapr, -report, -util) and their subcommands use argparse (DETK-0023); docopt-ng is not in pyproject.toml, uv.lock or environment.yml, and de_toolkit/test_docopt.py is removed'
   - 'the release/cli-pin tests pass with their expectations unchanged; only their adapter changes. A pinned behaviour the parser cannot keep is a decision for Adam before it is dropped, and a breaking change in the CHANGELOG once agreed'
-  - '`detk-x --help` and `detk-x sub --help` describe each command, argument, option and default; a wrong command line exits non-zero naming the problem'
+  - '`detk-x --help` and `detk-x sub --help` give help in the scope DETK-0025 sets: under its Options A and B, a fixed section order (description, usage, positional arguments, options, common options) listing every positional and option with metavar, default, choices and a one-line description, and under B an example command line per subcommand that CI parses (and runs where test data allows); a test checks the structure for every command'
+  - 'a wrong command line exits non-zero naming the problem'
   - 'DETK-0010''s skill test checks the skill''s command lines against the new parser, the record revised to say so, and the usage blocks in skills/detk/references/commands.md match the new --help'
   - 'the full test suite, the R-gated tests in CI and ruff pass; the airway example (run.sh) runs unchanged'
-from: [DETK-0001, DETK-0023]
+from: [DETK-0001, DETK-0023, DETK-0025]
 scope: [de_toolkit/common.py, de_toolkit/norm.py, de_toolkit/de.py, de_toolkit/enrich.py, de_toolkit/transform.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolkit/outlier.py, de_toolkit/wrapr.py, de_toolkit/report.py, de_toolkit/util.py, de_toolkit/test_docopt.py, tests/cli/, tests/skills/, tests/common/, tests/norm/, tests/de/, tests/enrich/, tests/transform/, tests/filter/, tests/stats/, tests/outlier/, tests/wrapr/, tests/report/, tests/util/, skills/detk/references/commands.md, pyproject.toml, uv.lock, environment.yml, +CHANGELOG]
-prev: [DETK-0023, release/cli-pin]
+prev: [DETK-0023, DETK-0025, release/cli-pin]
 ---
 
 # Replace docopt-ng in every command
@@ -23,6 +24,12 @@ prev: [DETK-0023, release/cli-pin]
 - [ ] @human Accept <!-- s5 -->
 
 ## Notes
+
+The "fully featured CLI" gaps listed in DETK-0025 (the `detk` umbrella
+not dispatching enrich, report and util; the unused `--size-factors`;
+metavar spellings; the deprecated `--column-data`; exit codes) are
+candidates for Adam, not scope of this node unless he promotes them.
+
 
 Planned 2026-11-18 on Adam's answer to DETK-0001 (option B); waits on his
 choice of parser (DETK-0023). Module docstrings stay as the commands'

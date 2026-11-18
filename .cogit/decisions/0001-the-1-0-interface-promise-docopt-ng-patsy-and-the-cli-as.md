@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-09
 from: {node: release}
 applies: [release]
 issue: 18
+revisions:
+  - {date: 2026-11-18, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-18: option B, migrate off docopt-ng and patsy before 1.0; the CLI stays the promise; the libraries are DETK-0023 and DETK-0024, open for Adam"}
 ---
 
 # The 1.0 interface promise: docopt-ng, patsy, and the CLI as the stable surface

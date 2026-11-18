@@ -51,9 +51,30 @@ As A, and declare the module-level API public.
 
 ## Decision
 
-Recommendation (the proposal on #18): Option A. Closing #18 records it.
+Option B, chosen by Adam on 2026-11-18 (relayed by the driver session):
+replace docopt-ng and patsy before 1.0 is tagged. In his words: "I'm ok
+with doing B and switching to better supported libraries before the
+release, I'd rather take the pain now than later." He sees detk as
+primarily for coding agents, to make agent-written analyses more reliable
+and explainable. He considered promising the Python API (Option C, and C
+with B) and did not choose it, so the 1.0 promise stays the CLI as in
+Option A: subcommand names, arguments, output formats, the versioned
+module JSON schema and the Process Run Crate provenance follow semver
+from 1.0; the Python API is not a promise.
+
+Which libraries replace them is not decided here: the parser is
+DETK-0023 (argparse, click or other) and the formula library DETK-0024
+(formulaic or other), both Adam's.
 
 ## Consequences
 
-The docs statement of #37 stands as written. Revisit docopt-ng if it
-becomes a maintenance burden, and patsy if statsmodels drops it.
+The docs statement of #37 (the CLI is the promise) stands. The migration
+is planned under `release`, ahead of `release/cut`: pin each command's
+parsing and the formula matrices in tests first (`release/cli-pin`,
+`release/formula-pin`), then replace docopt-ng in all 11 entry points
+(`release/cli-migrate`, after DETK-0023) and patsy in `patsy_lite.py`
+(`release/formula-migrate`, after DETK-0024), then update the docs that
+describe the docstring-as-interface pattern and copy usage blocks
+(`release/cli-docs`). DETK-0010's skill test, which parses with docopt,
+moves to the new parser in `release/cli-migrate`. patsy stays installed
+through statsmodels 0.14.

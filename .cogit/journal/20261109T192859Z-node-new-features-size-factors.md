@@ -3,7 +3,7 @@ kind: action
 time: 2026-11-09T19:28:59Z
 by: adamlabadorf
 action: node-new
-node: features/size-factors
+node: release/size-factors
 ---
 
 # New node features/size-factors

@@ -13,7 +13,7 @@ prev: [release]
 - [ ] [Contrasts](features/contrasts.md) <!-- s4 -->
 - [ ] [Sample QC](features/sample-qc.md) <!-- s5 -->
 - [ ] [DE methods](features/de-methods.md) <!-- s6 -->
-- [ ] [--size-factors writes or goes](features/size-factors.md) <!-- s8 -->
+- [ ] ~~@human --size-factors writes or goes moved to `release/size-factors`~~ not done <!-- s8 -->
 - [ ] [Annotate's mapping file in the provenance](features/crate-inputs.md) <!-- s9 -->
 - [ ] @human Accept <!-- s7 -->
 

@@ -1,28 +1,34 @@
 ---
 kind: task
-objective: 'patsy-lite builds its model matrices with the library chosen in DETK-0024, and detk no longer uses patsy (DETK-0001)'
+objective: 'patsy-lite builds its model matrices with formulaic, and detk no longer uses patsy (DETK-0001, DETK-0024)'
 acceptance:
-  - 'de_toolkit/patsy_lite.py builds model matrices with the choice of DETK-0024; no module of de_toolkit imports patsy and pyproject.toml no longer lists it (statsmodels may still install it)'
-  - 'the release/formula-pin tests pass with their fixtures unchanged. A matrix or column name that has to change is a decision for Adam first, and a breaking change in the CHANGELOG once agreed'
+  - 'de_toolkit/patsy_lite.py builds model matrices with formulaic (formula object and model_matrix in place of ModelDesc and dmatrices); no module of de_toolkit imports patsy; pyproject.toml lists formulaic and no longer lists patsy'
+  - 'the DETK-0024 study''s fixes are in: bool columns are made categorical before the matrix is built (so a TRUE/FALSE column still gives `x__True`), the matrices are cast to float, awkward names are quoted with backticks and the name map follows, term order is restored from formulaic''s terms (with its intercept term `1` mapped to `Intercept`), and every invalid formula, including one with no left-hand side, raises PatsyLiteParseError'
+  - 'the release/formula-pin tests pass with their fixtures unchanged, except error-message text, which may change and is listed in the CHANGELOG; any matrix or column name that has to change is a question for Adam first'
+  - '`test_patsy_lite_to_patsy`, which asserts patsy''s ModelDesc strings, is rewritten against the formulaic translation'
   - 'detk-de deseq2 and firth give the same results on the airway example as before, shown by the R-gated tests in CI'
-  - 'docs/formulas.md describes the new backend and states which pass-through terms are supported'
+  - 'docs/formulas.md no longer names patsy as the engine; the transforms question is left to release/formula-rename (DETK-0028)'
 from: [DETK-0001, DETK-0024]
 scope: [de_toolkit/patsy_lite.py, tests/patsy_lite/, docs/formulas.md, pyproject.toml, uv.lock, environment.yml, +CHANGELOG]
 prev: [DETK-0024, release/formula-pin]
 ---
 
-# Replace patsy in patsy-lite
+# Replace patsy with formulaic in patsy-lite
 
 ## Implementation plan
 
-- [ ] @developer Rebuild `patsy_lite.py` on the DETK-0024 choice, keeping its parser, its `__` names and its errors; drop the patsy pin, relock; update `docs/formulas.md`; CHANGELOG; open the PR <!-- s1 -->
+- [ ] @developer Port `patsy_lite.py` to formulaic as studied in DETK-0024 (bool to categorical, float cast, backtick quoting, term order, error wrapping), keeping its parser, its `__` names and its API; rewrite the translation test; swap patsy for formulaic in `pyproject.toml`, relock; drop the patsy wording in `docs/formulas.md`; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR, including the formula-pin fixtures and the R-gated de tests in CI <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes
 
-Planned 2026-11-18 on Adam's answer to DETK-0001 (option B); waits on his
-choice of formula library (DETK-0024). The module keeps its name: the
-patsy-lite syntax is what the docs call the formula language. Shares
-`pyproject.toml`, `uv.lock` and `environment.yml` with
-release/cli-migrate: whichever lands second relocks.
+Planned 2026-11-18; DETK-0024 accepted formulaic on 2026-11-19 ("accept
+the migration to formulaic and proceed to planning and implementation").
+The study, with the port's four changes and the 21-of-26 comparison, is in
+the record's Context and How to reproduce. The rename Adam asked for is
+release/formula-rename (DETK-0027); this node keeps the name so the port
+and the rename review separately. Shares `pyproject.toml` and `uv.lock`
+with release/cli-migrate and release/statsmodels-test: whichever lands
+later relocks. `environment.yml` lists patsy; it is out of date overall
+(docopt, future, sphinx), see the stop note.

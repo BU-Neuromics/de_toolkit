@@ -35,9 +35,13 @@ visited: f6503ed
 - [ ] [Keep IDs as written through R and the other readers](release/r-ids.md) <!-- s20 -->
 - [ ] [Pin each command's parsing in tests](release/cli-pin.md) <!-- s21 -->
 - [ ] [Pin the formula matrices in tests](release/formula-pin.md) <!-- s22 -->
+- [ ] [Make statsmodels a test-only dependency](release/statsmodels-test.md) <!-- s27 -->
 - [ ] [Replace docopt-ng in every command](release/cli-migrate.md) <!-- s23 -->
-- [ ] [Replace patsy in patsy-lite](release/formula-migrate.md) <!-- s24 -->
-- [ ] [Update the docs for the migrated CLI](release/cli-docs.md) <!-- s25 -->
+- [ ] [Replace patsy with formulaic in patsy-lite](release/formula-migrate.md) <!-- s24 -->
+- [ ] [Rename patsy-lite and settle transforms in formulas](release/formula-rename.md) <!-- s28 -->
+- [ ] [--size-factors writes or goes](release/size-factors.md) <!-- s26 -->
+- [ ] [Close the remaining CLI gaps](release/cli-gaps.md) <!-- s29 -->
+- [ ] [Update the docs for the 1.0 CLI](release/cli-docs.md) <!-- s25 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
 
@@ -45,8 +49,9 @@ visited: f6503ed
 
 Tracking issue #23 (the roadmap) and milestone v1.0.0. DETK-0002 (#22), Proposed and
 Adam's, gates the cut. DETK-0001 (#18) was accepted on 2026-11-18 as option B: migrate off
-docopt-ng and patsy before the tag (cli-pin, formula-pin, cli-migrate, formula-migrate,
-cli-docs). DETK-0023 accepted argparse; DETK-0024 (formulaic or keeping patsy for 1.0) and
-DETK-0025 (what --help promises; Adam put help text in the promise if it helps agents) are
-Proposed and Adam's. Adam promoted #24, #29
-and #25 into 1.0 and added agent skills (2026-11-09); the other candidates wait in `features`.
+docopt-ng and patsy before the tag. Adam then accepted argparse (DETK-0023), formulaic
+(DETK-0024), help promised as DETK-0025 Option B with all the CLI gaps in 1.0, and
+statsmodels as test-only (DETK-0026). Still his: the module name (DETK-0027), transforms in
+formulas (DETK-0028), --size-factors (DETK-0029), --column-data (DETK-0030), exit codes
+(DETK-0031) and shell completion (DETK-0032). release/size-factors moved here from features
+on 2026-11-19.

@@ -226,7 +226,14 @@ outside `release/formula-migrate`'s scope.
 
 ## Decision
 
-Open for Adam. No option is recommended by the planning session.
+Option A, formulaic, chosen by Adam on 2026-11-19 (relayed by the driver
+session): "0024 - accept the migration to formulaic and proceed to
+planning and implementation, and we need to rename patsy_lite.py to
+something else." The port carries the study's fixes: bool columns are
+made categorical and the matrices are cast to float, so the design
+strings and column names stay as they are. The new module name is
+DETK-0027. Whether formulas keep transforms such as `np.log(x)` is
+DETK-0028. Both are Adam's.
 
 ## Consequences
 

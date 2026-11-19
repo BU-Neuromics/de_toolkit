@@ -85,12 +85,15 @@ agents after 1.0. The condition in Adam's answer argues against it.
 
 ## Decision
 
-Open for Adam. The planning session recommends Option B: promise the
-structure and facts, with tested examples, and leave wording free to
-improve. Option C is the strongest for agents, but it adds a new
-promised schema and new options before the tag, so it could also come
-in a 1.x minor release without breaking anything. Adam decides whether
-it belongs in 1.0. Option D is not recommended.
+Option B, chosen by Adam on 2026-11-19 (relayed by the driver session):
+"DETK-0025 - B. address all the CLI gaps." From 1.0, help promises its
+structure and facts: section order; every positional and option with
+its metavar, default, choices and a one-line description; and at least
+one example command line per subcommand, which CI checks. Wording may
+improve in any release. All seven gaps listed below are in scope for
+1.0. Those that need a choice Adam has not made are DETK-0029
+(`--size-factors`), DETK-0030 (`--column-data`), DETK-0031 (exit codes)
+and DETK-0032 (shell completion).
 
 ## Consequences
 

@@ -3,7 +3,7 @@ kind: task
 objective: 'The formula module is de_toolkit/formula.py (DETK-0027), nothing in the code or docs names patsy-lite any more, and the docs no longer claim np.log(x) works (DETK-0024, DETK-0028)'
 acceptance:
   - 'de_toolkit/patsy_lite.py is renamed de_toolkit/formula.py; PatsyLiteParseError becomes FormulaParseError with no alias kept; patsy_lite_to_patsy gets a name that says what it now translates to; tests/patsy_lite/ moves to tests/formula/; common.py imports the new module; the user-visible "patsy lite could not parse" text names "detk formula syntax"'
-  - 'docs/formulas.md calls the syntax "detk formula syntax"; its fourth term type keeps interactions (a:b, a*b), which work and are pinned, and drops the np.log example, which does not work; transforms are left to release/formula-transforms (DETK-0028, DETK-0047)'
+  - 'docs/formulas.md calls the syntax "detk formula syntax"; its fourth term type keeps interactions (a:b, a*b), which work once release/formula-migrate has fixed a:b (DETK-0040), and drops the np.log example, which does not work; transforms are left to release/formula-transforms (DETK-0028, DETK-0047)'
   - 'no module, test or doc of the repository still says patsy-lite or patsy_lite, except the CHANGELOG''s history'
   - 'the formula-pin fixtures pass unchanged except for the import path, the exception name and error text naming the syntax'
   - 'the CHANGELOG lists the rename and the exception''s new name'

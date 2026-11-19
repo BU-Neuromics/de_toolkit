@@ -10,7 +10,7 @@ acceptance:
   - 'DETK-0010''s skill test checks the skill''s command lines against the argparse parsers; DETK-0010 is superseded or revised (as cogit allows for an Accepted record) to say so; the usage blocks in skills/detk/references/commands.md match the new --help'
   - 'the full test suite, the R-gated tests in CI and ruff pass; the airway example (run.sh) runs unchanged'
 from: [DETK-0001, DETK-0023, DETK-0025]
-scope: [de_toolkit/common.py, de_toolkit/norm.py, de_toolkit/de.py, de_toolkit/enrich.py, de_toolkit/transform.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolkit/outlier.py, de_toolkit/wrapr.py, de_toolkit/report.py, de_toolkit/util.py, de_toolkit/test_docopt.py, tests/cli/, tests/skills/, tests/common/, tests/norm/, tests/de/, tests/enrich/, tests/transform/, tests/filter/, tests/stats/, tests/outlier/, tests/wrapr/, tests/report/, tests/util/, skills/detk/references/commands.md, pyproject.toml, uv.lock, +CHANGELOG]
+scope: [de_toolkit/common.py, de_toolkit/norm.py, de_toolkit/de.py, de_toolkit/enrich.py, de_toolkit/transform.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolkit/outlier.py, de_toolkit/wrapr.py, de_toolkit/report.py, de_toolkit/util.py, de_toolkit/test_docopt.py, tests/cli/, tests/skills/, tests/common/, tests/norm/, tests/de/, tests/enrich/, tests/transform/, tests/filter/, tests/stats/, tests/outlier/, tests/wrapr/, tests/report/, tests/util/, skills/detk/references/commands.md, pyproject.toml, uv.lock, environment.yml, +CHANGELOG]
 prev: [DETK-0023, DETK-0025, release/cli-pin]
 ---
 
@@ -32,10 +32,7 @@ Adam put in 1.0 (DETK-0025), this node fixes the umbrella command (1) and
 the metavars (3), which need no further choice. `--size-factors` (2) is
 release/size-factors. `--column-data` (4), exit codes (5) and shell
 completion (7) are release/cli-gaps; until then, usage errors exit as
-argparse does (2), which is the code DETK-0031 keeps. `--column-data`
-is migrated as it is (deprecated, warning) and removed by release/cli-gaps
-(DETK-0030). `environment.yml` is deleted by release/statsmodels-test
-(DETK-0048).
+argparse does (2).
 
 Module docstrings stay as the commands' descriptions; where they also
 served as the parser spec, the spec moves into code. The tests that call
@@ -43,3 +40,10 @@ docopt today (most `tests/*/test_*.py` build their arguments with it) move
 with their modules. Shares `pyproject.toml` and `uv.lock` with
 release/formula-migrate and release/statsmodels-test: whichever lands
 later relocks.
+
+Updated 2026-11-19 on Adam's answers: usage errors exiting 2 is the code
+DETK-0031 keeps. The deprecated `--column-data` options (detk-filter,
+detk-stats summary and pca) are migrated as they are and removed by
+release/cli-gaps (DETK-0030). `environment.yml` is deleted by
+release/statsmodels-test (DETK-0048); its entry in the scope above stays
+only for the case where this node lands first.

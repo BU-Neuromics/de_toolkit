@@ -136,3 +136,7 @@ to promote into 1.0 or leave out:
    implicit, not declared.
 7. No shell completion. argparse needs a further package (argcomplete)
    for it. Probably low value for agents.
+
+## Replies
+
+- 2026-11-19, adamlabadorf: Correction to the Decision: the gaps in scope are the six the driver relayed, items 1-5 and 7 of the list; item 6 (--version handled before parsing) was noted as fine and is not a gap. The planning session wrote 'seven' in error.

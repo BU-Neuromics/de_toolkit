@@ -57,3 +57,7 @@ file the help describes; the example and the skill stay as they are.
 The node `features/size-factors` moves to `release/size-factors`, ahead
 of `release/cut`, and carries out the choice after `release/cli-migrate`
 (both edit `norm.py`).
+
+## Replies
+
+- 2026-11-19, adamlabadorf: Planning note: release/size-factors implements it; with DETK-0029 answered, it waits only on release/cli-migrate.

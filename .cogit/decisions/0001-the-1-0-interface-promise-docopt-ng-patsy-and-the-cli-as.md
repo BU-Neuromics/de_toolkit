@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-09
 from: {node: release}
 applies: [release]
 issue: 18
+revisions:
+  - {date: 2026-11-18, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-18: option B, migrate off docopt-ng and patsy before 1.0; the CLI stays the promise; the libraries are DETK-0023 and DETK-0024, open for Adam"}
 ---
 
 # The 1.0 interface promise: docopt-ng, patsy, and the CLI as the stable surface
@@ -51,9 +53,34 @@ As A, and declare the module-level API public.
 
 ## Decision
 
-Recommendation (the proposal on #18): Option A. Closing #18 records it.
+Option B, chosen by Adam on 2026-11-18 (relayed by the driver session):
+replace docopt-ng and patsy before 1.0 is tagged. In his words: "I'm ok
+with doing B and switching to better supported libraries before the
+release, I'd rather take the pain now than later." He sees detk as
+primarily for coding agents, to make agent-written analyses more reliable
+and explainable. He considered promising the Python API (Option C, and C
+with B) and did not choose it, so the 1.0 promise stays the CLI as in
+Option A: subcommand names, arguments, output formats, the versioned
+module JSON schema and the Process Run Crate provenance follow semver
+from 1.0; the Python API is not a promise.
+
+Which libraries replace them is not decided here: the parser is
+DETK-0023 (argparse, click or other) and the formula library DETK-0024
+(formulaic or other), both Adam's.
 
 ## Consequences
 
-The docs statement of #37 stands as written. Revisit docopt-ng if it
-becomes a maintenance burden, and patsy if statsmodels drops it.
+The docs statement of #37 (the CLI is the promise) stands. The migration
+is planned under `release`, ahead of `release/cut`: pin each command's
+parsing and the formula matrices in tests first (`release/cli-pin`,
+`release/formula-pin`), then replace docopt-ng in all 11 entry points
+(`release/cli-migrate`, after DETK-0023) and patsy in `patsy_lite.py`
+(`release/formula-migrate`, after DETK-0024), then update the docs that
+describe the docstring-as-interface pattern and copy usage blocks
+(`release/cli-docs`). DETK-0010's skill test, which parses with docopt,
+moves to the new parser in `release/cli-migrate`. patsy stays installed
+through statsmodels 0.14.
+
+## Replies
+
+- 2026-11-18, adamlabadorf: Adam, 2026-11-18 (relayed by the driver session), on whether --help is part of the promise: "I think a fully featured CLI should be promised for 1.0, including help text if that will enhance the agentic coding flow." What exactly help promises is DETK-0025 (Proposed, his).

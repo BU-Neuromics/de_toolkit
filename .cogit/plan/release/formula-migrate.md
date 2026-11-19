@@ -7,9 +7,9 @@ acceptance:
   - 'the release/formula-pin tests pass with their fixtures unchanged, except error-message text, which may change and is listed in the CHANGELOG; any matrix or column name that has to change is a question for Adam first'
   - '`test_patsy_lite_to_patsy`, which asserts patsy''s ModelDesc strings, is rewritten against the formulaic translation'
   - 'detk-de deseq2 and firth give the same results on the airway example as before, shown by the R-gated tests in CI'
-  - 'docs/formulas.md no longer names patsy as the engine; the transforms question is left to release/formula-rename (DETK-0028)'
+  - 'docs/formulas.md no longer names patsy as the engine; the np.log claim and transforms are left to release/formula-rename and release/formula-transforms (DETK-0028)'
 from: [DETK-0001, DETK-0024]
-scope: [de_toolkit/patsy_lite.py, tests/patsy_lite/, docs/formulas.md, pyproject.toml, uv.lock, environment.yml, +CHANGELOG]
+scope: [de_toolkit/patsy_lite.py, tests/patsy_lite/, docs/formulas.md, pyproject.toml, uv.lock, +CHANGELOG]
 prev: [DETK-0024, release/formula-pin]
 ---
 
@@ -30,5 +30,7 @@ the record's Context and How to reproduce. The rename Adam asked for is
 release/formula-rename (DETK-0027); this node keeps the name so the port
 and the rename review separately. Shares `pyproject.toml` and `uv.lock`
 with release/cli-migrate and release/statsmodels-test: whichever lands
-later relocks. `environment.yml` lists patsy; it is out of date overall
-(docopt, future, sphinx), see the stop note.
+later relocks. `environment.yml` is deleted by release/statsmodels-test
+(DETK-0048), so this node no longer touches it. Keeps the file name
+`patsy_lite.py`; release/formula-rename renames it to `formula.py`
+(DETK-0027) afterwards.

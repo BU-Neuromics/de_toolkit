@@ -2,7 +2,7 @@
 kind: task
 objective: 'Every detk-* command parses its command line with argparse, with help as DETK-0025 Option B promises it, and docopt-ng is gone (DETK-0001, DETK-0023, DETK-0025)'
 acceptance:
-  - 'all 11 entry points (detk and detk-norm, -de, -enrich, -transform, -filter, -stats, -outlier, -wrapr, -report, -util) and their subcommands use argparse; docopt-ng is not in pyproject.toml or uv.lock, de_toolkit/test_docopt.py is removed, and environment.yml lists no docopt'
+  - 'all 11 entry points (detk and detk-norm, -de, -enrich, -transform, -filter, -stats, -outlier, -wrapr, -report, -util) and their subcommands use argparse; docopt-ng is not in pyproject.toml or uv.lock, and de_toolkit/test_docopt.py is removed'
   - 'the release/cli-pin tests pass with their expectations unchanged except where this node changes them on purpose (the metavars and the umbrella command below); only their adapter changes otherwise. A pinned behaviour argparse cannot keep is a question for Adam before it is dropped, and a breaking change in the CHANGELOG once agreed'
   - 'help follows DETK-0025 Option B for every command and subcommand: the section order description, usage, positional arguments, options, common options, examples; every positional and option listed with metavar, default, choices and a one-line description; and at least one example command line per subcommand. A test checks the structure for every command and that each example parses, and runs it where test data allows'
   - 'the umbrella `detk <command>` runs every module command, enrich, report and util included, and its usage lists them all (DETK-0025 gap 1)'
@@ -10,7 +10,7 @@ acceptance:
   - 'DETK-0010''s skill test checks the skill''s command lines against the argparse parsers; DETK-0010 is superseded or revised (as cogit allows for an Accepted record) to say so; the usage blocks in skills/detk/references/commands.md match the new --help'
   - 'the full test suite, the R-gated tests in CI and ruff pass; the airway example (run.sh) runs unchanged'
 from: [DETK-0001, DETK-0023, DETK-0025]
-scope: [de_toolkit/common.py, de_toolkit/norm.py, de_toolkit/de.py, de_toolkit/enrich.py, de_toolkit/transform.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolkit/outlier.py, de_toolkit/wrapr.py, de_toolkit/report.py, de_toolkit/util.py, de_toolkit/test_docopt.py, tests/cli/, tests/skills/, tests/common/, tests/norm/, tests/de/, tests/enrich/, tests/transform/, tests/filter/, tests/stats/, tests/outlier/, tests/wrapr/, tests/report/, tests/util/, skills/detk/references/commands.md, pyproject.toml, uv.lock, environment.yml, +CHANGELOG]
+scope: [de_toolkit/common.py, de_toolkit/norm.py, de_toolkit/de.py, de_toolkit/enrich.py, de_toolkit/transform.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolkit/outlier.py, de_toolkit/wrapr.py, de_toolkit/report.py, de_toolkit/util.py, de_toolkit/test_docopt.py, tests/cli/, tests/skills/, tests/common/, tests/norm/, tests/de/, tests/enrich/, tests/transform/, tests/filter/, tests/stats/, tests/outlier/, tests/wrapr/, tests/report/, tests/util/, skills/detk/references/commands.md, pyproject.toml, uv.lock, +CHANGELOG]
 prev: [DETK-0023, DETK-0025, release/cli-pin]
 ---
 
@@ -32,7 +32,10 @@ Adam put in 1.0 (DETK-0025), this node fixes the umbrella command (1) and
 the metavars (3), which need no further choice. `--size-factors` (2) is
 release/size-factors. `--column-data` (4), exit codes (5) and shell
 completion (7) are release/cli-gaps; until then, usage errors exit as
-argparse does (2).
+argparse does (2), which is the code DETK-0031 keeps. `--column-data`
+is migrated as it is (deprecated, warning) and removed by release/cli-gaps
+(DETK-0030). `environment.yml` is deleted by release/statsmodels-test
+(DETK-0048).
 
 Module docstrings stay as the commands' descriptions; where they also
 served as the parser spec, the spec moves into code. The tests that call

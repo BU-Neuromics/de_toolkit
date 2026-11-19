@@ -18,7 +18,7 @@ visited: a21a419
 ## Implementation plan
 
 - [x] @developer Add fixtures and tests under `tests/patsy_lite/` for the documented formulas, the de tests' designs, quoting and the error cases; no change to `de_toolkit/`; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: the documented syntax fully covered, fixtures independent of patsy <!-- s2 -->
+- [x] @reviewer Review the PR: the documented syntax fully covered, fixtures independent of patsy <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes

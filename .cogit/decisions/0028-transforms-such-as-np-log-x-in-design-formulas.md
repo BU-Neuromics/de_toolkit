@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-19
 from: {node: release}
 applies: [release/formula-rename]
+revisions:
+  - {date: 2026-11-19, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-19: support a fixed set of transforms in 1.0 (the option read: 'Support a small whitelist (log, log2, etc.) in 1.0 and record it in provenance'); the set, naming, edge cases and provenance are DETK-0047"}
 ---
 
 # Transforms such as np.log(x) in design formulas

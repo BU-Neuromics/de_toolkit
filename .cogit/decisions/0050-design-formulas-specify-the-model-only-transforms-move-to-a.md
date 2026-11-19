@@ -3,6 +3,7 @@ template: adr
 state: Accepted
 authority: [human]
 date: 2026-11-19
+supersedes: [DETK-0028, DETK-0047]
 from: {node: release}
 applies: [release/formula-rename, release/augment]
 revisions:

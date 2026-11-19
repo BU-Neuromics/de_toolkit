@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-19
 from: {node: release}
 applies: [release/formula-rename, release/augment]
+revisions:
+  - {date: 2026-11-19, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-19: \"the formula should just specify models, and nothing else. I wonder instead if detk should provide some simple augmentation functions\"; then \"yes\" to the driver's summary of the consequences"}
 ---
 
 # Design formulas specify the model only; transforms move to a column data augmentation command

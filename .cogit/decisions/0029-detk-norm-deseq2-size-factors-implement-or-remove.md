@@ -46,9 +46,9 @@ documented output.
 
 ## Decision
 
-Open for Adam. Both are small. Implementing (A) keeps the example and
-the skill valid, so the planning session leans toward it, but the choice
-is Adam's.
+Option A, chosen by Adam on 2026-11-19 (relayed by the driver session):
+"implement it". `--size-factors=FILE` writes the two-column tab-separated
+file the help describes; the example and the skill stay as they are.
 
 ## Consequences
 

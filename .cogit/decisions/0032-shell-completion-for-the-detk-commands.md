@@ -47,8 +47,11 @@ in sync.
 
 ## Decision
 
-Open for Adam. The planning session recommends Option B: completion
-with no runtime dependency, in keeping with DETK-0026.
+Option B, chosen by Adam on 2026-11-19 (relayed by the driver session):
+"shtab at build time (no runtime dependency)". shtab generates the bash,
+zsh and tcsh scripts from the argparse parsers; it is a dev or build
+dependency only, never a runtime one, and a test keeps the shipped
+scripts current with the parsers.
 
 ## Consequences
 

@@ -54,9 +54,10 @@ Override argparse back to 1. Nothing changes; agents read stderr.
 
 ## Decision
 
-Open for Adam. The planning session recommends Option A: the usage/other
-split is the distinction agents act on most, and it is what argparse
-gives anyway.
+Option A, chosen by Adam on 2026-11-19 (relayed by the driver session):
+"0 = success, 2 = usage error, 1 = anything else". Every failure other
+than a usage error prints a one-line cause on stderr, with the traceback
+only under `--verbose`. The codes are stated in help and the docs.
 
 ## Consequences
 

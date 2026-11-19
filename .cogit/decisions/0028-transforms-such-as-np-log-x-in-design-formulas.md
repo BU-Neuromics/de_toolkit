@@ -101,9 +101,19 @@ code-evaluation, naming and promise concerns above.
 
 ## Decision
 
-Open for Adam. The planning session recommends Option A for 1.0.
-Option B could be added in a 1.x minor release without breaking
-anything, if agents turn out to need it.
+Option B, chosen by Adam on 2026-11-19 (relayed by the driver session).
+The option he picked read: "Support a small whitelist (log, log2, etc.)
+in 1.0 and record it in provenance." Transforms are neither removed (A)
+nor passed through to the engine (C).
+
+He did not say which transforms are in the set, how a transformed column
+is named, how edge cases (zero, negative or missing values, pseudocounts)
+behave, or how transforms are recorded in the module JSON and the Process
+Run Crate. Those are DETK-0047, Proposed and his, with the planning
+session's recommendation. What this record fixes: a fixed, named set;
+detk computes the transformed columns itself in pandas, and neither
+formulaic nor R ever evaluates an expression from a formula; transforms
+are recorded in provenance.
 
 ## Consequences
 

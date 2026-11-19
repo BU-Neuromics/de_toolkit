@@ -42,8 +42,9 @@ surface carries it until then.
 
 ## Decision
 
-Open for Adam. The planning session leans toward A: it has been
-deprecated for seven years and nothing in detk uses it.
+Option A, chosen by Adam on 2026-11-19 (relayed by the driver session):
+"remove it in 1.0". `detk-filter` accepts only the positional column data
+argument; the CHANGELOG lists the removal as a breaking change from 0.9.
 
 ## Consequences
 

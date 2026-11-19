@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-19
 from: {node: release}
 applies: [release/size-factors]
+revisions:
+  - {date: 2026-11-19, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-19: implement it"}
 ---
 
 # detk-norm deseq2 --size-factors: implement or remove

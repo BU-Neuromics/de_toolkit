@@ -12,15 +12,19 @@ acceptance:
 from: [DETK-0001, DETK-0025]
 scope: [tests/cli/, +tests/conftest.py]
 prev: [DETK-0001]
+issue: 70
+visited: a21a419
+status: done
+done: eb52eb8
 ---
 
 # Pin each command's parsing in tests
 
 ## Implementation plan
 
-- [ ] @developer Write `tests/cli/`: per-command tables of command lines and the arguments each yields, the invalid lines and their exits, the help facts, the named docopt behaviours and the umbrella command, through one adapter at the point each `main` dispatches; no change to `de_toolkit/`; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: every entry point and subcommand covered, expectations independent of docopt, help facts pinned and wording left free (DETK-0025 Option B) <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Write `tests/cli/`: per-command tables of command lines and the arguments each yields, the invalid lines and their exits, the help facts, the named docopt behaviours and the umbrella command, through one adapter at the point each `main` dispatches; no change to `de_toolkit/`; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: every entry point and subcommand covered, expectations independent of docopt, help facts pinned and wording left free (DETK-0025 Option B) <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

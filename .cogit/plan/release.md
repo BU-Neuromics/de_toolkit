@@ -39,9 +39,10 @@ visited: f6503ed
 - [ ] [Replace docopt-ng in every command](release/cli-migrate.md) <!-- s23 -->
 - [ ] [Replace patsy with formulaic in patsy-lite](release/formula-migrate.md) <!-- s24 -->
 - [ ] [Rename patsy-lite to formula](release/formula-rename.md) <!-- s28 -->
-- [ ] [Transforms in design formulas](release/formula-transforms.md) <!-- s30 -->
+- [ ] [Quote design names before R reads them](release/r-design-names.md) <!-- s31 -->
 - [ ] [--size-factors writes the size factors](release/size-factors.md) <!-- s26 -->
 - [ ] [Close the remaining CLI gaps](release/cli-gaps.md) <!-- s29 -->
+- [ ] [Column data augmentation command](release/augment.md) <!-- s30 -->
 - [ ] [Update the docs for the 1.0 CLI](release/cli-docs.md) <!-- s25 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
@@ -56,6 +57,8 @@ statsmodels as test-only (DETK-0026). On 2026-11-19 he also answered: formula.py
 (DETK-0027), a fixed set of transforms in 1.0 (DETK-0028 Option B), implement --size-factors
 (DETK-0029), remove --column-data (DETK-0030), exit codes 0/2/1 (DETK-0031), shtab at build
 time (DETK-0032), delete environment.yml (DETK-0048), every deprecated --column-data
-removed (his comment on DETK-0030) and model matrix columns in formulaic's order (DETK-0049). Still his: the transform set, names,
-edge cases and provenance (DETK-0047), which release/formula-transforms waits on.
+removed (his comment on DETK-0030) and model matrix columns in formulaic's order (DETK-0049).
+He then changed his mind on transforms: formulas specify the model only, and a column data
+augmentation command derives covariates (DETK-0050, superseding DETK-0028 and DETK-0047).
+Still his: that command's design (DETK-0051), which release/augment waits on.
 release/size-factors moved here from features on 2026-11-19.

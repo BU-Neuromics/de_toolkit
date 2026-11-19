@@ -10,7 +10,7 @@ acceptance:
   - 'uv run --group docs mkdocs build --strict passes'
 from: [DETK-0001, DETK-0025, DETK-0031, DETK-0032]
 scope: [docs/tools/, docs/report.md, docs/index.md, docs/quickstart.md, docs/concepts.md, docs/api.md, docs/agent-skills.md, docs/example.md, docs/dev/, README.md, tests/docs/, +CHANGELOG]
-prev: [release/cli-migrate, release/cli-gaps, release/size-factors, release/formula-rename]
+prev: [release/cli-migrate, release/cli-gaps, release/size-factors, release/formula-rename, release/augment]
 ---
 
 # Update the docs for the 1.0 CLI
@@ -25,6 +25,6 @@ prev: [release/cli-migrate, release/cli-gaps, release/size-factors, release/form
 
 Planned 2026-11-18 on Adam's answer to DETK-0001 (option B); widened
 2026-11-19 for DETK-0025 Option B and the CLI gaps. Comes after every
-node that changes the CLI, so the pages are written once.
+node that changes the CLI (release/augment included, which adds a command), so the pages are written once.
 `docs/formulas.md` belongs to release/formula-migrate and
 release/formula-rename.

@@ -39,6 +39,7 @@ node lands first. Keeps the file name
 
 Updated 2026-11-19 on Adam's answers: column order follows formulaic
 (DETK-0049, "I think we should order columns however formulaic orders
-them"), so the a*b pins change here. The np.log claim leaves the docs in
-release/formula-rename and transforms come in release/formula-transforms
-(DETK-0028, DETK-0047); this node leaves both alone.
+them"), so the a*b pins change here. Formulas take column names only
+(DETK-0050): the np.log claim and the error for a call in a formula are
+release/formula-rename's, derived columns release/augment's; this node
+leaves both alone.

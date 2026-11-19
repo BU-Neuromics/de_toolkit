@@ -4,7 +4,7 @@ state: Proposed
 authority: [human]
 date: 2026-11-19
 from: {node: release}
-applies: [release/formula-transforms]
+applies: [release/augment]
 ---
 
 # The transforms detk accepts in design formulas, and how they are named and recorded

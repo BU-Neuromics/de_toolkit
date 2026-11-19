@@ -55,6 +55,7 @@ docopt-ng and patsy before the tag. Adam then accepted argparse (DETK-0023), for
 statsmodels as test-only (DETK-0026). On 2026-11-19 he also answered: formula.py
 (DETK-0027), a fixed set of transforms in 1.0 (DETK-0028 Option B), implement --size-factors
 (DETK-0029), remove --column-data (DETK-0030), exit codes 0/2/1 (DETK-0031), shtab at build
-time (DETK-0032) and delete environment.yml (DETK-0048). Still his: the transform set, names,
+time (DETK-0032), delete environment.yml (DETK-0048), every deprecated --column-data
+removed (his comment on DETK-0030) and model matrix columns in formulaic's order (DETK-0049). Still his: the transform set, names,
 edge cases and provenance (DETK-0047), which release/formula-transforms waits on.
 release/size-factors moved here from features on 2026-11-19.

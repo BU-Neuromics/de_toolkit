@@ -2,7 +2,7 @@
 kind: task
 objective: 'Every detk-* command parses its command line with argparse, with help as DETK-0025 Option B promises it, and docopt-ng is gone (DETK-0001, DETK-0023, DETK-0025)'
 acceptance:
-  - 'all 11 entry points (detk and detk-norm, -de, -enrich, -transform, -filter, -stats, -outlier, -wrapr, -report, -util) and their subcommands use argparse; docopt-ng is not in pyproject.toml or uv.lock, de_toolkit/test_docopt.py is removed, and environment.yml lists no docopt'
+  - 'all 11 entry points (detk and detk-norm, -de, -enrich, -transform, -filter, -stats, -outlier, -wrapr, -report, -util) and their subcommands use argparse; docopt-ng is not in pyproject.toml or uv.lock, and de_toolkit/test_docopt.py is removed'
   - 'the release/cli-pin tests pass with their expectations unchanged except where this node changes them on purpose (the metavars and the umbrella command below); only their adapter changes otherwise. A pinned behaviour argparse cannot keep is a question for Adam before it is dropped, and a breaking change in the CHANGELOG once agreed'
   - 'help follows DETK-0025 Option B for every command and subcommand: the section order description, usage, positional arguments, options, common options, examples; every positional and option listed with metavar, default, choices and a one-line description; and at least one example command line per subcommand. A test checks the structure for every command and that each example parses, and runs it where test data allows'
   - 'the umbrella `detk <command>` runs every module command, enrich, report and util included, and its usage lists them all (DETK-0025 gap 1)'
@@ -50,3 +50,10 @@ docopt today (most `tests/*/test_*.py` build their arguments with it) move
 with their modules. Shares `pyproject.toml` and `uv.lock` with
 release/formula-migrate and release/statsmodels-test: whichever lands
 later relocks.
+
+Updated 2026-11-19 on Adam's answers: usage errors exiting 2 is the code
+DETK-0031 keeps. The deprecated `--column-data` options (detk-filter,
+detk-stats summary and pca) are migrated as they are and removed by
+release/cli-gaps (DETK-0030). `environment.yml` is deleted by
+release/statsmodels-test (DETK-0048); its entry in the scope above stays
+only for the case where this node lands first.

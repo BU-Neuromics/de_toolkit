@@ -38,9 +38,11 @@ visited: f6503ed
 - [ ] [Make statsmodels a test-only dependency](release/statsmodels-test.md) <!-- s27 -->
 - [ ] [Replace docopt-ng in every command](release/cli-migrate.md) <!-- s23 -->
 - [ ] [Replace patsy with formulaic in patsy-lite](release/formula-migrate.md) <!-- s24 -->
-- [ ] [Rename patsy-lite and settle transforms in formulas](release/formula-rename.md) <!-- s28 -->
-- [ ] [--size-factors writes or goes](release/size-factors.md) <!-- s26 -->
+- [ ] [Rename patsy-lite to formula](release/formula-rename.md) <!-- s28 -->
+- [ ] [Quote design names before R reads them](release/r-design-names.md) <!-- s31 -->
+- [ ] [--size-factors writes the size factors](release/size-factors.md) <!-- s26 -->
 - [ ] [Close the remaining CLI gaps](release/cli-gaps.md) <!-- s29 -->
+- [ ] [Column data augmentation command](release/augment.md) <!-- s30 -->
 - [ ] [Update the docs for the 1.0 CLI](release/cli-docs.md) <!-- s25 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
@@ -51,7 +53,12 @@ Tracking issue #23 (the roadmap) and milestone v1.0.0. DETK-0002 (#22), Proposed
 Adam's, gates the cut. DETK-0001 (#18) was accepted on 2026-11-18 as option B: migrate off
 docopt-ng and patsy before the tag. Adam then accepted argparse (DETK-0023), formulaic
 (DETK-0024), help promised as DETK-0025 Option B with all the CLI gaps in 1.0, and
-statsmodels as test-only (DETK-0026). Still his: the module name (DETK-0027), transforms in
-formulas (DETK-0028), --size-factors (DETK-0029), --column-data (DETK-0030), exit codes
-(DETK-0031) and shell completion (DETK-0032). release/size-factors moved here from features
-on 2026-11-19.
+statsmodels as test-only (DETK-0026). On 2026-11-19 he also answered: formula.py
+(DETK-0027), a fixed set of transforms in 1.0 (DETK-0028 Option B), implement --size-factors
+(DETK-0029), remove --column-data (DETK-0030), exit codes 0/2/1 (DETK-0031), shtab at build
+time (DETK-0032), delete environment.yml (DETK-0048), every deprecated --column-data
+removed (his comment on DETK-0030) and model matrix columns in formulaic's order (DETK-0049).
+He then changed his mind on transforms: formulas specify the model only, and a column data
+augmentation command derives covariates (DETK-0050, superseding DETK-0028 and DETK-0047).
+Still his: that command's design (DETK-0051), which release/augment waits on.
+release/size-factors moved here from features on 2026-11-19.

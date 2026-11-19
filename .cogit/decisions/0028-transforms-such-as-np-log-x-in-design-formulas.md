@@ -1,10 +1,14 @@
 ---
 template: adr
-state: Proposed
+state: Superseded
+superseded_by: DETK-0050
 authority: [human]
 date: 2026-11-19
 from: {node: release}
 applies: [release/formula-rename]
+revisions:
+  - {date: 2026-11-19, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-19: support a fixed set of transforms in 1.0 (the option read: 'Support a small whitelist (log, log2, etc.) in 1.0 and record it in provenance'); the set, naming, edge cases and provenance are DETK-0047"}
+  - {date: 2026-11-19, by: adamlabadorf, change: Superseded by DETK-0050, why: "from the terminal: Adam changed his mind on 2026-11-19: formulas specify the model only; derived columns come from a column data augmentation command (DETK-0051)"}
 ---
 
 # Transforms such as np.log(x) in design formulas
@@ -101,9 +105,19 @@ code-evaluation, naming and promise concerns above.
 
 ## Decision
 
-Open for Adam. The planning session recommends Option A for 1.0.
-Option B could be added in a 1.x minor release without breaking
-anything, if agents turn out to need it.
+Option B, chosen by Adam on 2026-11-19 (relayed by the driver session).
+The option he picked read: "Support a small whitelist (log, log2, etc.)
+in 1.0 and record it in provenance." Transforms are neither removed (A)
+nor passed through to the engine (C).
+
+He did not say which transforms are in the set, how a transformed column
+is named, how edge cases (zero, negative or missing values, pseudocounts)
+behave, or how transforms are recorded in the module JSON and the Process
+Run Crate. Those are DETK-0047, Proposed and his, with the planning
+session's recommendation. What this record fixes: a fixed, named set;
+detk computes the transformed columns itself in pandas, and neither
+formulaic nor R ever evaluates an expression from a formula; transforms
+are recorded in provenance.
 
 ## Consequences
 
@@ -112,3 +126,7 @@ and the module. `release/formula-pin` pins today's behaviour (the term
 fails) whichever way this goes. Under A, the new error message is
 pinned. Under B or C, the pin changes with the decision and the new
 behaviour gets its own tests.
+
+## Replies
+
+- 2026-11-19, adamlabadorf: Planning note: the Consequences above were written before the answer. With Option B, release/formula-rename only removes the np.log claim from docs/formulas.md while renaming; the new node release/formula-transforms implements the set once DETK-0047 settles its details, and changes formula-pin's pin of today's failing term on purpose.

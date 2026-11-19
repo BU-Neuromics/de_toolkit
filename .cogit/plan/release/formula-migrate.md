@@ -9,6 +9,7 @@ acceptance:
   - 'per DETK-0040: the `disease_status` and `continent` examples in docs/formulas.md show the columns detk actually gives'
   - '`test_patsy_lite_to_patsy`, which asserts patsy''s ModelDesc strings, is rewritten against the formulaic translation'
   - 'detk-de deseq2 and firth give the same results on the airway example as before, shown by the R-gated tests in CI'
+  - 'model matrix columns come in formulaic''s order (DETK-0049): the intercept, then terms by degree (main effects before interactions), each degree in the order written; the a*b pins, which today put interaction columns first in alphabetical order, change to that order in this PR and are named in its description, and the CHANGELOG notes that with an interaction in the design, the last column (DESeq2''s default result under --last-term-only) is now the interaction'
   - 'docs/formulas.md no longer names patsy as the engine; the transforms question is left to release/formula-rename (DETK-0028)'
 from: [DETK-0001, DETK-0024, DETK-0040]
 scope: [de_toolkit/patsy_lite.py, tests/patsy_lite/, docs/formulas.md, pyproject.toml, uv.lock, environment.yml, +CHANGELOG]
@@ -32,5 +33,15 @@ the record's Context and How to reproduce. The rename Adam asked for is
 release/formula-rename (DETK-0027); this node keeps the name so the port
 and the rename review separately. Shares `pyproject.toml` and `uv.lock`
 with release/cli-migrate and release/statsmodels-test: whichever lands
-later relocks. `environment.yml` lists patsy; it is out of date overall
-(docopt, future, sphinx), see the stop note.
+later relocks. `environment.yml` is deleted by release/statsmodels-test
+(DETK-0048); its scope entry above stays only for the case where this
+node lands first. Keeps the file name
+`patsy_lite.py`; release/formula-rename renames it to `formula.py`
+(DETK-0027) afterwards.
+
+Updated 2026-11-19 on Adam's answers: column order follows formulaic
+(DETK-0049, "I think we should order columns however formulaic orders
+them"), so the a*b pins change here. Formulas take column names only
+(DETK-0050): the np.log claim and the error for a call in a formula are
+release/formula-rename's, derived columns release/augment's; this node
+leaves both alone.

@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-19
 from: {node: release}
 applies: [release/size-factors]
+revisions:
+  - {date: 2026-11-19, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-19: implement it"}
 ---
 
 # detk-norm deseq2 --size-factors: implement or remove
@@ -46,12 +48,16 @@ documented output.
 
 ## Decision
 
-Open for Adam. Both are small. Implementing (A) keeps the example and
-the skill valid, so the planning session leans toward it, but the choice
-is Adam's.
+Option A, chosen by Adam on 2026-11-19 (relayed by the driver session):
+"implement it". `--size-factors=FILE` writes the two-column tab-separated
+file the help describes; the example and the skill stay as they are.
 
 ## Consequences
 
 The node `features/size-factors` moves to `release/size-factors`, ahead
 of `release/cut`, and carries out the choice after `release/cli-migrate`
 (both edit `norm.py`).
+
+## Replies
+
+- 2026-11-19, adamlabadorf: Planning note: release/size-factors implements it; with DETK-0029 answered, it waits only on release/cli-migrate.

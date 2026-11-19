@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-19
 from: {node: release}
 applies: [release/formula-rename]
+revisions:
+  - {date: 2026-11-19, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-19: formula.py"}
 ---
 
 # The name of the module that replaces patsy_lite.py
@@ -55,8 +57,11 @@ The most explicit name, and the longest.
 
 ## Decision
 
-Open for Adam. The planning session recommends Option A,
-`de_toolkit/formula.py`.
+Option A, chosen by Adam on 2026-11-19 (relayed by the driver session):
+"formula.py". The module is `de_toolkit/formula.py`, the exception
+`FormulaParseError`, and the docs call the syntax "detk formula syntax".
+`PatsyLiteParseError` is not kept as an alias: the Python API is not
+promised (DETK-0001), and Adam did not ask for one.
 
 ## Consequences
 

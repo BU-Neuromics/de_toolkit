@@ -124,3 +124,7 @@ and the module. `release/formula-pin` pins today's behaviour (the term
 fails) whichever way this goes. Under A, the new error message is
 pinned. Under B or C, the pin changes with the decision and the new
 behaviour gets its own tests.
+
+## Replies
+
+- 2026-11-19, adamlabadorf: Planning note: the Consequences above were written before the answer. With Option B, release/formula-rename only removes the np.log claim from docs/formulas.md while renaming; the new node release/formula-transforms implements the set once DETK-0047 settles its details, and changes formula-pin's pin of today's failing term on purpose.

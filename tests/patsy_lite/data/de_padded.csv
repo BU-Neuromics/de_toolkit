@@ -1,0 +1,7 @@
+sample,category,cont_cov
+001,cont,0.1
+002,cont,1.0
+003,cont,10.0
+004,case,2.0
+005,case,0.5
+006,case,5.0

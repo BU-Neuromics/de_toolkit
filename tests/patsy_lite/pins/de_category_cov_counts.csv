@@ -1,0 +1,4 @@
+sample,category__cont,Intercept,cont_cov,counts
+a,0.0,1.0,0.1,0.0
+b,0.0,1.0,1.0,0.0
+c,1.0,1.0,10.0,0.0

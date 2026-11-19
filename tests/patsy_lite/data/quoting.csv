@@ -1,0 +1,6 @@
+sample,fld.cont,fld.cat,age(yrs),grp.(a),x[1],b.c[2]
+q1,0.13,A,30,u,1.5,p
+q2,0.97,B,40,v,2.5,q
+q3,0.22,C,50,u,3.5,p
+q4,0.76,A,60,v,4.5,q
+q5,0.41,B,35,u,5.5,q

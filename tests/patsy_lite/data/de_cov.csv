@@ -1,0 +1,9 @@
+sample,category,cov,cont_cov
+sample0,control,high,3.7
+sample1,control,low,9.5
+sample2,control,high,7.3
+sample3,control,low,6.0
+sample4,case,high,1.6
+sample5,case,low,1.6
+sample6,case,high,0.6
+sample7,case,low,8.7

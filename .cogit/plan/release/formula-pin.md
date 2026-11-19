@@ -9,15 +9,19 @@ acceptance:
 from: [DETK-0001]
 scope: [tests/patsy_lite/]
 prev: [DETK-0001]
+issue: 71
+visited: a21a419
+status: done
+done: 2bd34b1
 ---
 
 # Pin the formula matrices in tests
 
 ## Implementation plan
 
-- [ ] @developer Add fixtures and tests under `tests/patsy_lite/` for the documented formulas, the de tests' designs, quoting and the error cases; no change to `de_toolkit/`; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: the documented syntax fully covered, fixtures independent of patsy <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Add fixtures and tests under `tests/patsy_lite/` for the documented formulas, the de tests' designs, quoting and the error cases; no change to `de_toolkit/`; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: the documented syntax fully covered, fixtures independent of patsy <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

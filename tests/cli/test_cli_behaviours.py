@@ -147,17 +147,19 @@ def counts_dir(tmp_path, monkeypatch):
     return tmp_path
 
 
-def test_filter_column_data_is_accepted_with_a_deprecation_warning(counts_dir):
+@pytest.mark.parametrize(
+    "argv",
+    [
+        pytest.param(("detk-filter", "mean(all) > 10"), id="detk-filter"),
+        pytest.param(("detk-stats", "summary"), id="detk-stats-summary"),
+        pytest.param(("detk-stats", "pca"), id="detk-stats-pca"),
+    ],
+)
+def test_column_data_is_accepted_with_a_deprecation_warning(counts_dir, argv):
+    # each usage marks --column-data DEPRECATED in favour of the positional
+    # <cov_fn>; DETK-0030 decides filter's for 1.0 (it names only filter)
     outcome = cli_adapter.run(
-        (
-            "detk-filter",
-            "-o",
-            "out.csv",
-            "--no-report",
-            "mean(all) > 10",
-            "counts.csv",
-            "--column-data=cov.csv",
-        )
+        argv + ("-o", "out.csv", "--no-report", "counts.csv", "--column-data=cov.csv")
     )
     assert outcome.code == 0, outcome.stderr
     assert (counts_dir / "out.csv").exists()

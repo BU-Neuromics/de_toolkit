@@ -41,6 +41,16 @@ def entry(text, opt):
     raise AssertionError(f"{opt.long} is not listed in help:\n{text}")
 
 
+def stated_default(entry_text, value):
+    """
+    Whether the help entry states *value* as the default: the value follows
+    the word "default" (docopt's ``[default: X]``, argparse's ``(default:
+    X)``), so a value that only appears elsewhere in the description, or
+    among the choices, does not count.
+    """
+    return re.search(rf"default\W+{re.escape(value)}(?![\w.])", entry_text, re.I) is not None
+
+
 def assert_help_ok(outcome, argv):
     assert outcome.code == 0, f"{' '.join(argv)}: exit {outcome.code}\n{outcome.stderr}"
     assert outcome.stderr == ""
@@ -89,6 +99,8 @@ def test_subcommand_help_states_options(command, sub):
                 f"metavar {opt.metavar} not given for {opt.long}:\n{e}"
             )
         if opt.default is not None:
-            assert opt.default in e, f"default {opt.default!r} not stated for {opt.long}:\n{e}"
+            assert stated_default(e, opt.default), (
+                f"default {opt.default!r} not stated for {opt.long}:\n{e}"
+            )
         for choice in opt.choices:
             assert flag_re(choice).search(e), f"choice {choice!r} not stated for {opt.long}:\n{e}"

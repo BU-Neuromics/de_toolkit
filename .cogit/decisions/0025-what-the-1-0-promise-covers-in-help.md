@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-18
 from: {node: release}
 applies: [release/cli-pin, release/cli-migrate, release/cli-docs]
+revisions:
+  - {date: 2026-11-19, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-19: option B; address all the CLI gaps"}
 ---
 
 # What the 1.0 promise covers in --help

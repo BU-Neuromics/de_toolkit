@@ -1,0 +1,9 @@
+sample,cont,binary_str,binary_int,cat_str,cat_int,flag
+s5,0.13,case,1,A,1,TRUE
+s1,0.97,control,0,B,2,FALSE
+s7,0.22,case,1,A,1,TRUE
+s2,0.76,control,0,C,3,FALSE
+s8,0.69,control,0,C,3,TRUE
+s3,0.08,case,1,A,1,FALSE
+s6,0.17,case,1,B,2,TRUE
+s4,0.53,control,0,C,3,FALSE

@@ -1,12 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-18
 from: {node: release}
 applies: [release/formula-migrate]
 revisions:
   - {date: 2026-11-18, by: adamlabadorf, change: Study of the formulaic migration and the statsmodels questions written in; Option B is now keeping patsy for 1.0; title widened, why: "Adam asked for an estimate before deciding, and for formulaic to be compared with keeping patsy (2026-11-18)"}
+  - {date: 2026-11-19, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-19: option A, formulaic; rename patsy_lite.py (name in DETK-0027)"}
 ---
 
 # The formula library behind patsy-lite for 1.0

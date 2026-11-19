@@ -12,6 +12,8 @@ acceptance:
 from: [DETK-0001, DETK-0025]
 scope: [tests/cli/, +tests/conftest.py]
 prev: [DETK-0001]
+issue: 70
+visited: a21a419
 ---
 
 # Pin each command's parsing in tests

@@ -1,12 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-19
 from: {node: release/formula-pin, step: s1}
 applies: [release/formula-migrate]
 revisions:
   - {date: 2026-11-19, by: DETK/developer, change: "Decision and Consequences written for Option B; item 2 (np.log) defers to DETK-0028; the docs example fixes go to release/formula-migrate, which holds docs/formulas.md", why: "Adam accepted the recommendation, relayed by the driver 2026-11-19; DETK-0028 is being recorded separately"}
+  - {date: 2026-11-19, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam accepted the recommendation (Option B), relayed by the driver session 2026-11-19: \"fix the four mismatches during release/formula-migrate and change their pins in that same PR\"; item 2 (np.log) defers to DETK-0028"}
 ---
 
 # What the formula migration does with today's behaviour that differs from docs/formulas.md

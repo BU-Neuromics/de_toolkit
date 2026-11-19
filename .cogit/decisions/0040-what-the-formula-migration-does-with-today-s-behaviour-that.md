@@ -5,6 +5,8 @@ authority: [human]
 date: 2026-11-19
 from: {node: release/formula-pin, step: s1}
 applies: [release/formula-migrate]
+revisions:
+  - {date: 2026-11-19, by: DETK/developer, change: "Decision and Consequences written for Option B; item 2 (np.log) defers to DETK-0028; the docs example fixes go to release/formula-migrate, which holds docs/formulas.md", why: "Adam accepted the recommendation, relayed by the driver 2026-11-19; DETK-0028 is being recorded separately"}
 ---
 
 # What the formula migration does with today's behaviour that differs from docs/formulas.md
@@ -43,7 +45,9 @@ What the pins found (the case names are in the test module):
    model silently.
 2. **`np.log(x)` fails** (`np_log_rhs`, `np_log_lhs`): already
    DETK-0024 and DETK-0028; pinned as an error naming
-   `np.log(cont)`.
+   `np.log(cont)`. This item defers to DETK-0028 (transforms), which
+   decides what replaces it and in which node; this record asks
+   nothing about it.
 3. **A boolean column's reference cannot be named**
    (`boolean_ref_upper`, `boolean_ref_python`). A TRUE/FALSE column
    reads as bool and becomes `flag__True` with False the reference
@@ -78,9 +82,9 @@ stays checkable against the pins; the docs match the behaviour.
   release/formula-migrate makes `a:b` give its interaction columns
   (and accept a reference inside it), accepts a bool reference
   (`flag[FALSE]`), and changes the `interaction_colon` pin and the
-  boolean error pins in the same PR, named in its description; the
-  docs examples are corrected in release/formula-rename or cli-docs.
-  np.log follows DETK-0028. Every other pin holds unchanged, so the
+  boolean error pins in the same PR, named in its description, and
+  corrects the two docs examples in `docs/formulas.md` (in its
+  scope). np.log follows DETK-0028. Every other pin holds unchanged, so the
   port is still checked. Recommended.
 - **C. Fix `a:b` now, on patsy, in its own node before the migration.**
   Smallest diff per change and the fix ships even if the migration
@@ -88,18 +92,22 @@ stays checkable against the pins; the docs match the behaviour.
 
 ## Decision
 
-Waiting on Adam. Recommended: **B** — the `a:b` loss is a silent wrong
+**B.** Adam accepted the recommendation (2026-11-19, relayed by the
+driver session): fix the mismatches during release/formula-migrate and
+change their pins in that same PR. The `a:b` loss is a silent wrong
 model that 1.0 should not promise, and fixing it inside the port keeps
 one place where the matrices change, with every other pin still
-holding.
+holding. Item 2 (np.log) is left to DETK-0028.
 
 ## Consequences
 
-- Under B, release/formula-migrate's acceptance gains: `a:b` of
-  categorical terms gives its interaction columns; a bool reference
-  can be named; the `interaction_colon` and boolean error pins change
-  in that PR and no other pin does. The docs example fixes go to the
-  docs node.
+- release/formula-migrate's acceptance gains: `a:b` of categorical
+  terms gives its interaction columns (a reference inside it is
+  accepted); a bool reference can be named; the two docs examples in
+  `docs/formulas.md` match the output; the `interaction_colon`,
+  `interaction_colon_ref` and boolean error pins change in that PR,
+  named in its description, and no other pin does (the np.log pins
+  follow DETK-0028).
 - Under A, the docs must describe the `a:b` behaviour, and a later fix
   changes the 1.0 promise.
 - Revisit if formulaic cannot reproduce the other pins without

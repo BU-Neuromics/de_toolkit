@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-19
 from: {node: release/formula-pin}
 applies: [release/formula-migrate]
+revisions:
+  - {date: 2026-11-19, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-19: \"I think we should order columns however formulaic orders them, I assume it does it in a conventional way\"; checked: formulaic orders by degree, then as written"}
 ---
 
 # Model matrix columns come in formulaic's order

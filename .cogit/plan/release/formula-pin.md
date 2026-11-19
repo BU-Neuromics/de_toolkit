@@ -9,6 +9,8 @@ acceptance:
 from: [DETK-0001]
 scope: [tests/patsy_lite/]
 prev: [DETK-0001]
+issue: 71
+visited: a21a419
 ---
 
 # Pin the formula matrices in tests

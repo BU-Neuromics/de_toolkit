@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-19
 from: {node: release/cli-pin}
 applies: [release/cli-pin, release/cli-migrate]
+revisions:
+  - {date: 2026-11-19, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-19: accepts Option A on the developer session's recommendation; release/cli-migrate makes each of the four accidental behaviours a parse error or removes it"}
 ---
 
 # Command line behaviours found while pinning: keep, reject or expose
@@ -80,9 +82,17 @@ which costs custom code for 1 and 2, and promises them from 1.0.
 
 ## Decision
 
-Open for Adam. The developer session recommends Option A: each is either
-unreachable or reachable only by a command line no documentation shows,
-and argparse makes most of them correct without extra code.
+Option A, accepted by Adam on 2026-11-19 (relayed by the driver session):
+he accepts Option A on the developer session's recommendation.
+release/cli-migrate makes each of the four behaviours a parse error or
+removes it: rlog requires both or neither of `<design>` and `<cov_fn>`;
+`--version` is honoured only as an argument of its own; the dead `trim`
+branch of `detk-outlier` is removed; `detk-stats -f`, `detk-util gather
+--format` and `--on-mismatch` reject values outside their choices when
+parsing. Each becomes a pin in `tests/cli/` and a CHANGELOG entry. The
+reason: each is unreachable or reachable only by a command line no
+documentation shows, and argparse makes most of them correct without
+extra code.
 
 ## Consequences
 

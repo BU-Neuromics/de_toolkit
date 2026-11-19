@@ -178,7 +178,8 @@ def test_norm_deseq2_size_factors_is_accepted_and_writes_nothing(counts_dir):
 # ------------------------------------------------- open questions (DETK-0033)
 @pytest.mark.skip(
     reason="DETK-0033: rlog [<design> <cov_fn>] accepts a design without cov_fn "
-    "(docopt matches the optional group partially); pinned or rejected on Adam's answer"
+    "(docopt matches the optional group partially); Option A accepted: release/cli-migrate "
+    "makes it a parse error and inverts this test"
 )
 def test_rlog_design_without_cov_fn():
     parsed = cli_adapter.parse(("detk-transform", "rlog", "c.csv", "d"))

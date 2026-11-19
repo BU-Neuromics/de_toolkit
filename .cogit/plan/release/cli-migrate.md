@@ -38,6 +38,12 @@ accidental behaviours found by release/cli-pin, which this node makes parse
 errors or removes; `test_rlog_design_without_cov_fn` in tests/cli/ is
 un-skipped and inverted here. The files they touch are already in scope.
 
+Found in review of release/cli-pin (PR #73): the `detk-stats` module
+docstring still describes `--json=<json fn>` and `--html=<html fn>` options
+and default JSON/HTML file names that no usage block declares and no code
+reads. When the docstring becomes the description in help, drop or correct
+that text (`de_toolkit/stats.py` is in scope).
+
 Module docstrings stay as the commands' descriptions; where they also
 served as the parser spec, the spec moves into code. The tests that call
 docopt today (most `tests/*/test_*.py` build their arguments with it) move

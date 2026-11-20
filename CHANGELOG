@@ -48,8 +48,9 @@ predates everything below.
 - Formulas take column names only (DETK-0050): a term that is not a column
   of the column data file and looks like a call, such as `np.log(x)` or
   `log2(x)`, is an error that says so; a derived column belongs in the
-  column data file. docs/formulas.md no longer says such expressions may be
-  passed; they never worked (`np.log(x)` was read as a column name)
+  column data file, and points to the Miller recipes page. docs/formulas.md
+  no longer says such expressions may be passed; they never worked
+  (`np.log(x)` was read as a column name)
 - `environment.yml`, an out-of-date conda environment file that nothing
   referred to, is removed; `pyproject.toml` is the one list of detk's
   dependencies
@@ -210,6 +211,20 @@ predates everything below.
   transform, summary statistics, the report and the crate, with no R, on
   data simulated by a seeded script next to the page; it runs in every test
   job (#100)
+- Derived covariates with Miller (`docs/recipes/covariates.md`): tested
+  Miller recipes for the derived columns a design formula no longer computes
+  (DETK-0051, DETK-0062): a constant column, `<column>_log2`, `_log10`,
+  `_ln`, `_log2_pc1`, `_zscore` (sd over n - 1), `_center` and `_minmax`,
+  each run through `detk-util record`. Each checks its input first: a
+  missing or non-numeric value, a value at or below zero for a log (after
+  the pseudocount), or a column that does not vary for the z-score and
+  min-max exits 1, names the samples on stderr and leaves no output file.
+  The page runs as a tutorial; tests check the values against numpy and
+  R's `scale()`, the IDs as written and every failure. Miller is not a detk
+  dependency: the tests skip without `mlr`, and the CI job with R installs
+  it. The agent skill carries the recipes (`references/covariates.md`) and
+  warns that tidyr's and csvtk's `gather` pivot to long format, unlike
+  `detk-util gather` (#115)
 
 ### Fixed
 - `detk-transform vst` and `detk-transform rlog` with `--rda FILE` write

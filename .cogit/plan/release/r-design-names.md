@@ -17,7 +17,7 @@ visited: b760aac
 
 ## Implementation plan
 
-- [ ] @developer Add the R-bound design form with quoting to the formula module, use it at every R `formula()` site, add the call-shaped-name tests (R-gated) and the dotted-name regression test; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Add the R-bound design form with quoting to the formula module, use it at every R `formula()` site, add the call-shaped-name tests (R-gated) and the dotted-name regression test; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: every R site covered, nothing in a column data file can run R code through the design, the R-gated tests in CI <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

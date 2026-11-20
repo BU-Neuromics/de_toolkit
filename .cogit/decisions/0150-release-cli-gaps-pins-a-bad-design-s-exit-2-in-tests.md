@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release/cli-gaps, step: s1}
 applies: [release/cli-gaps]
 issue: 96
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's delegation via the driver session, 2026-11-20: Option A, cli-gaps edits the formula pin; every InvalidDesignException exits 2; follows directly from DETK-0031 and stays within the 1.0 scope"}
 ---
 
 # release/cli-gaps pins a bad design's exit 2 in tests/formula, outside its scope

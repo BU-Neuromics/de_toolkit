@@ -1,6 +1,6 @@
 """
 The parsing behaviours detk relies on today, each pinned by name, so that
-replacing docopt-ng (release/cli-migrate) or closing a CLI gap
+the parser (docopt-ng until release/cli-migrate, argparse since) or closing a CLI gap
 (release/cli-gaps, release/size-factors) changes one of these deliberately.
 """
 
@@ -92,8 +92,8 @@ def _with_default():
 
 @pytest.mark.parametrize("command,sub,opt", list(_with_default()))
 def test_documented_default_is_the_value_acted_on(command, sub, opt):
-    # docopt reads each default from the "[default: ...]" in the usage text;
-    # whatever states it, the command acts on that value when the option is
+    # whatever states the default (docopt's "[default: ...]", argparse's
+    # default=), the command acts on that value when the option is
     # not given, and help states it (test_cli_help)
     req, _ = required(sub)
     parsed = cli_adapter.parse(prefix(command, sub) + tuple(req))
@@ -147,17 +147,11 @@ def test_version_as_an_argument_of_its_own_prints_the_version(prog):
         assert outcome.stdout.strip() == __version__
 
 
-def _on_argparse(prog):
-    return cli_adapter.parser(prog) is not None
-
-
 @pytest.mark.parametrize("prog", [c.prog for c in COMMANDS] + ["detk"])
 def test_version_after_an_unknown_subcommand_is_not_honoured(prog):
     # DETK-0033 Option A: --version is honoured only as an argument of its
     # own, as argparse's version action reads it; the unknown subcommand
     # before it is the error. (docopt-ng printed the version.)
-    if not _on_argparse(prog):
-        pytest.skip(f"{prog} is not on argparse yet (release/cli-migrate s3)")
     if prog != "detk" and not cli_adapter.subparsers(cli_adapter.parser(prog)):
         pytest.skip(f"{prog} has no subcommands: 'anything' is its first positional")
     outcome = cli_adapter.invoke((prog, "anything", "--version", "else"))

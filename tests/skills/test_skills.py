@@ -82,9 +82,15 @@ def _subcommands(tool):
 
 
 def _declared(tool, sub):
-    "The option strings the command (and subcommand) declares, -h and --help among them"
-    parser = _subparsers(tool)[sub] if sub else _parser(tool)
-    return set(parser._option_string_actions)
+    """The option strings the command (and subcommand) declares, -h and --help
+    among them; for a command named without its subcommand, those of the
+    command and of any of its subcommands"""
+    if sub:
+        return set(_subparsers(tool)[sub]._option_string_actions)
+    declared = set(_parser(tool)._option_string_actions)
+    for parser in _subparsers(tool).values():
+        declared |= set(parser._option_string_actions)
+    return declared
 
 
 def _argv(command):

@@ -97,7 +97,7 @@ class Command:
         return next(s for s in self.subcommands if s.name == name)
 
 
-# options every command shares, added to each subcommand by common._cli_doc
+# options every command shares, added to each subcommand by common.add_common_options
 COMMON = (
     Opt("--out-delim", "-d", "CHAR", ","),
     Opt("--report-dir", None, "DIR", "./detk_report"),

@@ -6,9 +6,6 @@ examples); every positional and option with a one-line description and its
 metavar in the one convention; and at least one example per subcommand,
 which parses to that subcommand and, where the test data below allows,
 runs.
-
-A command still on docopt is skipped until release/cli-migrate s3
-converts it.
 """
 
 import re
@@ -71,13 +68,6 @@ NEEDS_R = {
 }
 
 
-def _parser_or_skip(prog):
-    p = cli_adapter.parser(prog)
-    if p is None:
-        pytest.skip(f"{prog} is not on argparse yet (release/cli-migrate s3)")
-    return p
-
-
 def _help_params():
     "(prog, subcommand or None) for every command and subcommand"
     params = []
@@ -100,7 +90,7 @@ def _leaf_params():
 
 
 def _parser(prog, sub):
-    p = _parser_or_skip(prog)
+    p = cli_adapter.parser(prog)
     return cli_adapter.subparsers(p)[sub] if sub else p
 
 
@@ -113,7 +103,6 @@ def _help(prog, sub):
 
 @pytest.mark.parametrize("prog,sub", _help_params())
 def test_help_sections_in_order(prog, sub):
-    _parser_or_skip(prog)
     lines = _help(prog, sub).splitlines()
     # the description comes first, before the usage
     assert lines[0].strip() and not lines[0].startswith("usage:"), lines[0]
@@ -154,7 +143,6 @@ def test_option_metavars_follow_the_convention(prog, sub):
 
 @pytest.mark.parametrize("prog,sub", _leaf_params())
 def test_every_subcommand_has_an_example_that_parses(prog, sub):
-    _parser_or_skip(prog)
     examples = cli_adapter.examples(prog, sub)
     assert examples, f"{prog} {sub or ''} has no example"
     for what, argv in examples:
@@ -168,7 +156,6 @@ def test_every_subcommand_has_an_example_that_parses(prog, sub):
 def test_command_help_examples_parse(prog):
     # the examples a command's own help lists (for a command with
     # subcommands, each subcommand's, and detk's own)
-    _parser_or_skip(prog)
     for _, argv in cli_adapter.examples(prog):
         if argv[-1] in ("-h", "--help"):
             assert cli_adapter.invoke(argv).code == 0
@@ -184,7 +171,6 @@ def _runnable(parsed):
 
 @pytest.mark.parametrize("prog,sub", _leaf_params())
 def test_examples_run_where_test_data_allows(prog, sub, tmp_path, monkeypatch):
-    _parser_or_skip(prog)
     if (prog, sub) in NEEDS_R and not wrapr.check_r():
         pytest.skip("this subcommand runs R, which is not installed")
     for name, text in EXAMPLE_DATA.items():

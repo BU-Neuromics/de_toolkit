@@ -33,30 +33,6 @@ _PROCESS_START = datetime.now(UTC)
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-_cli_version = f"""\
-detk version: {__version__}\n
-"""
-
-# the docopt common options, for the commands not yet on argparse
-# (release/cli-migrate s3 converts them and removes this)
-_cli_common_opts = """\
-
-Common options:
-    -d CHAR --out-delim=CHAR  Delimiter to use for output file [default: ,]
-    --report-dir=DIR          Specify the report directory [default: ./detk_report]
-    --no-report               Do not generate the HTML report
-    --version                 Print out detk version and exit
-    -v --verbose              Make log output verbose
-    -q --quiet                Turn off all logging except warnings and errors
-    --shut-up                 Turn off ALL logging
-"""
-
-
-def _cli_doc(src):
-    "Add the common command line arguments to the given *src* docopt string"
-    return _cli_version + src + _cli_common_opts
-
-
 # ------------------------------------------------------------ command line
 #
 # Every detk command parses its command line with a DetkParser (argparse),
@@ -384,20 +360,6 @@ def parse_cli(parser, argv):
     return namespace
 
 
-def _arg(args, name, default=None):
-    """
-    The argument *name* (``counts_fn``, ``out_delim``) from a parsed command
-    line: an argparse Namespace, or the dict docopt returns, for the
-    commands not yet on argparse (release/cli-migrate s3 removes that).
-    """
-    if isinstance(args, argparse.Namespace):
-        return getattr(args, name, default)
-    for key in (f"--{name.replace('_', '-')}", f"<{name}>"):
-        if key in args:
-            return args[key]
-    return default
-
-
 banner = rf"""
 ===========================
         _      _   _    
@@ -413,10 +375,10 @@ banner = rf"""
 
 
 def set_logging(opts):
-    if not _arg(opts, "shut_up"):
-        if _arg(opts, "quiet"):
+    if not opts.shut_up:
+        if opts.quiet:
             level = logging.WARNING
-        elif _arg(opts, "verbose"):
+        elif opts.verbose:
             level = logging.DEBUG
         else:
             level = logging.INFO
@@ -429,12 +391,12 @@ def set_logging(opts):
 
 
 def make_cli_count_obj(args):
-    counts_fn, cov_fn, design = (_arg(args, n) for n in ("counts_fn", "cov_fn", "design"))
+    counts_fn, cov_fn, design = (getattr(args, n, None) for n in ("counts_fn", "cov_fn", "design"))
     logger.info("constructing counts matrix from %s and %s", counts_fn, cov_fn)
     logger.info("design is %s", design)
     try:
         count_obj = CountMatrixFile(
-            counts_fn, cov_fn, design=design, strict=_arg(args, "strict", False)
+            counts_fn, cov_fn, design=design, strict=getattr(args, "strict", False)
         )
     except Exception as e:
         logger.error(e)
@@ -447,7 +409,7 @@ def make_cli_count_obj(args):
 
 def write_output(df, args):
 
-    output = _arg(args, "output")
+    output = args.output
     if output == "stdout":
         f = sys.stdout
         logging.info("writing result to stdout")
@@ -455,7 +417,7 @@ def write_output(df, args):
         f = output
         logging.info("writing result to %s", f)
 
-    df.to_csv(f, sep=_arg(args, "out_delim", ","))
+    df.to_csv(f, sep=args.out_delim)
 
     logging.info("finished writing output")
 

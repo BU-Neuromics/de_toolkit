@@ -17,10 +17,8 @@ Arguments are reported by name, without the parser's decoration: ``<counts_fn>``
 is ``counts_fn``, ``--out-delim`` is ``out_delim``, and the subcommand is
 reported apart from them. Values are what the parser hands the command.
 
-A command on argparse parses with ``common.parse_cli``, which the stop
-replaces in the module; a command still on docopt-ng (until release/
-cli-migrate s3 converts it) has its ``docopt`` name replaced instead. The
-tables do not change with the parser. Nothing here imports docopt.
+Every command parses with ``common.parse_cli``, which the stop replaces in
+the module. The tables do not change with the parser.
 
 :func:`parser` and :func:`examples` reach a command's argparse parser, for
 the checks of help's structure and examples (DETK-0025 Option B).
@@ -92,26 +90,10 @@ def _module(name):
 
 
 def _normalize(module, result):
-    "The parser's result as a :class:`Parsed`"
-    if isinstance(result, argparse.Namespace):
-        found = vars(result)
-        args = {k: v for k, v in found.items() if k != "subcommand" and k not in _NOT_ARGUMENTS}
-        return Parsed(module, found.get("subcommand"), args)
-    subcommand = None
-    args = {}
-    for key, value in result.items():
-        if key.startswith("<") and key.endswith(">"):
-            name = key[1:-1]
-        elif key.startswith("-"):
-            name = key.lstrip("-").replace("-", "_")
-        else:
-            # a bare word in a usage line is a subcommand
-            if value is True:
-                subcommand = key
-            continue
-        if name not in _NOT_ARGUMENTS:
-            args[name] = value
-    return Parsed(module, subcommand, args)
+    "The parser's result (an argparse Namespace) as a :class:`Parsed`"
+    found = vars(result)
+    args = {k: v for k, v in found.items() if k != "subcommand" and k not in _NOT_ARGUMENTS}
+    return Parsed(module, found.get("subcommand"), args)
 
 
 def _stopper(module, parser):
@@ -139,10 +121,8 @@ def _process(argv, stop):
         if stop:
             for name in _DISPATCH_MODULES:
                 mod = _module(name)
-                for attr in ("parse_cli", "docopt"):
-                    if hasattr(mod, attr):
-                        patched.append((mod, attr, getattr(mod, attr)))
-                        setattr(mod, attr, _stopper(name, getattr(mod, attr)))
+                patched.append((mod, "parse_cli", mod.parse_cli))
+                mod.parse_cli = _stopper(name, mod.parse_cli)
         root.addHandler(handler)
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             yield out, err
@@ -252,12 +232,8 @@ def unset(value):
 
 
 def parser(prog):
-    """
-    The argparse parser of the entry point *prog*, or None while the
-    command is still on docopt (release/cli-migrate s3 converts the rest)
-    """
-    build = getattr(_module(ENTRY_POINTS[prog]), "build_parser", None)
-    return build() if build else None
+    "The argparse parser of the entry point *prog*"
+    return _module(ENTRY_POINTS[prog]).build_parser()
 
 
 def subparsers(p):

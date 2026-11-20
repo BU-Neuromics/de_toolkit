@@ -7,6 +7,8 @@ acceptance:
   - docs/tutorials/quantifiers.md (release/tutorial-quant) uses detk-util tidy -p for the sample sheet to write the tidied sample sheet and uses it downstream, in place of its workaround (tidy without -p, then the original sheet), and lists tidy among the crate's steps, with the page's checked step count updated; the tutorial runs green under the tutorial harness; CHANGELOG under Fixed
 scope: [+de_toolkit/util.py, +de_toolkit/crate.py, tests/util/, +tests/cli/cli_cases.py, +tests/cli/cli_tables.py, +docs/tutorials/quantifiers.md, tests/tutorials/, +CHANGELOG]
 prev: [release/record, release/tutorial-quant]
+issue: 114
+visited: 118283e
 ---
 
 # detk-util tidy writes the sample sheet as read and records in the report

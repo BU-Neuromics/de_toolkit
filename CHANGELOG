@@ -104,6 +104,10 @@ predates everything below.
   error when the samples list different features (`--on-mismatch=fill` or
   `drop` to go on) and a report of what was joined; it replaces csvgather in
   the documented workflow (#25)
+- Tutorials section in the docs, whose pages run as integration tests: a
+  pytest runner in `tests/tutorials/` runs each page's bash blocks in order
+  and checks the outputs the page shows (DETK-0064); `docs/dev/tutorials.md`
+  says how to write one (#83)
 
 ### Fixed
 - A design with an interaction of two categorical terms written alone,

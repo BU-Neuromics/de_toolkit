@@ -10,15 +10,19 @@ acceptance:
 from: [DETK-0064]
 scope: [new:docs/tutorials/, new:tests/tutorials/, docs/dev/, +mkdocs.yml, +.github/workflows/ci.yml, +pyproject.toml, +CHANGELOG]
 prev: [DETK-0064, release/statsmodels-test]
+issue: 83
+visited: e198df2
+status: done
+done: 2be3920
 ---
 
 # Run tutorials as tests
 
 ## Implementation plan
 
-- [ ] @developer Build the collector and its markers with fixture pages and tests, the tutorials index and nav, the CI wiring and the docs/dev how-to; open the PR <!-- s1 -->
-- [ ] @reviewer Review the collector (ordering, working directory, skips, failure messages) and the CI wiring; build the docs <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Build the collector and its markers with fixture pages and tests, the tutorials index and nav, the CI wiring and the docs/dev how-to; open the PR <!-- s1 -->
+- [x] @reviewer Review the collector (ordering, working directory, skips, failure messages) and the CI wiring; build the docs <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

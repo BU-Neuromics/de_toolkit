@@ -9,6 +9,8 @@ acceptance:
 from: [DETK-0029]
 scope: [de_toolkit/norm.py, docs/example.md, examples/airway/run.sh, tests/norm/, tests/cli/, skills/detk/references/commands.md, +CHANGELOG]
 prev: [DETK-0029, release/cli-migrate]
+issue: 86
+visited: 92d4fab
 ---
 
 # --size-factors writes the size factors

@@ -17,7 +17,7 @@ visited: 9a704f1
 ## Implementation plan
 
 - [x] @developer Add patsy and docopt-ng to `TEST_ONLY` in `tests/check_runtime_deps.py` (docstring and message to match), show the check failing once with patsy put back by hand, and correct the E402 comment in `pyproject.toml`; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR <!-- s2 -->
+- [x] @reviewer Review the PR <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes

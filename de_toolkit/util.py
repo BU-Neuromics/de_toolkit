@@ -145,10 +145,13 @@ def build_parser():
     add_command_options(parser)
     subs = add_subcommands(parser)
     for name, spec in SUBCOMMANDS.items():
-        # gather's files may be interleaved with its options
-        subs._parser_class = _IntermixedParser if name == "gather" else DetkParser
         sub = subs.add_parser(
-            name, help=spec["help"], description=spec["description"], examples=spec["examples"]
+            name,
+            help=spec["help"],
+            description=spec["description"],
+            examples=spec["examples"],
+            # gather's files may be interleaved with its options
+            intermixed=name == "gather",
         )
         if name == "tidy":
             _counts_and_covs(sub)
@@ -878,29 +881,6 @@ def _gather_main(args):
             r.add_module(gathered, out_file_path=args.output, workdir=os.getcwd())
 
     logging.info("done")
-
-
-class _IntermixedParser(DetkParser):
-    """
-    A parser whose positionals may come between its options, as gather's
-    <files>... could under docopt (``a.sf --format=salmon b.sf``; pinned in
-    tests/cli/cli_tables.py): argparse gives a positional only one run of
-    the command line unless it is parsed with parse_known_intermixed_args.
-    """
-
-    _intermixing = False
-
-    def parse_known_args(self, args=None, namespace=None):
-        if self._intermixing:
-            # parse_known_intermixed_args calls back here on some Pythons
-            return super().parse_known_args(args, namespace)
-        self._intermixing = True
-        try:
-            namespace, extras = self.parse_known_intermixed_args(args, namespace)
-        finally:
-            self._intermixing = False
-        namespace.__dict__.pop("_detk_seen", None)
-        return namespace, extras
 
 
 def main(argv=sys.argv):

@@ -151,7 +151,9 @@ class DetkParser(argparse.ArgumentParser):
     listed in full below it.
     """
 
-    def __init__(self, *args, examples=(), validate=None, add_help=True, **kwargs):
+    def __init__(
+        self, *args, examples=(), validate=None, intermixed=False, add_help=True, **kwargs
+    ):
         kwargs.setdefault("formatter_class", DetkHelpFormatter)
         super().__init__(*args, add_help=False, **kwargs)
         self.examples = list(examples)
@@ -159,6 +161,11 @@ class DetkParser(argparse.ArgumentParser):
         # arguments argparse cannot express, or None; parse_cli reports it
         # as a usage error of this parser
         self.validate = validate
+        # intermixed: positionals may come between options (detk-util
+        # gather's ``a.sf --format=salmon b.sf``, as docopt allowed); plain
+        # argparse gives a positional only one run of the command line
+        self.intermixed = intermixed
+        self._intermixing = False
         if add_help:
             self.add_argument("-h", "--help", action="help", help="Print this help and exit")
         self.register("action", "store", _StoreOnce)
@@ -166,7 +173,15 @@ class DetkParser(argparse.ArgumentParser):
         self.register("action", "store_true", _StoreTrueOnce)
 
     def parse_known_args(self, args=None, namespace=None):
-        namespace, extras = super().parse_known_args(args, namespace)
+        if self.intermixed and not self._intermixing:
+            # parse_known_intermixed_args calls back here
+            self._intermixing = True
+            try:
+                namespace, extras = self.parse_known_intermixed_args(args, namespace)
+            finally:
+                self._intermixing = False
+        else:
+            namespace, extras = super().parse_known_args(args, namespace)
         # the bookkeeping of _Once is not an argument
         namespace.__dict__.pop("_detk_seen", None)
         return namespace, extras

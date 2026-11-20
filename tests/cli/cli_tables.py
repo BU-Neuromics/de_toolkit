@@ -209,11 +209,55 @@ TRANSFORM = Command(
                 Opt("--strict"),
                 Opt("--blind", None, "BOOL"),
             ),
+            # --blind BOOL is True or False in any case, parsed to a bool;
+            # not given it is None, which the command runs as blind (DETK-0081)
+            lines=tuple(
+                Line(
+                    ("counts.csv", "--blind", token, "counts ~ group", "cov.csv"),
+                    {
+                        "counts_fn": "counts.csv",
+                        "design": "counts ~ group",
+                        "cov_fn": "cov.csv",
+                        "blind": value,
+                    },
+                    f"--blind {token} is {value}",
+                )
+                for token, value in (
+                    ("True", True),
+                    ("true", True),
+                    ("TRUE", True),
+                    ("False", False),
+                    ("false", False),
+                    ("FALSE", False),
+                )
+            )
+            + (
+                Line(
+                    ("counts.csv", "--blind=True"),
+                    {"counts_fn": "counts.csv", "blind": True},
+                    "a blind rlog needs no design",
+                ),
+            ),
             bad=(
                 Bad(
                     ("counts.csv", "counts ~ group"),
                     ("cov_fn",),
                     "rlog takes both or neither of <design> and <cov_fn> (DETK-0033)",
+                ),
+                Bad(
+                    ("counts.csv", "--blind", "maybe"),
+                    ("--blind", "maybe"),
+                    "--blind takes True or False (DETK-0081)",
+                ),
+                Bad(
+                    ("counts.csv", "--blind", "1"),
+                    ("--blind",),
+                    "--blind takes True or False, not 1 (DETK-0081)",
+                ),
+                Bad(
+                    ("counts.csv", "--blind", "False"),
+                    ("<design>", "<cov_fn>"),
+                    "a non-blind rlog needs <design> and <cov_fn> (DETK-0081)",
                 ),
             ),
         ),

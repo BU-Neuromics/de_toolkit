@@ -943,3 +943,109 @@ def test_stats_cli_json(fake_count_rowdist_obj, fake_count_rowdist_csv):
                 names.add(json.load(f)["name"])
 
         assert true_funcs == names
+
+
+################################################################################
+# DETK-0081: detk-stats summary --color-col colors the plots by a column
+@pytest.fixture
+def two_group_csvs(tmp_path):
+    rng = np.random.default_rng(81)
+    samples = [f"s{_}" for _ in range(1, 7)]
+    counts = pandas.DataFrame(
+        rng.poisson(50, (40, 6)) * [1, 1, 1, 3, 3, 3],
+        index=pandas.Index([f"g{_}" for _ in range(40)], name="gene"),
+        columns=samples,
+    )
+    covs = pandas.DataFrame(
+        {"dex": ["untrt"] * 3 + ["trt"] * 3, "batch": [1, 2, 3, 1, 2, 3]},
+        index=pandas.Index(samples, name="sample"),
+    )
+    counts_fn, covs_fn = tmp_path / "counts.csv", tmp_path / "covs.csv"
+    counts.to_csv(counts_fn)
+    covs.to_csv(covs_fn)
+    return str(counts_fn), str(covs_fn), dict(zip(samples, covs["dex"]))
+
+
+def _summary(tmp_path, tag, *argv):
+    from de_toolkit.stats import main
+
+    out, report = tmp_path / f"{tag}.csv", tmp_path / f"report_{tag}"
+    main(["detk-stats", "summary", "-o", str(out), "--report-dir", str(report), *argv])
+    mods = {}
+    for fn in (report / "json").glob("*.json"):
+        doc = json.loads(fn.read_text())
+        mods[doc["name"]] = doc
+    return out.read_text(), mods
+
+
+def test_summary_color_col_colors_the_plots(two_group_csvs, tmp_path):
+    from de_toolkit.report_specs import view_for
+
+    counts_fn, covs_fn, dex = two_group_csvs
+    plain_csv, plain = _summary(tmp_path, "plain", counts_fn, covs_fn)
+    csv_out, mods = _summary(tmp_path, "colored", "--color-col", "dex", counts_fn, covs_fn)
+
+    # the CSV output is unchanged
+    assert csv_out == plain_csv
+
+    for name in ("coldist", "colzero", "pca"):
+        mod = mods[name]
+        # the module JSON carries the column's value of each sample
+        assert mod["params"]["color_col"] == "dex"
+        assert mod["properties"]["color_by"] == {"column": "dex", "values": dex}
+        assert "color_by" not in plain[name]["properties"]
+        # and the plot colors by it
+        spec = view_for(mod)[3]["spec"]
+        color = spec["encoding"]["color"]
+        assert color["title"] == "dex"
+        assert color["type"] == "nominal"
+        rows = spec["data"]["values"]
+        assert {r["sample"]: r[color["field"]] for r in rows} == dex
+    # the lines of coldist stay one per sample
+    assert view_for(mods["coldist"])[3]["spec"]["encoding"]["detail"]["field"] == "sample"
+
+    # the modules the column does not apply to are as without it
+    for name in ("basestats", "rowzero", "entropy"):
+        assert mods[name]["params"] == plain[name]["params"]
+        assert mods[name]["properties"] == plain[name]["properties"]
+
+
+def test_summary_color_col_numeric_column(two_group_csvs, tmp_path):
+    from de_toolkit.report_specs import view_for
+
+    counts_fn, covs_fn, _ = two_group_csvs
+    _, mods = _summary(tmp_path, "batch", "--color-col=batch", counts_fn, covs_fn)
+    spec = view_for(mods["pca"])[3]["spec"]
+    assert spec["encoding"]["color"]["type"] == "quantitative"
+
+
+@pytest.mark.parametrize(
+    "argv,names",
+    [
+        (("--color-col", "nope"), ("--color-col", "nope")),
+        (("--color-col", "counts"), ("--color-col", "counts")),
+    ],
+)
+def test_summary_color_col_not_in_column_data_is_a_usage_error(
+    argv, names, two_group_csvs, tmp_path, capsys
+):
+    from de_toolkit.stats import main
+
+    counts_fn, covs_fn, _ = two_group_csvs
+    with pytest.raises(SystemExit) as e:
+        main(["detk-stats", "summary", "--no-report", *argv, counts_fn, covs_fn])
+    assert e.value.code == 2
+    err = capsys.readouterr().err
+    for name in names:
+        assert name in err
+
+
+def test_summary_color_col_without_column_data_is_a_usage_error(two_group_csvs, capsys):
+    from de_toolkit.stats import main
+
+    counts_fn, _, _ = two_group_csvs
+    with pytest.raises(SystemExit) as e:
+        main(["detk-stats", "summary", "--no-report", "--color-col", "dex", counts_fn])
+    assert e.value.code == 2
+    err = capsys.readouterr().err
+    assert "--color-col" in err and "<cov_fn>" in err

@@ -3,6 +3,7 @@ import pandas
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from de_toolkit.filter import parse_filter_command, main
 from de_toolkit.common import CountMatrix
+from de_toolkit.common import main as detk_main
 
 
 @pytest.fixture
@@ -87,7 +88,8 @@ def test_filter_cli(filter_count_obj):
                 cov_f.flush()
 
                 with NamedTemporaryFile("wt") as out_f:
-                    main(
+                    # through the umbrella detk
+                    detk_main(
                         [
                             "detk",
                             "filter",

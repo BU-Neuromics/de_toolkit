@@ -399,7 +399,6 @@ dependencies = [
     { name = "scikit-learn" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "statsmodels" },
     { name = "terminaltables" },
 ]
 
@@ -407,6 +406,7 @@ dependencies = [
 test = [
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "statsmodels" },
 ]
 
 [package.dev-dependencies]
@@ -416,6 +416,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "roc-validator" },
     { name = "ruff" },
+    { name = "statsmodels" },
     { name = "vl-convert-python" },
 ]
 docs = [
@@ -437,7 +438,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "scikit-learn" },
     { name = "scipy" },
-    { name = "statsmodels", specifier = ">=0.14" },
+    { name = "statsmodels", marker = "extra == 'test'", specifier = ">=0.14" },
     { name = "terminaltables" },
 ]
 provides-extras = ["test"]
@@ -449,6 +450,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "roc-validator" },
     { name = "ruff" },
+    { name = "statsmodels", specifier = ">=0.14" },
     { name = "vl-convert-python" },
 ]
 docs = [

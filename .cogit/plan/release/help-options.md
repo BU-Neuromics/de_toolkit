@@ -10,6 +10,8 @@ acceptance:
 from: [DETK-0081]
 scope: [de_toolkit/transform.py, de_toolkit/stats.py, +de_toolkit/report.py, tests/transform/, tests/stats/, tests/cli/, +CHANGELOG]
 prev: [DETK-0081, release/cli-migrate, release/cli-gaps]
+issue: 101
+visited: f3a014f
 ---
 
 # Options do what their help says

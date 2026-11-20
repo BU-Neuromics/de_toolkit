@@ -11,6 +11,8 @@ acceptance:
 from: [DETK-0051, DETK-0061]
 scope: [tests/util/, tests/cli/, de_toolkit/completions/, +de_toolkit/util.py, +de_toolkit/crate.py, +de_toolkit/report.py, +de_toolkit/report_specs.py, +de_toolkit/module_schema.json, +docs/tools/util.md, +skills/detk/references/commands.md, +CHANGELOG]
 prev: [DETK-0051, DETK-0061, release/cli-gaps]
+issue: 102
+visited: f3a014f
 ---
 
 # Record an external step with detk-util record

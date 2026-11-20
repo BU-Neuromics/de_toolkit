@@ -54,8 +54,10 @@ visited: f6503ed
 - [ ] [detk-util tidy writes the sample sheet as read and records in the report](release/tidy-output.md) <!-- s39 -->
 - [ ] [Formula and filter errors are clear and never silent](release/parse-errors.md) <!-- s40 -->
 - [ ] [Module JSON is strictly valid JSON](release/strict-json.md) <!-- s41 -->
-- [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] [detk-outlier entropy handles all-zero features and keeps each result on its feature](release/outlier-entropy.md) <!-- s42 -->
+- [ ] [Design and filter commands say only what went wrong](release/cli-messages.md) <!-- s43 -->
+- [ ] [detk-util record's help says what it does and lists only its options](release/record-help.md) <!-- s44 -->
+- [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
 
 ## Notes

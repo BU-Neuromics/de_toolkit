@@ -79,6 +79,44 @@ predates everything below.
   `de_toolkit.norm.fpkm()`; the `detk-norm fpkm` command failed outright. This is a
   correction. `fpkm` now also refuses missing, zero and negative lengths, as
   `tpm` does
+- Every `detk-*` command parses its command line with argparse instead of
+  docopt-ng, which is no longer a dependency (DETK-0001, DETK-0023). The
+  command lines that worked before work the same, with the exceptions
+  listed here; the tests in `tests/cli/` pin the rest
+- `--help` has a fixed layout for every command and subcommand (DETK-0025):
+  description, usage, positional arguments, options, common options and
+  examples, at least one example per subcommand (CI checks that each parses,
+  and runs it where test data allows). Every option states its metavar,
+  default and choices. The `detk version: X` line at the top of help is
+  gone; `--version` prints the version
+- Breaking: a usage error (unknown option or subcommand, missing or extra
+  argument) exits with status 2, as argparse does, where docopt exited 1;
+  the message names the problem and points at the subcommand's `--help`
+- Breaking: option metavars follow one convention (DETK-0025): FILE for a
+  file, DIR for a directory, N for a number, and CHAR, COL, COLS, FMT,
+  REGEX, WHAT or BOOL for other values. Changed: `detk-filter -o/--output`
+  (was `<out_fn>`) and `--column-data` (was `<column_data_fn>`), `detk-stats
+  --column-data` (was FN) and `--color-col` (was COLNAME) and `summary
+  --bins` (was BINS), `--rda` of `detk-de` and `detk-transform` (was RDA),
+  `detk-enrich -p/--cores` (was PROCS), `-i/--idcol` and `-c/--statcol` of
+  `detk-enrich` and `detk-util annotate` (was FIELD), `detk-enrich
+  --minSize`, `--maxSize` and `--nperm` (was INT), `detk-transform plog
+  -b/--base` (was B), `rlog --blind` (was N), `detk-outlier entropy
+  -p/--percentile` (was P), and `detk-wrapr --rpath`, `--meta-in`,
+  `--meta-out`, `--params-in`, `--params-out` (was PATH, now FILE) and
+  `--routput-dir` (was PATH, now DIR). Only help changes; the options take
+  the same values
+- Breaking: command lines that worked only by accident are now usage errors
+  (DETK-0033): `detk-transform rlog` takes both or neither of `<design>` and
+  `<cov_fn>`; `detk-stats -f/--format` accepts only `csv` or `table` (any
+  other value silently meant csv); `detk-util gather --format` and
+  `--on-mismatch` reject a value outside their choices when parsing;
+  `--version` is honoured only as an argument of its own, so `-o --version`
+  is a missing value for `-o`, and an unknown subcommand before `--version`
+  is reported. The unreachable `trim` branch of `detk-outlier` is removed
+- `detk-util gather` files may still come between its options
+  (`a.sf --format=salmon b.sf`); an option given twice, and `--`, are still
+  usage errors, as they were under docopt
 
 ### Added
 - Versioned module JSON schema for report data
@@ -104,8 +142,15 @@ predates everything below.
   error when the samples list different features (`--on-mismatch=fill` or
   `drop` to go on) and a report of what was joined; it replaces csvgather in
   the documented workflow (#25)
+- Tutorials section in the docs, whose pages run as integration tests: a
+  pytest runner in `tests/tutorials/` runs each page's bash blocks in order
+  and checks the outputs the page shows (DETK-0064); `docs/dev/tutorials.md`
+  says how to write one (#83)
 
 ### Fixed
+- The umbrella command `detk <command>` runs every module command:
+  `detk enrich`, `detk report` and `detk util` printed the usage or did
+  nothing, and its help now lists all ten commands (DETK-0025)
 - A design with an interaction of two categorical terms written alone,
   such as `counts ~ binary_str:cat_str`, gives its interaction columns; it
   used to be fitted silently as `counts ~ 1`. A reference level inside an

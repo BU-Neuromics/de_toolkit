@@ -1,19 +1,17 @@
 r"""
-Usage:
-    detk norm [options] <args>...
-    detk de [options] <args>...
-    detk transform [options] <args>...
-    detk filter [options] <args>...
-    detk stats [options] <args>...
-    detk outlier [options] <args>...
-    detk wrapr [options] <args>...
-    detk report [options] <args>...
-    detk util [options] <args>...
+detk, the differential expression toolkit: one command for every detk
+module command. detk <command> ... runs detk-<command> ..., so
+detk norm deseq2 counts.csv is detk-norm deseq2 counts.csv, and
+detk norm --help is the help of detk-norm.
+
+This module also holds what the commands share: the command line parser
+(:class:`DetkParser` and :func:`parse_cli`), the common options, the counts
+matrix and the module base class.
 """
 
+import argparse
 from collections import OrderedDict
 from copy import deepcopy
-from docopt import docopt
 import csv
 import io
 import logging
@@ -35,26 +33,331 @@ _PROCESS_START = datetime.now(UTC)
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-_cli_version = f"""\
-detk version: {__version__}\n
-"""
+# ------------------------------------------------------------ command line
+#
+# Every detk command parses its command line with a DetkParser (argparse),
+# whose help is what DETK-0025 Option B promises, in this order:
+#
+#   description          the command's or subcommand's description
+#   usage                one line per way of calling it, docopt style
+#   positional arguments each positional with a one-line description
+#   options              the command's own options, -h first
+#   common options       the options every detk command shares
+#   examples             at least one command line per subcommand
+#
+# Every option states its metavar, default and choices, so that an agent
+# reading --help has the facts in the same places for every command.
+# Wording may improve in any release; the structure and the facts are the
+# promise, and tests/cli/ checks them.
 
-_cli_common_opts = """\
-
-Common options:
-    -d CHAR --out-delim=CHAR  Delimiter to use for output file [default: ,]
-    --report-dir=DIR          Specify the report directory [default: ./detk_report]
-    --no-report               Do not generate the HTML report
-    --version                 Print out detk version and exit
-    -v --verbose              Make log output verbose
-    -q --quiet                Turn off all logging except warnings and errors
-    --shut-up                 Turn off ALL logging
-"""
+# help is formatted at a fixed width, so it is the same on a terminal, in a
+# pipe and in a test
+HELP_WIDTH = 80
 
 
-def _cli_doc(src):
-    "Add the common command line arguments to the given *src* docopt string"
-    return _cli_version + src + _cli_common_opts
+class DetkHelpFormatter(argparse.RawDescriptionHelpFormatter):
+    """
+    The help formatter of every detk parser: descriptions and examples as
+    written, and each option's default and choices stated after its
+    description, ``(choices: a, b)`` and ``(default: x)``.
+    """
+
+    def __init__(self, prog):
+        super().__init__(prog, width=HELP_WIDTH, max_help_position=30)
+
+    def _format_action_invocation(self, action):
+        # "-o, --output FILE" on every Python (3.11 and 3.12 repeat the
+        # metavar: "-o FILE, --output FILE")
+        if not action.option_strings or action.nargs == 0:
+            return super()._format_action_invocation(action)
+        default = self._get_default_metavar_for_optional(action)
+        return ", ".join(action.option_strings) + " " + self._format_args(action, default)
+
+    def _split_lines(self, text, width):
+        # keep "(default: x)" on one line
+        glued = text.replace("(default: ", "(default:\0")
+        return [line.replace("\0", " ") for line in super()._split_lines(glued, width)]
+
+    def _get_help_string(self, action):
+        text = action.help or ""
+        if isinstance(
+            action, (argparse._SubParsersAction, argparse._SubParsersAction._ChoicesPseudoAction)
+        ):
+            # a subcommand is listed with its own line below this one
+            return text
+        if action.choices and action.metavar is not None:
+            text += " (choices: " + ", ".join(str(c) for c in action.choices) + ")"
+        if action.option_strings and action.default not in (None, False, argparse.SUPPRESS):
+            text += " (default: %(default)s)"
+        return text
+
+
+class _Once:
+    """
+    An option given more than once is an error, as it was under docopt
+    (pinned in tests/cli/test_cli_behaviours.py), rather than argparse's
+    last-one-wins.
+    """
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        seen = namespace.__dict__.setdefault("_detk_seen", set())
+        if self.dest in seen:
+            raise argparse.ArgumentError(self, "given more than once")
+        seen.add(self.dest)
+        super().__call__(parser, namespace, values, option_string)
+
+
+class _StoreOnce(_Once, argparse._StoreAction):
+    pass
+
+
+class _StoreTrueOnce(_Once, argparse._StoreTrueAction):
+    pass
+
+
+class DetkParser(argparse.ArgumentParser):
+    """
+    The argparse parser of every detk command and subcommand.
+
+    *examples* is a list of ``(what it does, command line)`` pairs printed
+    last in help; tests/cli/ checks that each parses and runs it where test
+    data allows. A parser with subcommands lists its subcommands' usage
+    lines and examples. Usage is written docopt style, one line per
+    subcommand (``detk-norm cpm [options] <counts_fn>``); the options are
+    listed in full below it.
+    """
+
+    def __init__(
+        self, *args, examples=(), validate=None, intermixed=False, add_help=True, **kwargs
+    ):
+        kwargs.setdefault("formatter_class", DetkHelpFormatter)
+        super().__init__(*args, add_help=False, **kwargs)
+        self.examples = list(examples)
+        # validate(args) returns an error message for a combination of
+        # arguments argparse cannot express, or None; parse_cli reports it
+        # as a usage error of this parser
+        self.validate = validate
+        # intermixed: positionals may come between options (detk-util
+        # gather's ``a.sf --format=salmon b.sf``, as docopt allowed); plain
+        # argparse gives a positional only one run of the command line
+        self.intermixed = intermixed
+        self._intermixing = False
+        if add_help:
+            self.add_argument("-h", "--help", action="help", help="Print this help and exit")
+        self.register("action", "store", _StoreOnce)
+        self.register("action", None, _StoreOnce)
+        self.register("action", "store_true", _StoreTrueOnce)
+
+    def parse_known_args(self, args=None, namespace=None):
+        if self.intermixed and not self._intermixing:
+            # parse_known_intermixed_args calls back here
+            self._intermixing = True
+            try:
+                namespace, extras = self.parse_known_intermixed_args(args, namespace)
+            finally:
+                self._intermixing = False
+        else:
+            namespace, extras = super().parse_known_args(args, namespace)
+        # the bookkeeping of _Once is not an argument
+        namespace.__dict__.pop("_detk_seen", None)
+        return namespace, extras
+
+    # -- the pieces of help
+    def _subcommands(self):
+        "The subparsers action, or None for a parser without subcommands"
+        for action in self._actions:
+            if isinstance(action, argparse._SubParsersAction):
+                return action
+        return None
+
+    def usage_lines(self):
+        "One usage line per way of calling this command, without 'usage: '"
+        if self.usage:
+            return self.usage.splitlines()
+        subs = self._subcommands()
+        if subs is not None:
+            return [line for p in subs.choices.values() for line in p.usage_lines()]
+        words = [self.prog, "[options]"]
+        for action in self._actions:
+            if action.option_strings or action.help == argparse.SUPPRESS:
+                continue
+            metavar = action.metavar or action.dest
+            if action.nargs == "?":
+                words.append(f"[{metavar}]")
+            elif action.nargs == "*":
+                words.append(f"[{metavar}...]")
+            elif action.nargs == "+":
+                words.append(f"{metavar}...")
+            else:
+                words.append(metavar)
+        return [" ".join(words)]
+
+    def all_examples(self):
+        "This command's examples, then each subcommand's"
+        examples = list(self.examples)
+        subs = self._subcommands()
+        if subs is not None:
+            for p in subs.choices.values():
+                examples += [e for e in p.all_examples() if e not in examples]
+        return examples
+
+    def unknown_option(self, arg):
+        """
+        Whether the command line word *arg* looks like an option and is not
+        one of this parser's, as argparse matches them: exactly, by a
+        prefix of a long option (``--outp`` for ``--output``), or by a short
+        option with its value attached (``-oFILE``). An ambiguous prefix is
+        left to argparse to report.
+        """
+        if not arg.startswith("-") or arg == "-" or self._negative_number_matcher.match(arg):
+            return False
+        names = self._option_string_actions
+        if arg.startswith("--"):
+            name = arg.split("=", 1)[0]
+            return name not in names and not any(n.startswith(name) for n in names)
+        return arg not in names and arg[:2] not in names
+
+    def format_usage(self):
+        indent = "\n" + " " * len("usage: ")
+        return "usage: " + indent.join(self.usage_lines()) + "\n"
+
+    # the help sections in their promised order; a group of another title
+    # goes before the common options
+    _SECTION_ORDER = {"positional arguments": 0, "options": 1, "common options": 3}
+
+    def format_help(self):
+        sections = []
+        if self.description:
+            sections.append(self.description.strip("\n") + "\n")
+        sections.append(self.format_usage())
+        groups = sorted(self._action_groups, key=lambda g: self._SECTION_ORDER.get(g.title, 2))
+        for group in groups:
+            if not group._group_actions:
+                continue
+            formatter = self._get_formatter()
+            formatter.start_section(group.title)
+            formatter.add_text(group.description)
+            formatter.add_arguments(group._group_actions)
+            formatter.end_section()
+            sections.append(formatter.format_help())
+        examples = self.all_examples()
+        if examples:
+            lines = ["examples:"]
+            for what, command in examples:
+                lines += [f"  # {what}", f"  {command}"]
+            sections.append("\n".join(lines) + "\n")
+        return "\n".join(sections)
+
+    def error(self, message):
+        "Print the usage and the error on stderr and exit 2 (DETK-0031)"
+        self.print_usage(sys.stderr)
+        self.exit(2, f"{self.prog}: error: {message}\nRun '{self.prog} --help' for help.\n")
+
+
+def add_common_options(parser):
+    """
+    Add the options every detk command shares to *parser*, in their own
+    help section, "common options".
+    """
+    group = parser.add_argument_group("common options")
+    group.add_argument(
+        "-d",
+        "--out-delim",
+        metavar="CHAR",
+        default=",",
+        help="Delimiter to use for the output file",
+    )
+    group.add_argument(
+        "--report-dir",
+        metavar="DIR",
+        default="./detk_report",
+        help="Directory to write the HTML report and module JSON into",
+    )
+    group.add_argument("--no-report", action="store_true", help="Do not write the HTML report")
+    add_version_option(group)
+    group.add_argument("-v", "--verbose", action="store_true", help="Make log output verbose")
+    group.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="Turn off all logging except warnings and errors",
+    )
+    group.add_argument("--shut-up", action="store_true", help="Turn off ALL logging")
+    return group
+
+
+def add_command_options(parser, what="subcommand"):
+    """
+    The options of a command's top level, in its "common options" section:
+    ``--version``, with a line saying each *what* (subcommand) takes the
+    common options in its own help.
+    """
+    group = parser.add_argument_group(
+        "common options",
+        f"Each {what} also takes the common options:\nsee {parser.prog} <{what}> --help.",
+    )
+    add_version_option(group)
+    return group
+
+
+def add_version_option(group):
+    "``--version``: print the detk version and exit, honoured as an argument of its own"
+    group.add_argument(
+        "--version", action="version", version=__version__, help="Print the detk version and exit"
+    )
+
+
+def add_subcommands(parser):
+    """
+    The subparsers of a command with subcommands. Add each with
+    ``add_parser(name, help=..., description=..., examples=[...])``: *help*
+    is the one line the command's help lists it with, *description* the
+    text its own help starts with, *examples* its ``(what it does, command
+    line)`` pairs; then its arguments and :func:`add_common_options`.
+    """
+    return parser.add_subparsers(
+        dest="subcommand",
+        metavar="<subcommand>",
+        help="The subcommand to run, one of:",
+        required=True,
+        title="positional arguments",
+        parser_class=DetkParser,
+    )
+
+
+def parse_cli(parser, argv):
+    """
+    Parse the command line *argv* (``argv[0]`` the command's name) with
+    *parser* and return the arguments as an ``argparse.Namespace``, the
+    subcommand (if any) as ``subcommand``. On a usage error, print it with
+    the usage and exit 2; ``-h``/``--help`` and ``--version`` print and
+    exit 0. This is the point every command dispatches from, and the one
+    the tests in tests/cli/ stop a command at.
+    """
+    args = list(argv[1:])
+    # the parser that reports a usage error: the subcommand's, once it is
+    # named, so the error shows its usage and points at its help
+    leaf, rest = parser, args
+    subs = parser._subcommands()
+    if subs is not None and args and args[0] in subs.choices:
+        leaf, rest = subs.choices[args[0]], args[1:]
+    if "--" in rest:
+        # docopt took "--" for an argument no usage declared; it is not an
+        # end-of-options marker (pinned in tests/cli/test_cli_behaviours.py)
+        leaf.error("unrecognized arguments: --")
+    unknown = [a for a in rest if leaf.unknown_option(a)]
+    if unknown:
+        # name an unknown option before a missing positional, as docopt did
+        # (argparse would report only the missing positional)
+        leaf.error("unrecognized arguments: " + " ".join(unknown))
+    namespace, extras = parser.parse_known_args(args)
+    if extras:
+        leaf.error("unrecognized arguments: " + " ".join(extras))
+    if leaf.validate is not None:
+        message = leaf.validate(namespace)
+        if message:
+            leaf.error(message)
+    return namespace
 
 
 banner = rf"""
@@ -72,10 +375,10 @@ banner = rf"""
 
 
 def set_logging(opts):
-    if not opts["--shut-up"]:
-        if opts["--quiet"]:
+    if not opts.shut_up:
+        if opts.quiet:
             level = logging.WARNING
-        elif opts["--verbose"]:
+        elif opts.verbose:
             level = logging.DEBUG
         else:
             level = logging.INFO
@@ -88,16 +391,12 @@ def set_logging(opts):
 
 
 def make_cli_count_obj(args):
-    logger.info(
-        "constructing counts matrix from %s and %s", args.get("<counts_fn>"), args.get("<cov_fn>")
-    )
-    logger.info("design is %s", args.get("<design>"))
+    counts_fn, cov_fn, design = (getattr(args, n, None) for n in ("counts_fn", "cov_fn", "design"))
+    logger.info("constructing counts matrix from %s and %s", counts_fn, cov_fn)
+    logger.info("design is %s", design)
     try:
         count_obj = CountMatrixFile(
-            args.get("<counts_fn>"),
-            args.get("<cov_fn>"),
-            design=args.get("<design>"),
-            strict=args.get("--strict", False),
+            counts_fn, cov_fn, design=design, strict=getattr(args, "strict", False)
         )
     except Exception as e:
         logger.error(e)
@@ -110,14 +409,15 @@ def make_cli_count_obj(args):
 
 def write_output(df, args):
 
-    if args["--output"] == "stdout":
+    output = args.output
+    if output == "stdout":
         f = sys.stdout
         logging.info("writing result to stdout")
     else:
-        f = args["--output"]
+        f = output
         logging.info("writing result to %s", f)
 
-    df.to_csv(f, sep=args.get("--out-delim", ","))
+    df.to_csv(f, sep=args.out_delim)
 
     logging.info("finished writing output")
 
@@ -538,57 +838,64 @@ class DetkModule(OrderedDict):
         return self.__class__.__name__.lower()
 
 
+# the module commands the umbrella ``detk <command>`` runs, with the one
+# line its help lists for each
+MODULE_COMMANDS = {
+    "norm": "Normalize a counts matrix",
+    "de": "Test for differential expression",
+    "enrich": "Gene set enrichment of a differential expression result",
+    "transform": "Transform a counts matrix (vst, rlog, plog, ...)",
+    "filter": "Filter the rows of a counts matrix",
+    "stats": "Summary statistics and diagnostics of a counts matrix",
+    "outlier": "Find and treat outlier counts",
+    "wrapr": "Run R scripts and check the R packages detk uses",
+    "report": "Generate or clean the detk HTML report",
+    "util": "Utilities: gather quantification files, convert IDs, ...",
+}
+
+
+def build_parser():
+    "The parser of the umbrella ``detk``, for its help and its usage errors"
+    parser = DetkParser(
+        prog="detk",
+        description=__doc__.split("\n\n")[0].strip(),
+        usage="\n".join(f"detk {cmd} ..." for cmd in MODULE_COMMANDS) + "\ndetk help",
+        examples=[
+            ("Normalize counts.csv with DESeq2 size factors", "detk norm deseq2 counts.csv"),
+            ("The help of one command", "detk norm --help"),
+        ],
+    )
+    subs = parser.add_subparsers(
+        dest="command",
+        metavar="<command>",
+        required=True,
+        title="positional arguments",
+        help="The detk command to run, one of:",
+    )
+    for cmd, line in MODULE_COMMANDS.items():
+        subs.add_parser(cmd, help=line, add_help=False)
+    subs.add_parser("help", help="Print this help", add_help=False)
+    add_command_options(parser, "command")
+    return parser
+
+
 def main(argv=sys.argv):
+    """
+    ``detk <command> ...`` runs the module command ``detk-<command> ...``;
+    ``detk``, ``detk -h`` and ``detk help`` answer with the umbrella's help.
+    """
+    argv = list(argv)
+    if len(argv) > 1 and argv[1] in MODULE_COMMANDS:
+        # the module commands expect an argv[0] of the form detk-<command>
+        import importlib
 
-    if "--version" in argv:
-        print(__version__)
-        return
+        module = importlib.import_module(f"de_toolkit.{argv[1]}")
+        return module.main([f"detk-{argv[1]}"] + argv[2:])
 
-    cmds = "norm", "de", "transform", "filter", "stats", "outlier", "wrapr", "help"
-
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmds):
-        docopt(_cli_doc(__doc__))
-    cmd = argv[1]
-
-    # the individual main methods expect an executable of the form
-    # detk-<mode>, but here the detk and mode come as separate arguments
-    # concatenate them together and pass them on
-    cli_args = ["-".join(argv[:2])] + argv[2:]
-
-    if cmd == "norm":
-        from .norm import main
-
-        main(cli_args)
-    elif cmd == "de":
-        from .de import main
-
-        main(cli_args)
-    elif cmd == "enrich":
-        from .enrich import main
-
-        main(cli_args)
-    elif cmd == "transform":
-        from .transform import main
-
-        main(cli_args)
-    elif cmd == "filter":
-        from .filter import main
-
-        main(cli_args)
-    elif cmd == "stats":
-        from .stats import main
-
-        main(cli_args)
-    elif cmd == "outlier":
-        from .outlier import main
-
-        main(cli_args)
-    elif cmd == "wrapr":
-        from .wrapr import main
-
-        main(cli_args)
-    elif cmd == "help":
-        docopt(__doc__, ["-h"])
+    parser = build_parser()
+    args = parse_cli(parser, argv)
+    if args.command == "help":
+        parser.print_help()
 
 
 if __name__ == "__main__":

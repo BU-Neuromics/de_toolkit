@@ -4,10 +4,11 @@ The skills tell an agent which detk commands to run. For every markdown file
 under skills/, these tests check that:
 
 - each ``detk-*`` command line in a fenced code block (any fence except
-  ``text``, which holds copied usage) parses with that command's own docopt
-  usage, as the installed CLI prints it with ``--help``: the command and
-  subcommand exist, every option is declared, and no positional argument is
-  missing or extra;
+  ``text``, which holds copied usage) parses with that command's own
+  argparse parser (``build_parser`` in its module, through
+  ``common.parse_cli``, as the installed command parses it): the command
+  and subcommand exist, every option is declared, and no positional
+  argument is missing or extra (DETK-0010, as revised for argparse);
 - each ``detk-*`` command named in an inline code span in the prose exists,
   with its subcommand, and each option named in an inline code span is
   declared by the nearest command named above it (or, before any command is
@@ -20,6 +21,9 @@ not run the commands: they check that what the skill names is valid usage,
 not that the commands do what the skill says they do.
 """
 
+import contextlib
+import importlib
+import io
 import os
 import re
 import shlex
@@ -29,7 +33,6 @@ from functools import lru_cache
 from pathlib import Path
 
 import pytest
-from docopt import DocoptExit, docopt
 
 SKILLS_DIR = Path(__file__).resolve().parents[2] / "skills"
 SKILL_FILES = sorted(SKILLS_DIR.glob("*/SKILL.md"))
@@ -60,25 +63,34 @@ def _help(*argv):
 
 
 @lru_cache
+def _parser(tool):
+    "The argparse parser of the command *tool* (``detk-norm``)"
+    module = importlib.import_module(f"de_toolkit.{tool.removeprefix('detk-')}")
+    return module.build_parser()
+
+
+def _subparsers(tool):
+    for action in _parser(tool)._actions:
+        if action.__class__.__name__ == "_SubParsersAction":
+            return action.choices
+    return {}
+
+
+@lru_cache
 def _subcommands(tool):
-    usage = [
-        line.split() for line in _help(tool).splitlines() if line.strip().startswith(tool + " ")
-    ]
-    subs = {u[1] for u in usage if len(u) > 1}
-    return frozenset() if subs <= {"[options]"} else frozenset(subs)
+    return frozenset(_subparsers(tool))
 
 
-def _declared_options(doc):
-    """The options a docopt doc declares: the flags at the start of each
-    options-section line, before the two-space gap to the description."""
-    options = set()
-    for line in doc.splitlines():
-        line = line.strip()
-        if not line.startswith("-"):
-            continue
-        spec = re.split(r"\s{2,}", line, maxsplit=1)[0]
-        options.update(t for t in re.split(r"[\s,=]+", spec) if t.startswith("-"))
-    return options
+def _declared(tool, sub):
+    """The option strings the command (and subcommand) declares, -h and --help
+    among them; for a command named without its subcommand, those of the
+    command and of any of its subcommands"""
+    if sub:
+        return set(_subparsers(tool)[sub]._option_string_actions)
+    declared = set(_parser(tool)._option_string_actions)
+    for parser in _subparsers(tool).values():
+        declared |= set(parser._option_string_actions)
+    return declared
 
 
 def _argv(command):
@@ -110,8 +122,17 @@ def _locate(argv, where, bare=False):
     return tool, sub
 
 
-def _doc(tool, sub):
-    return _help(tool, sub) if sub else _help(tool)
+def _parse(tool, argv):
+    "Parse *argv* with the command's parser; AssertionError with its error if it fails"
+    from de_toolkit.common import parse_cli
+
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            parse_cli(_parser(tool), argv)
+    except SystemExit as e:
+        if e.code:
+            raise AssertionError(err.getvalue()) from None
 
 
 def _walk(text):
@@ -149,8 +170,8 @@ def _check_option(option, commands, where):
     """*option* must be declared by one of *commands*, a list of (tool, sub)."""
     option = option.split("=", 1)[0]
     if option in ("-h", "--help"):
-        return  # docopt answers --help for every command
-    declared = set().union(*(_declared_options(_doc(*c)) for c in commands))
+        return  # every command answers --help
+    declared = set().union(*(_declared(*c) for c in commands))
     named = ", ".join(f"{t} {s or ''}".rstrip() for t, s in commands)
     assert option in declared, f"{where}: {option} is not an option of {named}"
 
@@ -182,8 +203,8 @@ def check_markdown(text, name):
             tool, sub = _locate(argv, where)
             context = [(tool, sub)]
             try:
-                docopt(_doc(tool, sub), argv[1:])
-            except DocoptExit as e:
+                _parse(tool, argv)
+            except AssertionError as e:
                 raise AssertionError(f"{where} does not parse with its usage:\n{e}") from None
         elif item.startswith(("detk-", "detk ")):
             # a command named in prose usually leaves out its positionals, so

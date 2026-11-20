@@ -1,37 +1,102 @@
 r"""
-Usage:
-    detk-outlier entropy <counts_fn> [options]
-    detk-outlier shrink [options] <counts_fn>
+Find and treat outlier counts in a counts matrix: flag features whose counts
+are dominated by a few samples (entropy), or shrink the counts of a sample
+toward the others (shrink). The input is a delimited counts file, features
+in rows and samples in columns.
 """
 
-TODO = """
-    detk-outlier trim [options] <counts_fn>
-"""
-
-cmd_opts = {
-    "entropy": r"""
-Usage:
-    detk-outlier entropy <counts_fn> [options]
-
-Options:
-    -p P --percentile=P    Float value between 0 and 1
-    -o FILE --output=FILE  Name of the ouput csv
-    --plot-output=FILE     Name of the plot png
-""",
-    "shrink": r"""
-Usage:
-    detk-outlier shrink [options] <counts_fn>
-
-Options:
-    -o FILE --output=FILE   Destination of primary output [default: stdout]
-    -f N --shrink-factor=N  Shrinkage factor number float between 0 and 1 [default: 0.25]
-    -p N --p-max=N          Percent counts of sample default is sqrt(1/num samples)
-    -i N --iters=N          Number of terations [default: 1000]
-""",
+# each subcommand: the one line the command's help lists it with, its
+# description and its examples
+SUBCOMMANDS = {
+    "entropy": dict(
+        help="Flag features whose sample entropy is below a percentile",
+        description="""\
+Calculate the sample entropy of each feature and flag the features whose
+entropy is below the given percentile: features overly influenced by the
+counts of one or a few samples. Writes the entropy and the flag of each
+feature to the -o file, and optionally plots the entropy distribution with
+the threshold.""",
+        examples=[
+            (
+                "Flag the features below the 5th entropy percentile",
+                "detk-outlier entropy -p 0.05 -o entropy_flags.csv counts.csv",
+            ),
+        ],
+    ),
+    "shrink": dict(
+        help="Shrink the counts of dominant samples toward the others",
+        description="""\
+Shrink the counts of features where one sample holds more than a given
+fraction of the feature's counts toward the other samples, iteratively.""",
+        examples=[
+            ("Shrink outlier counts in counts.csv", "detk-outlier shrink -o shrunk.csv counts.csv"),
+        ],
+    ),
 }
 
+
+def build_parser():
+    "The detk-outlier command line parser"
+    parser = DetkParser(prog="detk-outlier", description=__doc__.strip())
+    add_command_options(parser)
+    subs = add_subcommands(parser)
+    for name, spec in SUBCOMMANDS.items():
+        sub = subs.add_parser(
+            name, help=spec["help"], description=spec["description"], examples=spec["examples"]
+        )
+        sub.add_argument(
+            "counts_fn",
+            metavar="<counts_fn>",
+            help="Counts file: features in rows, samples in columns, delimited",
+        )
+        if name == "entropy":
+            sub.add_argument(
+                "-p",
+                "--percentile",
+                metavar="N",
+                help="The entropy percentile below which a feature is flagged, between 0 and 1",
+            )
+            sub.add_argument(
+                "-o",
+                "--output",
+                metavar="FILE",
+                help="Destination of the entropy and flag of each feature in CSV format",
+            )
+            sub.add_argument(
+                "--plot-output",
+                metavar="FILE",
+                help="Destination of a PNG plot of the entropy distribution and threshold",
+            )
+        else:
+            sub.add_argument(
+                "-o",
+                "--output",
+                metavar="FILE",
+                default="stdout",
+                help="Destination of the shrunk counts in CSV format",
+            )
+            sub.add_argument(
+                "-f",
+                "--shrink-factor",
+                metavar="N",
+                default="0.25",
+                help="Shrinkage factor, between 0 and 1",
+            )
+            sub.add_argument(
+                "-p",
+                "--p-max",
+                metavar="N",
+                help="Largest fraction of a feature's counts one sample may hold "
+                "(when not given, sqrt(1 / number of samples))",
+            )
+            sub.add_argument(
+                "-i", "--iters", metavar="N", default="1000", help="Number of iterations"
+            )
+        add_common_options(sub)
+    return parser
+
+
 import os
-from docopt import docopt
 import logging
 import numpy as np
 import pandas as pd
@@ -42,13 +107,16 @@ import sys
 from .common import (
     CountMatrixFile,
     DetkModule,
-    _cli_doc,
+    DetkParser,
+    add_command_options,
+    add_common_options,
+    add_subcommands,
     make_cli_count_obj,
+    parse_cli,
     set_logging,
     write_output,
 )
 from .report import DetkReport
-from .util import stub
 
 # setup logging, null on the library level
 logger = logging.getLogger(__name__)
@@ -171,14 +239,6 @@ class ShrinkCounts(DetkModule):
     @property
     def properties(self):
         return {"num_kept": len(self.shrunk_counts)}
-
-
-@stub
-def trim(count_obj):
-    """
-    possibly implement some trimmed-mean trimming
-    """
-    pass
 
 
 def entropy(counts_obj, threshold):
@@ -321,30 +381,15 @@ def plot_entropy(entropy_res, threshold, name=None, show=None):
 
 def main(argv=sys.argv):
 
-    if "--version" in argv:
-        from .version import __version__
+    args = parse_cli(build_parser(), argv)
+    cmd = args.subcommand
 
-        print(__version__)
-        return
-
-    # add the common opts to the docopt strings
-    cmd_opts_aug = {}
-    for k, v in cmd_opts.items():
-        cmd_opts_aug[k] = _cli_doc(v)
-
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts):
-        docopt(_cli_doc(__doc__), argv)
-    argv = argv[1:]
-    cmd = argv[0]
+    set_logging(args)
+    logger.info("cmd: %s", " ".join(argv[1:]))
 
     if cmd == "entropy":
-        args = docopt(cmd_opts_aug["entropy"], argv)
-
-        set_logging(args)
-        logger.info("cmd: %s", " ".join(argv))
-
         count_obj = make_cli_count_obj(args)
-        pval = float(args["--percentile"])
+        pval = float(args.percentile)
 
         # run the entropy_calc function
         try:
@@ -353,35 +398,22 @@ def main(argv=sys.argv):
             logger.error(e)
             sys.exit(1)
 
-        if args["--plot-output"]:
-            logger.info("plotting entropy threshold to %s", args["--plot-output"])
-            plot_entropy(out.output, pval, name=args["--plot-output"])
-
-    elif cmd == "trim":
-        args = docopt(cmd_opts_aug["trim"], argv)
-
-        set_logging(args)
-        logger.info("cmd: %s", " ".join(argv))
-
-        count_obj = CountMatrixFile(args["<counts_fn>"])
-        out = trim(count_obj)
+        if args.plot_output:
+            logger.info("plotting entropy threshold to %s", args.plot_output)
+            plot_entropy(out.output, pval, name=args.plot_output)
 
     elif cmd == "shrink":
-        args = docopt(cmd_opts_aug["shrink"], argv)
-
-        set_logging(args)
-        logger.info("cmd: %s", " ".join(argv))
-
-        count_obj = CountMatrixFile(args["<counts_fn>"])
-        if args["--p-max"] is None:
-            args["--p-max"] = np.sqrt(1.0 / count_obj.counts.shape[1])
+        count_obj = CountMatrixFile(args.counts_fn)
+        p_max = args.p_max
+        if p_max is None:
+            p_max = np.sqrt(1.0 / count_obj.counts.shape[1])
 
         try:
             out = ShrinkCounts(
                 count_obj,
-                shrink_factor=float(args["--shrink-factor"]),
-                p_max=float(args["--p-max"]),
-                iters=int(args["--iters"]),
+                shrink_factor=float(args.shrink_factor),
+                p_max=float(p_max),
+                iters=int(args.iters),
             )
         except Exception as e:
             logger.error(e)
@@ -390,14 +422,14 @@ def main(argv=sys.argv):
     write_output(out.output, args)
 
     # write out the report json
-    if not args["--no-report"]:
-        logging.info("writing report to %s", args["--report-dir"])
-        with DetkReport(args["--report-dir"]) as r:
+    if not args.no_report:
+        logging.info("writing report to %s", args.report_dir)
+        with DetkReport(args.report_dir) as r:
             r.add_module(
                 out,
-                in_file_path=args["<counts_fn>"],
-                out_file_path=args["--output"],
-                column_data_path=args.get("--column-data"),
+                in_file_path=args.counts_fn,
+                out_file_path=args.output,
+                column_data_path=None,
                 workdir=os.getcwd(),
             )
     else:

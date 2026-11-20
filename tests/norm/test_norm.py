@@ -1,4 +1,3 @@
-import docopt
 import numpy as np
 import os
 import pandas
@@ -20,8 +19,8 @@ deseq2_test = pytest.mark.skipif(
 def test_norm_cli():
     from de_toolkit.norm import main
 
-    with pytest.raises(docopt.DocoptExit):
-        main()
+    with pytest.raises(SystemExit):
+        main(["detk-norm"])
 
 
 @deseq2_test

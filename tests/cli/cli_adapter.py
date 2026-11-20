@@ -17,14 +17,17 @@ Arguments are reported by name, without the parser's decoration: ``<counts_fn>``
 is ``counts_fn``, ``--out-delim`` is ``out_delim``, and the subcommand is
 reported apart from them. Values are what the parser hands the command.
 
-Today every ``main`` parses with docopt-ng, so the stop is made by replacing
-the ``docopt`` name each module calls. When the parser is replaced
-(release/cli-migrate), this module changes and the tables do not. Nothing
-here imports docopt.
+Every command parses with ``common.parse_cli``, which the stop replaces in
+the module. The tables do not change with the parser.
+
+:func:`parser` and :func:`examples` reach a command's argparse parser, for
+the checks of help's structure and examples (DETK-0025 Option B).
 """
 
+import argparse
 import contextlib
 import importlib
+import shlex
 import io
 import logging
 import os
@@ -87,22 +90,10 @@ def _module(name):
 
 
 def _normalize(module, result):
-    "The parser's result as a :class:`Parsed`"
-    subcommand = None
-    args = {}
-    for key, value in result.items():
-        if key.startswith("<") and key.endswith(">"):
-            name = key[1:-1]
-        elif key.startswith("-"):
-            name = key.lstrip("-").replace("-", "_")
-        else:
-            # a bare word in a usage line is a subcommand
-            if value is True:
-                subcommand = key
-            continue
-        if name not in _NOT_ARGUMENTS:
-            args[name] = value
-    return Parsed(module, subcommand, args)
+    "The parser's result (an argparse Namespace) as a :class:`Parsed`"
+    found = vars(result)
+    args = {k: v for k, v in found.items() if k != "subcommand" and k not in _NOT_ARGUMENTS}
+    return Parsed(module, found.get("subcommand"), args)
 
 
 def _stopper(module, parser):
@@ -130,15 +121,15 @@ def _process(argv, stop):
         if stop:
             for name in _DISPATCH_MODULES:
                 mod = _module(name)
-                patched.append((mod, mod.docopt))
-                mod.docopt = _stopper(name, mod.docopt)
+                patched.append((mod, "parse_cli", mod.parse_cli))
+                mod.parse_cli = _stopper(name, mod.parse_cli)
         root.addHandler(handler)
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             yield out, err
     finally:
         root.removeHandler(handler)
-        for mod, parser in patched:
-            mod.docopt = parser
+        for mod, attr, parser in patched:
+            setattr(mod, attr, parser)
         sys.argv = saved_argv
 
 
@@ -238,3 +229,33 @@ def same_value(expected, actual):
 def unset(value):
     "Whether a parsed value is the parser's 'not given' for an argument"
     return value is None or value is False or value == []
+
+
+def parser(prog):
+    "The argparse parser of the entry point *prog*"
+    return _module(ENTRY_POINTS[prog]).build_parser()
+
+
+def subparsers(p):
+    "{name: parser} of the subcommands of the argparse parser *p*; {} for none"
+    for action in p._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            return dict(action.choices)
+    return {}
+
+
+def examples(prog, sub=None):
+    """
+    The examples the help of *prog* (and its subcommand *sub*) gives, as
+    (what it does, argv) pairs; ``detk x ...`` is given as ``detk-x ...``
+    """
+    p = parser(prog)
+    if sub:
+        p = subparsers(p)[sub]
+    out = []
+    for what, command in p.examples:
+        argv = shlex.split(command)
+        if len(argv) > 1 and argv[0] == "detk" and f"detk-{argv[1]}" in ENTRY_POINTS:
+            argv = [f"detk-{argv[1]}", *argv[2:]]
+        out.append((what, tuple(argv)))
+    return out

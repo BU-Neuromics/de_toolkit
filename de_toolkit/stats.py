@@ -1,42 +1,18 @@
 r"""
-Easy access to informative count matrix statistics. Each of these functions
-produces two outputs:
-
-- a json formatted file containing relevant statistics in a machine-parsable
-  format
-- an optional human-friendly HTML page displaying the results
-
-All of the commands accept a single counts file as input with optional
-arguments as indicated in the documentation. By default, the JSON and HTML
-output files have the same basename without extension as the counts file but
-including .json or .html as appropriate. E.g., counts.csv will produce
-counts.json and counts.html in the current directory. These default filenames
-can be changed using optional command line arguments --json=<json fn> and
---html=<html fn> as appropriate for all commands. If <json fn>, either default
-or specified, already exists, it is read in, parsed, and added to. The HTML
-report is overwritten on every invocation using the contents of the JSON file.
-
-Some subcommands have specialize options. Examine the help messages for each
-command individually to view, e.g. detk-stats summary -h.
-
-Usage:
-    detk-stats summary [options] <counts_fn> [<cov_fn>]
-    detk-stats basestats [options] <counts_fn>
-    detk-stats coldist [options] <counts_fn>
-    detk-stats rowdist [options] <counts_fn>
-    detk-stats colzero [options] <counts_fn>
-    detk-stats rowzero [options] <counts_fn>
-    detk-stats entropy [options] <counts_fn>
-    detk-stats pca [options] <counts_fn> [<cov_fn>]
-
-Common Stats Options:
-    -h --help              Access detailed help for individual commands
-    -o FILE --output FILE  Destination of primary output [default: stdout]
-    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
+Statistics of a counts matrix, to inspect it before and after filtering and
+normalization: its size, the distributions of counts by sample and by
+feature, zero counts, sample entropy and principal components. Each
+subcommand writes its statistics as CSV (or a text table) to the output, and
+its module JSON to the report directory, from which the HTML report is
+built. summary runs most of the others at once.
 """
 
-cmd_opts = {
-    "summary": r"""
+# each subcommand: the one line the command's help lists it with, its
+# description, whether it takes the optional <cov_fn>, and its examples
+SUBCOMMANDS = {
+    "summary": dict(
+        help="All of basestats, coldist, colzero, rowzero, entropy and pca at once",
+        description="""\
 Compute summary statistics on a counts matrix file.
 
 This is equivalent to running each of these tools separately:
@@ -46,37 +22,30 @@ This is equivalent to running each of these tools separately:
 - colzero
 - rowzero
 - entropy
-- pca
-
-Usage:
-    detk-stats summary [options] <counts_fn> [<cov_fn>]
-
-Options:
-    -h --help
-    --column-data=FN       DEPRECATED: pass cov_fn as positional command line
-                           argument instead
-    --color-col=COLNAME    Use column data column COLNAME for coloring output plots
-    --bins=BINS            Number of bins to use for the calculated
-                           distributions [default: 20]
-    --log                  log transform count statistics
-    --density              Produce density distribution by dividing each distribution
-                           by the appropriate sum
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-""",
-    "basestats": r"""
-Calculate basic statistics of the counts file, including:
-    number of samples
-    number of rows
-
-Usage:
-    detk-stats basestats [options] <counts_fn>
-
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-""",
-    "coldist": r"""
+- pca""",
+        cov_fn=True,
+        examples=[
+            (
+                "Summary statistics of counts.csv, plots colored by group",
+                "detk-stats summary --log --color-col=group -o summary.csv counts.csv sample_info.csv",
+            )
+        ],
+    ),
+    "basestats": dict(
+        help="Number of samples and features",
+        description="""\
+Calculate basic statistics of the counts file: the number of samples
+(columns) and the number of features (rows).""",
+        examples=[
+            (
+                "Number of samples and features, as a table on stdout",
+                "detk-stats basestats -f table counts.csv",
+            )
+        ],
+    ),
+    "coldist": dict(
+        help="Distribution of the counts in each column (sample)",
+        description="""\
 Column-wise distribution of counts
 
 Compute the distribution of counts column-wise. Each column is subject to
@@ -103,24 +72,17 @@ In the stats object, the fields are defined as follows:
             Object with two keys, min and max, that contain the literal
             count values for counts that have a value larger or smaller than
             1.5*(inner quartile length) of the distribution. These could be
-            marked as outliers in a boxplot, for example.
-
-Usage:
-    detk-stats coldist [options] <counts_fn>
-
-Options:
-    --bins=N               The number of bins to use when computing the counts
-                           distribution [default: 20]
-    --log                  Perform a log10 transform on the counts before
-                           calculating the distribution. Zeros are omitted
-                           prior to histogram calculation.
-    --density              Return a density distribution instead of counts,
-                           such that the sum of values in *dist* for each
-                           column approximately sum to 1.
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-""",
-    "rowdist": r"""
+            marked as outliers in a boxplot, for example.""",
+        examples=[
+            (
+                "Distribution of log10 counts in each sample",
+                "detk-stats coldist --log -o coldist.csv counts.csv",
+            )
+        ],
+    ),
+    "rowdist": dict(
+        help="Distribution of the counts in each row (feature)",
+        description="""\
 Row-wise distribution of counts
 
 Compute the distribution of counts row-wise. Each row is subject to binning by
@@ -148,24 +110,17 @@ In the stats object, the fields are defined as follows:
             Object with two keys, min and max, that contain the literal
             count values for counts that have a value larger or smaller than
             1.5*(inner quartile length) of the distribution. These could be
-            marked as outliers in a boxplot, for example.
-
-Usage:
-    detk-stats rowdist [options] <counts_fn>
-
-Options:
-    --bins=N               The number of bins to use when computing the counts
-                           distribution [default: 20]
-    --log                  Perform a log10 transform on the counts before calculating
-                           the distribution. Zeros are omitted prior to histogram
-                           calculation.
-    --density              Return a density distribution instead of counts, such that
-                           the sum of values in *dist* for each row approximately
-                           sum to 1.
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-""",
-    "colzero": r"""
+            marked as outliers in a boxplot, for example.""",
+        examples=[
+            (
+                "Density distribution of the counts of each feature",
+                "detk-stats rowdist --density -o rowdist.csv counts.csv",
+            )
+        ],
+    ),
+    "colzero": dict(
+        help="Number and fraction of zero counts in each column",
+        description="""\
 Column-wise distribution of zero counts
 
 Compute the number and fraction of exact zero counts for each column.
@@ -179,16 +134,12 @@ The stats value is an array containing one object per column as follows:
     col_mean
         the mean of counts in the column
     nonzero_col_mean
-        the mean of only the non-zero counts in the column
-
-Usage:
-    detk-stats colzero [options] <counts_fn>
-
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-            """,
-    "rowzero": r"""
+        the mean of only the non-zero counts in the column""",
+        examples=[("Zero counts in each sample", "detk-stats colzero -o colzero.csv counts.csv")],
+    ),
+    "rowzero": dict(
+        help="Number and fraction of zero counts in each row",
+        description="""\
 Row-wise distribution of zero counts
 
 Compute the number and fraction of exact zero counts for each row.
@@ -202,16 +153,12 @@ The stats value is an array containing one object per row as follows:
     row_mean
         the mean of counts in the row
     nonzero_row_mean
-        the mean of only the non-zero counts in the row
-
-Usage:
-    detk-stats rowzero [options] <counts_fn>
-
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-""",
-    "entropy": r"""
+        the mean of only the non-zero counts in the row""",
+        examples=[("Zero counts in each feature", "detk-stats rowzero -o rowzero.csv counts.csv")],
+    ),
+    "entropy": dict(
+        help="Sample entropy of each row, to spot rows driven by one sample",
+        description="""\
 Row-wise sample entropy calculation
 
 Sample entropy is a metric that can be used to identify outlier samples by locating
@@ -232,17 +179,15 @@ The key entropies is an array containing one object per row with the following k
     name
         row name from counts file
     entropy
-        the value of H calculated as above for that row
-
-Usage:
-    detk-stats [options] entropy <counts_fn>
-
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-""",
-    "pca": r"""
-Principal common analysis of the counts matrix.
+        the value of H calculated as above for that row""",
+        examples=[
+            ("Sample entropy of each feature", "detk-stats entropy -o entropy.csv counts.csv")
+        ],
+    ),
+    "pca": dict(
+        help="Principal component analysis of the samples",
+        description="""\
+Principal component analysis of the counts matrix.
 
 This module performs PCA on a provided counts matrix and returns the principal
 component weights, scores, and variances. In addition, the weights and scores
@@ -254,21 +199,88 @@ the samples in each column. The user can specify some of these columns to
 include as variables for plotting purposes. The idea is that columns labeled
 with the same class will be colored according to their class, such that
 separations in the data can be more easily observed when projections are
-plotted.
-
-Usage:
-    detk-stats pca [options] <counts_fn> [<cov_fn>]
-
-Options:
-    --column-data=FN       DEPRECATED: pass cov_fn as positional command line
-                           argument instead
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
-""",
+plotted.""",
+        cov_fn=True,
+        examples=[
+            (
+                "PCA of counts.csv, with the sample information for plotting",
+                "detk-stats pca -o pca.csv counts.csv sample_info.csv",
+            )
+        ],
+    ),
 }
+
+
+def build_parser():
+    "The detk-stats command line parser"
+    parser = DetkParser(prog="detk-stats", description=__doc__.strip())
+    add_command_options(parser)
+    subs = add_subcommands(parser)
+    for name, spec in SUBCOMMANDS.items():
+        sub = subs.add_parser(
+            name, help=spec["help"], description=spec["description"], examples=spec["examples"]
+        )
+        sub.add_argument(
+            "counts_fn",
+            metavar="<counts_fn>",
+            help="Counts file: features in rows, samples in columns, delimited",
+        )
+        if spec.get("cov_fn"):
+            sub.add_argument(
+                "cov_fn",
+                metavar="<cov_fn>",
+                nargs="?",
+                help="Column data file: samples in rows, covariates in columns",
+            )
+            sub.add_argument(
+                "--column-data",
+                metavar="FILE",
+                help="DEPRECATED: pass the column data file as the positional <cov_fn> instead",
+            )
+        if name == "summary":
+            sub.add_argument(
+                "--color-col",
+                metavar="COL",
+                help="Column of the column data to color the output plots by",
+            )
+        if name in ("summary", "coldist", "rowdist"):
+            sub.add_argument(
+                "--bins",
+                metavar="N",
+                default="20",
+                help="Number of bins of the calculated distributions",
+            )
+            sub.add_argument(
+                "--log",
+                action="store_true",
+                help="log10 transform the counts first (zeros are left out)",
+            )
+            sub.add_argument(
+                "--density",
+                action="store_true",
+                help="Report each distribution as a density, divided by its sum",
+            )
+        sub.add_argument(
+            "-o",
+            "--output",
+            metavar="FILE",
+            default="stdout",
+            help="Destination of primary output",
+        )
+        sub.add_argument(
+            "-f",
+            "--format",
+            metavar="FMT",
+            default="csv",
+            choices=("csv", "table"),
+            help="Format of output",
+        )
+        add_common_options(sub)
+    return parser
+
+
 from collections import OrderedDict, defaultdict
 import csv
-from docopt import docopt
 import logging
 import numpy as np
 import os.path
@@ -278,7 +290,16 @@ from sklearn.preprocessing import scale
 import sys
 import warnings
 
-from .common import DetkModule, _cli_doc, set_logging, make_cli_count_obj
+from .common import (
+    DetkModule,
+    DetkParser,
+    add_command_options,
+    add_common_options,
+    add_subcommands,
+    make_cli_count_obj,
+    parse_cli,
+    set_logging,
+)
 from .report import DetkReport
 
 # setup logging, null on the library level
@@ -1119,30 +1140,15 @@ class CountPCA(DetkModule):
 
 def main(argv=sys.argv):
 
-    if "--version" in argv:
-        from .version import __version__
-
-        print(__version__)
-        return
-
-    # add the common opts to the docopt strings
-    cmd_opts_aug = {}
-    for k, v in cmd_opts.items():
-        cmd_opts_aug[k] = _cli_doc(v)
-
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts):
-        docopt(_cli_doc(__doc__), argv)
-    argv = argv[1:]
-    cmd = argv[0]
-
-    args = docopt(cmd_opts_aug[cmd], argv)
+    args = parse_cli(build_parser(), argv)
+    cmd = args.subcommand
     counts_obj = make_cli_count_obj(args)
     set_logging(args)
-    logger.info("cmd: %s", " ".join(argv))
+    logger.info("cmd: %s", " ".join(argv[1:]))
 
     if cmd == "pca":
-        if args["--column-data"] is not None:
-            if args["<cov_fn>"] is not None:
+        if args.column_data is not None:
+            if args.cov_fn is not None:
                 logger.warning(
                     "Both positional <cov_fn> argument and --column-data "
                     "are provided, ignoring the --column-data argument."
@@ -1153,14 +1159,14 @@ def main(argv=sys.argv):
                     "Use the optional [<cov_fn>] positional argument instead."
                 )
 
-                args["<cov_fn>"] = args["--column-data"]
+                args.cov_fn = args.column_data
 
         counts_obj = make_cli_count_obj(args)
         output = CountPCA(counts_obj)
 
     elif cmd == "summary":
-        if args["--column-data"] is not None:
-            if args["<cov_fn>"] is not None:
+        if args.column_data is not None:
+            if args.cov_fn is not None:
                 logger.warning(
                     "Both positional <cov_fn> argument and --column-data "
                     "are provided, ignoring the --column-data argument."
@@ -1171,18 +1177,14 @@ def main(argv=sys.argv):
                     "Use the optional [<cov_fn>] positional argument instead."
                 )
 
-                args["<cov_fn>"] = args["--column-data"]
+                args.cov_fn = args.column_data
 
         counts_obj = make_cli_count_obj(args)
-        output = summary(counts_obj, int(args["--bins"]), args["--log"], args["--density"])
+        output = summary(counts_obj, int(args.bins), args.log, args.density)
     elif cmd == "coldist":
-        output = ColDist(
-            counts_obj, bins=int(args["--bins"]), log=args["--log"], density=args["--density"]
-        )
+        output = ColDist(counts_obj, bins=int(args.bins), log=args.log, density=args.density)
     elif cmd == "rowdist":
-        output = RowDist(
-            counts_obj, bins=int(args["--bins"]), log=args["--log"], density=args["--density"]
-        )
+        output = RowDist(counts_obj, bins=int(args.bins), log=args.log, density=args.density)
     elif cmd == "colzero":
         output = ColZero(counts_obj)
     elif cmd == "rowzero":
@@ -1196,14 +1198,11 @@ def main(argv=sys.argv):
     if not isinstance(output, list):
         output = [output]
 
-    # Obtain string used to name output files, unless filename is specified
-    os.path.splitext(args["<counts_fn>"])[0]
-
     outf = sys.stdout
-    if args["--output"] != "stdout":
-        outf = open(args["--output"], "w")
+    if args.output != "stdout":
+        outf = open(args.output, "w")
 
-    if args["--format"] == "table":
+    if args.format == "table":
         from terminaltables import AsciiTable
 
         for out in output:
@@ -1223,15 +1222,15 @@ def main(argv=sys.argv):
                 out_writer.writerows(out.output)
 
     # write out the report json
-    if not args["--no-report"]:
-        logging.info("writing report to %s", args["--report-dir"])
-        with DetkReport(args["--report-dir"]) as r:
+    if not args.no_report:
+        logging.info("writing report to %s", args.report_dir)
+        with DetkReport(args.report_dir) as r:
             for out in output:
                 r.add_module(
                     out,
-                    in_file_path=args["<counts_fn>"],
-                    out_file_path=args["--output"],
-                    column_data_path=args.get("--column-data"),
+                    in_file_path=args.counts_fn,
+                    out_file_path=args.output,
+                    column_data_path=getattr(args, "column_data", None),
                     workdir=os.getcwd(),
                 )
     else:

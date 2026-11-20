@@ -1,15 +1,19 @@
 r"""
-Usage:
-    detk-enrich fgsea [options] <gmt_fn> <result_fn>
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+Gene set enrichment of a differential expression result: rank its features
+by a statistic and test the gene sets of a GMT file for enrichment at the
+top or bottom of the ranking (fgsea).
 """
 
 todo = r"""
     detk-enrich fisher [options] <gmt_fn> <result_fn>
 """
-cmd_opts = {
-    "fgsea": r"""
+
+# each subcommand: the one line the command's help lists it with, its
+# description and its examples
+SUBCOMMANDS = {
+    "fgsea": dict(
+        help="Preranked gene set enrichment with fgsea (needs R and fgsea)",
+        description="""\
 Perform preranked Gene Set Enrichment Analysis using the fgsea bioconductor
 package on the given gmt gene set file.
 
@@ -21,48 +25,95 @@ character delimited file, and is assumed to have column names in the first row.
 The feature IDs must be from the same system (e.g. gene symbols, ENSGIDs, etc)
 in both GMT and result files. The user will likely have to provide:
 
-- -i <col>: column name in the results file that contains feature IDs
-- -c <col>: column name in the results file that contains the statistics to
+- -i COL: column in the results file that contains feature IDs
+- -c COL: column in the results file that contains the statistics to
   use when computing enrichment, e.g. log2FoldChange
 
-fgsea: https://bioconductor.org/packages/release/bioc/html/fgsea.html
-
-Usage:
-    detk-enrich fgsea [options] <gmt_fn> <result_fn>
-
-Options:
-    -h --help                 Print out this help
-    -o FILE --output=FILE     Destination of fgsea output [default: stdout]
-    -p PROCS --cores=PROCS    Ask BiocParallel to use PROCS processes when
-                              executing fgsea in parallel, requires the
-                              BiocParallel package to be installed
-    -i FIELD --idcol=FIELD    Column name or 0-based integer index to use as
-                              the gene identifier [default: 0]
-    -c FIELD --statcol=FIELD  Column name or 0-based integer index to use as
-                              the statistic for ranking, defaults to the last
-                              numeric column in the file
-    -a --ascending            Sort column ascending, default is to sort
-                              descending, use this if you are sorting by p-value
-                              or want to reverse the directionality of the NES
-                              scores
-    --abs                     Take the absolute value of the column before
-                              passing to fgsea
-    --filter-unannotated      Remove any genes from the result matrix that have
-                              identifiers that don't exist in any gene set of
-                              the GMT
-    --minSize=INT             minSize argument to fgsea [default: 15]
-    --maxSize=INT             maxSize argument to fgsea [default: 500]
-    --nperm=INT               nperm argument to fgsea [default: 10000]
-    --multilevel              Use the fgseaMultilevel function, instead of fgsea
-    --routput-dir=DIR         Path to output directory for R stuffs, useful for
-                              debuggin out
-    --rda=FILE                write out the fgsea result to the provide file
-                              using saveRDS() in R
-""",
+fgsea: https://bioconductor.org/packages/release/bioc/html/fgsea.html""",
+        examples=[
+            (
+                "Rank the genes of deseq2_results.csv by log2FoldChange and test the "
+                "sets in genesets.gmt",
+                "detk-enrich fgsea -i gene -c log2FoldChange -o fgsea.csv "
+                "genesets.gmt deseq2_results.csv",
+            ),
+        ],
+    ),
 }
+
+
+def build_parser():
+    "The detk-enrich command line parser"
+    parser = DetkParser(prog="detk-enrich", description=__doc__.strip())
+    add_command_options(parser)
+    subs = add_subcommands(parser)
+    spec = SUBCOMMANDS["fgsea"]
+    sub = subs.add_parser(
+        "fgsea", help=spec["help"], description=spec["description"], examples=spec["examples"]
+    )
+    sub.add_argument(
+        "gmt_fn", metavar="<gmt_fn>", help="Gene sets in GMT format: name, description, IDs"
+    )
+    sub.add_argument(
+        "result_fn",
+        metavar="<result_fn>",
+        help="Delimited result file with column names, such as a detk-de result",
+    )
+    sub.add_argument(
+        "-o", "--output", metavar="FILE", default="stdout", help="Destination of fgsea output"
+    )
+    sub.add_argument(
+        "-p",
+        "--cores",
+        metavar="N",
+        help="Number of processes fgsea uses (needs the BiocParallel package)",
+    )
+    sub.add_argument(
+        "-i",
+        "--idcol",
+        metavar="COL",
+        default="0",
+        help="Column (name or 0-based index) holding the feature IDs",
+    )
+    sub.add_argument(
+        "-c",
+        "--statcol",
+        metavar="COL",
+        help="Column (name or 0-based index) of the ranking statistic; "
+        "the last numeric column if not given",
+    )
+    sub.add_argument(
+        "-a",
+        "--ascending",
+        action="store_true",
+        help="Rank ascending (for p-values, or to reverse the sign of NES)",
+    )
+    sub.add_argument(
+        "--abs", action="store_true", help="Rank by the absolute value of the statistic"
+    )
+    sub.add_argument(
+        "--filter-unannotated",
+        action="store_true",
+        help="Drop the features whose IDs are in no gene set of the GMT",
+    )
+    sub.add_argument("--minSize", metavar="N", default="15", help="minSize argument to fgsea")
+    sub.add_argument("--maxSize", metavar="N", default="500", help="maxSize argument to fgsea")
+    sub.add_argument("--nperm", metavar="N", default="10000", help="nperm argument to fgsea")
+    sub.add_argument(
+        "--multilevel", action="store_true", help="Use the fgseaMultilevel function, not fgsea"
+    )
+    sub.add_argument(
+        "--routput-dir",
+        metavar="DIR",
+        help="Directory to keep the R script, its inputs and outputs in, for debugging",
+    )
+    sub.add_argument("--rda", metavar="FILE", help="File to saveRDS() the fgsea result to")
+    add_common_options(sub)
+    return parser
+
+
 from collections import namedtuple, OrderedDict
 import csv
-from docopt import docopt
 from functools import reduce
 import logging
 import math
@@ -72,7 +123,17 @@ from pprint import pformat
 import tempfile
 import sys
 import warnings
-from .common import DetkModule, _cli_doc, read_delimited, set_logging, write_output
+from .common import (
+    DetkModule,
+    DetkParser,
+    add_command_options,
+    add_common_options,
+    add_subcommands,
+    parse_cli,
+    read_delimited,
+    set_logging,
+    write_output,
+)
 from .wrapr import require_r, wrapr
 from .report import DetkReport
 
@@ -413,88 +474,68 @@ def read_result_stat(result_fn, idcol=0, statcol=None):
 
 def main(argv=sys.argv):
 
-    if "--version" in argv:
-        from .version import __version__
+    args = parse_cli(build_parser(), argv)
+    set_logging(args)
+    logger.info("cmd: %s", " ".join(argv[1:]))
 
-        print(__version__)
-        return
+    # fgsea, the only subcommand
+    logger.info("reading in GMT file %s", args.gmt_fn)
+    gmt = GMT()
+    try:
+        gmt.load_file(args.gmt_fn)
+    except Exception as e:
+        logger.error(e)
+        sys.exit(1)
 
-    # add the common opts to the docopt strings
-    cmd_opts_aug = {}
-    for k, v in cmd_opts.items():
-        cmd_opts_aug[k] = _cli_doc(v)
+    logger.info("reading in results file %s", args.result_fn)
+    try:
+        stat = read_result_stat(args.result_fn, idcol=args.idcol, statcol=args.statcol)
+    except Exception as e:
+        logger.error(e)
+        sys.exit(1)
 
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts):
-        docopt(__doc__)
-    argv = argv[1:]
-    cmd = argv[0]
-
-    if cmd == "fgsea":
-        args = docopt(cmd_opts_aug["fgsea"], argv)
-
-        set_logging(args)
-        logger.info("cmd: %s", " ".join(argv))
-
-        logger.info("reading in GMT file %s", args["<gmt_fn>"])
-        gmt = GMT()
+    cores = args.cores
+    if cores is not None:
         try:
-            gmt.load_file(args["<gmt_fn>"])
-        except Exception as e:
-            logger.error(e)
+            cores = int(cores)
+        except ValueError:
+            logger.error(Exception("The cores argument to fgsea must be an integer"))
             sys.exit(1)
 
-        logger.info("reading in results file %s", args["<result_fn>"])
-        try:
-            stat = read_result_stat(
-                args["<result_fn>"], idcol=args["--idcol"], statcol=args["--statcol"]
-            )
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+    if args.abs:
+        logger.info("taking absolute value of statistic column due to --abs")
+        stat = stat.abs()
 
-        cores = args["--cores"]
-        if cores is not None:
-            try:
-                cores = int(cores)
-            except ValueError:
-                logger.error(Exception("The cores argument to fgsea must be an integer"))
-                sys.exit(1)
+    if args.ascending:
+        logger.info("sorting statistic into ascending order due to --ascending")
+        stat = -stat
 
-        if args["--abs"]:
-            logger.info("taking absolute value of statistic column due to --abs")
-            stat = stat.abs()
-
-        if args["--ascending"]:
-            logger.info("sorting statistic into ascending order due to --ascending")
-            stat = -stat
-
-        try:
-            out = FGSEARes(
-                gmt,
-                stat,
-                minSize=int(args["--minSize"]),
-                maxSize=int(args["--maxSize"]),
-                nperm=int(args["--nperm"]),
-                multilevel=args["--multilevel"],
-                nproc=cores,
-                filter_unannotated=args["--filter-unannotated"],
-                rda_fn=args["--rda"],
-                routput_dir=args["--routput-dir"],
-            )
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+    try:
+        out = FGSEARes(
+            gmt,
+            stat,
+            minSize=int(args.minSize),
+            maxSize=int(args.maxSize),
+            nperm=int(args.nperm),
+            multilevel=args.multilevel,
+            nproc=cores,
+            filter_unannotated=args.filter_unannotated,
+            rda_fn=args.rda,
+            routput_dir=args.routput_dir,
+        )
+    except Exception as e:
+        logger.error(e)
+        sys.exit(1)
 
     write_output(out.output, args)
 
-    if not args["--no-report"]:
-        logging.info("writing report to %s", args["--report-dir"])
-        with DetkReport(args["--report-dir"]) as r:
+    if not args.no_report:
+        logging.info("writing report to %s", args.report_dir)
+        with DetkReport(args.report_dir) as r:
             r.add_module(
                 out,
-                in_file_path=args["<gmt_fn>"],
-                out_file_path=args["--output"],
-                column_data_path=args.get("--column-data"),
+                in_file_path=args.gmt_fn,
+                out_file_path=args.output,
                 workdir=os.getcwd(),
             )
     else:

@@ -1,112 +1,146 @@
 r"""
-Usage:
-    detk-norm deseq2 [options] <counts_fn>
-    detk-norm library [options] <counts_fn>
-    detk-norm fpkm [options] <counts_fn> <lengths_fn>
-    detk-norm cpm [options] <counts_fn>
-    detk-norm tpm [options] <counts_fn> <lengths_fn>
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+Normalize the counts in a counts matrix, so that values can be compared
+across samples (deseq2, library, cpm) or across samples and features (fpkm,
+tpm). The input is a delimited counts file, features in rows and samples in
+columns; the output is the normalized matrix in the same shape.
 """
 
-todo = r"""
-    detk-norm custom <counts_fn>
-"""
-cmd_opts = {
-    "deseq2": r"""
+_LENGTHS_NOTE = """
+<lengths_fn> is a delimited file with two columns: the first is the name of
+a row in the counts file, the second the effective length in bases of that
+gene, transcript or other feature. The order of names in the two files does
+*not* have to be the same; names are matched as text. The first line of the
+lengths file is skipped as a header only when its second field is text that
+is not a number or a missing value such as NA.
+
+The command exits with an error if a feature in the counts file is not in
+the lengths file, if any of their lengths is not a positive number, or if a
+name is listed more than once in the lengths file."""
+
+# each subcommand: the one line the command's help lists it with, its
+# description, its positionals beyond <counts_fn> and its examples
+SUBCOMMANDS = {
+    "deseq2": dict(
+        help="Normalize by the DESeq2 median-of-ratios size factors",
+        description="""\
 Perform counts normalization on the given counts matrix using the method
-implemented in the DESeq2 package.
-
-Usage:
-    detk-norm deseq2 [options] <counts_fn>
-
-Options:
-    -h --help                    Print out this help
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
-    --size-factors=FILE          Write out the size factors found by the DESeq2
-                                 method to two column tab separated file where
-                                 the first column is sample name and the second
-                                 column is the size factor
-""",
-    "library": r"""
+implemented in the DESeq2 package: each sample is divided by its size factor,
+the median ratio of its counts to the geometric mean of each feature across
+samples.""",
+        examples=[
+            (
+                "Normalize counts.csv, writing norm_counts.csv",
+                "detk-norm deseq2 -o norm_counts.csv counts.csv",
+            ),
+        ],
+    ),
+    "library": dict(
+        help="Divide each count by its sample's total count",
+        description="""\
 Perform library size normalization on the columns of the given counts matrix.
-Counts in each column are divided by the sum of each column.
-
-Usage:
-    detk-norm library [options] <counts_fn>
-
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
-""",
-    "fpkm": r"""
+Counts in each column are divided by the sum of that column.""",
+        examples=[
+            ("Library size normalize counts.csv to stdout", "detk-norm library counts.csv"),
+        ],
+    ),
+    "fpkm": dict(
+        help="Fragments per kilobase per million (needs feature lengths)",
+        description="""\
 Perform Fragments Per Kilobase per Million normalization on the given counts
 file. Each count is divided by its feature's length in kilobases and by its
 sample's total count in millions: count * 1e9 / (length * library size).
-<lengths_fn> should be a delimited file with two columns, the first
-being the name of one of the rows in the counts file and the second is the
-effective length in bases of the gene/sequence/etc to use in the
-normalization.
-
-*Note:* Program will throw an error and exit if there are genes/sequences
-in the counts file that are not found in the lengths file, if any of
-their lengths is not a positive number, or if a name is listed more than
-once in the lengths file. Names are matched as text. The first line of the
-lengths file is skipped as a header only when its second field is text that
-is not a number or a missing value such as NA.
-
-The order of names in the counts and lengths files do *not* have to be the
-same.
-
-Usage:
-    detk-norm fpkm [options] <counts_fn> <lengths_fn>
-
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
-
-""",
-    "cpm": r"""
+"""
+        + _LENGTHS_NOTE,
+        lengths=True,
+        examples=[
+            (
+                "FPKM of counts.csv with the feature lengths in lengths.csv",
+                "detk-norm fpkm -o fpkm.csv counts.csv lengths.csv",
+            ),
+        ],
+    ),
+    "cpm": dict(
+        help="Counts per million: library size normalization times 1e6",
+        description="""\
 Perform Counts Per Million normalization on the columns of the given counts
 matrix. Counts in each column are divided by the sum of that column and
-multiplied by one million, so every column of the output sums to 1e6.
-
-Usage:
-    detk-norm cpm [options] <counts_fn>
-
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
-""",
-    "tpm": r"""
+multiplied by one million, so every column of the output sums to 1e6.""",
+        examples=[("Counts per million of counts.csv", "detk-norm cpm -o cpm.csv counts.csv")],
+    ),
+    "tpm": dict(
+        help="Transcripts per million (needs feature lengths)",
+        description="""\
 Perform Transcripts Per Million normalization on the given counts file. Each
 count is divided by its feature's length in kilobases, then each column is
-scaled so it sums to one million. <lengths_fn> is the same two column
-delimited file the fpkm subcommand takes: the first column is the name of a
-row in the counts file, the second its effective length in bases.
-
-*Note:* Program will throw an error and exit if there are genes/sequences
-in the counts file that are not found in the lengths file, if any of
-their lengths is not a positive number, or if a name is listed more than
-once in the lengths file. Names are matched as text. The first line of the
-lengths file is skipped as a header only when its second field is text that
-is not a number or a missing value such as NA.
-
-The order of names in the counts and lengths files do *not* have to be the
-same.
-
-Usage:
-    detk-norm tpm [options] <counts_fn> <lengths_fn>
-
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
-""",
+scaled so it sums to one million.
+"""
+        + _LENGTHS_NOTE,
+        lengths=True,
+        examples=[
+            (
+                "TPM of counts.csv with the feature lengths in lengths.csv",
+                "detk-norm tpm -o tpm.csv counts.csv lengths.csv",
+            ),
+        ],
+    ),
 }
-from docopt import docopt
+
+
+def build_parser():
+    "The detk-norm command line parser"
+    parser = DetkParser(prog="detk-norm", description=__doc__.strip())
+    add_command_options(parser)
+    subs = add_subcommands(parser)
+    for name, spec in SUBCOMMANDS.items():
+        sub = subs.add_parser(
+            name, help=spec["help"], description=spec["description"], examples=spec["examples"]
+        )
+        sub.add_argument(
+            "counts_fn",
+            metavar="<counts_fn>",
+            help="Counts file: features in rows, samples in columns, delimited",
+        )
+        if spec.get("lengths"):
+            sub.add_argument(
+                "lengths_fn",
+                metavar="<lengths_fn>",
+                help="Feature lengths file: feature name and length in bases",
+            )
+        sub.add_argument(
+            "-o",
+            "--output",
+            metavar="FILE",
+            default="stdout",
+            help="Destination of normalized output in CSV format",
+        )
+        if name == "deseq2":
+            sub.add_argument(
+                "--size-factors",
+                metavar="FILE",
+                help="Write out the size factors found by the DESeq2 method to a two "
+                "column tab separated file: sample name and size factor",
+            )
+        add_common_options(sub)
+    return parser
+
+
 import logging
 import numpy as np
 import pandas
 from pprint import pformat
 import sys
 import os
-from .common import DetkModule, _cli_doc, set_logging, make_cli_count_obj, write_output
+from .common import (
+    DetkModule,
+    DetkParser,
+    add_command_options,
+    add_common_options,
+    add_subcommands,
+    make_cli_count_obj,
+    parse_cli,
+    set_logging,
+    write_output,
+)
 from .report import DetkReport
 from .util import stub
 from .wrapr import require_r, wrapr
@@ -515,26 +549,11 @@ def custom_norm(count_mat, factors):
 
 def main(argv=sys.argv):
 
-    if "--version" in argv:
-        from .version import __version__
-
-        print(__version__)
-        return
-
-    # add the common opts to the docopt strings
-    cmd_opts_aug = {}
-    for k, v in cmd_opts.items():
-        cmd_opts_aug[k] = _cli_doc(v)
-
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts):
-        docopt(_cli_doc(__doc__), argv)
-    argv = argv[1:]
-    cmd = argv[0]
-
-    args = docopt(cmd_opts_aug[cmd], argv)
+    args = parse_cli(build_parser(), argv)
+    cmd = args.subcommand
     count_obj = make_cli_count_obj(args)
     set_logging(args)
-    logger.info("cmd: %s", " ".join(argv))
+    logger.info("cmd: %s", " ".join(argv[1:]))
 
     if cmd == "deseq2":
         try:
@@ -556,7 +575,7 @@ def main(argv=sys.argv):
         # providing the lengths that should be used for each ID in the counts
         # file
         try:
-            lengths = read_lengths(args["<lengths_fn>"])
+            lengths = read_lengths(args.lengths_fn)
         except Exception as e:
             logger.error(e)
             sys.exit(1)
@@ -576,7 +595,7 @@ def main(argv=sys.argv):
 
     elif cmd == "tpm":
         try:
-            lengths = read_lengths(args["<lengths_fn>"])
+            lengths = read_lengths(args.lengths_fn)
             out = TPMCounts(count_obj.counts, lengths)
         except Exception as e:
             logger.error(e)
@@ -584,14 +603,13 @@ def main(argv=sys.argv):
 
     write_output(out.output, args)
 
-    if not args["--no-report"]:
-        logging.info("writing report to %s", args["--report-dir"])
-        with DetkReport(args["--report-dir"]) as r:
+    if not args.no_report:
+        logging.info("writing report to %s", args.report_dir)
+        with DetkReport(args.report_dir) as r:
             r.add_module(
                 out,
-                in_file_path=args["<counts_fn>"],
-                out_file_path=args["--output"],
-                column_data_path=args.get("--column-data"),
+                in_file_path=args.counts_fn,
+                out_file_path=args.output,
                 workdir=os.getcwd(),
             )
 

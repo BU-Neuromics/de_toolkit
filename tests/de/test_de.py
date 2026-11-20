@@ -2,7 +2,6 @@ from de_toolkit.common import CountMatrix, InvalidDesignException
 from de_toolkit.de import main
 from de_toolkit.wrapr import check_r, check_r_package
 
-import docopt
 from itertools import cycle
 import numpy
 import os
@@ -63,8 +62,8 @@ def test_R_check_names_nonsense(deseq2_test_counts_obj):
 
 
 def test_de_cli():
-    with pytest.raises(docopt.DocoptExit):
-        main()
+    with pytest.raises(SystemExit):
+        main(["detk-de"])
 
 
 @pytest.fixture

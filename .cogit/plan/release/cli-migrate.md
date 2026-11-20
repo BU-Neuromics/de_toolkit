@@ -13,17 +13,21 @@ acceptance:
 from: [DETK-0001, DETK-0023, DETK-0025, DETK-0033]
 scope: [de_toolkit/common.py, de_toolkit/norm.py, de_toolkit/de.py, de_toolkit/enrich.py, de_toolkit/transform.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolkit/outlier.py, de_toolkit/wrapr.py, de_toolkit/report.py, de_toolkit/util.py, de_toolkit/test_docopt.py, tests/cli/, tests/skills/, tests/common/, tests/norm/, tests/de/, tests/enrich/, tests/transform/, tests/filter/, tests/stats/, tests/outlier/, tests/wrapr/, tests/report/, tests/util/, skills/detk/references/commands.md, pyproject.toml, uv.lock, environment.yml, +CHANGELOG]
 prev: [DETK-0023, DETK-0025, release/cli-pin]
+issue: 79
+visited: 7812441
+status: done
+done: 41d61f6
 ---
 
 # Replace docopt-ng in every command
 
 ## Implementation plan
 
-- [ ] @developer Build the shared pieces in `common.py` on argparse (the common options, the subcommand dispatch, the help sections and examples, the umbrella `detk`) and migrate `detk-norm` on them as the pattern; switch the cli-pin adapter; open the PR <!-- s1 -->
-- [ ] @reviewer Review the pattern before it is copied: cli-pin passes for detk-norm, help follows DETK-0025 Option B and reads well for an agent <!-- s2 -->
-- [ ] @developer Migrate the other ten entry points with examples, harmonize metavars, fix the umbrella command, move the skill test to argparse (DETK-0010), regenerate the skill's usage blocks, remove docopt-ng and `test_docopt.py`, relock, CHANGELOG <!-- s3 -->
-- [ ] @reviewer Review the PR, including the R-gated tests in CI and the airway run <!-- s4 -->
-- [ ] @human Accept <!-- s5 -->
+- [x] @developer Build the shared pieces in `common.py` on argparse (the common options, the subcommand dispatch, the help sections and examples, the umbrella `detk`) and migrate `detk-norm` on them as the pattern; switch the cli-pin adapter; open the PR <!-- s1 -->
+- [x] @reviewer Review the pattern before it is copied: cli-pin passes for detk-norm, help follows DETK-0025 Option B and reads well for an agent <!-- s2 -->
+- [x] @developer Migrate the other ten entry points with examples, harmonize metavars, fix the umbrella command, move the skill test to argparse (DETK-0010), regenerate the skill's usage blocks, remove docopt-ng and `test_docopt.py`, relock, CHANGELOG <!-- s3 -->
+- [x] @reviewer Review the PR, including the R-gated tests in CI and the airway run <!-- s4 -->
+- [x] @human Accept <!-- s5 -->
 
 ## Notes
 

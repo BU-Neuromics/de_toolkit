@@ -88,7 +88,11 @@ R_RESERVED = frozenset(
 # letters count, since R's letters depend on the locale; quoting a name R
 # would also read plainly is harmless.
 R_SYNTACTIC = re.compile(r"(?:[A-Za-z]|\.(?![0-9]))[A-Za-z0-9._]*|\.")
-R_NUMERAL = re.compile(r"-?\d+(?:\.\d*)?")
+# the only numeral detk writes in a resolved design: the 1 of a trivial
+# model, counts ~ 1 (DesignMatrix.design). Any other number-shaped term,
+# such as 2.5 or 1.0, is a column name (the parser takes decimals as
+# columns) and is quoted, or R would read it as a constant.
+R_INTERCEPT = "1"
 
 
 def r_name(name):
@@ -113,8 +117,9 @@ def r_design(design):
     ``lhs ~ rhs`` with terms joined by `` + ``): every name in it that R
     would not read as a plain name is backtick-quoted, so R's ``formula()``
     reads each as a column name and runs none as code (DETK-0050). An
-    interaction ``a:b`` stays an interaction of the names ``a`` and ``b``,
-    and numerals such as the ``1`` of ``counts ~ 1`` are left as they are.
+    interaction ``a:b`` stays an interaction of the names ``a`` and ``b``.
+    Only the intercept ``1`` of ``counts ~ 1`` is left bare: a number-shaped
+    column name such as ``2.5`` is quoted like any other.
     The resolved design itself, unquoted, is what detk records.
     """
     if "~" not in design:
@@ -124,7 +129,7 @@ def r_design(design):
     def side(s):
         terms = [_.strip() for _ in s.split(" + ")]
         return " + ".join(
-            ":".join(_ if R_NUMERAL.fullmatch(_) else r_name(_) for _ in term.split(":"))
+            term if term == R_INTERCEPT else ":".join(r_name(_) for _ in term.split(":"))
             for term in terms
             if term
         )

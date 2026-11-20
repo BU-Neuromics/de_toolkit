@@ -81,6 +81,12 @@ def test_r_name(name, quoted):
             "counts ~ a__x + `age(yrs)` + a__x:`age(yrs)`",
         ),
         ("counts ~ if + system(x)", "counts ~ `if` + `system(x)`"),
+        # a number-shaped name is a column, not a constant; only the
+        # intercept 1 detk writes for a trivial model is left bare
+        ("counts ~ Intercept + 2.5", "counts ~ Intercept + `2.5`"),
+        ("1.0 ~ Intercept + counts", "`1.0` ~ Intercept + counts"),
+        ("counts ~ 0.5 + 1. + 10.25", "counts ~ `0.5` + `1.` + `10.25`"),
+        ("counts ~ a__x:2.5", "counts ~ a__x:`2.5`"),
     ],
 )
 def test_r_design(design, quoted):
@@ -100,6 +106,22 @@ def test_r_design_of_resolved_design():
     assert r_design(cm.design) == f"counts ~ Intercept + fld.cont + `{CALL}`"
 
 
+def test_r_design_of_resolved_number_shaped_design():
+    "A column named 2.5 is resolved as a column and quoted for R."
+    counts = pandas.DataFrame(
+        numpy.arange(1, 25).reshape(6, 4), columns=[f"s{_}" for _ in range(4)]
+    )
+    column_data = pandas.DataFrame(
+        {"2.5": [0.1, 0.5, 0.2, 0.9], "1.0": [0, 1, 0, 1]}, index=counts.columns
+    )
+    cm = CountMatrix(counts, column_data, "counts ~ 2.5")
+    assert cm.design == "counts ~ Intercept + 2.5"
+    assert r_design(cm.design) == "counts ~ Intercept + `2.5`"
+    cm = CountMatrix(counts, column_data, "1.0 ~ counts + 2.5")
+    assert cm.design == "1.0 ~ Intercept + counts + 2.5"
+    assert r_design(cm.design) == "`1.0` ~ Intercept + counts + `2.5`"
+
+
 # R: the call-shaped column is a column name, and no code runs
 
 
@@ -107,7 +129,7 @@ def test_r_design_of_resolved_design():
 def r_data(tmp_path, monkeypatch):
     """
     Counts and column data in *tmp_path*, the working directory: a two group
-    design with the group also as ``file.create(1)`` and ``fld.cont``.
+    design with the group as ``file.create(1)`` and ``2.5``, and ``fld.cont``.
     """
     rng = numpy.random.default_rng(0)
     n = 10
@@ -119,7 +141,8 @@ def r_data(tmp_path, monkeypatch):
         columns=samples,
     )
     column_data = pandas.DataFrame(
-        {CALL: group, "fld.cont": numpy.linspace(0, 1, n)}, index=pandas.Index(samples)
+        {CALL: group, "fld.cont": numpy.linspace(0, 1, n), "2.5": group},
+        index=pandas.Index(samples),
     )
     counts_fn = tmp_path / "counts.csv"
     column_data_fn = tmp_path / "column_data.csv"
@@ -176,6 +199,17 @@ def test_firth_call_shaped_column(r_data):
     res = pandas.read_csv(tmp_path / "out.csv", index_col=0)
     assert "counts__beta" in res.columns
     assert len(res) == 20
+
+
+@logistf_test
+def test_firth_number_shaped_column(r_data):
+    "A column named 2.5 is fitted as the outcome, not read as the constant 2.5."
+    tmp_path, counts_fn, column_data_fn = r_data
+    de_main(["detk-de", "firth", "2.5 ~ counts", counts_fn, column_data_fn, "-o", "out.csv"])
+    res = pandas.read_csv(tmp_path / "out.csv", index_col=0)
+    assert "counts__beta" in res.columns
+    assert len(res) == 20
+    assert (res["status"] == "OK").all()
 
 
 @deseq2_test

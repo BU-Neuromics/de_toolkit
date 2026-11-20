@@ -14,6 +14,8 @@ acceptance:
 from: [DETK-0001, DETK-0024, DETK-0040]
 scope: [de_toolkit/patsy_lite.py, tests/patsy_lite/, docs/formulas.md, pyproject.toml, uv.lock, environment.yml, +CHANGELOG]
 prev: [DETK-0024, DETK-0040, release/formula-pin]
+issue: 78
+visited: 7812441
 ---
 
 # Replace patsy with formulaic in patsy-lite

@@ -286,6 +286,7 @@ import sys
 import warnings
 
 from .common import (
+    UsageError,
     cli_main,
     option_value,
     DetkModule,
@@ -304,7 +305,33 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-def summary(count_mat, bins=20, log=False, density=False):
+def color_by(count_mat, color_col):
+    """
+    The value of column *color_col* of *count_mat*'s column data for each
+    sample, as the report colors the plots of a sample by it: ``{"column":
+    color_col, "values": {sample: value}}``, or None without *color_col*.
+    A column the column data does not have is a ValueError.
+    """
+    if color_col is None:
+        return None
+    column_data = count_mat.column_data
+    if column_data is None or color_col == "counts" or color_col not in column_data:
+        raise ValueError(f"{color_col!r} is not a column of the column data")
+    values = column_data[color_col]
+    return {
+        "column": color_col,
+        "values": {str(s): v for s, v in zip(values.index, values.tolist())},
+    }
+
+
+def _with_color_by(props, colors):
+    "The properties *props*, with ``color_by`` when the plots are colored"
+    if colors is not None:
+        props["color_by"] = colors
+    return props
+
+
+def summary(count_mat, bins=20, log=False, density=False, color_col=None):
     """
     Compute summary statistics on a counts matrix file.
 
@@ -327,6 +354,9 @@ def summary(count_mat, bins=20, log=False, density=False):
         perform log10 transform of counts in coldist
     density : bool
         return a density distribution from coldist
+    color_col : str, optional
+        column of the column data the report colors the coldist, colzero and
+        pca plots by (see :func:`color_by`)
 
     Returns
     -------
@@ -336,12 +366,12 @@ def summary(count_mat, bins=20, log=False, density=False):
 
     total_output = [
         BaseStats(count_mat),
-        ColDist(count_mat, bins, log, density),
+        ColDist(count_mat, bins, log, density, color_col=color_col),
         # RowDist(count_mat, bins, log, density),
-        ColZero(count_mat),
+        ColZero(count_mat, color_col=color_col),
         RowZero(count_mat),
         Entropy(count_mat),
-        CountPCA(count_mat),
+        CountPCA(count_mat, color_col=color_col),
     ]
 
     return total_output
@@ -410,9 +440,12 @@ class ColDist(DetkModule):
 
     """
 
-    def __init__(self, count_mat, bins=100, log=False, density=False):
+    def __init__(self, count_mat, bins=100, log=False, density=False, color_col=None):
 
         self["params"] = {"bins": bins, "log": log, "density": density}
+        self.color_by = color_by(count_mat, color_col)
+        if color_col is not None:
+            self["params"]["color_col"] = color_col
 
         self["pct"] = pct = np.arange(bins) / bins
 
@@ -504,7 +537,7 @@ class ColDist(DetkModule):
               ]
             }
         """
-        return {"dists": self["dists"]}
+        return _with_color_by({"dists": self["dists"]}, self.color_by)
 
 
 class RowDist(DetkModule):
@@ -598,7 +631,10 @@ class ColZero(DetkModule):
 
     """
 
-    def __init__(self, count_mat):
+    def __init__(self, count_mat, color_col=None):
+        self.color_by = color_by(count_mat, color_col)
+        if color_col is not None:
+            self["params"] = {"color_col": color_col}
         # Get counts, number of columns, number of rows, and sample names
         num_rows, num_cols = count_mat.counts.shape
         col_names = count_mat.sample_names
@@ -695,7 +731,7 @@ class ColZero(DetkModule):
               ]
             }
         """
-        return {"zeros": self["zeros"]}
+        return _with_color_by({"zeros": self["zeros"]}, self.color_by)
 
 
 class RowZero(DetkModule):
@@ -1020,7 +1056,11 @@ class CountPCA(DetkModule):
     projections are plotted.
     """
 
-    def __init__(self, count_mat):
+    def __init__(self, count_mat, color_col=None):
+
+        self.color_by = color_by(count_mat, color_col)
+        if color_col is not None:
+            self["params"] = {"color_col": color_col}
 
         # get counts from file and scale counts
         # counts matrices are n_features x n_samples, need to transpose
@@ -1128,11 +1168,14 @@ class CountPCA(DetkModule):
                 }
             ]
         """
-        return {
-            "column_names": self["column_names"],
-            "column_variables": self["column_variables"],
-            "components": self["components"],
-        }
+        return _with_color_by(
+            {
+                "column_names": self["column_names"],
+                "column_variables": self["column_variables"],
+                "components": self["components"],
+            },
+            self.color_by,
+        )
 
 
 @cli_main
@@ -1147,7 +1190,24 @@ def main(argv=sys.argv):
     if cmd == "pca":
         output = CountPCA(counts_obj)
     elif cmd == "summary":
-        output = summary(counts_obj, option_value(args, "bins"), args.log, args.density)
+        if args.color_col is not None:
+            # --color-col names a column of the column data (DETK-0081)
+            if args.cov_fn is None:
+                raise UsageError(f"--color-col {args.color_col!r} needs the column data <cov_fn>")
+            try:
+                color_by(counts_obj, args.color_col)
+            except ValueError:
+                raise UsageError(
+                    f"--color-col {args.color_col!r} is not a column of the column data "
+                    f"{args.cov_fn}"
+                ) from None
+        output = summary(
+            counts_obj,
+            option_value(args, "bins"),
+            args.log,
+            args.density,
+            color_col=args.color_col,
+        )
     elif cmd == "coldist":
         output = ColDist(
             counts_obj, bins=option_value(args, "bins"), log=args.log, density=args.density

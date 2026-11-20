@@ -19,7 +19,7 @@ visited: 118283e
 
 ## Implementation plan
 
-- [ ] @developer Write the recipes page as an executable tutorial page with each recipe and a failure, the numpy and R checks, the skill reference with its consistency test and the gather warning, Miller in the R job, the formula error's pointer and docs/formulas.md's link; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Write the recipes page as an executable tutorial page with each recipe and a failure, the numpy and R checks, the skill reference with its consistency test and the gather warning, Miller in the R job, the formula error's pointer and docs/formulas.md's link; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review each recipe's arithmetic (n-1, pseudocount, base) and its failures against DETK-0062, run the page with and without mlr, and read the skill from an agent's side <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

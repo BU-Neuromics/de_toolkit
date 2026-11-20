@@ -10,6 +10,8 @@ scope: [+de_toolkit/formula.py, +de_toolkit/filter.py, tests/formula/, tests/fil
 prev: [DETK-0190, release/r-design-names, release/help-options]
 issue: 112
 visited: 09ef1fd
+status: done
+done: 28dcc55
 ---
 
 # Formula and filter errors are clear and never silent
@@ -18,7 +20,7 @@ visited: 09ef1fd
 
 - [x] @developer Apply DETK-0190 to number-like terms in the formula module, make a filter group value not in its column a usage error (and match numeric and boolean values as written), turn every wrapped formulaic error into a clean message; tests and cli-pin rows; docs/formulas.md; CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: try 3, 2.5 and -2.5 on each side of ~, cond[Z] and a misspelled term on the command line, and read each message as a user would <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

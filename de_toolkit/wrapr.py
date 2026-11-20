@@ -552,7 +552,7 @@ class WrapR:
         if self.raise_on_error and not self.success:
             # the first line is the cause a command prints (common.cli_main):
             # R's own error line, and where R's full output was written
-            if hasattr(self, "_tempdir"):
+            if self._tempdir is not None:
                 # the temporary directory goes when the command exits
                 where = "rerun with --routput-dir DIR to keep R's output"
             else:

@@ -15,6 +15,8 @@ scope: [de_toolkit/common.py, de_toolkit/norm.py, de_toolkit/de.py, de_toolkit/e
 prev: [DETK-0023, DETK-0025, release/cli-pin]
 issue: 79
 visited: 7812441
+status: done
+done: 41d61f6
 ---
 
 # Replace docopt-ng in every command
@@ -25,7 +27,7 @@ visited: 7812441
 - [x] @reviewer Review the pattern before it is copied: cli-pin passes for detk-norm, help follows DETK-0025 Option B and reads well for an agent <!-- s2 -->
 - [x] @developer Migrate the other ten entry points with examples, harmonize metavars, fix the umbrella command, move the skill test to argparse (DETK-0010), regenerate the skill's usage blocks, remove docopt-ng and `test_docopt.py`, relock, CHANGELOG <!-- s3 -->
 - [x] @reviewer Review the PR, including the R-gated tests in CI and the airway run <!-- s4 -->
-- [ ] @human Accept <!-- s5 -->
+- [x] @human Accept <!-- s5 -->
 
 ## Notes
 

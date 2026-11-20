@@ -1,8 +1,12 @@
+from dataclasses import dataclass, field
 import logging
-import pandas
-from patsy import ModelDesc, dmatrices, PatsyError
-from ply import lex
 import re
+import warnings
+
+import formulaic
+from formulaic.errors import DataMismatchWarning
+import pandas
+from ply import lex
 
 # setup logging, null on the library level
 logger = logging.getLogger(__name__)
@@ -17,19 +21,14 @@ tokens = ("CONSTANT", "FACTORTERM", "RELATION", "OP", "COUNT")
 
 t_COUNT = r"count"
 t_CONSTANT = r"-?\d+(?:\.\d*)?"
-# t_SIMPLETERM = r'\w[\w:*.()]*'
 t_RELATION = r"~"
-t_OP = r"[-+*/]"
+# : joins the terms of an interaction, so a:b and a[ref]:b are two terms
+t_OP = r"[-+*/:]"
 t_ignore = " "
-
-# def t_BINARYTERM(t) :
-#    r'(\w[^[]*)\[([^]]+)\]$'
-#    t.term, t.args = t.lexer.lexmatch.groups()[1:3]
-#    return t
 
 
 def t_FACTORTERM(t):
-    r"([\w](?:[\w.():]+)?)(?:\[([^]]+)\])?"
+    r"([\w](?:[\w.()]+)?)(?:\[([^]]+)\])?"
     # this regex returns a bunch of empty groups for some reason
     # filter out the None valued groups and just operate on what
     # is left
@@ -47,7 +46,6 @@ def t_FACTORTERM(t):
 
 
 def t_error(t):
-    # print(t)
     return t
 
 
@@ -55,8 +53,9 @@ lexer = lex.lex()
 
 
 def quote_var(v):
+    "Quote a column name formulaic would not read as a name, with backticks."
     if any(_ in v for _ in "#.()[]@"):
-        return f'Q("{v}")'
+        return f"`{v}`"
     return v
 
 
@@ -72,7 +71,49 @@ def repr_val(v):
     return v
 
 
-def patsy_lite_to_patsy(formula):
+def is_bool_column(col):
+    "True if *col* holds booleans (bool dtype, or bools with missing values)."
+    if pandas.api.types.is_bool_dtype(col):
+        return True
+    if col.dtype == object:
+        values = col.dropna()
+        return len(values) > 0 and all(isinstance(_, bool) for _ in values)
+    return False
+
+
+def bool_level(level):
+    "A level written for a boolean column (TRUE, False, true, ...) as a bool."
+    if isinstance(level, str) and level.lower() in ("true", "false"):
+        return level.lower() == "true"
+    return level
+
+
+@dataclass
+class TranslatedFormula:
+    """
+    A patsy-lite formula translated to formulaic's syntax.
+
+    *formula* is the formulaic formula string. *name_map* maps each term as
+    written in it to the column name it stands for, and is used to give
+    the model matrix columns their patsy-lite names. *levels* maps a
+    column given a level list to that list.
+    """
+
+    formula: str
+    name_map: dict = field(default_factory=dict)
+    levels: dict = field(default_factory=dict)
+
+    def describe(self):
+        return self.formula
+
+
+def patsy_lite_to_patsy(formula, bool_columns=()):
+    """
+    Translate the patsy-lite *formula* to formulaic's syntax.
+
+    The levels written for a column named in *bool_columns* are read as
+    booleans, in any case (TRUE, False, ...).
+    """
 
     # I guess we assume there is always a lhs and a rhs?
     if "~" not in formula:
@@ -82,11 +123,11 @@ def patsy_lite_to_patsy(formula):
 
     lexer.input(formula)
 
-    patsy_formula = []
-    # the name map is attached to the model description and used later to
-    # replace the patsy DesignInfo column names to the originals specified
-    # in the formula
+    translated = []
+    # the name map is used later to replace formulaic's column names with
+    # the column names as written in the formula
     name_map = {}
+    levels = {}
 
     while True:
         try:
@@ -98,29 +139,32 @@ def patsy_lite_to_patsy(formula):
             break
 
         if tok.type in ("CONSTANT", "RELATION", "OP", "COUNT"):
-            patsy_formula.append(tok.value)
+            translated.append(tok.value)
 
         # term
         # term[ref] -> C(term, Treatment("ref"))
         # term[lev1,lev2,lev3] -> C(term, levels=["lev1","lev2","lev3"])
         if tok.type == "FACTORTERM":
+            to_val = repr_val
+            if tok.term in bool_columns:
+
+                def to_val(v):
+                    return bool_level(repr_val(v))
+
             if hasattr(tok, "ref"):
-                term = f"C({quote_var(tok.term)}, Treatment({repr(repr_val(tok.ref))}))"
+                term = f"C({quote_var(tok.term)}, Treatment({to_val(tok.ref)!r}))"
                 name_map[term] = tok.term
-                patsy_formula.append(term)
             elif hasattr(tok, "levels"):
-                term = f"C({quote_var(tok.term)}, levels={[repr_val(_) for _ in tok.levels]})"
+                term_levels = [to_val(_) for _ in tok.levels]
+                term = f"C({quote_var(tok.term)}, levels={term_levels})"
                 name_map[term] = tok.term
-                patsy_formula.append(term)
+                levels[tok.term] = term_levels
             else:
                 term = quote_var(tok.value)
-                patsy_formula.append(term)
                 name_map[term] = tok.value
+            translated.append(term)
 
-    patsy_formula = " ".join(patsy_formula)
-    model = ModelDesc.from_formula(patsy_formula)
-    model.name_map = name_map
-    return model
+    return TranslatedFormula(" ".join(translated), name_map, levels)
 
 
 class ModelError(Exception):
@@ -139,44 +183,65 @@ class DesignMatrix:
         # interested in the vector space of the reference level for
         # logistic regression (i.e., one column with zero for reference
         # samples and one for the other)
-        # with patsy we can control this by adding an intercept to the
-        # lhs, which will acheive the desired result and has no effect
-        # when including, e.g. continuous variables
+        # we can control this by adding an intercept to the lhs, which
+        # will acheive the desired result and has no effect when
+        # including, e.g. continuous variables
         # we remove the Intercept term from the lhs before returning
         # the design matrix
         if not formula.strip().startswith("~"):
             formula = f"1 + {formula}"
 
-        model = patsy_lite_to_patsy(formula)
-        logger.debug("transpiled patsy formula: %s", model.describe())
+        # formulaic treats a bool column as numeric; make it categorical,
+        # so a TRUE/FALSE column gives flag__True with False the reference
+        data = model_data.copy()
+        bool_columns = [c for c in data.columns if is_bool_column(data[c])]
+        for c in bool_columns:
+            data[c] = pandas.Categorical(data[c], categories=[False, True])
+
+        model = patsy_lite_to_patsy(formula, bool_columns)
+        logger.debug("translated formulaic formula: %s", model.describe())
+
+        # formulaic turns a value outside a level list into a missing value
+        # and drops its sample with a warning; report it as an error instead
+        for column, column_levels in model.levels.items():
+            if column in data:
+                unlisted = sorted(set(data[column].dropna()) - set(column_levels), key=str)
+                if unlisted:
+                    raise PatsyLiteParseError(
+                        f"Misspecified column in design, check term names. "
+                        f"{column} has the level(s) {', '.join(map(repr, unlisted))}, "
+                        f"which are not among the levels given: {column_levels}"
+                    )
 
         try:
-            self.lhs, self.rhs = dmatrices(model.describe(), model_data, return_type="dataframe")
-        except PatsyError as e:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", DataMismatchWarning)
+                matrices = formulaic.model_matrix(model.describe(), data)
+        except Exception as e:
             raise PatsyLiteParseError(
                 f"Misspecified column in design, check term names. {e.args}"
             ) from e
 
-        # patsy reorders the terms after calling dmatrices for some reason
-        # rearrange them back again to what was specified in the design
-        new_order = []
-        for term in model.rhs_termlist:
-            for col in self.rhs.columns:
-                if col.startswith(term.name()):
-                    new_order.append(col)
+        if not hasattr(matrices, "lhs"):
+            raise PatsyLiteParseError(
+                f"The design {self._formula!r} has no left hand side: name the outcome "
+                "(counts, or the column to model) before the ~"
+            )
 
-        self.rhs = self.rhs[new_order]
+        # columns come in formulaic's order (DETK-0049): the intercept, then
+        # terms by degree, each degree in the order written
+        self.lhs = pandas.DataFrame(matrices.lhs).astype("float64")
+        self.rhs = pandas.DataFrame(matrices.rhs).astype("float64")
 
-        # the patsy formula names are ugly and not very machine (or human)
-        # readable
-        # replace the patsy names with the patsy lite names
+        # formulaic's column names are ugly and not very machine (or
+        # human) readable; replace them with the patsy lite names
         def rename_model_cols(c):
             for k, v in model.name_map.items():
                 if k in c:
                     c = c.replace(k, v)
-            # categorical variables sometimes look like
-            # C(term, Treatment('cont'))[T.cont]
-            # replace [T.cont] -> __cont
+            # categorical variables look like
+            # C(term, Treatment('cont'))[T.case] or term[A] in an interaction
+            # replace [T.case] -> __case
             cat_match = r"\[(?:T\.)?(\w*)\]"
             if re.search(cat_match, c):
                 c = re.sub(cat_match, r"__\1", c)

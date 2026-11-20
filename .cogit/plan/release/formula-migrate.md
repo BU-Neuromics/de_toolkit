@@ -16,6 +16,8 @@ scope: [de_toolkit/patsy_lite.py, tests/patsy_lite/, docs/formulas.md, pyproject
 prev: [DETK-0024, DETK-0040, release/formula-pin, DETK-0080]
 issue: 78
 visited: 7812441
+status: done
+done: 81dc3db
 ---
 
 # Replace patsy with formulaic in patsy-lite
@@ -24,7 +26,7 @@ visited: 7812441
 
 - [x] @developer Port `patsy_lite.py` to formulaic as studied in DETK-0024 (bool to categorical, float cast, backtick quoting, term order, error wrapping) and fix the DETK-0040 mismatches with their pins, keeping its parser, its `__` names and its API; rewrite the translation test; swap patsy for formulaic in `pyproject.toml`, relock; drop the patsy wording in `docs/formulas.md` and correct its two examples (DETK-0040); CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR, including the formula-pin fixtures and the R-gated de tests in CI <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

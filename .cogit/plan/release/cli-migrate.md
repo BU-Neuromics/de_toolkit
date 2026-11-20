@@ -22,7 +22,7 @@ visited: 7812441
 ## Implementation plan
 
 - [x] @developer Build the shared pieces in `common.py` on argparse (the common options, the subcommand dispatch, the help sections and examples, the umbrella `detk`) and migrate `detk-norm` on them as the pattern; switch the cli-pin adapter; open the PR <!-- s1 -->
-- [ ] @reviewer Review the pattern before it is copied: cli-pin passes for detk-norm, help follows DETK-0025 Option B and reads well for an agent <!-- s2 -->
+- [x] @reviewer Review the pattern before it is copied: cli-pin passes for detk-norm, help follows DETK-0025 Option B and reads well for an agent <!-- s2 -->
 - [ ] @developer Migrate the other ten entry points with examples, harmonize metavars, fix the umbrella command, move the skill test to argparse (DETK-0010), regenerate the skill's usage blocks, remove docopt-ng and `test_docopt.py`, relock, CHANGELOG <!-- s3 -->
 - [ ] @reviewer Review the PR, including the R-gated tests in CI and the airway run <!-- s4 -->
 - [ ] @human Accept <!-- s5 -->

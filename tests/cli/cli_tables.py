@@ -144,6 +144,41 @@ _DE_SHARED = (
     Opt("--rda", None, "FILE"),
     Opt("--strict"),
 )
+# a design starting with "-" is the design, with options before or after
+# it, not an unknown option: the command then gives DETK-0190's message
+_DE_DASH_DESIGN = tuple(
+    Line(
+        argv,
+        {"design": design, "counts_fn": "counts.csv", "cov_fn": "cov.csv", **extra},
+        why,
+    )
+    for argv, design, extra, why in (
+        (
+            ("-2.5 ~ counts", "counts.csv", "cov.csv"),
+            "-2.5 ~ counts",
+            {},
+            "a design starting with - is the design",
+        ),
+        (
+            ("-2.5~counts", "counts.csv", "cov.csv"),
+            "-2.5~counts",
+            {},
+            "a design starting with - and without spaces is the design",
+        ),
+        (
+            ("-o", "out.csv", "-2.5 ~ counts", "counts.csv", "cov.csv", "--strict"),
+            "-2.5 ~ counts",
+            {"output": "out.csv", "strict": True},
+            "options parse before and after a design starting with -",
+        ),
+        (
+            ("-o~/out.csv", "-2.5 ~ counts", "counts.csv", "cov.csv"),
+            "-2.5 ~ counts",
+            {"output": "~/out.csv"},
+            "an option with its value attached is still the option, with a ~ in it",
+        ),
+    )
+)
 DE = Command(
     "detk-de",
     (
@@ -157,11 +192,20 @@ DE = Command(
                 Opt("--gene-wise-disp"),
                 Opt("--cores", None, "N", "none"),
             ),
+            lines=_DE_DASH_DESIGN,
+            bad=(
+                Bad(
+                    ("--bogus", "-2.5 ~ counts", "counts.csv", "cov.csv"),
+                    ("--bogus",),
+                    "an unknown option is still one beside a design starting with -",
+                ),
+            ),
         ),
         Sub(
             "firth",
             _DE_POS,
             _DE_SHARED + (Opt("--standardize"), Opt("--cores", None, "N", "none")),
+            lines=_DE_DASH_DESIGN,
         ),
     ),
 )
@@ -242,6 +286,16 @@ TRANSFORM = Command(
                     ("counts.csv", "--blind=True"),
                     {"counts_fn": "counts.csv", "blind": True},
                     "a blind rlog needs no design",
+                ),
+                Line(
+                    ("counts.csv", "-2.5 ~ counts", "--blind", "False", "cov.csv"),
+                    {
+                        "counts_fn": "counts.csv",
+                        "design": "-2.5 ~ counts",
+                        "cov_fn": "cov.csv",
+                        "blind": False,
+                    },
+                    "a design starting with - is the design",
                 ),
             ),
             bad=(

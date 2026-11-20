@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release/record, step: s1}
 applies: [release/record]
 issue: 107
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's delegation via the driver session, 2026-11-20: Option A, detk-de records its column data path (one-line de.py change); implements the accepted DETK-0061 within the 1.0 scope"}
 ---
 
 # detk-de records its column data file in the module JSON, so the crate links it (de.py, outside release/record's scope)

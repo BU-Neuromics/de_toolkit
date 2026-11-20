@@ -1,7 +1,7 @@
 import pytest
 import pandas
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from de_toolkit.filter import parse_filter_command, main
+from de_toolkit.filter import FilterCommandError, parse_filter_command, main
 from de_toolkit.common import CountMatrix
 from de_toolkit.common import main as detk_main
 
@@ -240,9 +240,9 @@ def test_parser(filter_count_obj):
     p = parse_filter_command("nonzero(cov[case]) == 0 and zero(cov[cont]) == 0")
     assert p(filter_count_obj) == {"gene05"}
 
-    # misspecified group value
-    with pytest.warns(UserWarning):
-        p = parse_filter_command("nonzero(cov[cse]) == 0")
+    # misspecified group value: an error naming it, not an empty selection
+    p = parse_filter_command("nonzero(cov[cse]) == 0")
+    with pytest.raises(FilterCommandError, match=r"group 'cse' of the column 'cov'.*case, cont"):
         p(filter_count_obj)
 
     p = parse_filter_command(

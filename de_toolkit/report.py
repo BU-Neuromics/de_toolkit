@@ -58,6 +58,7 @@ from importlib.resources import files as _pkg_files
 import jinja2
 import json
 import logging
+import math
 from pprint import pformat
 import numpy as np
 import os
@@ -78,7 +79,7 @@ from .common import (
     parse_cli,
     set_logging,
 )
-from .crate import CRATE_FILENAME, write_crate
+from .crate import CRATE_FILENAME, finite_json, write_crate
 from .report_specs import clean, view_for
 from .version import __version__
 
@@ -106,35 +107,34 @@ def _asset(*parts):
 
 
 class NumpyEncoder(json.JSONEncoder):
-    """Special json encoder for numpy types"""
+    """JSON encoder for module JSON: numpy scalars and arrays become their
+    Python values, and a non-finite number (NaN, inf, -inf), at any nesting
+    level, is written as null. The output is always strictly valid JSON: the
+    encoder runs with ``allow_nan=False``, so a bare ``NaN`` or ``Infinity``
+    can never be written (#116)."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs["allow_nan"] = False
+        super().__init__(*args, **kwargs)
 
     def default(self, obj):
-        if isinstance(
-            obj,
-            (
-                np.int_,
-                np.intc,
-                np.intp,
-                np.int8,
-                np.int16,
-                np.int32,
-                np.int64,
-                np.uint8,
-                np.uint16,
-                np.uint32,
-                np.uint64,
-            ),
-        ):
-            return int(obj)
-        elif isinstance(obj, (np.float16, np.float32, np.float64)):
-            return float(obj)
-        elif isinstance(obj, (np.ndarray,)):  #### This is the fix
-            return obj.tolist()
+        # finite_json has already turned numpy scalars and arrays into Python
+        # values; this is the fallback for anything reaching the encoder
+        # without it
+        if isinstance(obj, (np.integer, np.floating, np.bool_, np.ndarray)):
+            return finite_json(obj)
         return json.JSONEncoder.default(self, obj)
+
+    def iterencode(self, o, _one_shot=False):
+        # json.dump goes through iterencode, json.dumps through encode (which
+        # ends here for anything but a float, list or mapping)
+        return super().iterencode(finite_json(o), _one_shot)
 
     def encode(self, obj):
         if isinstance(obj, float):
-            return format(obj, ".3f").replace("nan", "NaN")
+            if not math.isfinite(obj):
+                return "null"
+            return format(obj, ".3f")
         elif isinstance(obj, (list, tuple)):
             return "[" + ", ".join(list(map(self.encode, obj))) + "]"
         elif isinstance(obj, Mapping):

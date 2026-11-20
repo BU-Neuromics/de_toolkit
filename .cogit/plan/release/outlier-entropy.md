@@ -6,6 +6,8 @@ acceptance:
   - the output rows are aligned to the input by feature name, not by position (today results_df.index = counts_obj.counts.index relabels the concatenation [non-zero, all-zero] positionally, so every feature after an all-zero one gets another feature's entropy); the output keeps the input's row order; a test with an all-zero feature in the middle checks each row's entropy against scipy.stats.entropy of that feature's counts, and a test checks the output index equals the input index
   - the -p meaning is unchanged here (DETK-0200, proposed on release/tutorial-airway, decides it); tests in tests/outlier/ through the Python API and the CLI; CHANGELOG under Fixed
 scope: [+de_toolkit/outlier.py, tests/outlier/, +CHANGELOG]
+issue: 123
+visited: 8628a94
 ---
 
 # detk-outlier entropy handles all-zero features and keeps each result on its feature

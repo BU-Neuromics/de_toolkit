@@ -188,6 +188,11 @@ predates everything below.
   pytest runner in `tests/tutorials/` runs each page's bash blocks in order
   and checks the outputs the page shows (DETK-0064); `docs/dev/tutorials.md`
   says how to write one (#83)
+- Tutorial: from quantifier outputs to a normalized matrix. Salmon
+  `quant.sf` files to a counts matrix, a sample sheet, CPM and TPM, a log
+  transform, summary statistics, the report and the crate, with no R, on
+  data simulated by a seeded script next to the page; it runs in every test
+  job (#100)
 
 ### Fixed
 - `detk-transform vst` and `detk-transform rlog` with `--rda FILE` write

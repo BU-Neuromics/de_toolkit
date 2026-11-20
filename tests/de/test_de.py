@@ -487,3 +487,29 @@ def test_firth_keeps_padded_ids(padded_ids_csvs, tmp_path):
         ]
     )
     assert _ids_as_written(out_fn) == PADDED_IDS
+
+
+# a design that cannot be built is a usage error saying only what is wrong,
+# before R runs; a design starting with "-" is the design (DETK-0190)
+@pytest.mark.parametrize(
+    "design, message",
+    [
+        ("counts ~ nope", "Invalid design: nope in the design is not a column"),
+        ("counts ~ group[z]", "Invalid design: group[z] in the design names the reference level"),
+        ("-2.5 ~ counts", "Invalid design: -2.5 in the design is a number"),
+        ("counts ~ group +", "Invalid design: could not read the design 'counts ~ group +'"),
+    ],
+)
+@pytest.mark.parametrize("sub", ["deseq2", "firth"])
+def test_de_cli_invalid_design_message(tmp_path, capsys, sub, design, message):
+    counts = tmp_path / "counts.csv"
+    counts.write_text("gene,s1,s2,s3,s4\ng1,1,2,3,4\ng2,5,6,7,8\n")
+    cov = tmp_path / "cov.csv"
+    cov.write_text("sample,group\ns1,a\ns2,a\ns3,b\ns4,b\n")
+    with pytest.raises(SystemExit) as e:
+        main(["detk-de", sub, "--no-report", design, str(counts), str(cov)])
+    assert e.value.code == 2
+    err = capsys.readouterr().err
+    assert f"detk-de {sub}: error: {message}" in err
+    assert "unrecognized arguments" not in err
+    assert "could not parse it" not in err

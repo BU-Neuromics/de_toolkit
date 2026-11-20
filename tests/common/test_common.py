@@ -1,7 +1,7 @@
 import os
 import pandas
 import pytest
-from de_toolkit.common import main, InvalidDesignException, DetkModule
+from de_toolkit.common import main, CountMatrix, InvalidDesignException, DetkModule
 
 
 def test_cli():
@@ -437,3 +437,41 @@ def test_gather_then_norm_keeps_padded_ids(tmp_path):
     lines = out_fn.read_text().splitlines()
     assert lines[0].split(",")[1:] == ["001", "002"]
     assert [line.split(",")[0] for line in lines[1:]] == ["007", "42", "0099"]
+
+
+# ------------------------------------------------- invalid design messages
+# A design formula syntax read but detk could not build says only what is
+# wrong ("Invalid design: <reason>"); one the syntax cannot read says so.
+_GROUPS = pandas.DataFrame({"group": ["a", "a", "b", "b"]}, index=["s1", "s2", "s3", "s4"])
+_COUNTS = pandas.DataFrame(
+    [[1, 2, 3, 4], [5, 6, 7, 8]], index=["g1", "g2"], columns=["s1", "s2", "s3", "s4"]
+)
+
+INVALID_DESIGNS = [
+    (
+        "counts ~ nope",
+        "Invalid design: nope in the design is not a column of the column data file "
+        "(its columns: group)",
+    ),
+    (
+        "counts ~ group[z]",
+        "Invalid design: group[z] in the design names the reference level 'z', "
+        "which group does not have (its values: a, b)",
+    ),
+    (
+        "-2.5 ~ counts",
+        "Invalid design: -2.5 in the design is a number, and formulas take column names",
+    ),
+    (
+        "counts ~ group +",
+        "Invalid design: could not read the design 'counts ~ group +': ",
+    ),
+]
+
+
+@pytest.mark.parametrize("design, message", INVALID_DESIGNS)
+def test_invalid_design_says_what_is_wrong(design, message):
+    with pytest.raises(InvalidDesignException) as e:
+        CountMatrix(_COUNTS.copy(), _GROUPS.copy(), design=design)
+    assert str(e.value).startswith(message)
+    assert "could not parse it" not in str(e.value)

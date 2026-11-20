@@ -230,8 +230,30 @@ class DetkParser(argparse.ArgumentParser):
         one of this parser's, as argparse matches them: exactly, by a
         prefix of a long option (``--outp`` for ``--output``), or by a short
         option with its value attached (``-oFILE``). An ambiguous prefix is
-        left to argparse to report.
+        left to argparse to report. A :meth:`value_word` is not an option.
         """
+        return self._not_an_option_of_ours(arg) and not self.value_word(arg)
+
+    def value_word(self, arg):
+        """
+        Whether the command line word *arg*, which starts with ``-``, is a
+        value and not an option: it is none of this parser's options and
+        holds a ``~`` or a space, as a design does (``'-2.5 ~ counts'``,
+        which then reaches the design's own message, DETK-0190). No option
+        name has either, and an option of this parser written with its value
+        attached (``-o~/out.csv``) is still that option.
+        """
+        return ("~" in arg or " " in arg) and self._not_an_option_of_ours(arg)
+
+    def _parse_optional(self, arg_string):
+        # argparse reads a word starting with "-" as an option unless it has
+        # a space; a value_word is a positional, with or without one
+        if self.value_word(arg_string):
+            return None
+        return super()._parse_optional(arg_string)
+
+    def _not_an_option_of_ours(self, arg):
+        "Whether *arg* looks like an option and matches none of this parser's"
         if not arg.startswith("-") or arg == "-" or self._negative_number_matcher.match(arg):
             return False
         names = self._option_string_actions
@@ -668,9 +690,11 @@ class CountMatrix:
             try:
                 self.design_matrix = DesignMatrix(design, self.column_data)
             except FormulaParseError as e:
+                # each FormulaParseError names its cause: a term that is not
+                # a column, a level the data lacks, a number-like term
+                # (DETK-0190), or formula syntax detk could not read
                 raise InvalidDesignException(
-                    "Invalid design, detk formula syntax could not parse it: "
-                    + "; ".join(str(a) for a in e.args)
+                    "Invalid design: " + "; ".join(str(a) for a in e.args)
                 ) from e
 
             # check if the full design matrix has lost any rows due to

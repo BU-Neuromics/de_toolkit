@@ -10,6 +10,8 @@ acceptance:
 from: [DETK-0064]
 scope: [new:docs/tutorials/, docs/example.md, docs/example/, examples/airway/, tests/example/, new:tests/tutorials/, +skills/detk/references/airway.md, +tests/skills/test_skills.py, +mkdocs.yml, +CHANGELOG]
 prev: [DETK-0064, release/tutorial-harness, release/cli-gaps, release/size-factors, release/formula-rename, release/r-design-names]
+issue: 111
+visited: 09ef1fd
 ---
 
 # Tutorial: differential expression on airway

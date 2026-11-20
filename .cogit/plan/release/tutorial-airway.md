@@ -18,7 +18,7 @@ visited: 09ef1fd
 
 ## Implementation plan
 
-- [ ] @developer Turn the airway example into the tutorial page with checked outputs and the DESeq2 comparison, retire the copies in run.sh and tests/example, regenerate the published report and crate; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Turn the airway example into the tutorial page with checked outputs and the DESeq2 comparison, retire the copies in run.sh and tests/example, regenerate the published report and crate; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Follow the page as a new user would, check its outputs against the report, and confirm the R job ran it <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

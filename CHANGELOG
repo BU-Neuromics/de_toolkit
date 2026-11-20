@@ -212,6 +212,14 @@ predates everything below.
   job (#100)
 
 ### Fixed
+- Module JSON (`detk_report/json/*.json`), the report's embedded payload
+  and `ro-crate-metadata.json` are strictly valid JSON: a missing or
+  non-finite number (NaN, inf, -inf) is written as `null`, where detk wrote
+  the bare tokens `NaN` and `inf` that jq, `JSON.parse` and other strict
+  readers reject (seen with a missing `--color-col` value, PCA and
+  `rowzero`). Serialization refuses a bare NaN or Infinity, the report's
+  views show the nulls as missing, and `detk-report` still re-renders a
+  report directory written before, with bare NaN in its module JSON (#116)
 - `detk-transform vst` and `detk-transform rlog` with `--rda FILE` write
   FILE, as their help says: the `DESeqTransform` object DESeq2 returns,
   with `saveRDS()`, as `detk-de deseq2 --rda` does. The option was accepted

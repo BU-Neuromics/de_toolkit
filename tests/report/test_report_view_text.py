@@ -411,3 +411,41 @@ def test_module_named_like_a_page_element_gets_another_id(tmp_path):
         assert page["ids"].count(n) == 1, n
     # registered modules keep their plain ids
     assert _card(page, "pca")["id"] == "pca"
+
+
+@needs_jsdom
+def test_views_with_null_values_render(tmp_path):
+    # a missing or non-finite number is null in module JSON (#116): the
+    # charts skip the point, kv values and table cells show it as missing,
+    # and the static chart leaves the point out
+    pytest.importorskip("matplotlib")
+    from de_toolkit.static_plots import MAX_INTERACTIVE_POINTS
+
+    big = _de_terms("t", MAX_INTERACTIVE_POINTS + 1)
+    big["de"]["terms"][0]["points"][0]["effect"] = None
+    small = _de_terms("t", 5)
+    small["de"]["terms"][0]["points"][1]["nlp"] = None
+    mods = [
+        _pca({"status": ["A", None, "B"]}),
+        _mod("basestats", {"num_rows": None, "num_cols": 3}),
+        _mod(
+            "rowzero",
+            {
+                "zeros": [
+                    {"num_zeros": 0, "num_features": 5, "feature_frac": 0.5, "mean": 2.0},
+                    {"num_zeros": 3, "num_features": None, "feature_frac": None, "mean": None},
+                ]
+            },
+        ),
+        _mod("deseq2counts", small),
+        _mod("flgcounts", big),
+    ]
+    mods[0]["properties"]["components"][0]["scores"][1] = None
+    page = _render(_write_report(tmp_path, mods))
+    _no_markup(page)
+
+    assert _card(page, "basestats")["vals"] == ["—", "3"]
+    assert _card(page, "pca")["vis"] == ["pca_vis"]
+    assert _card(page, "rowzero")["vis"]
+    assert _card(page, "deseq2counts")["vis"]
+    assert _card(page, "flgcounts")["svg"] is not None

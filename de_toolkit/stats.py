@@ -232,11 +232,6 @@ def build_parser():
                 nargs="?",
                 help="Column data file: samples in rows, covariates in columns",
             )
-            sub.add_argument(
-                "--column-data",
-                metavar="FILE",
-                help="DEPRECATED: pass the column data file as the positional <cov_fn> instead",
-            )
         if name == "summary":
             sub.add_argument(
                 "--color-col",
@@ -291,6 +286,8 @@ import sys
 import warnings
 
 from .common import (
+    cli_main,
+    option_value,
     DetkModule,
     DetkParser,
     add_command_options,
@@ -1138,6 +1135,7 @@ class CountPCA(DetkModule):
         }
 
 
+@cli_main
 def main(argv=sys.argv):
 
     args = parse_cli(build_parser(), argv)
@@ -1147,44 +1145,17 @@ def main(argv=sys.argv):
     logger.info("cmd: %s", " ".join(argv[1:]))
 
     if cmd == "pca":
-        if args.column_data is not None:
-            if args.cov_fn is not None:
-                logger.warning(
-                    "Both positional <cov_fn> argument and --column-data "
-                    "are provided, ignoring the --column-data argument."
-                )
-            else:
-                logger.warning(
-                    "The --column-data command line argument is deprecated. "
-                    "Use the optional [<cov_fn>] positional argument instead."
-                )
-
-                args.cov_fn = args.column_data
-
-        counts_obj = make_cli_count_obj(args)
         output = CountPCA(counts_obj)
-
     elif cmd == "summary":
-        if args.column_data is not None:
-            if args.cov_fn is not None:
-                logger.warning(
-                    "Both positional <cov_fn> argument and --column-data "
-                    "are provided, ignoring the --column-data argument."
-                )
-            else:
-                logger.warning(
-                    "The --column-data command line argument is deprecated. "
-                    "Use the optional [<cov_fn>] positional argument instead."
-                )
-
-                args.cov_fn = args.column_data
-
-        counts_obj = make_cli_count_obj(args)
-        output = summary(counts_obj, int(args.bins), args.log, args.density)
+        output = summary(counts_obj, option_value(args, "bins"), args.log, args.density)
     elif cmd == "coldist":
-        output = ColDist(counts_obj, bins=int(args.bins), log=args.log, density=args.density)
+        output = ColDist(
+            counts_obj, bins=option_value(args, "bins"), log=args.log, density=args.density
+        )
     elif cmd == "rowdist":
-        output = RowDist(counts_obj, bins=int(args.bins), log=args.log, density=args.density)
+        output = RowDist(
+            counts_obj, bins=option_value(args, "bins"), log=args.log, density=args.density
+        )
     elif cmd == "colzero":
         output = ColZero(counts_obj)
     elif cmd == "rowzero":
@@ -1230,7 +1201,7 @@ def main(argv=sys.argv):
                     out,
                     in_file_path=args.counts_fn,
                     out_file_path=args.output,
-                    column_data_path=getattr(args, "column_data", None),
+                    column_data_path=getattr(args, "cov_fn", None),
                     workdir=os.getcwd(),
                 )
     else:

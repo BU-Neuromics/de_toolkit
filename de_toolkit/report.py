@@ -69,6 +69,7 @@ import time
 from datetime import datetime, UTC
 
 from .common import (
+    cli_main,
     _PROCESS_START,
     DetkParser,
     add_command_options,
@@ -376,6 +377,7 @@ class DetkReport:
         self.write()
 
 
+@cli_main
 def main(argv=sys.argv):
 
     args = parse_cli(build_parser(), argv)

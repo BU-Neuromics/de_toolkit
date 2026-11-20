@@ -63,8 +63,8 @@ class Line:
 @dataclass(frozen=True)
 class Bad:
     """
-    A command line the command rejects: a non-zero exit with each of *names*
-    on stderr. *stage* is ``parse`` when the parser rejects it, ``run`` when
+    A command line the command rejects: exit 2, a usage error (DETK-0031),
+    with each of *names* on stderr. *stage* is ``parse`` when the parser rejects it, ``run`` when
     the command does, after parsing.
     """
 
@@ -227,19 +227,12 @@ FILTER = Command(
         Sub(
             None,
             (Pos("command"), COUNTS, Pos("cov_fn", optional=True)),
-            (
-                Opt("--output", "-o", "FILE", "stdout"),
-                Opt("--column-data", None, "FILE"),
-            ),
-            lines=(
-                Line(
+            (Opt("--output", "-o", "FILE", "stdout"),),
+            bad=(
+                Bad(
                     ("mean(all) > 10", "counts.csv", "--column-data=cov.csv"),
-                    {
-                        "command": "mean(all) > 10",
-                        "counts_fn": "counts.csv",
-                        "column_data": "cov.csv",
-                    },
-                    "deprecated --column-data parses (its warning is pinned in test_cli_behaviours)",
+                    ("--column-data",),
+                    "--column-data is removed; the column data is the positional <cov_fn> (DETK-0030)",
                 ),
             ),
         ),
@@ -263,13 +256,19 @@ STATS = Command(
             "summary",
             (COUNTS, Pos("cov_fn", optional=True)),
             (
-                Opt("--column-data", None, "FILE"),
                 Opt("--color-col", None, "COL"),
                 Opt("--bins", None, "N", "20"),
                 Opt("--log"),
                 Opt("--density"),
             )
             + _STATS_OUT,
+            bad=(
+                Bad(
+                    ("counts.csv", "--column-data=cov.csv"),
+                    ("--column-data",),
+                    "--column-data is removed; the column data is the positional <cov_fn> (DETK-0030)",
+                ),
+            ),
         ),
         Sub(
             "basestats",
@@ -291,7 +290,14 @@ STATS = Command(
         Sub(
             "pca",
             (COUNTS, Pos("cov_fn", optional=True)),
-            (Opt("--column-data", None, "FILE"),) + _STATS_OUT,
+            _STATS_OUT,
+            bad=(
+                Bad(
+                    ("counts.csv", "--column-data=cov.csv"),
+                    ("--column-data",),
+                    "--column-data is removed; the column data is the positional <cov_fn> (DETK-0030)",
+                ),
+            ),
         ),
     ),
 )

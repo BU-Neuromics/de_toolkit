@@ -129,6 +129,8 @@ from pprint import pformat
 import sys
 import os
 from .common import (
+    cli_main,
+    option_value,
     DetkModule,
     DetkParser,
     InvalidDesignException,
@@ -623,6 +625,7 @@ def t_test(count_obj):
     pass
 
 
+@cli_main
 def main(argv=sys.argv):
 
     args = parse_cli(build_parser(), argv)
@@ -630,33 +633,29 @@ def main(argv=sys.argv):
     set_logging(args)
     logger.info("cmd: %s", " ".join(argv[1:]))
 
+    cores = option_value(args, "cores") if args.cores != "none" else None
     count_obj = make_cli_count_obj(args)
 
-    try:
-        cores = int(args.cores) if args.cores != "none" else None
-        if cmd == "deseq2":
-            logger.info("running DESeq2")
-            out = DESeq2Counts(
-                count_obj,
-                normalized=args.norm_counts,
-                rda=args.rda,
-                all_coeff_results=not args.last_term_only,
-                gene_wise_disp_est=args.gene_wise_disp,
-                cores=cores,
-                routput_dir=args.routput_dir,
-            )
-        elif cmd == "firth":
-            logger.info("running Firth logistic regression")
-            out = FLGCounts(
-                count_obj,
-                rda=args.rda,
-                standardize=args.standardize,
-                cores=cores,
-                routput_dir=args.routput_dir,
-            )
-    except Exception as e:
-        logger.error(e)
-        sys.exit(1)
+    if cmd == "deseq2":
+        logger.info("running DESeq2")
+        out = DESeq2Counts(
+            count_obj,
+            normalized=args.norm_counts,
+            rda=args.rda,
+            all_coeff_results=not args.last_term_only,
+            gene_wise_disp_est=args.gene_wise_disp,
+            cores=cores,
+            routput_dir=args.routput_dir,
+        )
+    elif cmd == "firth":
+        logger.info("running Firth logistic regression")
+        out = FLGCounts(
+            count_obj,
+            rda=args.rda,
+            standardize=args.standardize,
+            cores=cores,
+            routput_dir=args.routput_dir,
+        )
 
     write_output(out.output, args)
 

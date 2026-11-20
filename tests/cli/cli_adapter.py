@@ -78,8 +78,12 @@ class Outcome:
     parsed: Parsed | None = field(default=None)
 
 
-class _Dispatch(Exception):
-    "Raised in place of a module's parser returning, to stop ``main`` there"
+class _Dispatch(BaseException):
+    """
+    Raised in place of a module's parser returning, to stop ``main`` there;
+    a BaseException, so that ``common.cli_main`` (which turns an Exception
+    into exit 1) lets it through
+    """
 
     def __init__(self, parsed):
         self.parsed = parsed

@@ -132,6 +132,7 @@ from pprint import pformat
 import sys
 import os
 from .common import (
+    cli_main,
     DetkModule,
     DetkParser,
     add_command_options,
@@ -563,6 +564,7 @@ def custom_norm(count_mat, factors):
     pass
 
 
+@cli_main
 def main(argv=sys.argv):
 
     args = parse_cli(build_parser(), argv)
@@ -572,59 +574,31 @@ def main(argv=sys.argv):
     logger.info("cmd: %s", " ".join(argv[1:]))
 
     if cmd == "deseq2":
-        try:
-            out = DESeq2Norm(count_obj)
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+        out = DESeq2Norm(count_obj)
 
     elif cmd == "library":
-        try:
-            out = LibrarySize(count_obj.counts)
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+        out = LibrarySize(count_obj.counts)
 
     elif cmd == "fpkm":
         # the lengths_fn is assumed to be a file with two columns
         # ID<delim>int
         # providing the lengths that should be used for each ID in the counts
         # file
-        try:
-            lengths = read_lengths(args.lengths_fn)
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+        lengths = read_lengths(args.lengths_fn)
 
-        try:
-            out = FPKMCounts(count_obj.counts, lengths)
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+        out = FPKMCounts(count_obj.counts, lengths)
 
     elif cmd == "cpm":
-        try:
-            out = CPMCounts(count_obj.counts)
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+        out = CPMCounts(count_obj.counts)
 
     elif cmd == "tpm":
-        try:
-            lengths = read_lengths(args.lengths_fn)
-            out = TPMCounts(count_obj.counts, lengths)
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+        lengths = read_lengths(args.lengths_fn)
+        out = TPMCounts(count_obj.counts, lengths)
 
     # the size factors first, so an unwritable path stops the command before
     # any normalized counts are written
     if cmd == "deseq2" and args.size_factors:
-        try:
-            out.write_size_factors(args.size_factors)
-        except OSError as e:
-            logger.error(e)
-            sys.exit(1)
+        out.write_size_factors(args.size_factors)
 
     write_output(out.output, args)
 

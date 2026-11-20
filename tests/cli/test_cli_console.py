@@ -33,6 +33,6 @@ def test_console_rejects_unknown_option_like_entry_point(command, tmp_path):
     argv = (command.prog,) + ((sub.name,) if sub.name else ()) + ("--bogus-option",)
     console = cli_adapter.run_console(argv, cwd=tmp_path)
     in_process = cli_adapter.invoke(argv)
-    assert console.code != 0 and in_process.code != 0
+    assert console.code == in_process.code == 2
     assert "--bogus-option" in console.stderr
     assert console.stdout == ""

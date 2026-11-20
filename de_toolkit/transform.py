@@ -120,6 +120,8 @@ import numpy
 from pprint import pformat
 import sys
 from .common import (
+    cli_main,
+    option_value,
     DetkModule,
     DetkParser,
     add_command_options,
@@ -396,6 +398,7 @@ def ruvseq(count_obj):
     pass
 
 
+@cli_main
 def main(argv=sys.argv):
 
     args = parse_cli(build_parser(), argv)
@@ -409,20 +412,16 @@ def main(argv=sys.argv):
         out = VstCounts(count_obj)
 
     elif cmd == "plog":
-        try:
-            out = PlogCounts(count_obj, pseudocount=float(args.pseudocount), base=float(args.base))
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+        out = PlogCounts(
+            count_obj,
+            pseudocount=option_value(args, "pseudocount", float),
+            base=option_value(args, "base", float),
+        )
 
     elif cmd == "rlog":
         blind = True if args.blind is None else args.blind
 
-        try:
-            out = RlogCounts(count_obj, blind=blind)
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+        out = RlogCounts(count_obj, blind=blind)
 
     write_output(out.output, args)
 

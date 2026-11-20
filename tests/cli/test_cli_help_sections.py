@@ -77,7 +77,8 @@ NEEDS_R = {
 
 def _help_params():
     "(prog, subcommand or None) for every command and subcommand"
-    params = []
+    # detk's own command with arguments (the module commands are the tables')
+    params = [pytest.param("detk", "completion", id="detk-completion")]
     for prog in PROGS:
         params.append(pytest.param(prog, None, id=prog))
         command = next((c for c in COMMANDS if c.prog == prog), None)
@@ -164,7 +165,9 @@ def test_command_help_examples_parse(prog):
     # the examples a command's own help lists (for a command with
     # subcommands, each subcommand's, and detk's own)
     for _, argv in cli_adapter.examples(prog):
-        if argv[-1] in ("-h", "--help"):
+        if argv[-1] in ("-h", "--help") or argv[0] == "detk":
+            # detk's own commands (help, completion) run in detk itself,
+            # which has no dispatch point to stop at
             assert cli_adapter.invoke(argv).code == 0
         else:
             cli_adapter.parse(argv)

@@ -154,6 +154,13 @@ predates everything below.
   (`mean(cond[a]) > 1`), which its expression language rejected
 
 ### Added
+- Shell completion for bash, zsh and tcsh, for `detk` and every
+  `detk-<command>` with their subcommands, options, choices and file
+  arguments (DETK-0032). The scripts are generated from the command line
+  parsers by shtab and ship with detk; `detk completion <shell>` prints one
+  (`eval "$(detk completion bash)"` in `~/.bashrc`; `detk completion --help`
+  says how to load each). shtab is a development dependency only, and a test
+  fails when the shipped scripts fall behind the parsers
 - Versioned module JSON schema for report data
 - Process Run Crate (RO-Crate) provenance for CLI runs
 - `detk-norm cpm` (counts per million) and `detk-norm tpm` (transcripts per

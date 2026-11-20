@@ -986,7 +986,8 @@ def build_parser():
     parser = DetkParser(
         prog="detk",
         description=__doc__.split("\n\n")[0].strip(),
-        usage="\n".join(f"detk {cmd} ..." for cmd in MODULE_COMMANDS) + "\ndetk help",
+        usage="\n".join(f"detk {cmd} ..." for cmd in MODULE_COMMANDS)
+        + "\ndetk completion <shell>\ndetk help",
         examples=[
             ("Normalize counts.csv with DESeq2 size factors", "detk norm deseq2 counts.csv"),
             ("The help of one command", "detk norm --help"),
@@ -1001,9 +1002,51 @@ def build_parser():
     )
     for cmd, line in MODULE_COMMANDS.items():
         subs.add_parser(cmd, help=line, add_help=False)
+    completion = subs.add_parser(
+        "completion",
+        # argparse would build its prog from detk's usage, which lists every command
+        prog="detk completion",
+        help="Print the shell completion script for bash, zsh or tcsh",
+        description=COMPLETION_DESCRIPTION,
+        examples=[
+            ("Print the bash completion script", "detk completion bash"),
+            ("Print the tcsh completion script", "detk completion tcsh"),
+        ],
+    )
+    completion.add_argument(
+        "shell",
+        metavar="<shell>",
+        choices=COMPLETION_SHELLS,
+        help="The shell to print the completion script for",
+    )
     subs.add_parser("help", help="Print this help", add_help=False)
     add_command_options(parser, "command")
     return parser
+
+
+# shell completion (DETK-0032): scripts for every detk command, generated from
+# the parsers by shtab when detk is built (de_toolkit/completions/_generate.py)
+# and shipped in the package; ``detk completion <shell>`` prints one, so a user
+# needs no shtab
+COMPLETION_SHELLS = ("bash", "zsh", "tcsh")
+
+COMPLETION_DESCRIPTION = """\
+Print the shell completion script for every detk command (detk and each
+detk-<command>) on stdout. Load it in the shell's startup file:
+
+  bash   eval "$(detk completion bash)"         in ~/.bashrc
+  zsh    eval "$(detk completion zsh)"          in ~/.zshrc, after compinit
+  tcsh   detk completion tcsh > ~/.detk.tcsh    once, then in ~/.tcshrc:
+         source ~/.detk.tcsh
+
+The scripts ship with detk; printing one needs nothing else installed."""
+
+
+def completion_script(shell):
+    "The shipped completion script for *shell* (one of COMPLETION_SHELLS), as text"
+    from importlib.resources import files
+
+    return (files("de_toolkit.completions") / f"detk.{shell}").read_text()
 
 
 @cli_main
@@ -1024,6 +1067,8 @@ def main(argv=sys.argv):
     args = parse_cli(parser, argv)
     if args.command == "help":
         parser.print_help()
+    elif args.command == "completion":
+        sys.stdout.write(completion_script(args.shell))
 
 
 if __name__ == "__main__":

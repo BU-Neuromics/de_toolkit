@@ -60,3 +60,37 @@ def test_umbrella_rejects(rest):
 
 def test_umbrella_help_lists_every_module_command():
     assert set(UMBRELLA.help_lists) == {c.module for c in COMMANDS}
+
+
+# --------------------------------------------- detk completion (DETK-0032)
+@pytest.mark.parametrize("shell", ["bash", "zsh", "tcsh"])
+def test_completion_prints_the_shipped_script(shell):
+    from de_toolkit.common import completion_script
+
+    outcome = cli_adapter.invoke(("detk", "completion", shell))
+    assert outcome.code == 0, outcome.stderr
+    assert outcome.stdout == completion_script(shell)
+    assert outcome.stderr == ""
+
+
+@pytest.mark.parametrize(
+    "rest,name",
+    [
+        (("completion",), "shell"),
+        (("completion", "fish"), "fish"),
+        (("completion", "bash", "zsh"), "zsh"),
+        (("completion", "--bogus-option", "bash"), "--bogus-option"),
+    ],
+)
+def test_completion_rejects(rest, name):
+    outcome = cli_adapter.invoke(("detk",) + rest)
+    assert outcome.code == 2
+    assert outcome.stdout == ""
+    assert outcome.stderr.startswith("usage: detk completion ")
+    assert name in outcome.stderr
+
+
+def test_completion_is_listed_in_detk_help():
+    outcome = cli_adapter.invoke(("detk", "--help"))
+    assert "detk completion <shell>" in outcome.stdout
+    assert "  completion " in outcome.stdout

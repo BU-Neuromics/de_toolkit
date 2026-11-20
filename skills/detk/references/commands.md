@@ -26,6 +26,13 @@ input, a missing R or R package, a failing step). A failure's cause is the
 last line on stderr, `<command>: error: <cause>`; `--verbose` adds the
 traceback above it.
 
+Shell completion for bash, zsh and tcsh ships with detk; this prints the
+bash script and loads it (the command's `--help` says how to load each):
+
+```text
+eval "$(detk completion bash)"
+```
+
 Most commands write their table to stdout unless given `-o FILE`, and log to
 stderr. Each run also writes a JSON document under `<report-dir>/json/`
 unless `--no-report` is given.

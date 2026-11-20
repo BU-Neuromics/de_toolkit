@@ -482,19 +482,47 @@ class Tidy(DetkModule):
 def read_column_data(f):
     """
     Read the column data (sample information) file *f*, samples in rows,
-    indexed by its first column, every value as text exactly as written
-    (empty cells stay empty), so the tidied file is written as it was read.
+    indexed by its first column, every field (the IDs too) as text exactly as
+    written (empty cells stay empty), so the tidied file is written as it was
+    read. The header may name the ID column (``sample,condition``), leave it
+    empty (``,condition``, R's write.csv) or leave it out, one field short
+    (``condition``, R's write.table with ``sep=","``); the index is named by
+    the header's first cell in the first case only.
     """
-    table = read_delimited(f, dtype=str, keep_default_na=False)
-    if not isinstance(table.index, pandas.RangeIndex):
-        # a header one field short: pandas took the first column as the index
-        return table
-    # pandas types an index_col, so the IDs are made the index after reading
-    first = table.columns[0]
-    table = table.set_index(first)
-    if str(first).startswith("Unnamed: "):
-        # an empty first header cell stays empty
-        table.index.name = None
+    from pandas.errors import EmptyDataError
+
+    from .common import _first_line, _read_with, _rewindable, sniff_delimiter
+
+    # every line is read as fields of text, the header too, so pandas types
+    # nothing: an index pandas infers from a short header would be typed
+    # (001 read as 1), so the layout is told from the field counts instead
+    f, compression = _rewindable(f)
+    sep = sniff_delimiter(_first_line(f, compression))
+
+    def read(**kwargs):
+        return _read_with(
+            f, compression, sep, header=None, dtype=str, keep_default_na=False, **kwargs
+        )
+
+    header = read(nrows=1).iloc[0].tolist()
+    try:
+        width = read(skiprows=1, nrows=1).shape[1]
+    except EmptyDataError:
+        width = len(header)
+    short = width == len(header) + 1
+    if not short and width != len(header):
+        raise ValueError(
+            f"the header of the column data has {len(header)} fields and its first "
+            f"row {width}; they must be as many, or the header one fewer"
+        )
+    try:
+        rows = read(skiprows=1, names=list(range(width)))
+    except EmptyDataError:
+        rows = pandas.DataFrame(columns=list(range(width)), dtype=str)
+
+    table = rows.iloc[:, 1:]
+    table.index = pandas.Index(rows[0].to_numpy(), name=None if short else (header[0] or None))
+    table.columns = header if short else header[1:]
     return table
 
 

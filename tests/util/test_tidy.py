@@ -103,6 +103,37 @@ def test_an_unnamed_first_header_cell_stays_unnamed(work):
     assert lines(work / "s.csv") == [",condition", "S1,a", "S2,b", "S3,a"]
 
 
+@pytest.mark.parametrize("ids", [("001", "002"), ("1", "3")])
+def test_a_short_header_sheet_with_numeric_looking_ids(work, ids):
+    # R's write.table(sep=","): no header cell over the row names
+    a, b = ids
+    (work / "counts.csv").write_text(f"gene,{a},{b},S3,P1\ng1,1,2,3,4\n")
+    (work / "samples.csv").write_text(
+        f'"condition","dose"\n"{b}","treat",""\n"{a}","ctrl","1.50"\n'
+    )
+    main(
+        [
+            "detk-util",
+            "tidy",
+            "--no-report",
+            "-o",
+            "c.csv",
+            "-p",
+            "s.csv",
+            "counts.csv",
+            "samples.csv",
+        ]
+    )
+    assert lines(work / "c.csv") == [f"gene,{a},{b}", "g1,1,2"]
+    assert lines(work / "s.csv") == [",condition,dose", f"{a},ctrl,1.50", f"{b},treat,"]
+
+
+def test_a_header_neither_as_long_nor_one_short_is_an_error(work):
+    (work / "samples.csv").write_text("condition\nS1,a,b\nS2,a,b\n")
+    with pytest.raises(SystemExit):
+        main(["detk-util", "tidy", "--no-report", "-o", "c.csv", "counts.csv", "samples.csv"])
+
+
 def test_the_out_delimiter_applies_to_the_sheet(work):
     main(
         ["detk-util", "tidy", "--no-report", "-d", "\t", "-o", "c.tsv", "-p", "s.tsv"]

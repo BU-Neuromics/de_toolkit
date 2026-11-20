@@ -124,6 +124,8 @@ import tempfile
 import sys
 import warnings
 from .common import (
+    cli_main,
+    option_value,
     DetkModule,
     DetkParser,
     add_command_options,
@@ -472,6 +474,7 @@ def read_result_stat(result_fn, idcol=0, statcol=None):
     return stat
 
 
+@cli_main
 def main(argv=sys.argv):
 
     args = parse_cli(build_parser(), argv)
@@ -481,26 +484,12 @@ def main(argv=sys.argv):
     # fgsea, the only subcommand
     logger.info("reading in GMT file %s", args.gmt_fn)
     gmt = GMT()
-    try:
-        gmt.load_file(args.gmt_fn)
-    except Exception as e:
-        logger.error(e)
-        sys.exit(1)
+    gmt.load_file(args.gmt_fn)
 
     logger.info("reading in results file %s", args.result_fn)
-    try:
-        stat = read_result_stat(args.result_fn, idcol=args.idcol, statcol=args.statcol)
-    except Exception as e:
-        logger.error(e)
-        sys.exit(1)
+    stat = read_result_stat(args.result_fn, idcol=args.idcol, statcol=args.statcol)
 
-    cores = args.cores
-    if cores is not None:
-        try:
-            cores = int(cores)
-        except ValueError:
-            logger.error(Exception("The cores argument to fgsea must be an integer"))
-            sys.exit(1)
+    cores = None if args.cores is None else option_value(args, "cores")
 
     if args.abs:
         logger.info("taking absolute value of statistic column due to --abs")
@@ -510,22 +499,18 @@ def main(argv=sys.argv):
         logger.info("sorting statistic into ascending order due to --ascending")
         stat = -stat
 
-    try:
-        out = FGSEARes(
-            gmt,
-            stat,
-            minSize=int(args.minSize),
-            maxSize=int(args.maxSize),
-            nperm=int(args.nperm),
-            multilevel=args.multilevel,
-            nproc=cores,
-            filter_unannotated=args.filter_unannotated,
-            rda_fn=args.rda,
-            routput_dir=args.routput_dir,
-        )
-    except Exception as e:
-        logger.error(e)
-        sys.exit(1)
+    out = FGSEARes(
+        gmt,
+        stat,
+        minSize=option_value(args, "minSize"),
+        maxSize=option_value(args, "maxSize"),
+        nperm=option_value(args, "nperm"),
+        multilevel=args.multilevel,
+        nproc=cores,
+        filter_unannotated=args.filter_unannotated,
+        rda_fn=args.rda,
+        routput_dir=args.routput_dir,
+    )
 
     write_output(out.output, args)
 

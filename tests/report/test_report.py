@@ -140,7 +140,7 @@ def test_report_generate(tmp_path):
                 f"all_mRNA_nonzero_{kind}_counts_trim.csv",
                 "-o",
                 f"{kind}_summary_stats.csv",
-                "--column-data=sample_info.csv",
+                "sample_info.csv",
             ],
             cwd,
         )

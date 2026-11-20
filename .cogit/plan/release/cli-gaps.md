@@ -9,18 +9,22 @@ acceptance:
   - 'the skill''s usage blocks and DETK-0010''s test still pass, and skills/detk/references/commands.md states the exit codes'
 from: [DETK-0025, DETK-0030, DETK-0031, DETK-0032]
 scope: [de_toolkit/common.py, de_toolkit/norm.py, de_toolkit/de.py, de_toolkit/enrich.py, de_toolkit/transform.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolkit/outlier.py, de_toolkit/wrapr.py, de_toolkit/report.py, de_toolkit/util.py, de_toolkit/completions/, tests/cli/, tests/filter/, tests/stats/, +tests/report/test_report.py, tests/completion/, skills/detk/references/commands.md, pyproject.toml, uv.lock, +CHANGELOG]
-prev: [DETK-0030, DETK-0031, DETK-0032, release/cli-migrate, release/statsmodels-test]
+prev: [DETK-0030, DETK-0031, DETK-0032, release/cli-migrate, release/statsmodels-test, DETK-0150, DETK-0151]
+issue: 95
+visited: 60769b2
+status: done
+done: 95f510e
 ---
 
 # Close the remaining CLI gaps
 
 ## Implementation plan
 
-- [ ] @developer Remove every deprecated `--column-data` (detk-filter, detk-stats summary and pca; DETK-0030); route every failure through one handler giving 0/2/1 with a one-line stderr cause (DETK-0031), help epilogs, cli-pin rows; open the PR <!-- s1 -->
-- [ ] @reviewer Review the exit codes and messages from an agent's side: each failure class gives its code and a cause to act on <!-- s2 -->
-- [ ] @developer Generate bash, zsh and tcsh completion with shtab at build time, ship the scripts and the command that prints them, add the regenerate-and-compare test; CHANGELOG <!-- s3 -->
-- [ ] @reviewer Review the PR <!-- s4 -->
-- [ ] @human Accept <!-- s5 -->
+- [x] @developer Remove every deprecated `--column-data` (detk-filter, detk-stats summary and pca; DETK-0030); route every failure through one handler giving 0/2/1 with a one-line stderr cause (DETK-0031), help epilogs, cli-pin rows; open the PR <!-- s1 -->
+- [x] @reviewer Review the exit codes and messages from an agent's side: each failure class gives its code and a cause to act on <!-- s2 -->
+- [x] @developer Generate bash, zsh and tcsh completion with shtab at build time, ship the scripts and the command that prints them, add the regenerate-and-compare test; CHANGELOG <!-- s3 -->
+- [x] @reviewer Review the PR <!-- s4 -->
+- [x] @human Accept <!-- s5 -->
 
 ## Notes
 

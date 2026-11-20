@@ -10,6 +10,7 @@ matrix and the module base class.
 """
 
 import argparse
+import functools
 from collections import OrderedDict
 from copy import deepcopy
 import csv
@@ -19,6 +20,7 @@ import os
 import pandas
 from pprint import pformat
 import sys
+import traceback
 import warnings
 from .formula import DesignMatrix, FormulaParseError
 from .version import __version__
@@ -44,6 +46,7 @@ logger.addHandler(logging.NullHandler())
 #   options              the command's own options, -h first
 #   common options       the options every detk command shares
 #   examples             at least one command line per subcommand
+#   exit codes           0 success, 2 usage error, 1 any other failure (DETK-0031)
 #
 # Every option states its metavar, default and choices, so that an agent
 # reading --help has the facts in the same places for every command.
@@ -131,6 +134,8 @@ class DetkParser(argparse.ArgumentParser):
         self, *args, examples=(), validate=None, intermixed=False, add_help=True, **kwargs
     ):
         kwargs.setdefault("formatter_class", DetkHelpFormatter)
+        # every command's help ends with its exit codes (DETK-0031)
+        kwargs.setdefault("epilog", EXIT_CODES_EPILOG)
         super().__init__(*args, add_help=False, **kwargs)
         self.examples = list(examples)
         # validate(args) returns an error message for a combination of
@@ -139,7 +144,10 @@ class DetkParser(argparse.ArgumentParser):
         self.validate = validate
         # intermixed: positionals may come between options (detk-util
         # gather's ``a.sf --format=salmon b.sf``, as docopt allowed); plain
-        # argparse gives a positional only one run of the command line
+        # argparse gives a positional only one run of the command line. A
+        # leaf parser with an optional positional is always intermixed (see
+        # _parses_intermixed), so Python 3.11 takes ``counts.csv -o out.csv
+        # cov.csv`` as 3.12+ and docopt do (DETK-0151)
         self.intermixed = intermixed
         self._intermixing = False
         if add_help:
@@ -148,8 +156,23 @@ class DetkParser(argparse.ArgumentParser):
         self.register("action", None, _StoreOnce)
         self.register("action", "store_true", _StoreTrueOnce)
 
+    def _parses_intermixed(self):
+        """
+        Whether this parser parses its options and positionals in two
+        passes: when asked to, and for a leaf parser (no subcommands) with an
+        optional positional, which Python 3.11's argparse gives only the run
+        of positionals before the first option (DETK-0151)
+        """
+        if self.intermixed:
+            return True
+        if self._subcommands() is not None:
+            return False
+        return any(
+            not action.option_strings and action.nargs in ("?", "*") for action in self._actions
+        )
+
     def parse_known_args(self, args=None, namespace=None):
-        if self.intermixed and not self._intermixing:
+        if self._parses_intermixed() and not self._intermixing:
             # parse_known_intermixed_args calls back here
             self._intermixing = True
             try:
@@ -246,6 +269,8 @@ class DetkParser(argparse.ArgumentParser):
             for what, command in examples:
                 lines += [f"  # {what}", f"  {command}"]
             sections.append("\n".join(lines) + "\n")
+        if self.epilog:
+            sections.append(self.epilog.strip("\n") + "\n")
         return "\n".join(sections)
 
     def error(self, message):
@@ -357,7 +382,112 @@ def parse_cli(parser, argv):
         message = leaf.validate(namespace)
         if message:
             leaf.error(message)
+    # what cli_main needs to report a failure after parsing: the parser whose
+    # usage a usage error shows, and whether --verbose asked for tracebacks
+    _CLI_STATE.update(parser=leaf, verbose=bool(getattr(namespace, "verbose", False)))
     return namespace
+
+
+# ---------------------------------------------------------------- exit codes
+#
+# DETK-0031: every detk command exits
+#
+#   0  on success
+#   2  on a usage error: argparse's own (DetkParser.error), and a check detk
+#      makes after parsing (UsageError, InvalidDesignException)
+#   1  on any other failure: a bad input file, a missing R or R package, a
+#      step that fails
+#
+# A failure prints one line on stderr, "<command>: error: <cause>"; the
+# traceback is printed before it only under --verbose. cli_main is the one
+# place that turns an exception into an exit code.
+
+EXIT_SUCCESS = 0
+EXIT_FAILURE = 1
+EXIT_USAGE = 2
+
+EXIT_CODES_EPILOG = (
+    "exit codes:\n"
+    "  0  success\n"
+    "  2  usage error: the command line is wrong (see the usage above)\n"
+    "  1  any other failure: bad input, a missing R or R package, a failing step;\n"
+    "     the cause is the last line on stderr (--verbose adds the traceback)"
+)
+
+# set by parse_cli for cli_main
+_CLI_STATE = {}
+
+
+class UsageError(Exception):
+    """
+    A command line detk rejects after parsing it, for a reason argparse
+    cannot check: exits 2 with the command's usage, like an argparse error.
+    """
+
+
+def option_value(args, dest, kind=int):
+    """
+    The value of the option *dest* in *args* converted with *kind* (int or
+    float); a value that does not convert is a :class:`UsageError` naming
+    the option, as argparse names one.
+    """
+    value = getattr(args, dest)
+    try:
+        return kind(value)
+    except (TypeError, ValueError):
+        names = [f"--{dest.replace('_', '-')}"]
+        parser = _CLI_STATE.get("parser")
+        if parser is not None:
+            for action in parser._actions:
+                if action.dest == dest and action.option_strings:
+                    names = action.option_strings
+        raise UsageError(
+            f"argument {'/'.join(names)}: invalid {kind.__name__} value: {value!r}"
+        ) from None
+
+
+def one_line(exc):
+    "The cause of the exception *exc* on one line: its message's first line, else its type"
+    lines = [line.strip() for line in str(exc).splitlines() if line.strip()]
+    return lines[0] if lines else type(exc).__name__
+
+
+def cli_main(main):
+    """
+    Decorate a command's ``main(argv)`` with the exit codes of DETK-0031:
+    a :class:`UsageError` or :class:`InvalidDesignException` exits 2 with the
+    usage, any other exception exits 1 with its cause on one line of stderr
+    (and its traceback first under ``--verbose``). ``SystemExit`` passes
+    through: argparse's usage errors already exit 2, help and version 0.
+    """
+
+    @functools.wraps(main)
+    def wrapper(argv=None):
+        argv = list(sys.argv if argv is None else argv)
+        _CLI_STATE.clear()
+        try:
+            return main(argv)
+        except (UsageError, InvalidDesignException) as e:
+            parser = _CLI_STATE.get("parser")
+            if _CLI_STATE.get("verbose"):
+                traceback.print_exc()
+            if parser is not None:
+                parser.error(one_line(e))
+            prog = os.path.basename(argv[0]) if argv else "detk"
+            sys.stderr.write(f"{prog}: error: {one_line(e)}\n")
+            sys.exit(EXIT_USAGE)
+        except Exception as e:
+            prog = os.path.basename(argv[0]) if argv else "detk"
+            if _CLI_STATE.get("verbose"):
+                traceback.print_exc()
+                hint = ""
+            else:
+                hint = " (--verbose for the traceback)"
+            sys.stdout.flush()
+            sys.stderr.write(f"{prog}: error: {one_line(e)}{hint}\n")
+            sys.exit(EXIT_FAILURE)
+
+    return wrapper
 
 
 banner = rf"""
@@ -394,13 +524,9 @@ def make_cli_count_obj(args):
     counts_fn, cov_fn, design = (getattr(args, n, None) for n in ("counts_fn", "cov_fn", "design"))
     logger.info("constructing counts matrix from %s and %s", counts_fn, cov_fn)
     logger.info("design is %s", design)
-    try:
-        count_obj = CountMatrixFile(
-            counts_fn, cov_fn, design=design, strict=getattr(args, "strict", False)
-        )
-    except Exception as e:
-        logger.error(e)
-        sys.exit(1)
+    count_obj = CountMatrixFile(
+        counts_fn, cov_fn, design=design, strict=getattr(args, "strict", False)
+    )
 
     logger.info("counts matrix created successfully")
 
@@ -526,7 +652,8 @@ class CountMatrix:
                 self.design_matrix = DesignMatrix(design, self.column_data)
             except FormulaParseError as e:
                 raise InvalidDesignException(
-                    f"Invalid design, detk formula syntax could not parse {e.args}"
+                    "Invalid design, detk formula syntax could not parse it: "
+                    + "; ".join(str(a) for a in e.args)
                 ) from e
 
             # check if the full design matrix has lost any rows due to
@@ -859,7 +986,8 @@ def build_parser():
     parser = DetkParser(
         prog="detk",
         description=__doc__.split("\n\n")[0].strip(),
-        usage="\n".join(f"detk {cmd} ..." for cmd in MODULE_COMMANDS) + "\ndetk help",
+        usage="\n".join(f"detk {cmd} ..." for cmd in MODULE_COMMANDS)
+        + "\ndetk completion <shell>\ndetk help",
         examples=[
             ("Normalize counts.csv with DESeq2 size factors", "detk norm deseq2 counts.csv"),
             ("The help of one command", "detk norm --help"),
@@ -874,11 +1002,54 @@ def build_parser():
     )
     for cmd, line in MODULE_COMMANDS.items():
         subs.add_parser(cmd, help=line, add_help=False)
+    completion = subs.add_parser(
+        "completion",
+        # argparse would build its prog from detk's usage, which lists every command
+        prog="detk completion",
+        help="Print the shell completion script for bash, zsh or tcsh",
+        description=COMPLETION_DESCRIPTION,
+        examples=[
+            ("Print the bash completion script", "detk completion bash"),
+            ("Print the tcsh completion script", "detk completion tcsh"),
+        ],
+    )
+    completion.add_argument(
+        "shell",
+        metavar="<shell>",
+        choices=COMPLETION_SHELLS,
+        help="The shell to print the completion script for",
+    )
     subs.add_parser("help", help="Print this help", add_help=False)
     add_command_options(parser, "command")
     return parser
 
 
+# shell completion (DETK-0032): scripts for every detk command, generated from
+# the parsers by shtab when detk is built (de_toolkit/completions/_generate.py)
+# and shipped in the package; ``detk completion <shell>`` prints one, so a user
+# needs no shtab
+COMPLETION_SHELLS = ("bash", "zsh", "tcsh")
+
+COMPLETION_DESCRIPTION = """\
+Print the shell completion script for every detk command (detk and each
+detk-<command>) on stdout. Load it in the shell's startup file:
+
+  bash   eval "$(detk completion bash)"         in ~/.bashrc
+  zsh    eval "$(detk completion zsh)"          in ~/.zshrc, after compinit
+  tcsh   detk completion tcsh > ~/.detk.tcsh    once, then in ~/.tcshrc:
+         source ~/.detk.tcsh
+
+The scripts ship with detk; printing one needs nothing else installed."""
+
+
+def completion_script(shell):
+    "The shipped completion script for *shell* (one of COMPLETION_SHELLS), as text"
+    from importlib.resources import files
+
+    return (files("de_toolkit.completions") / f"detk.{shell}").read_text()
+
+
+@cli_main
 def main(argv=sys.argv):
     """
     ``detk <command> ...`` runs the module command ``detk-<command> ...``;
@@ -896,6 +1067,8 @@ def main(argv=sys.argv):
     args = parse_cli(parser, argv)
     if args.command == "help":
         parser.print_help()
+    elif args.command == "completion":
+        sys.stdout.write(completion_script(args.shell))
 
 
 if __name__ == "__main__":

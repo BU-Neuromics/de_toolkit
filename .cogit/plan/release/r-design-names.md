@@ -11,6 +11,8 @@ scope: [+de_toolkit/formula.py, +de_toolkit/de.py, +de_toolkit/transform.py, +de
 prev: [DETK-0050, release/formula-rename, release/cli-migrate]
 issue: 94
 visited: b760aac
+status: done
+done: a6255ce
 ---
 
 # Quote design names before R reads them
@@ -19,7 +21,7 @@ visited: b760aac
 
 - [x] @developer Add the R-bound design form with quoting to the formula module, use it at every R `formula()` site, add the call-shaped-name tests (R-gated) and the dotted-name regression test; CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: every R site covered, nothing in a column data file can run R code through the design, the R-gated tests in CI <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

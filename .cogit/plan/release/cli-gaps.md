@@ -18,7 +18,7 @@ visited: 60769b2
 
 ## Implementation plan
 
-- [ ] @developer Remove every deprecated `--column-data` (detk-filter, detk-stats summary and pca; DETK-0030); route every failure through one handler giving 0/2/1 with a one-line stderr cause (DETK-0031), help epilogs, cli-pin rows; open the PR <!-- s1 -->
+- [x] @developer Remove every deprecated `--column-data` (detk-filter, detk-stats summary and pca; DETK-0030); route every failure through one handler giving 0/2/1 with a one-line stderr cause (DETK-0031), help epilogs, cli-pin rows; open the PR <!-- s1 -->
 - [ ] @reviewer Review the exit codes and messages from an agent's side: each failure class gives its code and a cause to act on <!-- s2 -->
 - [ ] @developer Generate bash, zsh and tcsh completion with shtab at build time, ship the scripts and the command that prints them, add the regenerate-and-compare test; CHANGELOG <!-- s3 -->
 - [ ] @reviewer Review the PR <!-- s4 -->

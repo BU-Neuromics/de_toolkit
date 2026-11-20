@@ -22,7 +22,7 @@ visited: 7812441
 
 ## Implementation plan
 
-- [ ] @developer Port `patsy_lite.py` to formulaic as studied in DETK-0024 (bool to categorical, float cast, backtick quoting, term order, error wrapping) and fix the DETK-0040 mismatches with their pins, keeping its parser, its `__` names and its API; rewrite the translation test; swap patsy for formulaic in `pyproject.toml`, relock; drop the patsy wording in `docs/formulas.md` and correct its two examples (DETK-0040); CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Port `patsy_lite.py` to formulaic as studied in DETK-0024 (bool to categorical, float cast, backtick quoting, term order, error wrapping) and fix the DETK-0040 mismatches with their pins, keeping its parser, its `__` names and its API; rewrite the translation test; swap patsy for formulaic in `pyproject.toml`, relock; drop the patsy wording in `docs/formulas.md` and correct its two examples (DETK-0040); CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR, including the formula-pin fixtures and the R-gated de tests in CI <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

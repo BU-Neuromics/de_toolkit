@@ -55,6 +55,7 @@ visited: f6503ed
 - [ ] [Formula and filter errors are clear and never silent](release/parse-errors.md) <!-- s40 -->
 - [ ] [Module JSON is strictly valid JSON](release/strict-json.md) <!-- s41 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
+- [ ] [detk-outlier entropy handles all-zero features and keeps each result on its feature](release/outlier-entropy.md) <!-- s42 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
 
 ## Notes

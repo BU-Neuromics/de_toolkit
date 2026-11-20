@@ -85,7 +85,7 @@ it in detk's test suite. For example (abbreviated):
 
 ### Document schema
 
-The envelope is versioned (`schema_version`, currently **1.0**) and specified
+The envelope is versioned (`schema_version`, currently **1.1**) and specified
 by a JSON Schema shipped inside the package at `de_toolkit/module_schema.json`
 ([view on GitHub](https://github.com/BU-Neuromics/de_toolkit/blob/main/de_toolkit/module_schema.json)).
 Required fields:
@@ -102,7 +102,13 @@ Required fields:
 
 Optional fields: `start_time` / `end_time` (ISO 8601 UTC), `argv` (the process
 argument vector), `in_file_path`, `out_file_path`, `column_data_path`,
-`workdir`. Every document detk emits is validated against the schema in the
+`workdir`, and since 1.1 `in_file_paths` and `out_file_paths`: lists of every
+input and output file of a step with several, written by
+[`detk-util record`](tools/util.md#record), whose first entries are also
+`in_file_path` and `out_file_path`. The version is `major.minor`: the minor
+version goes up for an addition every older document still satisfies (1.1
+added the two optional lists, so every 1.0 document is a valid 1.1 one), the
+major version for a change that is not. Every document detk emits is validated against the schema in the
 test suite; validate your own consumers against the same file. Small
 p-values never appear as raw floats in `properties` — the encoder rounds
 floats to 3 decimals, so modules emit `-log10` values or preformatted strings

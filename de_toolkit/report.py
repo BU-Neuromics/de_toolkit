@@ -83,9 +83,11 @@ from .report_specs import clean, view_for
 from .version import __version__
 
 # version of the module JSON document format (the envelope written by
-# DetkModuleJSON); bump on any backward-incompatible change and update
-# module_schema.json to match
-MODULE_SCHEMA_VERSION = "1.0"
+# DetkModuleJSON), major.minor: the major goes up on a backward-incompatible
+# change, the minor on an addition every older document still satisfies;
+# update module_schema.json to match. 1.1 adds the optional in_file_paths and
+# out_file_paths (detk-util record, DETK-0061)
+MODULE_SCHEMA_VERSION = "1.1"
 
 # setup logging, null on the library level
 logger = logging.getLogger(__name__)
@@ -183,6 +185,8 @@ class DetkModuleJSON:
         workdir=None,
         json_dir=".",
         json_path=None,
+        in_file_paths=None,
+        out_file_paths=None,
     ):
 
         # the json filename is calculated as the combination of
@@ -229,6 +233,12 @@ class DetkModuleJSON:
                 ("properties", module_json["properties"]),
             ]
         )
+        # every input and output file of a step with several (schema 1.1);
+        # left out otherwise, so other modules' documents are as before
+        if in_file_paths is not None:
+            self.out_d["in_file_paths"] = list(in_file_paths)
+        if out_file_paths is not None:
+            self.out_d["out_file_paths"] = list(out_file_paths)
 
     def write(self, indent=None):
         """
@@ -244,6 +254,8 @@ class DetkModuleJSON:
         - ``in_file_path``: path to the file that was processed
         - ``out_file_path``: path to the file that was output, if available
         - ``column_data_path``: path to the column data file used, if available
+        - ``in_file_paths``, ``out_file_paths``: every input and output file,
+          for a step with several (optional, schema 1.1)
         """
 
         logger.debug(
@@ -285,9 +297,18 @@ class DetkReport:
         self.modules = []
 
     def add_module(
-        self, module, in_file_path=None, out_file_path=None, column_data_path=None, workdir=None
+        self,
+        module,
+        in_file_path=None,
+        out_file_path=None,
+        column_data_path=None,
+        workdir=None,
+        in_file_paths=None,
+        out_file_paths=None,
     ):
-        "Add and serialize the given module to the report directory"
+        """Add and serialize the given module to the report directory;
+        *in_file_paths* and *out_file_paths* list every input and output
+        file of a step with several (detk-util record)"""
         module_json = DetkModuleJSON(
             module,
             in_file_path=in_file_path,
@@ -295,6 +316,8 @@ class DetkReport:
             column_data_path=column_data_path,
             workdir=workdir,
             json_dir=self.json_dir,
+            in_file_paths=in_file_paths,
+            out_file_paths=out_file_paths,
         )
         logger.debug("adding detk module json for module %s", module.name)
         self.modules.append(module_json)

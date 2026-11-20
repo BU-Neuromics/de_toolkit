@@ -10,18 +10,22 @@ acceptance:
   - 'tests use a Python one-liner as the external command, so they need no Miller; docs/tools/util.md documents it; the skill''s commands.md usage block passes DETK-0010''s test; CHANGELOG'
 from: [DETK-0051, DETK-0061]
 scope: [tests/util/, tests/cli/, de_toolkit/completions/, +de_toolkit/util.py, +de_toolkit/crate.py, +de_toolkit/report.py, +de_toolkit/report_specs.py, +de_toolkit/module_schema.json, +docs/tools/util.md, +skills/detk/references/commands.md, +CHANGELOG]
-prev: [DETK-0051, DETK-0061, release/cli-gaps]
+prev: [DETK-0051, DETK-0061, release/cli-gaps, DETK-0160]
+issue: 102
+visited: f3a014f
+status: done
+done: 3062cee
 ---
 
 # Record an external step with detk-util record
 
 ## Implementation plan
 
-- [ ] @developer Build `detk-util record` as DETK-0061 decides (parser and help on the cli-migrate pattern, running the command, the checks, the module JSON with checksums, the schema's optional fields, the crate's instrument and file links, the report entry without a view), with unit, cli-pin, help and crate-lineage tests; open the PR <!-- s1 -->
-- [ ] @reviewer Review the refusals and exit codes against DETK-0031 and DETK-0061, the module JSON and the crate (instrument, object, result, lineage into a later detk-de run), and the help from an agent's side <!-- s2 -->
-- [ ] @developer Wire it into the umbrella command and completion, document it in docs/tools/util.md and the skill's commands.md, CHANGELOG <!-- s3 -->
-- [ ] @reviewer Review the PR, CI and the docs build <!-- s4 -->
-- [ ] @human Accept <!-- s5 -->
+- [x] @developer Build `detk-util record` as DETK-0061 decides (parser and help on the cli-migrate pattern, running the command, the checks, the module JSON with checksums, the schema's optional fields, the crate's instrument and file links, the report entry without a view), with unit, cli-pin, help and crate-lineage tests; open the PR <!-- s1 -->
+- [x] @reviewer Review the refusals and exit codes against DETK-0031 and DETK-0061, the module JSON and the crate (instrument, object, result, lineage into a later detk-de run), and the help from an agent's side <!-- s2 -->
+- [x] @developer Wire it into the umbrella command and completion, document it in docs/tools/util.md and the skill's commands.md, CHANGELOG <!-- s3 -->
+- [x] @reviewer Review the PR, CI and the docs build <!-- s4 -->
+- [x] @human Accept <!-- s5 -->
 
 ## Notes
 

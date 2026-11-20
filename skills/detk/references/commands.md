@@ -336,6 +336,40 @@ options:
   -o, --output FILE  Destination of the annotated table (default: stdout)
 ```
 
+## `detk-util record`
+
+```text
+usage: detk-util record [options] [-i FILE]... -o FILE... -- <command> [<arg>...]
+
+positional arguments:
+  <command>  The command to run and its arguments, after --; run as given,
+             without a shell
+
+options:
+  -h, --help           Print this help and exit
+  -i, --input FILE     A file the command reads; give it once per file, or not
+                       at all
+  -o, --output FILE    A file the command writes; give it once per file (at
+                       least one)
+  --tool NAME          Name of the tool that runs (without it: the base name of
+                       the command's first word)
+  --tool-version TEXT  Version of the tool to record (without it: the first line
+                       of '<command> --version')
+```
+
+Runs a command outside detk (Miller, awk, an R script) and records it as a
+step, so the report and the provenance crate show it as the producer of its
+outputs. Everything after `--` is the command, run without a shell (use
+`sh -c '...'` for a pipeline, with `--tool`); it exits 1 and records nothing
+if an input is missing, the command fails or an output is missing. An output
+that existed before the run, such as the file a shell redirect creates,
+passes that check. For your own script as the command, give `--tool-version`:
+the version check runs the script with `--version`.
+
+```bash
+detk-util record -i sample_info.csv -o sample_info_derived.csv -- mlr --icsv --ocsv put '$age_group = $age >= 50 ? "old" : "young"' sample_info.csv > sample_info_derived.csv
+```
+
 ## `detk-report generate`
 
 ```text

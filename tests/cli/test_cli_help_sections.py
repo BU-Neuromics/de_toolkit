@@ -32,9 +32,23 @@ REQUIRED = ("usage:", "options:", "examples:", "exit codes:")
 # for a file, DIR for a directory, N for a number; and for values that are
 # none of those, CHAR (a character), COL (a column, by name or 0-based
 # index), COLS (comma-separated columns), FMT (a format name), REGEX (a
-# regular expression), WHAT (one of the listed choices) and BOOL (True or
-# False). A new kind of value adds a word here and to the CHANGELOG.
-METAVARS = {"FILE", "DIR", "N", "CHAR", "COL", "COLS", "FMT", "REGEX", "WHAT", "BOOL"}
+# regular expression), WHAT (one of the listed choices), BOOL (True or
+# False), NAME (a name, such as a tool's) and TEXT (free text, such as a
+# version). A new kind of value adds a word here and to the CHANGELOG.
+METAVARS = {
+    "FILE",
+    "DIR",
+    "N",
+    "CHAR",
+    "COL",
+    "COLS",
+    "FMT",
+    "REGEX",
+    "WHAT",
+    "BOOL",
+    "NAME",
+    "TEXT",
+}
 
 PROGS = ["detk"] + [c.prog for c in COMMANDS]
 

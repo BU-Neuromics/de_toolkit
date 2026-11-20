@@ -11,6 +11,8 @@ acceptance:
 from: [DETK-0050, DETK-0051, DETK-0062, DETK-0064]
 scope: [new:docs/recipes/, new:tests/recipes/, docs/formulas.md, +mkdocs.yml, +.github/workflows/ci.yml, +skills/detk/SKILL.md, +de_toolkit/formula.py, +CHANGELOG]
 prev: [DETK-0051, DETK-0062, DETK-0064, release/record, release/tutorial-harness, release/formula-rename]
+issue: 115
+visited: 118283e
 ---
 
 # Miller recipes for derived covariates

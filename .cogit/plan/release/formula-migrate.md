@@ -13,7 +13,7 @@ acceptance:
   - 'docs/formulas.md no longer names patsy as the engine; the transforms question is left to release/formula-rename (DETK-0028)'
 from: [DETK-0001, DETK-0024, DETK-0040]
 scope: [de_toolkit/patsy_lite.py, tests/patsy_lite/, docs/formulas.md, pyproject.toml, uv.lock, environment.yml, +CHANGELOG]
-prev: [DETK-0024, DETK-0040, release/formula-pin]
+prev: [DETK-0024, DETK-0040, release/formula-pin, DETK-0080]
 issue: 78
 visited: 7812441
 ---

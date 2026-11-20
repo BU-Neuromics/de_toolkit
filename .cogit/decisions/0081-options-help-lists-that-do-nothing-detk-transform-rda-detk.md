@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release/cli-migrate, step: s4}
 applies: [release/cut]
 issue: 85
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A, make each option do what its help says, as DETK-0029 did for --size-factors: the reviewer's recommendation, accepted under Adam's delegation via the driver session, 2026-11-20 (DETK-0063: within the 1.0 scope, the 1.0 promise unchanged). Planned as release/help-options, after release/cli-migrate and release/cli-gaps, before release/cut."}
 ---
 
 # Options help lists that do nothing: detk-transform --rda, detk-stats summary --color-col, rlog --blind
@@ -86,7 +88,15 @@ behaviour change.
 
 ## Decision
 
-<!-- Adam's -->
+Option A, accepted 2026-11-20 under Adam's delegation via the driver
+session (DETK-0063: within the 1.0 scope, and it keeps the 1.0 promise
+rather than changing it), on the reviewer's recommendation and DETK-0029's
+precedent: `--rda` in detk-transform vst and rlog saves the R objects as
+detk-de's does; `--color-col` colors detk-stats summary's plots (falling
+back to Option B for that option only if the summary has no plot it can
+color, recorded as a new decision); `--blind` is parsed to a bool, so
+`--blind False` runs the non-blind rlog with the user's design. The work is
+release/help-options.
 
 ## Consequences
 

@@ -20,7 +20,7 @@ visited: f3a014f
 ## Implementation plan
 
 - [x] @developer Build `detk-util record` as DETK-0061 decides (parser and help on the cli-migrate pattern, running the command, the checks, the module JSON with checksums, the schema's optional fields, the crate's instrument and file links, the report entry without a view), with unit, cli-pin, help and crate-lineage tests; open the PR <!-- s1 -->
-- [ ] @reviewer Review the refusals and exit codes against DETK-0031 and DETK-0061, the module JSON and the crate (instrument, object, result, lineage into a later detk-de run), and the help from an agent's side <!-- s2 -->
+- [x] @reviewer Review the refusals and exit codes against DETK-0031 and DETK-0061, the module JSON and the crate (instrument, object, result, lineage into a later detk-de run), and the help from an agent's side <!-- s2 -->
 - [ ] @developer Wire it into the umbrella command and completion, document it in docs/tools/util.md and the skill's commands.md, CHANGELOG <!-- s3 -->
 - [ ] @reviewer Review the PR, CI and the docs build <!-- s4 -->
 - [ ] @human Accept <!-- s5 -->

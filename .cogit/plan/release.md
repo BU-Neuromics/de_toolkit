@@ -51,6 +51,9 @@ visited: f6503ed
 - [ ] [Options do what their help says](release/help-options.md) <!-- s38 -->
 - [ ] [Update the docs for the 1.0 CLI](release/cli-docs.md) <!-- s25 -->
 - [ ] [Guard the removed dependencies and fix the E402 note](release/dep-guards.md) <!-- s37 -->
+- [ ] [detk-util tidy writes the sample sheet as read and records in the report](release/tidy-output.md) <!-- s39 -->
+- [ ] [Formula and filter errors are clear and never silent](release/parse-errors.md) <!-- s40 -->
+- [ ] [Module JSON is strictly valid JSON](release/strict-json.md) <!-- s41 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
 

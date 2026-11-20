@@ -18,7 +18,7 @@ visited: f3a014f
 
 ## Implementation plan
 
-- [ ] @developer Make `--rda` (vst, rlog), `--color-col` (summary) and `--blind` (rlog) do what their help says, each with an end-to-end test, the blind vs non-blind rlog comparison in the R job, cli-pin rows; CHANGELOG under Fixed; open the PR <!-- s1 -->
+- [x] @developer Make `--rda` (vst, rlog), `--color-col` (summary) and `--blind` (rlog) do what their help says, each with an end-to-end test, the blind vs non-blind rlog comparison in the R job, cli-pin rows; CHANGELOG under Fixed; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: each option tested end to end, the R job ran the rlog comparison <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

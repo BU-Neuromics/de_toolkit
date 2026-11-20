@@ -49,8 +49,8 @@ visited: f6503ed
 - [ ] [Tutorial: differential expression on airway](release/tutorial-airway.md) <!-- s35 -->
 - [ ] [Tutorial: derived covariates and recorded steps](release/tutorial-covariates.md) <!-- s36 -->
 - [ ] [Update the docs for the 1.0 CLI](release/cli-docs.md) <!-- s25 -->
-- [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] [Guard the removed dependencies and fix the E402 note](release/dep-guards.md) <!-- s37 -->
+- [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
 
 ## Notes

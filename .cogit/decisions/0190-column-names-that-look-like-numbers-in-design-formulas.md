@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 applies: [release/parse-errors]
 issue: 108
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A, a number-like term other than 0 and 1 is a usage error (exit 2) naming the term and suggesting a rename when such a column exists: the recommendation, accepted under Adam's delegation via the driver session, 2026-11-20 (DETK-0063: matches 0.x behaviour, within the 1.0 scope, the 1.0 promise unchanged). Implemented by release/parse-errors."}
 ---
 
 # Column names that look like numbers in design formulas

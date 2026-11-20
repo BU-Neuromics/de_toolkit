@@ -78,6 +78,66 @@ def quote_var(v):
     return v
 
 
+# R's reserved words (?Reserved); make.names() alters all but ... and ..1, ..2
+R_RESERVED = frozenset(
+    "if else repeat while function for next break in TRUE FALSE NULL Inf NaN NA "
+    "NA_integer_ NA_real_ NA_character_ NA_complex_ ...".split()
+)
+# a syntactic R name, as make.names() leaves it: a letter, or a dot not
+# followed by a digit, then letters, digits, dots and underscores. Only ASCII
+# letters count, since R's letters depend on the locale; quoting a name R
+# would also read plainly is harmless.
+R_SYNTACTIC = re.compile(r"(?:[A-Za-z]|\.(?![0-9]))[A-Za-z0-9._]*|\.")
+# the only numeral detk writes in a resolved design: the 1 of a trivial
+# model, counts ~ 1 (DesignMatrix.design). Any other number-shaped term,
+# such as 2.5 or 1.0, is a column name (the parser takes decimals as
+# columns) and is quoted, or R would read it as a constant.
+R_INTERCEPT = "1"
+
+
+def r_name(name):
+    """
+    *name* as R reads it as a name: backtick-quoted, with backticks and
+    backslashes in it escaped, unless it is a syntactic R name that is not a
+    reserved word (or ..1, ..2, ...).
+    """
+    if (
+        R_SYNTACTIC.fullmatch(name)
+        and name not in R_RESERVED
+        and not re.fullmatch(r"\.\.\d+", name)
+    ):
+        return name
+    escaped = name.replace("\\", "\\\\").replace("`", "\\`")
+    return f"`{escaped}`"
+
+
+def r_design(design):
+    """
+    The R-bound form of the resolved *design* (``CountMatrix.design``, as
+    ``lhs ~ rhs`` with terms joined by `` + ``): every name in it that R
+    would not read as a plain name is backtick-quoted, so R's ``formula()``
+    reads each as a column name and runs none as code (DETK-0050). An
+    interaction ``a:b`` stays an interaction of the names ``a`` and ``b``.
+    Only the intercept ``1`` of ``counts ~ 1`` is left bare: a number-shaped
+    column name such as ``2.5`` is quoted like any other.
+    The resolved design itself, unquoted, is what detk records.
+    """
+    if "~" not in design:
+        raise FormulaParseError(f"The design {design!r} has no ~")
+    lhs, rhs = design.split("~", 1)
+
+    def side(s):
+        terms = [_.strip() for _ in s.split(" + ")]
+        return " + ".join(
+            term if term == R_INTERCEPT else ":".join(r_name(_) for _ in term.split(":"))
+            for term in terms
+            if term
+        )
+
+    lhs, rhs = side(lhs), side(rhs)
+    return f"{lhs} ~ {rhs}" if lhs else f"~ {rhs}"
+
+
 def repr_val(v):
     try:
         return int(v)

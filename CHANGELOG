@@ -250,6 +250,15 @@ predates everything below.
   `fld.cat:age(yrs)`, are accepted where they were errors. The reference of
   a `TRUE`/`FALSE` column can be named, in any case: `flag[FALSE]` (#78,
   DETK-0040)
+- A column data column named like a call, such as `print(1)` or
+  `file.create(1)`, is read by R as a column name and never run: every name
+  in the design that is not a syntactic R name (or is a reserved word) is
+  backtick-quoted before R's `formula()` reads it, in `detk-de deseq2` and
+  `firth`, `detk-transform rlog` with a design, and the DESeq2
+  normalization's R path. R used to evaluate such a name as code when it
+  built the model frame. The design detk records (`params.design`) and the
+  results' column names are unchanged; DESeq2, which makes its column data
+  names syntactic, stops with an error naming the column (#94, DETK-0050)
 - The design examples in the formulas documentation show the columns detk
   gives: an integer `batch` needs `batch[1]` to be categorical, and
   categories without a level list come in sorted order (#78, DETK-0040)

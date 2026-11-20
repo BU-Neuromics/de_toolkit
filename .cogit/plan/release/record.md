@@ -1,39 +1,33 @@
 ---
 kind: task
-objective: 'A detk command adds derived columns (a constant, logs, scaling) to a column data file and records itself like every other step, so formulas can stay model-only (DETK-0050, DETK-0051)'
+objective: 'detk-util record runs an external command (Miller, awk, an R script) and records it as a detk step, so a file it makes shows in the module JSON and the Process Run Crate as the output of a step (DETK-0051 Option C, DETK-0061)'
 acceptance:
-  - 'the command exists as DETK-0051 places and names it, with the operations, options, defaults and refusals it decides: a constant column; logs with base, pseudocount and zero handling; scaling by z-score (sample sd, n-1), centring and min-max to [0, 1]'
-  - 'it writes a new column data file: every original column and row kept as written (IDs as text, DETK-0015), the new columns appended under the names DETK-0051 sets, a name clash refused; values match numpy/pandas references in tests, including the sample standard deviation and R''s scale() on the same data where R is available'
-  - 'each run writes a module JSON document (input as column_data_path, output as out_file_path, the operation and options in params, the per-column source and numbers in properties as DETK-0051 decides) that validates against the schema; the crate maps it to its command and shows it as the producer of a later detk-de run''s column data; a report view shows the new columns'
-  - 'its parser and help follow the release/cli-migrate pattern and DETK-0025 Option B (sections, metavars, at least one example per subcommand that the help test parses); it exits per DETK-0031; it is in the umbrella detk command, the regenerated completion scripts (DETK-0032) and a cli-pin table'
-  - 'the formula error for a call in a formula (release/formula-rename) names this command, and docs/formulas.md says how to derive a covariate with it'
-  - 'a docs page under docs/tools/ with the mkdocs nav entry, the skill''s commands.md usage block (DETK-0010''s test passes) and a short note in the skill''s design section; CHANGELOG'
-  - 'an end-to-end test: augment log on the airway example''s column data, then detk-de deseq2 with the new column in the design, R-gated in CI'
-from: [DETK-0050, DETK-0051]
-scope: [de_toolkit/augment.py, tests/augment/, docs/tools/augment.md, tests/cli/, de_toolkit/completions/, +de_toolkit/common.py, +de_toolkit/formula.py, +de_toolkit/crate.py, +de_toolkit/report_specs.py, +pyproject.toml, +docs/tools/index.md, +mkdocs.yml, docs/formulas.md, +skills/detk/references/commands.md, +skills/detk/SKILL.md, +CHANGELOG]
-prev: [DETK-0050, DETK-0051, release/formula-rename, release/cli-gaps]
+  - 'detk-util record takes the command line DETK-0061 decides (repeatable --input and --output, --tool, --tool-version, --report-dir, the command after --), runs the command without a shell with stdio inherited, and refuses as it decides: a missing input, a missing output after the run, a failed or missing command each exit 1 with a message naming it and write no module JSON (DETK-0031)'
+  - 'the module JSON (name record) holds the command, argv, tool, tool version, inputs and outputs in params and each file''s SHA-256 and size in properties; the envelope''s optional in_file_paths and out_file_paths validate against module_schema.json, whose minor version goes up, and every module JSON a test fixture holds still validates'
+  - 'the crate makes the step a CreateAction whose instrument is the external tool with its version, whose object and result list every input and output, and whose command is a PropertyValue; a test records a command that writes a column data file, runs a detk step on it, and finds the recorded step as that file''s producer in the crate'
+  - 'the report lists a record step without a view (DETK-0061 item 6) and builds without error'
+  - 'its parser and help follow the release/cli-migrate pattern and DETK-0025 Option B with an example the help test parses; it is in the umbrella detk command, the completion scripts (DETK-0032) and a cli-pin table'
+  - 'tests use a Python one-liner as the external command, so they need no Miller; docs/tools/util.md documents it; the skill''s commands.md usage block passes DETK-0010''s test; CHANGELOG'
+from: [DETK-0051, DETK-0061]
+scope: [tests/util/, tests/cli/, de_toolkit/completions/, +de_toolkit/util.py, +de_toolkit/crate.py, +de_toolkit/report.py, +de_toolkit/report_specs.py, +de_toolkit/module_schema.json, +docs/tools/util.md, +skills/detk/references/commands.md, +CHANGELOG]
+prev: [DETK-0051, DETK-0061, release/cli-gaps]
 ---
 
-# Column data augmentation command
+# Record an external step with detk-util record
 
 ## Implementation plan
 
-- [ ] @developer Build the command DETK-0051 decides (parser and help on the cli-migrate pattern, the operations with their checks, the output file, module JSON, crate entry, report view), with unit, cli-pin and help tests; open the PR <!-- s1 -->
-- [ ] @reviewer Review the operations and refusals against DETK-0051, the provenance in the module JSON and the crate, and the help from an agent's side <!-- s2 -->
-- [ ] @developer Wire it into the umbrella command and completion, name it in the formula error and docs/formulas.md, add the docs page, nav, skill entries, the R-gated end-to-end test and the CHANGELOG <!-- s3 -->
-- [ ] @reviewer Review the PR, including the R-gated test in CI and the docs build <!-- s4 -->
+- [ ] @developer Build `detk-util record` as DETK-0061 decides (parser and help on the cli-migrate pattern, running the command, the checks, the module JSON with checksums, the schema's optional fields, the crate's instrument and file links, the report entry without a view), with unit, cli-pin, help and crate-lineage tests; open the PR <!-- s1 -->
+- [ ] @reviewer Review the refusals and exit codes against DETK-0031 and DETK-0061, the module JSON and the crate (instrument, object, result, lineage into a later detk-de run), and the help from an agent's side <!-- s2 -->
+- [ ] @developer Wire it into the umbrella command and completion, document it in docs/tools/util.md and the skill's commands.md, CHANGELOG <!-- s3 -->
+- [ ] @reviewer Review the PR, CI and the docs build <!-- s4 -->
 - [ ] @human Accept <!-- s5 -->
 
 ## Notes
 
-Planned 2026-11-19, replacing release/formula-transforms (renamed here) on
-Adam's change of mind (DETK-0050, superseding DETK-0028 and DETK-0047): "the
-formula should just specify models, and nothing else. I wonder instead if
-detk should provide some simple augmentation functions...". Waits on
-DETK-0051 (name, placement, options, names, provenance), Proposed and
-Adam's. The scope assumes the recommended placement, a new
-`de_toolkit/augment.py` and entry point `detk-augment`; if Adam places it
-under detk-util, `de_toolkit/util.py` and `tests/util/` replace those two
-entries. Comes after release/cli-gaps so it is born with the final exit
-codes and completion, and after release/formula-rename, whose error it
-names itself in. release/cli-docs comes after it.
+Planned 2026-11-19 as release/augment (a detk-augment command); replanned
+2026-11-20 when Adam answered DETK-0051 with Option C: "go with c, and I like
+the record command". The Miller recipes that use this command are
+release/miller-recipes. Comes after release/cli-gaps so it is born with the
+final exit codes and completion. Waits on DETK-0061 (Proposed; recommended
+for acceptance under Adam's delegation, DETK-0063).

@@ -43,5 +43,5 @@ Updated 2026-11-19 on Adam's answers: column order follows formulaic
 (DETK-0049, "I think we should order columns however formulaic orders
 them"), so the a*b pins change here. Formulas take column names only
 (DETK-0050): the np.log claim and the error for a call in a formula are
-release/formula-rename's, derived columns release/augment's; this node
+release/formula-rename's, derived columns release/miller-recipes'; this node
 leaves both alone.

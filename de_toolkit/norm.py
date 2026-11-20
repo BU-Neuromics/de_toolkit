@@ -290,6 +290,17 @@ class DESeq2Norm(DetkModule):
     def properties(self):
         return {"num_kept": len(self.normalized), "size_factors": self.size_factors}
 
+    def write_size_factors(self, path):
+        """
+        Write the size factors to *path*: tab separated, no header, one row
+        per sample of its name and size factor, in the counts file's column
+        order, with the sample names as they were written
+        """
+        logger.info("writing size factors to %s", path)
+        with open(path, "w", newline="") as f:
+            for sample, factor in self.size_factors.items():
+                f.write(f"{sample}\t{factor!r}\n")
+
 
 def library_size(count_df):
     """
@@ -602,6 +613,13 @@ def main(argv=sys.argv):
             sys.exit(1)
 
     write_output(out.output, args)
+
+    if cmd == "deseq2" and args.size_factors:
+        try:
+            out.write_size_factors(args.size_factors)
+        except OSError as e:
+            logger.error(e)
+            sys.exit(1)
 
     if not args.no_report:
         logging.info("writing report to %s", args.report_dir)

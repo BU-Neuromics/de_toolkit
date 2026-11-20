@@ -39,6 +39,17 @@ predates everything below.
     "Error evaluating factor ..."); a level list that leaves out a level the
     data has names the missing level and the list; a design with nothing
     before the `~` says it has no left hand side
+- The formula module is `de_toolkit.formula` (DETK-0027), where it was
+  `de_toolkit.patsy_lite`, and its syntax is called the detk formula syntax.
+  Its parse error `PatsyLiteParseError` is now `FormulaParseError`, with no
+  alias kept, and `patsy_lite_to_patsy` is now `to_formulaic`. An invalid
+  design's message reads "detk formula syntax could not parse", where it
+  read "patsy lite could not parse"
+- Formulas take column names only (DETK-0050): a term that is not a column
+  of the column data file and looks like a call, such as `np.log(x)` or
+  `log2(x)`, is an error that says so; a derived column belongs in the
+  column data file. docs/formulas.md no longer says such expressions may be
+  passed; they never worked (`np.log(x)` was read as a column name)
 - `environment.yml`, an out-of-date conda environment file that nothing
   referred to, is removed; `pyproject.toml` is the one list of detk's
   dependencies

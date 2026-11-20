@@ -20,7 +20,7 @@ import pandas
 from pprint import pformat
 import sys
 import warnings
-from .patsy_lite import DesignMatrix, PatsyLiteParseError
+from .formula import DesignMatrix, FormulaParseError
 from .version import __version__
 
 # process start time, recorded at import for provenance (a CLI invocation
@@ -524,9 +524,9 @@ class CountMatrix:
         if design is not None and self.column_data is not None:
             try:
                 self.design_matrix = DesignMatrix(design, self.column_data)
-            except PatsyLiteParseError as e:
+            except FormulaParseError as e:
                 raise InvalidDesignException(
-                    f"Invalid design, patsy lite could not parse {e.args}"
+                    f"Invalid design, detk formula syntax could not parse {e.args}"
                 ) from e
 
             # check if the full design matrix has lost any rows due to

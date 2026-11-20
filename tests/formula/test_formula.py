@@ -18,12 +18,12 @@ def model_data():
     return df
 
 
-def test_patsy_lite_to_patsy(model_data):
-    "patsy-lite translates to formulaic's formula syntax."
-    from de_toolkit.patsy_lite import patsy_lite_to_patsy, PatsyLiteParseError
+def test_to_formulaic(model_data):
+    "detk formula syntax translates to formulaic's formula syntax."
+    from de_toolkit.formula import to_formulaic, FormulaParseError
 
     def pltp(formula, **kwargs):
-        return patsy_lite_to_patsy(formula, **kwargs).describe()
+        return to_formulaic(formula, **kwargs).describe()
 
     assert pltp("A ~ B") == "A ~ B"
     assert pltp("A~B") == "A ~ B"
@@ -37,9 +37,9 @@ def test_patsy_lite_to_patsy(model_data):
     # integer levels and references are passed as integers
     assert pltp("y ~ batch[2]") == "y ~ C(batch, Treatment(2))"
     assert pltp("y ~ batch[3,1,2]") == "y ~ C(batch, levels=[3, 1, 2])"
-    with pytest.raises(PatsyLiteParseError):
+    with pytest.raises(FormulaParseError):
         pltp("B")
-    with pytest.raises(PatsyLiteParseError):
+    with pytest.raises(FormulaParseError):
         pltp("A[one]~B[two]&C[three,four]")
     assert pltp("count ~ RIN + age_at_death") == "count ~ RIN + age_at_death"
 
@@ -68,7 +68,7 @@ def test_patsy_lite_to_patsy(model_data):
     assert pltp("y ~ flag[FALSE]") == "y ~ C(flag, Treatment('FALSE'))"
 
     # the name map takes each translated term back to its column name
-    model = patsy_lite_to_patsy("fld.y ~ a[one] + b[x,y] + c")
+    model = to_formulaic("fld.y ~ a[one] + b[x,y] + c")
     assert model.name_map == {
         "`fld.y`": "fld.y",
         "C(a, Treatment('one'))": "a",
@@ -80,7 +80,7 @@ def test_patsy_lite_to_patsy(model_data):
 
 def test_DesignMatrix(model_data):
 
-    from de_toolkit.patsy_lite import DesignMatrix, ModelError
+    from de_toolkit.formula import DesignMatrix, ModelError
 
     dm = DesignMatrix("cont ~ binary_str[B] + binary_int + cat_int", model_data)
     assert dm.design == "cont ~ Intercept + binary_str__A + binary_int + cat_int"
@@ -148,7 +148,7 @@ def test_DesignMatrix(model_data):
 
 def test_DesignMatrix_colnames(model_data):
 
-    from de_toolkit.patsy_lite import DesignMatrix, PatsyLiteParseError
+    from de_toolkit.formula import DesignMatrix, FormulaParseError
 
     dm = DesignMatrix("cont ~ cont + binary_str", model_data)
     assert dm.design == "cont ~ Intercept + cont + binary_str__B"
@@ -165,5 +165,43 @@ def test_DesignMatrix_colnames(model_data):
     dm = DesignMatrix("fld.cont ~ fld.cat_int[4,1,2,3]", model_data)
     assert dm.design == "fld.cont ~ Intercept + fld.cat_int__1 + fld.cat_int__2 + fld.cat_int__3"
 
-    with pytest.raises(PatsyLiteParseError):
+    with pytest.raises(FormulaParseError):
         dm = DesignMatrix("fld.cont ~ fld.cat_int[4,1,2,3] + fld.]lsaj", model_data)
+
+
+@pytest.mark.parametrize(
+    "formula, call",
+    [
+        ("cont ~ np.log(cont)", "np.log(cont)"),
+        ("cont ~ log2(cont) + binary_str", "log2(cont)"),
+        ("np.log(cont) ~ binary_str", "np.log(cont)"),
+        ("cont ~ binary_str[A] * log2(cat_int)", "log2(cat_int)"),
+    ],
+)
+def test_DesignMatrix_call_is_an_error(model_data, formula, call):
+    "Formulas take column names only: a call is an error (DETK-0050)."
+    from de_toolkit.formula import DesignMatrix, FormulaParseError
+
+    with pytest.raises(FormulaParseError) as e:
+        DesignMatrix(formula, model_data)
+    message = str(e.value)
+    assert "column names only" in message
+    assert call in message
+    assert "column data file" in message
+
+
+def test_DesignMatrix_column_named_like_a_call(model_data):
+    "A column whose name looks like a call is a column."
+    from de_toolkit.formula import DesignMatrix
+
+    model_data["log2(cont)"] = model_data["cont"]
+    model_data["np.log(x)"] = model_data["cat_str"]
+    dm = DesignMatrix("cont ~ log2(cont) + np.log(x)[A]", model_data)
+    assert list(dm.rhs.columns) == [
+        "Intercept",
+        "log2(cont)",
+        "np.log(x)__B",
+        "np.log(x)__C",
+        "np.log(x)__D",
+    ]
+    assert (dm.rhs["log2(cont)"] == model_data["cont"]).all()

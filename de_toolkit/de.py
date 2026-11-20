@@ -665,6 +665,8 @@ def main(argv=sys.argv):
                 out,
                 in_file_path=args.counts_fn,
                 out_file_path=args.output,
+                # the crate links the column data as an input (DETK-0161)
+                column_data_path=args.cov_fn,
                 workdir=os.getcwd(),
             )
     else:

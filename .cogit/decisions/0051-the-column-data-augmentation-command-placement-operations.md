@@ -1,6 +1,6 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-19
 from: {node: release}
@@ -9,6 +9,7 @@ evidence:
   - {pointer: "DETK-0060", visibility: public}
 revisions:
   - {date: 2026-11-20, by: adamlabadorf, change: "Retitled and rewritten for Adam's answer: Options B and C from the research (DETK-0060) added, the draft kept as Option A, Decision and Consequences for Option C", why: "Adam chose Option C on 2026-11-20, relayed by the driver session"}
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-20: \"go with c, and I like the record command, no need for the report here but I'd like to keep it for later.\""}
 ---
 
 # Derived covariates: Miller recipes and detk-util record, not a detk augmentation command

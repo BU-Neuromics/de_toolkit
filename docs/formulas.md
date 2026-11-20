@@ -82,6 +82,12 @@ derived column, such as a log-transformed covariate, belongs in the column
 data file, where the formula can name it. A column whose name really is such
 a string, say `log2(cont)`, is still a column.
 
+[Derived covariates with Miller](recipes/covariates.md) gives tested recipes
+for the usual derived columns (a log, a log with a pseudocount, a z-score,
+centring, min-max and a constant column), each with the checks that stop it
+on a missing value or a log of zero, and each recorded with
+`detk-util record` so the step shows in the report and the provenance.
+
 Column names in a formula start with a letter or underscore. A term that
 looks like a number, such as `3`, `2.5` or `-2.5`, is an error on either side
 of `~`, whether or not the column data has a column by that name: a number

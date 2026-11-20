@@ -112,7 +112,7 @@ predates everything below.
   the message names the problem and points at the subcommand's `--help`
 - Breaking: option metavars follow one convention (DETK-0025): FILE for a
   file, DIR for a directory, N for a number, and CHAR, COL, COLS, FMT,
-  REGEX, WHAT or BOOL for other values. Changed: `detk-filter -o/--output`
+  REGEX, WHAT, BOOL, NAME or TEXT for other values. Changed: `detk-filter -o/--output`
   (was `<out_fn>`) and `--column-data` (was `<column_data_fn>`), `detk-stats
   --column-data` (was FN) and `--color-col` (was COLNAME) and `summary
   --bins` (was BINS), `--rda` of `detk-de` and `detk-transform` (was RDA),
@@ -168,7 +168,13 @@ predates everything below.
   (`eval "$(detk completion bash)"` in `~/.bashrc`; `detk completion --help`
   says how to load each). shtab is a development dependency only, and a test
   fails when the shipped scripts fall behind the parsers
-- Versioned module JSON schema for report data
+- Versioned module JSON schema for report data. Schema 1.1 adds the
+  optional `in_file_paths` and `out_file_paths`, every input and output file
+  of a step with several (written by `detk-util record`); every 1.0 document
+  is still valid (DETK-0061)
+- `detk-de` records its column data file (`column_data_path`) in its module
+  JSON, so the crate shows the column data as an input of the `detk-de` run
+  and traces it to the step that produced it (DETK-0161)
 - Process Run Crate (RO-Crate) provenance for CLI runs
 - `detk-norm cpm` (counts per million) and `detk-norm tpm` (transcripts per
   million, from the same lengths file as `fpkm`), each with a report view.
@@ -191,6 +197,17 @@ predates everything below.
   error when the samples list different features (`--on-mismatch=fill` or
   `drop` to go on) and a report of what was joined; it replaces csvgather in
   the documented workflow (#25)
+- `detk-util record [-i FILE]... -o FILE... -- <command> [<arg>...]`: run a
+  command outside detk (Miller, awk, an R script) and record it as a step, so
+  the report lists it and the provenance crate shows it as the producer of
+  its outputs (DETK-0051, DETK-0061). The command runs without a shell, with
+  detk's stdin, stdout and stderr; a missing input, a command not found or
+  failing, or a missing output exits 1 and records nothing. The module JSON
+  holds the command, the tool and its version (`--tool`, `--tool-version`,
+  else `<command> --version`) and the SHA-256 and size of every file; in the
+  crate the tool is the step's instrument. Its options use two new metavars,
+  NAME and TEXT. A subcommand that takes a command after `--` is the one
+  exception to detk's refusing `--` (DETK-0160)
 - Tutorials section in the docs, whose pages run as integration tests: a
   pytest runner in `tests/tutorials/` runs each page's bash blocks in order
   and checks the outputs the page shows (DETK-0064); `docs/dev/tutorials.md`

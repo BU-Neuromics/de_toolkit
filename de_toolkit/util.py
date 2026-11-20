@@ -1,8 +1,9 @@
 r"""
 Utilities around a detk analysis: tidy a counts file and its sample
 information so their samples match (tidy, tidy-counts, tidy-covs), annotate
-a result table with feature metadata such as gene symbols (annotate), and
-gather per-sample quantifier outputs into one counts matrix (gather).
+a result table with feature metadata such as gene symbols (annotate),
+gather per-sample quantifier outputs into one counts matrix (gather), and
+run a command outside detk and record it as a step of the analysis (record).
 """
 
 _GATHER_FORMATS = ("salmon", "kallisto", "htseq", "featurecounts", "auto")
@@ -117,6 +118,52 @@ ones with 0, --on-mismatch=drop keeps only the features every sample lists.""",
             ),
         ],
     ),
+    "record": dict(
+        help="Run a command outside detk and record it as a step in the report and crate",
+        description="""\
+Run an external command (Miller, awk, an R script, ...) and record it as a
+step of the analysis, so the files it writes show in the module JSON and in
+the provenance crate (ro-crate-metadata.json) as the output of that step, and
+a later detk command that reads them has a producer to trace them to.
+
+The command is everything after --, run as given without a shell: a pipeline
+or a redirect inside the step needs sh -c '...'. It reads detk's stdin and
+writes to detk's stdout and stderr, so a redirect of the whole line (detk-util
+record ... -- cmd > out.csv) captures the command's own output; record itself
+writes nothing to stdout, its messages go to stderr.
+
+Every --input must exist before the run and every --output after it. Record
+exits 1 and writes no module JSON when an input is missing, when the command
+is not found or exits non-zero, or when an output is missing after the run; it
+never deletes or rewrites a file. The check only asks that each output exists:
+a file that was there before the run passes it, including the empty file a
+shell redirect (> out.csv) creates before record starts. The module JSON holds
+the command, the tool and its version, and the SHA-256 checksum and size of
+every input (read before the run) and output (read after it), so the
+checksums say what the files held when recorded.
+
+The tool is the base name of the command's first word unless --tool names it
+(needed for sh -c '...' or Rscript script.R). Its version is the first line
+of '<command> --version', run with a 10 s timeout, unless --tool-version gives
+it; when that fails, or --tool names a tool other than the command's first
+word, the version is recorded as 'unknown' with a warning. When the command is
+your own script (./derive.py), give --tool-version: asking for the version
+runs '<script> --version', which runs a script that does not handle --version
+a second time.""",
+        examples=[
+            (
+                "Record a Miller step that adds an age_group column to the sample information",
+                "detk-util record -i sample_info.csv -o sample_info_derived.csv -- "
+                'mlr --icsv --ocsv put \'$age_group = $age >= 50 ? "old" : "young"\' '
+                "sample_info.csv > sample_info_derived.csv",
+            ),
+            (
+                "Record a pipeline, run through sh -c, as an awk step",
+                "detk-util record --tool=awk -i counts.csv -o counts_head.csv -- "
+                "sh -c 'head -n 101 counts.csv | awk -F, \"NF > 1\" > counts_head.csv'",
+            ),
+        ],
+    ),
 }
 
 
@@ -139,6 +186,53 @@ def _output(sub, what):
     )
 
 
+RECORD_USAGE = "detk-util record [options] [-i FILE]... -o FILE... -- <command> [<arg>...]"
+
+
+def _record_arguments(sub):
+    # every word after "--" is the command (common.parse_cli); the positional
+    # is here for help and completion, and nothing before "--" may fill it
+    sub.command_dest = "command"
+    sub.add_argument(
+        "command",
+        metavar="<command>",
+        nargs="*",
+        help="The command to run and its arguments, after --; run as given, without a shell",
+    )
+    sub.add_argument(
+        "-i",
+        "--input",
+        metavar="FILE",
+        action="append",
+        help="A file the command reads; give it once per file, or not at all",
+    )
+    sub.add_argument(
+        "-o",
+        "--output",
+        metavar="FILE",
+        action="append",
+        required=True,
+        help="A file the command writes; give it once per file (at least one)",
+    )
+    sub.add_argument(
+        "--tool",
+        metavar="NAME",
+        help="Name of the tool that runs (without it: the base name of the command's first word)",
+    )
+    sub.add_argument(
+        "--tool-version",
+        metavar="TEXT",
+        help="Version of the tool to record (without it: the first line of '<command> --version')",
+    )
+    sub.validate = _validate_record
+
+
+def _validate_record(args):
+    if not args.command:
+        return "the following arguments are required: <command> (the command to run, after --)"
+    return None
+
+
 def build_parser():
     "The detk-util command line parser"
     parser = DetkParser(prog="detk-util", description=__doc__.strip())
@@ -152,6 +246,7 @@ def build_parser():
             examples=spec["examples"],
             # gather's files may be interleaved with its options
             intermixed=name == "gather",
+            **(dict(usage=RECORD_USAGE) if name == "record" else {}),
         )
         if name == "tidy":
             _counts_and_covs(sub)
@@ -246,6 +341,8 @@ def build_parser():
                 "error, fill with 0 or drop them",
             )
             _output(sub, "the counts matrix")
+        elif name == "record":
+            _record_arguments(sub)
         add_common_options(sub)
     return parser
 
@@ -876,6 +973,190 @@ def _gather_main(args):
     logging.info("done")
 
 
+# ---------------------------------------------------------------------------
+# record: run an external command and record it as a step (DETK-0051, DETK-0061)
+# ---------------------------------------------------------------------------
+
+# seconds '<tool> --version' may take before the version is recorded unknown
+VERSION_TIMEOUT = 10
+UNKNOWN_VERSION = "unknown"
+
+
+def file_digest(path):
+    "The SHA-256 checksum (hex) and size in bytes of the file at *path*"
+    import hashlib
+
+    h = hashlib.sha256()
+    size = 0
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            h.update(block)
+            size += len(block)
+    return {"path": path, "sha256": h.hexdigest(), "size": size}
+
+
+def probe_version(executable, timeout=VERSION_TIMEOUT):
+    """
+    The first non-empty line ``<executable> --version`` prints (on stdout,
+    else stderr), or None when it is not found, fails, prints nothing or
+    takes longer than *timeout* seconds. Its output is captured, never shown.
+    """
+    import subprocess
+
+    try:
+        p = subprocess.run(
+            [executable, "--version"],
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            errors="replace",
+            timeout=timeout,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if p.returncode != 0:
+        return None
+    for text in (p.stdout, p.stderr):
+        for line in text.splitlines():
+            if line.strip():
+                return line.strip()
+    return None
+
+
+class Record(DetkModule):
+    """
+    The record of an external command run as a step of the analysis: *argv*
+    the command and its arguments, *tool* and *tool_version* the software
+    that ran, *inputs* and *outputs* the files it read and wrote (as given),
+    *input_digests* and *output_digests* their :func:`file_digest`, and
+    *exit_status* the command's exit status.
+
+    :func:`run_record` runs the command and builds one; the module JSON holds
+    the command, tool, version and file lists in ``params`` and each file's
+    checksum and size in ``properties``.
+    """
+
+    def __init__(
+        self,
+        argv,
+        tool,
+        tool_version,
+        inputs,
+        outputs,
+        input_digests,
+        output_digests,
+        exit_status=0,
+    ):
+        import shlex
+
+        self["params"] = {
+            "command": shlex.join(argv),
+            "argv": list(argv),
+            "tool": tool,
+            "tool_version": tool_version,
+            "inputs": list(inputs),
+            "outputs": list(outputs),
+        }
+        self["properties"] = {
+            "inputs": list(input_digests),
+            "outputs": list(output_digests),
+            "exit_status": exit_status,
+        }
+
+
+def run_record(argv, inputs=(), outputs=(), tool=None, tool_version=None):
+    """
+    Run the command *argv* (a list, run without a shell, with this process's
+    stdin, stdout and stderr) and return its :class:`Record`.
+
+    Raises ``ValueError`` naming the file when an input does not exist
+    before the run or an output does not exist after it, and
+    ``RuntimeError`` when the command is not found, cannot be run or exits
+    non-zero. Nothing is recorded then, and no file is deleted or changed.
+    """
+    import os
+    import shlex
+    import subprocess
+
+    argv = list(argv)
+    inputs, outputs = list(inputs), list(outputs)
+    if not argv:
+        raise ValueError("no command to run")
+    if not outputs:
+        raise ValueError("at least one output file is required")
+    for path in inputs:
+        if not os.path.isfile(path):
+            raise ValueError(f"input file {path} does not exist")
+    input_digests = [file_digest(p) for p in inputs]
+
+    command = shlex.join(argv)
+    logger.info("running: %s", command)
+    sys.stdout.flush()
+    sys.stderr.flush()
+    try:
+        status = subprocess.run(argv).returncode
+    except FileNotFoundError:
+        raise RuntimeError(f"command not found: {argv[0]}") from None
+    except OSError as e:
+        raise RuntimeError(f"command {argv[0]} could not be run: {e.strerror or e}") from None
+    if status < 0:
+        raise RuntimeError(f"command was killed by signal {-status}: {command}")
+    if status != 0:
+        raise RuntimeError(f"command failed with exit status {status}: {command}")
+
+    for path in outputs:
+        if not os.path.isfile(path):
+            raise ValueError(f"output file {path} was not written by the command: {command}")
+    output_digests = [file_digest(p) for p in outputs]
+
+    executable = os.path.basename(argv[0])
+    if tool is None:
+        tool = executable
+    if tool_version is None:
+        # the command's first word is asked only for its own version: with
+        # --tool naming another tool (sh -c '...', Rscript), it is unknown
+        found = probe_version(argv[0]) if tool == executable else None
+        if found is None:
+            logger.warning(
+                "the version of %s is not known; recording %r (give it with --tool-version)",
+                tool,
+                UNKNOWN_VERSION,
+            )
+        tool_version = found or UNKNOWN_VERSION
+    logger.info("recorded %s %s", tool, tool_version)
+
+    return Record(argv, tool, tool_version, inputs, outputs, input_digests, output_digests, status)
+
+
+def _record_main(args):
+    import os
+
+    from .report import DetkReport
+
+    inputs = args.input or []
+    record = run_record(
+        args.command,
+        inputs=inputs,
+        outputs=args.output,
+        tool=args.tool,
+        tool_version=args.tool_version,
+    )
+
+    if not args.no_report:
+        logging.info("writing report to %s", args.report_dir)
+        with DetkReport(args.report_dir) as r:
+            r.add_module(
+                record,
+                in_file_path=inputs[0] if inputs else None,
+                out_file_path=args.output[0],
+                workdir=os.getcwd(),
+                in_file_paths=inputs,
+                out_file_paths=list(args.output),
+            )
+
+    logging.info("done")
+
+
 @cli_main
 def main(argv=sys.argv):
 
@@ -892,6 +1173,11 @@ def main(argv=sys.argv):
         set_logging(args)
         logger.info("cmd: %s", " ".join(argv))
         return _gather_main(args)
+
+    if cmd == "record":
+        set_logging(args)
+        logger.info("cmd: %s", " ".join(argv))
+        return _record_main(args)
 
     count_obj = make_cli_count_obj(args)
     set_logging(args)

@@ -8,15 +8,19 @@ acceptance:
 from: [DETK-0001, DETK-0026]
 scope: [tests/check_runtime_deps.py, +pyproject.toml]
 prev: [DETK-0001, DETK-0026, release/cli-migrate]
+issue: 90
+visited: 9a704f1
+status: done
+done: 3385157
 ---
 
 # Guard the removed dependencies and fix the E402 note
 
 ## Implementation plan
 
-- [ ] @developer Add patsy and docopt-ng to `TEST_ONLY` in `tests/check_runtime_deps.py` (docstring and message to match), show the check failing once with patsy put back by hand, and correct the E402 comment in `pyproject.toml`; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Add patsy and docopt-ng to `TEST_ONLY` in `tests/check_runtime_deps.py` (docstring and message to match), show the check failing once with patsy put back by hand, and correct the E402 comment in `pyproject.toml`; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

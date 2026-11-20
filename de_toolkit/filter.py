@@ -1,14 +1,19 @@
 r"""
-Usage:
-    detk-filter [options] <command> <counts_fn> [<cov_fn>]
+Filter features (rows) out of a counts matrix with a filter expression,
+written in a small mini-language and quoted on the command line. The
+expression describes the rows to keep:
 
-Options:
-    -o <out_fn> --output=<out_fn>    Name of output file [default: stdout]
-    --column-data=<column_data_fn>   DEPRECATED: pass cov_fn as positional
-                                     command line argument instead
+    <function>(<column spec>) <inequality> <number>
+
+The functions are mean, median, max, min, zero and nonzero (for zero and
+nonzero, a number strictly between 0 and 1 is a fraction of samples, 0 or
+>= 1 a number of samples); the inequalities >, >=, <, <=, == and !=. Terms
+combine with and / or and group with parentheses. The column spec is all
+(every sample), a column of <cov_fn> (the filter is applied to each of its
+groups, and a row is kept if any group passes), or one group of it, as in
+condition[test].
 """
 
-from docopt import docopt
 import logging
 import os.path
 import ply.lex as lex
@@ -17,7 +22,15 @@ import sys
 from tempfile import TemporaryDirectory
 from warnings import warn
 
-from .common import DetkModule, _cli_doc, set_logging, make_cli_count_obj, write_output
+from .common import (
+    DetkModule,
+    DetkParser,
+    add_common_options,
+    make_cli_count_obj,
+    parse_cli,
+    set_logging,
+    write_output,
+)
 from .report import DetkReport
 
 # setup logging, null on the library level
@@ -307,28 +320,58 @@ class FilterCounts(DetkModule):
         }
 
 
+def build_parser():
+    "The detk-filter command line parser"
+    parser = DetkParser(
+        prog="detk-filter",
+        description=__doc__.strip(),
+        examples=[
+            (
+                "Keep the genes with a count above zero in at least half the samples",
+                "detk-filter -o counts_filtered.csv 'nonzero(all) >= 0.5' counts.csv",
+            ),
+            (
+                "Keep the genes whose mean count is above 10 in either group",
+                "detk-filter -o counts_filtered.csv 'mean(group) > 10' counts.csv sample_info.csv",
+            ),
+        ],
+    )
+    parser.add_argument(
+        "command", metavar="<command>", help="Filter expression: the rows to keep, quoted"
+    )
+    parser.add_argument(
+        "counts_fn",
+        metavar="<counts_fn>",
+        help="Counts file: features in rows, samples in columns, delimited",
+    )
+    parser.add_argument(
+        "cov_fn",
+        metavar="<cov_fn>",
+        nargs="?",
+        help="Column data file: samples in rows, covariates in columns, for group filters",
+    )
+    parser.add_argument(
+        "-o", "--output", metavar="FILE", default="stdout", help="Name of the output file"
+    )
+    parser.add_argument(
+        "--column-data",
+        metavar="FILE",
+        help="DEPRECATED: pass the column data file as the positional <cov_fn> instead",
+    )
+    add_common_options(parser)
+    return parser
+
+
 def main(argv=sys.argv):
 
-    if "--version" in argv:
-        from .version import __version__
-
-        print(__version__)
-        return
-
-    if argv[0].endswith("detk"):
-        argv = argv[2:]
-    elif argv[0].endswith("detk-filter"):
-        argv = argv[1:]
-
-    # Create command line arguments to pass in data and filter command
-    args = docopt(_cli_doc(__doc__), argv=argv)
+    args = parse_cli(build_parser(), argv)
 
     set_logging(args)
-    logger.info("cmd: %s", " ".join(argv))
+    logger.info("cmd: %s", " ".join(argv[1:]))
 
     # Get column data, if provided
-    if args["--column-data"] is not None:
-        if args["<cov_fn>"] is not None:
+    if args.column_data is not None:
+        if args.cov_fn is not None:
             logger.warning(
                 "Both positional <cov_fn> argument and --column-data "
                 "are provided, ignoring the --column-data argument."
@@ -339,27 +382,27 @@ def main(argv=sys.argv):
                 "Use the optional [<cov_fn>] positional argument instead."
             )
 
-            args["<cov_fn>"] = args["--column-data"]
+            args.cov_fn = args.column_data
 
     count_obj = make_cli_count_obj(args)
 
     try:
-        filtered = FilterCounts(count_obj, args["<command>"])
+        filtered = FilterCounts(count_obj, args.command)
     except Exception as e:
         logger.error(e)
         sys.exit(1)
 
     write_output(filtered.output, args)
 
-    if not args["--no-report"]:
-        logging.info("writing report to %s", args["--report-dir"])
+    if not args.no_report:
+        logging.info("writing report to %s", args.report_dir)
         # write out the report json
-        with DetkReport(args["--report-dir"]) as r:
+        with DetkReport(args.report_dir) as r:
             r.add_module(
                 filtered,
-                in_file_path=args["<counts_fn>"],
-                out_file_path=args["--output"],
-                column_data_path=args.get("--column-data"),
+                in_file_path=args.counts_fn,
+                out_file_path=args.output,
+                column_data_path=args.column_data,
                 workdir=os.getcwd(),
             )
 

@@ -1,58 +1,135 @@
 r"""
-Usage:
-    detk-transform plog [options] <counts_fn>
-    detk-transform vst [options] <counts_fn>
-    detk-transform rlog [options] <counts_fn> [<design> <cov_fn>]
-
-Options:
-    -h --help   This helpful helping of help
+Transform the counts in a counts matrix: a log transform with a pseudocount
+(plog), or DESeq2's variance stabilizing (vst) or regularized log (rlog)
+transformation, which make the variance of a feature less dependent on its
+mean. The input is a delimited counts file, features in rows and samples in
+columns; the output is the transformed matrix in the same shape.
 """
 
-TODO = """
-    detk-transform ruvseq <counts_fn>
-"""
+_RDA_HELP = "Write the R result objects of the analysis to FILE with saveRDS()"
 
-cmd_opts = {
-    "vst": r"""
-Usage:
-    detk-transform vst [options] <counts_fn>
-
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    --rda=RDA              Filename passed to saveRDS() R function of the result
-                           objects from the analysis
-""",
-    "plog": r"""
-Usage:
-    detk-transform plog [options] <counts_fn>
-
-Options:
-    -c N --pseudocount=N   The pseudocount to use when taking the log transform [default: 1]
-    -b B --base=B          The base of the log to use [default: 10]
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-""",
-    "rlog": r"""
-Usage:
-    detk-transform rlog [options] <counts_fn> [<design> <cov_fn>]
-
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    --rda=RDA              Filename passed to saveRDS() R function of the result
-                           objects from the analysis
-    --strict               Require that the sample order indicated by the column names in the
-                           counts file are the same as, and in the same order as, the
-                           sample order in the row names of the covariates file
-    --blind N              If False, count_obj is expected to have column_data
-""",
+# each subcommand: the one line the command's help lists it with, its
+# description and its examples
+SUBCOMMANDS = {
+    "plog": dict(
+        help="log(count + pseudocount) in a given base",
+        description="""\
+Take the logarithm of each count plus a pseudocount: log(count + pseudocount),
+in the given base.""",
+        examples=[
+            ("log10(count + 1) of counts.csv", "detk-transform plog -o plog.csv counts.csv"),
+            ("log2(count + 0.5)", "detk-transform plog -b 2 -c 0.5 -o log2.csv counts.csv"),
+        ],
+    ),
+    "vst": dict(
+        help="DESeq2 variance stabilizing transformation (runs R)",
+        description="""\
+Apply the variance stabilizing transformation (varianceStabilizingTransformation)
+of the DESeq2 package to the counts, blind to any design. Needs R with
+DESeq2.""",
+        examples=[("VST of counts.csv", "detk-transform vst -o vst.csv counts.csv")],
+    ),
+    "rlog": dict(
+        help="DESeq2 regularized log transformation (runs R)",
+        description="""\
+Apply the regularized log transformation (rlog) of the DESeq2 package to the
+counts. Give both <design> and <cov_fn>, or neither: with them, the design is
+built from the sample information file. Needs R with DESeq2.""",
+        examples=[("rlog of counts.csv", "detk-transform rlog -o rlog.csv counts.csv")],
+    ),
 }
 
-from docopt import docopt
+
+def _rlog_design_and_cov_fn(args):
+    "rlog takes both or neither of <design> and <cov_fn> (DETK-0033)"
+    if (args.design is None) != (args.cov_fn is None):
+        return "<design> and <cov_fn> go together: give both, or neither (missing: <cov_fn>)"
+    return None
+
+
+def build_parser():
+    "The detk-transform command line parser"
+    parser = DetkParser(prog="detk-transform", description=__doc__.strip())
+    add_command_options(parser)
+    subs = add_subcommands(parser)
+    for name, spec in SUBCOMMANDS.items():
+        sub = subs.add_parser(
+            name,
+            help=spec["help"],
+            description=spec["description"],
+            examples=spec["examples"],
+            validate=_rlog_design_and_cov_fn if name == "rlog" else None,
+        )
+        sub.add_argument(
+            "counts_fn",
+            metavar="<counts_fn>",
+            help="Counts file: features in rows, samples in columns, delimited",
+        )
+        if name == "rlog":
+            sub.add_argument(
+                "design",
+                metavar="<design>",
+                nargs="?",
+                help="Design formula, e.g. 'counts ~ group' (with <cov_fn>)",
+            )
+            sub.add_argument(
+                "cov_fn",
+                metavar="<cov_fn>",
+                nargs="?",
+                help="Sample information file: samples in rows (with <design>)",
+            )
+        if name == "plog":
+            sub.add_argument(
+                "-c",
+                "--pseudocount",
+                metavar="N",
+                default="1",
+                help="The pseudocount added to each count before the log",
+            )
+            sub.add_argument(
+                "-b", "--base", metavar="N", default="10", help="The base of the logarithm"
+            )
+        sub.add_argument(
+            "-o",
+            "--output",
+            metavar="FILE",
+            default="stdout",
+            help="Destination of the transformed counts in CSV format",
+        )
+        if name in ("vst", "rlog"):
+            sub.add_argument("--rda", metavar="FILE", help=_RDA_HELP)
+        if name == "rlog":
+            sub.add_argument(
+                "--strict",
+                action="store_true",
+                help="Require the counts columns and the sample information rows to "
+                "name the same samples in the same order",
+            )
+            sub.add_argument(
+                "--blind",
+                metavar="BOOL",
+                help="Passed to DESeq2 rlog(blind=); when not given, blind is True",
+            )
+        add_common_options(sub)
+    return parser
+
+
 import logging
 import os
 import numpy
 from pprint import pformat
 import sys
-from .common import DetkModule, _cli_doc, make_cli_count_obj, set_logging, write_output
+from .common import (
+    DetkModule,
+    DetkParser,
+    add_command_options,
+    add_common_options,
+    add_subcommands,
+    make_cli_count_obj,
+    parse_cli,
+    set_logging,
+    write_output,
+)
 from .wrapr import require_r, wrapr
 from .util import stub
 from .report import DetkReport
@@ -320,29 +397,10 @@ def ruvseq(count_obj):
 
 def main(argv=sys.argv):
 
-    if "--version" in argv:
-        from .version import __version__
-
-        print(__version__)
-        return
-
-    # add the common opts to the docopt strings
-    cmd_opts_aug = {}
-    for k, v in cmd_opts.items():
-        cmd_opts_aug[k] = _cli_doc(v)
-
-    # dispatch on the subcommand and parse with its own usage string; parsing
-    # the module-level usage first (as this main used to) rejected every
-    # subcommand-specific option like -o, because [options] only expands to
-    # the options listed in the same docstring
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts):
-        docopt(_cli_doc(__doc__))
-    argv = argv[1:]
-    cmd = argv[0]
-
-    args = docopt(cmd_opts_aug[cmd], argv)
+    args = parse_cli(build_parser(), argv)
+    cmd = args.subcommand
     set_logging(args)
-    logger.info("cmd: %s", " ".join(argv))
+    logger.info("cmd: %s", " ".join(argv[1:]))
 
     count_obj = make_cli_count_obj(args)
 
@@ -351,33 +409,30 @@ def main(argv=sys.argv):
 
     elif cmd == "plog":
         try:
-            out = PlogCounts(
-                count_obj, pseudocount=float(args["--pseudocount"]), base=float(args["--base"])
-            )
+            out = PlogCounts(count_obj, pseudocount=float(args.pseudocount), base=float(args.base))
         except Exception as e:
             logger.error(e)
             sys.exit(1)
 
     elif cmd == "rlog":
-        if args["--blind"] is None:
-            args["--blind"] = True
+        blind = True if args.blind is None else args.blind
 
         try:
-            out = RlogCounts(count_obj, blind=args["--blind"])
+            out = RlogCounts(count_obj, blind=blind)
         except Exception as e:
             logger.error(e)
             sys.exit(1)
 
     write_output(out.output, args)
 
-    if not args["--no-report"]:
-        logging.info("writing report to %s", args["--report-dir"])
-        with DetkReport(args["--report-dir"]) as r:
+    if not args.no_report:
+        logging.info("writing report to %s", args.report_dir)
+        with DetkReport(args.report_dir) as r:
             r.add_module(
                 out,
-                in_file_path=args["<counts_fn>"],
-                out_file_path=args["--output"],
-                column_data_path=args.get("--column-data"),
+                in_file_path=args.counts_fn,
+                out_file_path=args.output,
+                column_data_path=None,
                 workdir=os.getcwd(),
             )
 

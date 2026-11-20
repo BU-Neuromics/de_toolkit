@@ -1,4 +1,3 @@
-import docopt
 import pandas
 import pytest
 import sys
@@ -47,8 +46,8 @@ def fake_untidy_column_data_csv(request):
 
 
 def test_util_cli():
-    with pytest.raises(docopt.DocoptExit):
-        main()
+    with pytest.raises(SystemExit):
+        main(["detk-util"])
 
 
 def test_tidy_cli(fake_untidy_counts_csv, fake_untidy_column_data_csv):

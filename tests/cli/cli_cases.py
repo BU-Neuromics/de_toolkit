@@ -67,7 +67,8 @@ def lines(sub):
                 forms.append((o.short, (o.short,)))
             value = True
         else:
-            value = _value(o.key)
+            # an option with choices takes one of them
+            value = o.choices[0] if o.choices else _value(o.key)
             forms.append((f"{o.long}=", (f"{o.long}={value}",)))
             forms.append((f"{o.long} ", (o.long, value)))
             if o.short:

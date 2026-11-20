@@ -2,19 +2,22 @@
 
 The usage of each command the `detk` skill uses, copied from the commands'
 own `--help` output (de_toolkit's test suite checks that they still match).
-`<command> <subcommand> --help` prints the usage of the installed version.
+`<command> <subcommand> --help` prints the full help of the installed
+version: description, usage, arguments, options, common options and
+examples.
 
 Every command also accepts the common options:
 
 ```text
-Common options:
-    -d CHAR --out-delim=CHAR  Delimiter to use for output file [default: ,]
-    --report-dir=DIR          Specify the report directory [default: ./detk_report]
-    --no-report               Do not generate the HTML report
-    --version                 Print out detk version and exit
-    -v --verbose              Make log output verbose
-    -q --quiet                Turn off all logging except warnings and errors
-    --shut-up                 Turn off ALL logging
+common options:
+  -d, --out-delim CHAR  Delimiter to use for the output file (default: ,)
+  --report-dir DIR      Directory to write the HTML report and module JSON into
+                        (default: ./detk_report)
+  --no-report           Do not write the HTML report
+  --version             Print the detk version and exit
+  -v, --verbose         Make log output verbose
+  -q, --quiet           Turn off all logging except warnings and errors
+  --shut-up             Turn off ALL logging
 ```
 
 Most commands write their table to stdout unless given `-o FILE`, and log to
@@ -24,284 +27,342 @@ unless `--no-report` is given.
 ## `detk-stats summary`
 
 ```text
-Usage:
-    detk-stats summary [options] <counts_fn> [<cov_fn>]
+usage: detk-stats summary [options] <counts_fn> [<cov_fn>]
 
-Options:
-    --column-data=FN       DEPRECATED: pass cov_fn as positional command line
-                           argument instead
-    --color-col=COLNAME    Use column data column COLNAME for coloring output plots
-    --bins=BINS            Number of bins to use for the calculated
-                           distributions [default: 20]
-    --log                  log transform count statistics
-    --density              Produce density distribution by dividing each distribution
-                           by the appropriate sum
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <cov_fn>     Column data file: samples in rows, covariates in columns
+
+options:
+  -h, --help          Print this help and exit
+  --column-data FILE  DEPRECATED: pass the column data file as the positional
+                      <cov_fn> instead
+  --color-col COL     Column of the column data to color the output plots by
+  --bins N            Number of bins of the calculated distributions
+                      (default: 20)
+  --log               log10 transform the counts first (zeros are left out)
+  --density           Report each distribution as a density, divided by its sum
+  -o, --output FILE   Destination of primary output (default: stdout)
+  -f, --format FMT    Format of output (choices: csv, table) (default: csv)
 ```
 
 ## `detk-filter`
 
 ```text
-Usage:
-    detk-filter [options] <command> <counts_fn> [<cov_fn>]
+usage: detk-filter [options] <command> <counts_fn> [<cov_fn>]
 
-Options:
-    -o <out_fn> --output=<out_fn>    Name of output file [default: stdout]
-    --column-data=<column_data_fn>   DEPRECATED: pass cov_fn as positional
-                                     command line argument instead
+positional arguments:
+  <command>    Filter expression: the rows to keep, quoted
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <cov_fn>     Column data file: samples in rows, covariates in columns, for
+               group filters
+
+options:
+  -h, --help          Print this help and exit
+  -o, --output FILE   Name of the output file (default: stdout)
+  --column-data FILE  DEPRECATED: pass the column data file as the positional
+                      <cov_fn> instead
 ```
 
 ## `detk-util gather`
 
 ```text
-Usage:
-    detk-util gather [options] <files>...
+usage: detk-util gather [options] <files>...
 
-Options:
-    --format=FMT           salmon, kallisto, htseq, featurecounts or auto
-                           [default: auto]
-    --column=COL           Column to extract from each file, by name or 0-based
-                           position (default: the format's count column)
-    --name-from=REGEX      Regular expression deriving each sample name from
-                           its file path (the first group, or the whole match)
-    --on-mismatch=WHAT     What to do when the samples list different features:
-                           error, fill (with 0) or drop [default: error]
-    -o FILE --output=FILE  Destination of the counts matrix [default: stdout]
+positional arguments:
+  <files>  Quantifier output files, one per sample (a quoted glob is expanded)
+
+options:
+  -h, --help          Print this help and exit
+  --format FMT        Format of the files; auto detects it from each file's
+                      header (choices: salmon, kallisto, htseq, featurecounts,
+                      auto) (default: auto)
+  --column COL        Column to extract from each file, by name or 0-based
+                      position (without it: the format's count column)
+  --name-from REGEX   Regular expression deriving each sample name from its file
+                      path (the first group, or the whole match)
+  --on-mismatch WHAT  What to do when the samples list different features: stop
+                      with an error, fill with 0 or drop them (choices: error,
+                      fill, drop) (default: error)
+  -o, --output FILE   Destination of the counts matrix (default: stdout)
 ```
 
 ## `detk-util tidy`
 
 ```text
-Usage:
-    detk-util tidy [options] <counts_fn> <cov_fn>
+usage: detk-util tidy [options] <counts_fn> <cov_fn>
 
-Options:
-    -o FILE --output=FILE  Destination of tidied counts data [default: stdout]
-    -p FILE --column-data-output=FILE  Destination of tidied column data
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <cov_fn>     Sample information file: samples in rows, delimited
+
+options:
+  -h, --help                  Print this help and exit
+  -o, --output FILE           Destination of tidied counts data
+                              (default: stdout)
+  -p, --column-data-output FILE
+                              Destination of tidied column data (not written
+                              without it)
 ```
 
 ## `detk-norm deseq2`
 
 ```text
-Usage:
-    detk-norm deseq2 [options] <counts_fn>
+usage: detk-norm deseq2 [options] <counts_fn>
 
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
-    --size-factors=FILE          Write out the size factors found by the DESeq2
-                                 method to two column tab separated file where
-                                 the first column is sample name and the second
-                                 column is the size factor
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help           Print this help and exit
+  -o, --output FILE    Destination of normalized output in CSV format
+                       (default: stdout)
+  --size-factors FILE  Write out the size factors found by the DESeq2 method to
+                       a two column tab separated file: sample name and size
+                       factor
 ```
 
 ## `detk-norm fpkm`
 
 ```text
-Usage:
-    detk-norm fpkm [options] <counts_fn> <lengths_fn>
+usage: detk-norm fpkm [options] <counts_fn> <lengths_fn>
 
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+positional arguments:
+  <counts_fn>   Counts file: features in rows, samples in columns, delimited
+  <lengths_fn>  Feature lengths file: feature name and length in bases
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of normalized output in CSV format
+                     (default: stdout)
 ```
 
 ## `detk-norm library`
 
 ```text
-Usage:
-    detk-norm library [options] <counts_fn>
+usage: detk-norm library [options] <counts_fn>
 
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of normalized output in CSV format
+                     (default: stdout)
 ```
 
 ## `detk-norm cpm`
 
 ```text
-Usage:
-    detk-norm cpm [options] <counts_fn>
+usage: detk-norm cpm [options] <counts_fn>
 
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of normalized output in CSV format
+                     (default: stdout)
 ```
 
 ## `detk-norm tpm`
 
 ```text
-Usage:
-    detk-norm tpm [options] <counts_fn> <lengths_fn>
+usage: detk-norm tpm [options] <counts_fn> <lengths_fn>
 
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+positional arguments:
+  <counts_fn>   Counts file: features in rows, samples in columns, delimited
+  <lengths_fn>  Feature lengths file: feature name and length in bases
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of normalized output in CSV format
+                     (default: stdout)
 ```
 
 ## `detk-transform vst`
 
 ```text
-Usage:
-    detk-transform vst [options] <counts_fn>
+usage: detk-transform vst [options] <counts_fn>
 
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    --rda=RDA              Filename passed to saveRDS() R function of the result
-                           objects from the analysis
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of the transformed counts in CSV format
+                     (default: stdout)
+  --rda FILE         Write the R result objects of the analysis to FILE with
+                     saveRDS()
 ```
 
 ## `detk-outlier entropy`
 
 ```text
-Usage:
-    detk-outlier entropy <counts_fn> [options]
+usage: detk-outlier entropy [options] <counts_fn>
 
-Options:
-    -p P --percentile=P    Float value between 0 and 1
-    -o FILE --output=FILE  Name of the ouput csv
-    --plot-output=FILE     Name of the plot png
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help          Print this help and exit
+  -p, --percentile N  The entropy percentile below which a feature is flagged,
+                      between 0 and 1
+  -o, --output FILE   Destination of the entropy and flag of each feature in CSV
+                      format
+  --plot-output FILE  Destination of a PNG plot of the entropy distribution and
+                      threshold
 ```
 
 ## `detk-de deseq2`
 
 ```text
-Usage:
-    detk-de deseq2 [options] <design> <counts_fn> <cov_fn>
+usage: detk-de deseq2 [options] <design> <counts_fn> <cov_fn>
 
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    --routput-dir=DIR      Path to output directory for R stuffs, useful for
-                           debuggin out
-    --rda=RDA              Filename passed to saveRDS() R function of the result
-                           objects from the analysis
-    --strict               Require that the sample order indicated by the column names in the
-                           counts file are the same as, and in the same order as, the
-                           sample order in the row names of the covariates file
-    --norm-counts          Prevent DESeq2 from normalizing counts prior to
-                           running differential expression, default behavior
-                           assumes that provided counts are raw
-    --last-term-only       Use the default DESeq2 behavior of returning DE parameters
-                           for the last term in the model, default behavior is to
-                           report parameters for all variables in the model
-    --gene-wise-disp       Use estimateDispersionsGeneEst instead of estimateDispersions
-    --cores=N              Tell DESeq2 to use N cores when running, requires the
-                           BiocParallel Bioconductor package to be installed [default: none]
+positional arguments:
+  <design>     Model formula, quoted, such as "counts ~ group"
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <cov_fn>     Sample information file: samples in rows, the first column their
+               names
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of primary output (default: stdout)
+  --routput-dir DIR  Directory to keep the R script, its inputs and outputs in,
+                     for debugging
+  --rda FILE         File to saveRDS() the R result objects of the analysis to
+  --strict           Require the counts file's sample columns to be the same as,
+                     and in the same order as, the rows of the sample
+                     information file
+  --norm-counts      Do not let DESeq2 normalize the counts: they are already
+                     normalized
+  --last-term-only   Report the parameters of the model's last term only
+                     (DESeq2's default)
+  --gene-wise-disp   Use estimateDispersionsGeneEst instead of
+                     estimateDispersions
+  --cores N          Number of cores DESeq2 uses (needs the BiocParallel
+                     package) (default: none)
 ```
 
 ## `detk-de firth`
 
 ```text
-Usage:
-    detk-de firth [options] <design> <counts_fn> <cov_fn>
+usage: detk-de firth [options] <design> <counts_fn> <cov_fn>
 
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    --routput-dir=DIR      Path to output directory for R stuffs, useful for
-                           debuggin out
-    --rda=RDA              Filename passed to saveRDS() R function of the result
-                           objects from the analysis
-    --strict               Require that the sample order indicated by the column names in the
-                           counts file are the same as, and in the same order as, the
-                           sample order in the row names of the covariates file
-    --standardize          Standardize counts prior to running logistic regression
-                           as to obtain standardized (i.e. directly comparable)
-                           beta coefficients
-    --cores=N              Tell R to use N cores when running, requires the
-                           parallel R package to be installed [default: none]
+positional arguments:
+  <design>     Model formula, quoted, such as "counts ~ group"
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <cov_fn>     Sample information file: samples in rows, the first column their
+               names
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of primary output (default: stdout)
+  --routput-dir DIR  Directory to keep the R script, its inputs and outputs in,
+                     for debugging
+  --rda FILE         File to saveRDS() the R result objects of the analysis to
+  --strict           Require the counts file's sample columns to be the same as,
+                     and in the same order as, the rows of the sample
+                     information file
+  --standardize      Standardize the counts first, so the coefficients are
+                     directly comparable
+  --cores N          Number of cores R uses (needs the parallel R package)
+                     (default: none)
 ```
 
 ## `detk-enrich fgsea`
 
 ```text
-Usage:
-    detk-enrich fgsea [options] <gmt_fn> <result_fn>
+usage: detk-enrich fgsea [options] <gmt_fn> <result_fn>
 
-Options:
-    -o FILE --output=FILE     Destination of fgsea output [default: stdout]
-    -p PROCS --cores=PROCS    Ask BiocParallel to use PROCS processes when
-                              executing fgsea in parallel, requires the
-                              BiocParallel package to be installed
-    -i FIELD --idcol=FIELD    Column name or 0-based integer index to use as
-                              the gene identifier [default: 0]
-    -c FIELD --statcol=FIELD  Column name or 0-based integer index to use as
-                              the statistic for ranking, defaults to the last
-                              numeric column in the file
-    -a --ascending            Sort column ascending, default is to sort
-                              descending, use this if you are sorting by p-value
-                              or want to reverse the directionality of the NES
-                              scores
-    --abs                     Take the absolute value of the column before
-                              passing to fgsea
-    --filter-unannotated      Remove any genes from the result matrix that have
-                              identifiers that don't exist in any gene set of
-                              the GMT
-    --minSize=INT             minSize argument to fgsea [default: 15]
-    --maxSize=INT             maxSize argument to fgsea [default: 500]
-    --nperm=INT               nperm argument to fgsea [default: 10000]
-    --multilevel              Use the fgseaMultilevel function, instead of fgsea
-    --routput-dir=DIR         Path to output directory for R stuffs, useful for
-                              debuggin out
-    --rda=FILE                write out the fgsea result to the provide file
-                              using saveRDS() in R
+positional arguments:
+  <gmt_fn>     Gene sets in GMT format: name, description, IDs
+  <result_fn>  Delimited result file with column names, such as a detk-de result
+
+options:
+  -h, --help            Print this help and exit
+  -o, --output FILE     Destination of fgsea output (default: stdout)
+  -p, --cores N         Number of processes fgsea uses (needs the BiocParallel
+                        package)
+  -i, --idcol COL       Column (name or 0-based index) holding the feature IDs
+                        (default: 0)
+  -c, --statcol COL     Column (name or 0-based index) of the ranking statistic;
+                        the last numeric column if not given
+  -a, --ascending       Rank ascending (for p-values, or to reverse the sign of
+                        NES)
+  --abs                 Rank by the absolute value of the statistic
+  --filter-unannotated  Drop the features whose IDs are in no gene set of the
+                        GMT
+  --minSize N           minSize argument to fgsea (default: 15)
+  --maxSize N           maxSize argument to fgsea (default: 500)
+  --nperm N             nperm argument to fgsea (default: 10000)
+  --multilevel          Use the fgseaMultilevel function, not fgsea
+  --routput-dir DIR     Directory to keep the R script, its inputs and outputs
+                        in, for debugging
+  --rda FILE            File to saveRDS() the fgsea result to
 ```
 
 ## `detk-util annotate`
 
 ```text
-Usage:
-    detk-util annotate [options] <result_fn> <mapping_fn>
+usage: detk-util annotate [options] <result_fn> <mapping_fn>
 
-Options:
-    -i FIELD --idcol=FIELD  Column in the result file holding the feature IDs to
-                            join on [default: 0]
-    --map-from=COL          Column in the mapping file matching the result IDs
-                            [default: 0]
-    --map-to=COLS           Comma-separated mapping columns to add, or 'all' for
-                            every column but --map-from [default: all]
-    --strip-versions        Strip trailing .N version suffixes from Ensembl-style
-                            IDs on both sides before joining
-    --drop-unmapped         Drop result rows with no mapping instead of leaving
-                            their added columns empty
-    -o FILE --output=FILE   Destination of the annotated table [default: stdout]
+positional arguments:
+  <result_fn>   Result table to annotate, e.g. the output of detk-de
+  <mapping_fn>  Mapping table: feature IDs and the metadata columns to add
+
+options:
+  -h, --help         Print this help and exit
+  -i, --idcol COL    Column in the result file holding the feature IDs to join
+                     on (default: 0)
+  --map-from COL     Column in the mapping file matching the result IDs
+                     (default: 0)
+  --map-to COLS      Comma-separated mapping columns to add, or 'all' for every
+                     column but --map-from (default: all)
+  --strip-versions   Strip trailing .N version suffixes from Ensembl-style IDs
+                     before joining
+  --drop-unmapped    Drop result rows with no mapping instead of leaving their
+                     added columns empty
+  -o, --output FILE  Destination of the annotated table (default: stdout)
 ```
 
 ## `detk-report generate`
 
 ```text
-Usage:
-    detk-report generate [options]
+usage: detk-report generate [options]
 
-Options:
-    --dev  Pretty-print the embedded JSON payload (larger file, easier to read)
+options:
+  -h, --help  Print this help and exit
+  --dev       Pretty-print the embedded JSON payload (larger file, easier to
+              read)
 ```
 
 ## `detk-report clean`
 
 ```text
-Usage:
-    detk-report clean [options]
+usage: detk-report clean [options]
+
+options:
+  -h, --help  Print this help and exit
 ```
 
 ## `detk-wrapr check`
 
 ```text
-Usage:
-    detk-wrapr check [options]
-    detk-wrapr run [options] <rscript> [<counts_in>] [<out>]
+usage: detk-wrapr check [options]
 
-Options:
-    --rpath=PATH        Path to Rscript executable, inferred from the environment
-                        by default
-    --routput-dir=PATH  A directory name to write all of the relevant files to
-                        when running this wrapr, useful for debugging an R
-                        script if things go wrong, by default the directory
-                        and files created are temporary and deleted after
-                        execution
-    --meta-in=PATH      Path to metadata file corresponding to columns in counts,
-                        same as is passed to other detk functions
-    --meta-out=PATH     Path to metadata file corresponding to columns in counts,
-                        same as is passed to other detk functions
-    --params-in=PATH    Path to JSON formatted file containing parameters needed
-                        by R script
-    --params-out=PATH   Path to JSON formatted file to be created with output
-                        from the R script
-    --strict            Ensure counts column names and the first row of the
-                        metadata file provided (if any) match, otherwise fail
+options:
+  -h, --help         Print this help and exit
+  --rpath FILE       Path to the Rscript executable; found on the PATH when not
+                     given
+  --routput-dir DIR  Keep the files handed to and written by R in DIR, for
+                     debugging (when not given, a temporary directory deleted
+                     after the run)
+  --meta-in FILE     Sample information file for the columns of the counts, as
+                     other detk commands take it
+  --meta-out FILE    Destination of the sample information as the R script
+                     leaves it
+  --params-in FILE   JSON file of parameters handed to the R script
+  --params-out FILE  Destination of the JSON output parameters of the R script
+  --strict           Require the counts columns and the --meta-in rows to match
 ```

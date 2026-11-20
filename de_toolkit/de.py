@@ -1,69 +1,143 @@
 r"""
-Usage:
-    detk-de deseq2 [options] <design> <counts_fn> <cov_fn>
-    detk-de firth [options] <design> <counts_fn> <cov_fn>
+Test every feature of a counts matrix for differential expression with a
+model of the sample information: DESeq2 (deseq2) or Firth's penalized
+logistic regression (firth). Each takes a model <design> written as a
+formula, a counts file and a sample information file whose first column
+names the samples; the output is a table with one row per feature.
 """
 
 TODO = r"""
     detk-de t-test ( help | [options] <counts_fn> <cov_fn> )
 """
 
-cmd_opts = {
-    "deseq2": r"""
-Usage:
-    detk-de deseq2 [options] <design> <counts_fn> <cov_fn>
+_STRICT_HELP = (
+    "Require the counts file's sample columns to be the same as, and in the same "
+    "order as, the rows of the sample information file"
+)
 
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    --routput-dir=DIR      Path to output directory for R stuffs, useful for
-                           debuggin out
-    --rda=RDA              Filename passed to saveRDS() R function of the result
-                           objects from the analysis
-    --strict               Require that the sample order indicated by the column names in the
-                           counts file are the same as, and in the same order as, the
-                           sample order in the row names of the covariates file
-    --norm-counts          Prevent DESeq2 from normalizing counts prior to
-                           running differential expression, default behavior
-                           assumes that provided counts are raw
-    --last-term-only       Use the default DESeq2 behavior of returning DE parameters
-                           for the last term in the model, default behavior is to
-                           report parameters for all variables in the model
-    --gene-wise-disp       Use estimateDispersionsGeneEst instead of estimateDispersions
-    --cores=N              Tell DESeq2 to use N cores when running, requires the
-                           BiocParallel Bioconductor package to be installed [default: none]
-""",
-    "firth": r"""
-Usage:
-    detk-de firth [options] <design> <counts_fn> <cov_fn>
-
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    --routput-dir=DIR      Path to output directory for R stuffs, useful for
-                           debuggin out
-    --rda=RDA              Filename passed to saveRDS() R function of the result
-                           objects from the analysis
-    --strict               Require that the sample order indicated by the column names in the
-                           counts file are the same as, and in the same order as, the
-                           sample order in the row names of the covariates file
-    --standardize          Standardize counts prior to running logistic regression
-                           as to obtain standardized (i.e. directly comparable)
-                           beta coefficients
-    --cores=N              Tell R to use N cores when running, requires the
-                           parallel R package to be installed [default: none]
-""",
+# each subcommand: the one line the command's help lists it with, its
+# description and its examples
+SUBCOMMANDS = {
+    "deseq2": dict(
+        help="Differential expression with DESeq2 (needs R and DESeq2)",
+        description="""\
+Test for differential expression with the DESeq2 Bioconductor package. The
+<design> is a formula with counts on the left, such as "counts ~ group" or
+"counts ~ cell + dex[untrt]", the bracket naming a factor's reference level.
+By default the result reports the parameters of every variable in the model
+and assumes the counts are raw.""",
+        examples=[
+            (
+                "DESeq2 of counts.csv by group in sample_info.csv",
+                'detk-de deseq2 -o deseq2_results.csv "counts ~ group" counts.csv sample_info.csv',
+            ),
+        ],
+    ),
+    "firth": dict(
+        help="Firth's penalized logistic regression on each feature (needs R)",
+        description="""\
+Test for differential expression with Firth's penalized logistic regression
+(the logistf R package): for each feature, the condition on the left of the
+<design> is modelled from the feature's counts and the other variables, as
+in "group ~ counts + age".""",
+        examples=[
+            (
+                "Firth logistic regression of group on each feature of counts.csv",
+                'detk-de firth -o firth_results.csv "group ~ counts" counts.csv sample_info.csv',
+            ),
+        ],
+    ),
 }
 
-from docopt import docopt
+
+def build_parser():
+    "The detk-de command line parser"
+    parser = DetkParser(prog="detk-de", description=__doc__.strip())
+    add_command_options(parser)
+    subs = add_subcommands(parser)
+    for name, spec in SUBCOMMANDS.items():
+        sub = subs.add_parser(
+            name, help=spec["help"], description=spec["description"], examples=spec["examples"]
+        )
+        sub.add_argument(
+            "design", metavar="<design>", help='Model formula, quoted, such as "counts ~ group"'
+        )
+        sub.add_argument(
+            "counts_fn",
+            metavar="<counts_fn>",
+            help="Counts file: features in rows, samples in columns, delimited",
+        )
+        sub.add_argument(
+            "cov_fn",
+            metavar="<cov_fn>",
+            help="Sample information file: samples in rows, the first column their names",
+        )
+        sub.add_argument(
+            "-o", "--output", metavar="FILE", default="stdout", help="Destination of primary output"
+        )
+        sub.add_argument(
+            "--routput-dir",
+            metavar="DIR",
+            help="Directory to keep the R script, its inputs and outputs in, for debugging",
+        )
+        sub.add_argument(
+            "--rda",
+            metavar="FILE",
+            help="File to saveRDS() the R result objects of the analysis to",
+        )
+        sub.add_argument("--strict", action="store_true", help=_STRICT_HELP)
+        if name == "deseq2":
+            sub.add_argument(
+                "--norm-counts",
+                action="store_true",
+                help="Do not let DESeq2 normalize the counts: they are already normalized",
+            )
+            sub.add_argument(
+                "--last-term-only",
+                action="store_true",
+                help="Report the parameters of the model's last term only (DESeq2's default)",
+            )
+            sub.add_argument(
+                "--gene-wise-disp",
+                action="store_true",
+                help="Use estimateDispersionsGeneEst instead of estimateDispersions",
+            )
+            sub.add_argument(
+                "--cores",
+                metavar="N",
+                default="none",
+                help="Number of cores DESeq2 uses (needs the BiocParallel package)",
+            )
+        else:
+            sub.add_argument(
+                "--standardize",
+                action="store_true",
+                help="Standardize the counts first, so the coefficients are directly comparable",
+            )
+            sub.add_argument(
+                "--cores",
+                metavar="N",
+                default="none",
+                help="Number of cores R uses (needs the parallel R package)",
+            )
+        add_common_options(sub)
+    return parser
+
+
 import logging
 from pprint import pformat
 import sys
 import os
 from .common import (
-    InvalidDesignException,
     DetkModule,
-    _cli_doc,
-    set_logging,
+    DetkParser,
+    InvalidDesignException,
+    add_command_options,
+    add_common_options,
+    add_subcommands,
     make_cli_count_obj,
+    parse_cli,
+    set_logging,
     write_output,
 )
 import numpy as np
@@ -550,76 +624,48 @@ def t_test(count_obj):
 
 def main(argv=sys.argv):
 
-    if "--version" in argv:
-        from .version import __version__
+    args = parse_cli(build_parser(), argv)
+    cmd = args.subcommand
+    set_logging(args)
+    logger.info("cmd: %s", " ".join(argv[1:]))
 
-        print(__version__)
-        return
+    count_obj = make_cli_count_obj(args)
 
-    # add the common opts to the docopt strings
-    cmd_opts_aug = {}
-    for k, v in cmd_opts.items():
-        cmd_opts_aug[k] = _cli_doc(v)
-
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts_aug):
-        docopt(_cli_doc(__doc__))
-    argv = argv[1:]
-    cmd = argv[0]
-
-    if cmd == "deseq2":
-        args = docopt(cmd_opts_aug["deseq2"], argv)
-
-        set_logging(args)
-        logger.info("cmd: %s", " ".join(argv))
-
-        count_obj = make_cli_count_obj(args)
-
-        try:
+    try:
+        cores = int(args.cores) if args.cores != "none" else None
+        if cmd == "deseq2":
             logger.info("running DESeq2")
             out = DESeq2Counts(
                 count_obj,
-                normalized=args.get("--norm-counts", False),
-                rda=args.get("--rda"),
-                all_coeff_results=not args.get("--last-term-only", False),
-                gene_wise_disp_est=args.get("--gene-wise-disp", False),
-                cores=int(args["--cores"]) if args["--cores"] != "none" else None,
-                routput_dir=args["--routput-dir"],
+                normalized=args.norm_counts,
+                rda=args.rda,
+                all_coeff_results=not args.last_term_only,
+                gene_wise_disp_est=args.gene_wise_disp,
+                cores=cores,
+                routput_dir=args.routput_dir,
             )
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
-
-    elif cmd == "firth":
-        args = docopt(cmd_opts_aug["firth"], argv)
-
-        set_logging(args)
-        logger.info("cmd: %s", " ".join(argv))
-
-        count_obj = make_cli_count_obj(args)
-
-        try:
+        elif cmd == "firth":
             logger.info("running Firth logistic regression")
             out = FLGCounts(
                 count_obj,
-                rda=args["--rda"],
-                standardize=args.get("--standardize", False),
-                cores=int(args["--cores"]) if args["--cores"] != "none" else None,
-                routput_dir=args["--routput-dir"],
+                rda=args.rda,
+                standardize=args.standardize,
+                cores=cores,
+                routput_dir=args.routput_dir,
             )
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+    except Exception as e:
+        logger.error(e)
+        sys.exit(1)
 
     write_output(out.output, args)
 
-    if not args["--no-report"]:
-        logging.info("writing report to %s", args["--report-dir"])
-        with DetkReport(args["--report-dir"]) as r:
+    if not args.no_report:
+        logging.info("writing report to %s", args.report_dir)
+        with DetkReport(args.report_dir) as r:
             r.add_module(
                 out,
-                in_file_path=args["<counts_fn>"],
-                out_file_path=args["--output"],
-                column_data_path=args.get("--column-data"),
+                in_file_path=args.counts_fn,
+                out_file_path=args.output,
                 workdir=os.getcwd(),
             )
     else:

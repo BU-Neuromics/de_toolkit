@@ -1,4 +1,3 @@
-import docopt
 import gzip
 import json
 import os
@@ -29,13 +28,13 @@ def test_report_cli(fake_module, tmp_path, monkeypatch):
     # crate + default report dir land in cwd; keep them off the repo root
     monkeypatch.chdir(tmp_path)
 
-    with pytest.raises(docopt.DocoptExit):
-        main()
+    with pytest.raises(SystemExit):
+        main(["detk-report"])
 
     main(["report", "generate"])
     main(["detk-report", "generate"])
 
-    with pytest.raises(docopt.DocoptExit):
+    with pytest.raises(SystemExit):
         main(["detk-report", "generate", "oogabooga"])
 
     with TemporaryDirectory() as d:
@@ -51,7 +50,7 @@ def test_report_cli(fake_module, tmp_path, monkeypatch):
     main(["report", "clean"])
     main(["detk-report", "clean"])
 
-    with pytest.raises(docopt.DocoptExit):
+    with pytest.raises(SystemExit):
         main(["detk-report", "clean", "oogabooga"])
 
 

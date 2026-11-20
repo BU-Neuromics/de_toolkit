@@ -5,7 +5,7 @@ authority: [human]
 date: 2026-11-19
 supersedes: [DETK-0028, DETK-0047]
 from: {node: release}
-applies: [release/formula-rename, release/augment]
+applies: [release/formula-rename, release/record]
 revisions:
   - {date: 2026-11-19, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-19: \"the formula should just specify models, and nothing else. I wonder instead if detk should provide some simple augmentation functions\"; then \"yes\" to the driver's summary of the consequences"}
 ---

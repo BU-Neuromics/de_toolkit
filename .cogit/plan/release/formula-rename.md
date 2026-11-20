@@ -4,7 +4,7 @@ objective: 'The formula module is de_toolkit/formula.py (DETK-0027), nothing in 
 acceptance:
   - 'de_toolkit/patsy_lite.py is renamed de_toolkit/formula.py; PatsyLiteParseError becomes FormulaParseError with no alias kept; patsy_lite_to_patsy gets a name that says what it now translates to; tests/patsy_lite/ moves to tests/formula/; common.py imports the new module; the user-visible "patsy lite could not parse" text names "detk formula syntax"'
   - 'docs/formulas.md calls the syntax "detk formula syntax"; its fourth term type keeps interactions (a:b, a*b), which work once release/formula-migrate has fixed a:b (DETK-0040), and drops the np.log example, which does not work (DETK-0050)'
-  - 'a term that is not a column of the column data file and looks like a call (np.log(x), log2(x)) raises FormulaParseError saying formulas take column names only and that derived columns belong in the column data file; release/augment later names its command in that message; a column whose name really is such a string still works as a column; the np.log pins change their expected message only'
+  - 'a term that is not a column of the column data file and looks like a call (np.log(x), log2(x)) raises FormulaParseError saying formulas take column names only and that derived columns belong in the column data file; release/miller-recipes later points that message to the derived-covariates recipes page (DETK-0051 Option C); a column whose name really is such a string still works as a column; the np.log pins change their expected message only'
   - 'no module, test or doc of the repository still says patsy-lite or patsy_lite, except the CHANGELOG''s history'
   - 'the formula-pin fixtures pass unchanged except for the import path, the exception name, and error text naming the syntax or the call error above'
   - 'the CHANGELOG lists the rename and the exception''s new name'
@@ -27,4 +27,4 @@ Planned 2026-11-19 on Adam's answer to DETK-0024 ("we need to rename
 patsy_lite.py to something else"); the name is DETK-0027 ("formula.py",
 2026-11-19). Adam first chose transforms in formulas (DETK-0028), then
 the same day kept formulas to the model only (DETK-0050): derived columns
-come from release/augment. This node adds the error that says so. Its `common.py` edit is the import and the error text only.
+come from the Miller recipes of release/miller-recipes, run through detk-util record (DETK-0051 Option C). This node adds the error that says so. Its `common.py` edit is the import and the error text only.

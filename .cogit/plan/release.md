@@ -42,7 +42,12 @@ visited: f6503ed
 - [ ] [Quote design names before R reads them](release/r-design-names.md) <!-- s31 -->
 - [ ] [--size-factors writes the size factors](release/size-factors.md) <!-- s26 -->
 - [ ] [Close the remaining CLI gaps](release/cli-gaps.md) <!-- s29 -->
-- [ ] [Column data augmentation command](release/augment.md) <!-- s30 -->
+- [ ] [Record an external step with detk-util record](release/record.md) <!-- s30 -->
+- [ ] [Run tutorials as tests](release/tutorial-harness.md) <!-- s33 -->
+- [ ] [Miller recipes for derived covariates](release/miller-recipes.md) <!-- s32 -->
+- [ ] [Tutorial: from quantifier outputs to a normalized matrix](release/tutorial-quant.md) <!-- s34 -->
+- [ ] [Tutorial: differential expression on airway](release/tutorial-airway.md) <!-- s35 -->
+- [ ] [Tutorial: derived covariates and recorded steps](release/tutorial-covariates.md) <!-- s36 -->
 - [ ] [Update the docs for the 1.0 CLI](release/cli-docs.md) <!-- s25 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
@@ -50,7 +55,7 @@ visited: f6503ed
 ## Notes
 
 Tracking issue #23 (the roadmap) and milestone v1.0.0. DETK-0002 (#22), Proposed and
-Adam's, gates the cut. DETK-0001 (#18) was accepted on 2026-11-18 as option B: migrate off
+Adam's, deferred by him on 2026-11-20, is answered at release/cut's step s7. DETK-0001 (#18) was accepted on 2026-11-18 as option B: migrate off
 docopt-ng and patsy before the tag. Adam then accepted argparse (DETK-0023), formulaic
 (DETK-0024), help promised as DETK-0025 Option B with all the CLI gaps in 1.0, and
 statsmodels as test-only (DETK-0026). On 2026-11-19 he also answered: formula.py
@@ -60,5 +65,12 @@ time (DETK-0032), delete environment.yml (DETK-0048), every deprecated --column-
 removed (his comment on DETK-0030) and model matrix columns in formulaic's order (DETK-0049).
 He then changed his mind on transforms: formulas specify the model only, and a column data
 augmentation command derives covariates (DETK-0050, superseding DETK-0028 and DETK-0047).
-Still his: that command's design (DETK-0051), which release/augment waits on.
+On 2026-11-20 he answered DETK-0051 with its Option C: no augmentation command; tested Miller
+recipes in the docs and skill (release/miller-recipes, DETK-0062) and a `detk-util record`
+command that records an external step (release/record, DETK-0061); the research is DETK-0060.
+He asked for tutorials that are both docs and integration tests (DETK-0064: executable
+Markdown run by pytest; release/tutorial-harness and three tutorial nodes), set how the
+project runs toward 1.0 (DETK-0063: a definition of done he approves, delegated decisions,
+plan PRs merged on green, the release his), and deferred DETK-0002, which is now a step of
+release/cut rather than a gate on it.
 release/size-factors moved here from features on 2026-11-19.

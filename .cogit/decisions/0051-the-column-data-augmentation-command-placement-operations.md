@@ -1,16 +1,23 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-19
 from: {node: release}
-applies: [release/augment]
+applies: [release/record, release/miller-recipes]
+evidence:
+  - {pointer: "DETK-0060", visibility: public}
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: "Retitled and rewritten for Adam's answer: Options B and C from the research (DETK-0060) added, the draft kept as Option A, Decision and Consequences for Option C", why: "Adam chose Option C on 2026-11-20, relayed by the driver session"}
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-20: \"go with c, and I like the record command, no need for the report here but I'd like to keep it for later.\""}
 ---
 
-# The column data augmentation command: placement, operations, names and provenance
+# Derived covariates: Miller recipes and detk-util record, not a detk augmentation command
 
 - Proposed by: the planning session, 2026-11-19, to design the command
   DETK-0050 calls for
+- Revised by: the planning session, 2026-11-20, to add the options the
+  research of DETK-0060 laid out and record Adam's answer
 
 ## Background
 
@@ -23,6 +30,12 @@ that scales values to be between zero and one". He confirmed that scale
 means a z-score with the sample standard deviation (n-1). The command is
 part of the 1.0 CLI, so its name, options and output names are promised
 until 2.0 (DETK-0001, DETK-0025).
+
+Before answering, Adam asked whether detk should build such a command at
+all or point to an existing tool. A research session surveyed the
+command-line CSV tools (DETK-0060, which keeps its report in full) and
+recommended documenting Miller and adding one small detk command that
+records an external step in detk's provenance.
 
 ## Context
 
@@ -53,10 +66,12 @@ until 2.0 (DETK-0001, DETK-0025).
 
 ## Options
 
-Each item is a separate choice. The planning session's recommendation
-comes first; the alternatives follow it.
+### Option A: build `detk-augment` (the draft of 2026-11-19)
 
-### 1. Name and placement
+The draft as the planning session wrote it, kept for the record. Each
+item was a separate choice, its recommendation first.
+
+#### 1. Name and placement
 
 **Recommended: its own command, `detk-augment`, with one subcommand per
 operation: `constant`, `log`, `scale`.** It is one family of operations,
@@ -69,7 +84,7 @@ entry point, but the operations then become a third level
 `detk-coldata constant|log|scale`, which names the file rather than the
 act.
 
-### 2. One operation per run, several columns
+#### 2. One operation per run, several columns
 
 **Recommended:** each run does one operation, on one or more columns:
 `detk-augment log --base 2 sample_info.csv age weight -o sample_info.aug.csv`.
@@ -80,7 +95,7 @@ Alternative: several operations in one run (`--log age --scale weight`).
 Fewer files, but one step in the crate stands for several transforms, and
 the option set gets combinatorial.
 
-### 3. The operations and their options
+#### 3. The operations and their options
 
 **Recommended:**
 
@@ -113,14 +128,14 @@ map to equal outputs. (b) A default base of 2, the usual base for fold
 changes, at the cost of differing from `plog`. (c) `exp` or `square`:
 not needed for DE designs; they can come in a 1.x minor release.
 
-### 4. Which columns it accepts
+#### 4. Which columns it accepts
 
 **Recommended:** `log` and `scale` take numeric columns only. A column of
 text, a boolean column, a column that does not exist and the sample-name
 column are each an error naming the column. `constant` refuses a name
 that already exists.
 
-### 5. Output names and collisions
+#### 5. Output names and collisions
 
 **Recommended:** a derived column is named `<column>_<operation>`:
 `age_log2`, `age_log10`, `age_ln` (for base e), `age_log2_pc1` when a
@@ -137,7 +152,7 @@ Alternatives: (a) the operation first (`log2_age`); (b) `--overwrite`
 to replace an existing column, which keeps names short but loses the
 source values in the file that is passed on.
 
-### 6. Provenance
+#### 6. Provenance
 
 **Recommended:** each run writes a module JSON document like other
 steps, with the input as `column_data_path` and the new file as
@@ -155,17 +170,76 @@ column data. A report view shows the new columns and those numbers.
 Alternative: no report view, only the module JSON and the crate. Less
 to build, but every other step has a view.
 
+### Option B: a separate tidyr-style utility package
+
+A general verb set (select, rename, mutate, join, pivot) as its own
+package. The most work: to be worth reusing it needs the whole verb set,
+which Miller and xan already are; provenance is the hardest of the three
+(its own format, or detk's module JSON, so not really independent); a
+second package to maintain. DETK-0060 does not recommend it.
+
+### Option C: document Miller and add `detk-util record`
+
+detk builds no augmentation operations. Its docs and agent skill carry
+tested Miller (`mlr`) recipes for the operations Adam named (a constant
+column; log with a base and a pseudocount; z-score with n-1; centring;
+min-max), each with the checks Miller lacks written into it (a zero or
+negative value left after the pseudocount, a missing value, zero
+variance or range: each fails and names the samples). One new detk
+command, `detk-util record`, runs an external command and writes a
+module JSON document for it (the command line, the tool's name and
+`--version`, the input and output files named explicitly), with a
+`SUBTOOLS` entry, so the Process Run Crate shows the step as the
+producer of the column data a later `detk-de` run reads. It records any
+external step (awk, an R script), not only Miller.
+
+Against A: the safe defaults live in documented, tested recipes rather
+than code, and the crate records a command rather than structured
+statistics (the mean and standard deviation used). For it: one
+subcommand promised in 1.0 instead of three, no reinvention, and
+provenance covered once, generically.
+
 ## Decision
 
-Open for Adam. The planning session recommends the first option of each
-item. `release/augment` waits on this record.
+Option C, chosen by Adam on 2026-11-20, relayed by the driver session:
+"go with c, and I like the record command, no need for the report here
+but I'd like to keep it for later." The research report is kept in the
+record as DETK-0060.
+
+1. detk builds no augmentation command in 1.0. Option A's design stays
+   above as a record of what was weighed.
+2. The docs and the agent skill carry tested Miller recipes for a
+   constant column, log with a base and a pseudocount, z-score (sample
+   standard deviation, n-1), centring and min-max to [0, 1]. Each recipe
+   carries the checks Miller lacks: a missing value in a source column,
+   a value that is zero or negative where a log is taken (after the
+   pseudocount), and zero variance or zero range each fail and name the
+   samples. Each recipe is shown run through `detk-util record`. The
+   names Option A item 5 recommended (`age_log2_pc1`, `age_zscore`)
+   are the recipes' names, so no name carries `__` or reads as an R
+   call. How the recipes are kept, checked and tested is DETK-0062.
+3. `detk-util record` is part of the 1.0 CLI, under the promise of
+   DETK-0025 like every other subcommand. Its open design details are
+   DETK-0061.
+4. The skill warns that tidyr's (and csvtk's) `gather` pivots to long
+   format, the opposite of `detk-util gather`, which combines files
+   into a wide matrix.
+5. "No need for the report here but I'd like to keep it for later"
+   answers the research session's offer to turn its report into a
+   shareable page: the report is kept in the record instead (DETK-0060).
+   Read as a report view for `detk-util record`, it matches the plan
+   too: no view in 1.0 (DETK-0061 item 6).
 
 ## Consequences
 
-`release/augment` builds the command as decided: its argparse parser
-and help on the pattern of `release/cli-migrate` (DETK-0025), the exit
-codes of DETK-0031, the completion scripts of DETK-0032, its cli-pin
-table, the module JSON and crate entries, a report view, tests, a docs
-page and the skill. It names itself in the formula error and in
-`docs/formulas.md` (DETK-0050). Adding an operation later is a 1.x minor
-release.
+- release/augment becomes release/record (`detk-util record`) and a
+  new node, release/miller-recipes, carries the recipes, their docs,
+  the skill entries and their tests.
+- The formula error for a call in a formula (release/formula-rename)
+  points to the derived-covariates recipes page rather than a detk
+  command, and `docs/formulas.md` links it.
+- Miller is not a dependency of detk. The recipe tests need `mlr` and
+  are skipped where it is absent (DETK-0062).
+- DETK-0050 item 3's "column data augmentation command" is met by the
+  recipes run through `detk-util record`: the derived columns are added
+  to a new column data file by a recorded step.

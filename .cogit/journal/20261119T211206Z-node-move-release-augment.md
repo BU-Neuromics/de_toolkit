@@ -3,7 +3,7 @@ kind: action
 time: 2026-11-19T21:12:06Z
 by: adamlabadorf
 action: node-move
-node: release/augment
+node: release/record
 ---
 
 # Moved release/augment

@@ -1,12 +1,14 @@
 ---
 template: adr
-state: Provisional
+state: Accepted
 authority: [DETK/developer]
 date: 2026-11-20
 from: {node: release/cli-migrate, step: s3}
 applies: [release/cli-migrate]
 allowed_by: [reasonable]
 reason: "DETK-0010's mechanism moves from docopt to argparse with the parser it checks against (DETK-0023); the decision itself is unchanged"
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's delegation via the driver session, 2026-11-20: a direct consequence of DETK-0001 Option B and DETK-0023 (argparse)"}
 ---
 
 # Keep the agent skill in step with the CLI through the argparse parsers

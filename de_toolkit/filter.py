@@ -11,7 +11,9 @@ nonzero, a number strictly between 0 and 1 is a fraction of samples, 0 or
 combine with and / or and group with parentheses. The column spec is all
 (every sample), a column of <cov_fn> (the filter is applied to each of its
 groups, and a row is kept if any group passes), or one group of it, as in
-condition[test].
+condition[test]: a group is a value of the column as written, a number for
+a column of numbers (flag[1]) and true or false for a column of booleans. A
+group the column does not have is an error.
 """
 
 import logging
@@ -20,7 +22,8 @@ import ply.lex as lex
 import ply.yacc as yacc
 import sys
 from tempfile import TemporaryDirectory
-from warnings import warn
+
+import pandas
 
 from .common import (
     UsageError,
@@ -176,6 +179,30 @@ class Clause(Expr):
         return f"Clause({repr(self.func)},{repr(self.spec)},{repr(self.op)},{repr(self.val)})"
 
 
+def group_matches(values, group):
+    """
+    A boolean mask of the column *values* equal to the *group* as written in
+    a filter expression: compared as a number for a column of numbers
+    (``cond[1]`` on a 0/1 column), as true or false in any case for a
+    column of booleans, and as text otherwise.
+    """
+    if pandas.api.types.is_bool_dtype(values) or (
+        values.dtype == object
+        and len(values.dropna())
+        and all(isinstance(_, bool) for _ in values.dropna())
+    ):
+        if group.lower() not in ("true", "false"):
+            return pandas.Series(False, index=values.index)
+        return values == (group.lower() == "true")
+    if pandas.api.types.is_numeric_dtype(values):
+        try:
+            number = float(group)
+        except ValueError:
+            return pandas.Series(False, index=values.index)
+        return values == number
+    return values.astype(str) == group
+
+
 class ColSpec(Expr):
     def __init__(self, field=None, group=None):
         self.field = field
@@ -202,25 +229,18 @@ class ColSpec(Expr):
                     f"in the column data (its columns: {', '.join(map(str, columns))})"
                 )
             if self.group is not None:
-                # only one group is selected, return just that subset
-                # of rows for the given column
-                # throw a warning if the group is not found in the column, as
-                # this is probably not intended
-                cols = mat.column_data.index[mat.column_data[self.field] == self.group]
+                # only one group is selected: the samples whose value in the
+                # column is the group as written; a group the column does
+                # not have is an error, not an empty selection
+                values = mat.column_data[self.field]
+                cols = mat.column_data.index[group_matches(values, self.group)]
                 if cols.size == 0:
-                    warn(
-                        f'Specified group value {self.field}=="{self.group}" was not found in '
-                        f"column values ({mat.column_data[self.field].unique()}). This is probably not what you "
-                        "want to do, give that filter command a good look.",
-                        stacklevel=2,
+                    present = sorted({str(_) for _ in values.dropna()})
+                    raise FilterCommandError(
+                        f"the filter expression names the group {self.group!r} of the column "
+                        f"{self.field!r}, which has no such value (its values: "
+                        f"{', '.join(present)})"
                     )
-                    warn(
-                        f'Specified group value {self.field}=="{self.group}" was not found in '
-                        f"column values ({mat.column_data[self.field].unique()}). This is probably not what you "
-                        "want to do, give that filter command a good look.",
-                        stacklevel=2,
-                    )
-
                 return [mat.counts[cols]]
             else:
                 # return a list of dataframe slices, one per
@@ -271,7 +291,8 @@ def p_func(p):
 def p_spec(p):
     """colspec : ALL
     | WORD
-    | WORD LBRACKET WORD RBRACKET"""
+    | WORD LBRACKET WORD RBRACKET
+    | WORD LBRACKET NUMBER RBRACKET"""
     if p[1].lower() == "all":
         obj = ColSpec()
     else:

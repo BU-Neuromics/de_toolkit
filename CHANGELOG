@@ -50,6 +50,13 @@ predates everything below.
   `log2(x)`, is an error that says so; a derived column belongs in the
   column data file. docs/formulas.md no longer says such expressions may be
   passed; they never worked (`np.log(x)` was read as a column name)
+- A term of a design formula that looks like a number, other than the
+  intercept numbers `0` and `1` (`counts ~ 0 + x`, `counts ~ 1`), is a usage
+  error (exit 2) naming it, on either side of `~` (DETK-0190). A column
+  whose name looks like a number, such as `3`, `2.5` or `-2.5`, is no longer
+  read as a column (`counts ~ 2.5` was, on the 1.0 development branch); the
+  message says to rename it to start with a letter or underscore. In 0.x a
+  number was never a column either (#112)
 - `environment.yml`, an out-of-date conda environment file that nothing
   referred to, is removed; `pyproject.toml` is the one list of detk's
   dependencies
@@ -290,6 +297,21 @@ predates everything below.
   An unknown module named like a chart (`pca-vis`) or like one of the
   page's own elements (`main`, `nav`, `vg-tooltip-element`, ...) no longer
   shares that element's id (#65)
+- A design no longer loses a term silently: `counts ~ -2.5` was fitted as
+  `counts ~ 1` and `-2.5 ~ c` with no outcome (#112, DETK-0190). An invalid
+  design (an unknown column, a misspelled term, a reference level the column
+  does not have, a number, a character or operator detk formula syntax does
+  not take) is reported in one plain line naming the offending term and
+  what the column data has instead, as in `nope in the design is not a
+  column of the column data file (its columns: ...)`: it was Python tuple
+  text with formulaic's terminal colour codes (#112)
+- `detk-filter` with a group its column does not have, as in
+  `mean(cond[Z]) > 1`, is a usage error (exit 2) naming the column, the
+  group and the values the column has, and writes no output; it warned
+  twice and wrote a file with no rows. A group matches a column of numbers
+  or booleans as written: `flag[1]` selects the samples with `1` in a 0/1
+  column, `dose[0.5]` and `b[true]` (any case) likewise, where they selected
+  nothing (a group that is a number did not parse) (#112)
 - A one-column input file, such as a bare list of IDs, is read as one
   column; the delimiter sniffer no longer splits it on a letter of its
   header (`gene_id` became `g`, `n`, `_id`). The delimiter of every sniffed

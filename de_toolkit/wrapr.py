@@ -106,6 +106,7 @@ import subprocess
 import sys
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from .common import (
+    cli_main,
     CountMatrixFile,
     DetkParser,
     add_command_options,
@@ -163,9 +164,8 @@ def require_r_package(pkg):
     "Check whether pkg is installed in R, and raise if not."
     if not check_r_package(pkg):
         raise RPackageMissing(
-            f"R package {pkg} is needed for this "
-            "functionality. In R, try installing with:\n\n"
-            f'install.packages("{pkg}")'
+            f"R package {pkg} is needed for this functionality; "
+            f'install it in R with install.packages("{pkg}")'
         )
 
 
@@ -233,10 +233,8 @@ def require_deseq2(f):
     def _f(*args, **kwargs):
         if not check_deseq2():
             raise RPackageMissing(
-                "R package DESeq2 is needed for this "
-                "functionality. In R, try installing with:\n\n"
-                'source("http://bioconductor.org/biocLite.R")\n'
-                'biocLite("DESeq2")'
+                "R package DESeq2 is needed for this functionality; install it in R "
+                'with BiocManager::install("DESeq2")'
             )
         else:
             return f(*args, **kwargs)
@@ -533,8 +531,13 @@ class WrapR:
         self.success = p.returncode == 0
 
         if self.raise_on_error and not self.success:
+            # the first line is the cause a command prints (common.cli_main):
+            # R's own error line, and where R's full output was written
+            errors = [line.strip() for line in self.stderr.splitlines() if line.strip()]
+            cause = next((e for e in errors if e.startswith("Error")), errors[-1] if errors else "")
             raise RExecutionError(
-                "R encountered an error:\n\n"
+                f"R encountered an error (exit {self.returncode}): {cause} "
+                f"[R's output is in {self.routput_dir}]\n\n"
                 + f"stdout:\n{self.stdout}\n\n"
                 + f"stderr:\n{self.stderr}\n"
             )
@@ -630,6 +633,7 @@ def wrapr(Rcode, **kwargs):
         return wr
 
 
+@cli_main
 def main(argv=sys.argv):
 
     args = parse_cli(build_parser(), argv)
@@ -644,11 +648,7 @@ def main(argv=sys.argv):
         column_data = None
 
         if args.counts_in is not None:
-            try:
-                counts_obj = CountMatrixFile(args.counts_in, args.meta_in, strict=args.strict)
-            except Exception as e:
-                logger.error(e)
-                sys.exit(1)
+            counts_obj = CountMatrixFile(args.counts_in, args.meta_in, strict=args.strict)
 
             logger.info("counts matrix created successfully")
 
@@ -677,12 +677,9 @@ def main(argv=sys.argv):
         r = check_r()
 
         if not r:
-            logger.error(
-                RscriptExecutableNotFound(
-                    "Rscript executable not found, wrapr interface and functions will not work"
-                )
+            raise RscriptExecutableNotFound(
+                "Rscript executable not found, wrapr interface and functions will not work"
             )
-            sys.exit(1)
 
         logger.info("R found: %s", r)
         logger.info("R path: %s", get_r_path())
@@ -691,13 +688,9 @@ def main(argv=sys.argv):
         logger.info("jsonlite found: %s", jsonlite)
 
         if not jsonlite:
-            logger.error(
-                RPackageMissing(
-                    "ERROR: R package jsonlite must be installed, "
-                    "wrapr interface and functions will not work"
-                )
+            raise RPackageMissing(
+                "R package jsonlite must be installed, wrapr interface and functions will not work"
             )
-            sys.exit(1)
 
 
 if __name__ == "__main__":

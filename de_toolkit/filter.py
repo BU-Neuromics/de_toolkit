@@ -23,6 +23,7 @@ from tempfile import TemporaryDirectory
 from warnings import warn
 
 from .common import (
+    cli_main,
     DetkModule,
     DetkParser,
     add_common_options,
@@ -353,15 +354,11 @@ def build_parser():
     parser.add_argument(
         "-o", "--output", metavar="FILE", default="stdout", help="Name of the output file"
     )
-    parser.add_argument(
-        "--column-data",
-        metavar="FILE",
-        help="DEPRECATED: pass the column data file as the positional <cov_fn> instead",
-    )
     add_common_options(parser)
     return parser
 
 
+@cli_main
 def main(argv=sys.argv):
 
     args = parse_cli(build_parser(), argv)
@@ -369,28 +366,9 @@ def main(argv=sys.argv):
     set_logging(args)
     logger.info("cmd: %s", " ".join(argv[1:]))
 
-    # Get column data, if provided
-    if args.column_data is not None:
-        if args.cov_fn is not None:
-            logger.warning(
-                "Both positional <cov_fn> argument and --column-data "
-                "are provided, ignoring the --column-data argument."
-            )
-        else:
-            logger.warning(
-                "The --column-data command line argument is deprecated. "
-                "Use the optional [<cov_fn>] positional argument instead."
-            )
-
-            args.cov_fn = args.column_data
-
     count_obj = make_cli_count_obj(args)
 
-    try:
-        filtered = FilterCounts(count_obj, args.command)
-    except Exception as e:
-        logger.error(e)
-        sys.exit(1)
+    filtered = FilterCounts(count_obj, args.command)
 
     write_output(filtered.output, args)
 
@@ -402,7 +380,7 @@ def main(argv=sys.argv):
                 filtered,
                 in_file_path=args.counts_fn,
                 out_file_path=args.output,
-                column_data_path=args.column_data,
+                column_data_path=args.cov_fn,
                 workdir=os.getcwd(),
             )
 

@@ -2,7 +2,7 @@
 Help as DETK-0025 Option B promises it, beyond the facts test_cli_help
 checks: for every command and subcommand, the sections in their order
 (description, usage, positional arguments, options, common options,
-examples); every positional and option with a one-line description and its
+examples, exit codes); every positional and option with a one-line description and its
 metavar in the one convention; and at least one example per subcommand,
 which parses to that subcommand and, where the test data below allows,
 runs.
@@ -16,10 +16,17 @@ import cli_adapter
 from de_toolkit import wrapr
 from cli_tables import COMMANDS
 
-SECTIONS = ("usage:", "positional arguments:", "options:", "common options:", "examples:")
+SECTIONS = (
+    "usage:",
+    "positional arguments:",
+    "options:",
+    "common options:",
+    "examples:",
+    "exit codes:",
+)
 # every help has these; argparse leaves out a section with nothing in it, so
 # a subcommand without positionals has no "positional arguments:"
-REQUIRED = ("usage:", "options:", "examples:")
+REQUIRED = ("usage:", "options:", "examples:", "exit codes:")
 
 # option metavars (DETK-0025 gap 3), one closed list across commands: FILE
 # for a file, DIR for a directory, N for a number; and for values that are

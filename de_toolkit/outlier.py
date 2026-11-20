@@ -105,6 +105,8 @@ import scipy.stats as sc
 import sys
 
 from .common import (
+    cli_main,
+    option_value,
     CountMatrixFile,
     DetkModule,
     DetkParser,
@@ -379,6 +381,7 @@ def plot_entropy(entropy_res, threshold, name=None, show=None):
         plt.show()
 
 
+@cli_main
 def main(argv=sys.argv):
 
     args = parse_cli(build_parser(), argv)
@@ -389,14 +392,10 @@ def main(argv=sys.argv):
 
     if cmd == "entropy":
         count_obj = make_cli_count_obj(args)
-        pval = float(args.percentile)
+        pval = option_value(args, "percentile", float)
 
         # run the entropy_calc function
-        try:
-            out = EntropyCounts(count_obj, pval)
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+        out = EntropyCounts(count_obj, pval)
 
         if args.plot_output:
             logger.info("plotting entropy threshold to %s", args.plot_output)
@@ -405,19 +404,17 @@ def main(argv=sys.argv):
     elif cmd == "shrink":
         count_obj = CountMatrixFile(args.counts_fn)
         p_max = args.p_max
-        if p_max is None:
+        if p_max is not None:
+            p_max = option_value(args, "p_max", float)
+        else:
             p_max = np.sqrt(1.0 / count_obj.counts.shape[1])
 
-        try:
-            out = ShrinkCounts(
-                count_obj,
-                shrink_factor=float(args.shrink_factor),
-                p_max=float(p_max),
-                iters=int(args.iters),
-            )
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
+        out = ShrinkCounts(
+            count_obj,
+            shrink_factor=option_value(args, "shrink_factor", float),
+            p_max=float(p_max),
+            iters=option_value(args, "iters"),
+        )
 
     write_output(out.output, args)
 

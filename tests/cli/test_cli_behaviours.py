@@ -27,7 +27,7 @@ def test_long_option_prefix_out_is_ambiguous_and_rejected():
     # not taken for --output
     outcome = cli_adapter.invoke(DESEQ2 + ("--out", "out.csv", "counts.csv"))
     assert outcome.parsed is None
-    assert outcome.code != 0
+    assert outcome.code == 2
     assert "--out" in outcome.stderr
 
 
@@ -53,26 +53,26 @@ def test_subcommand_must_be_the_first_argument():
     # makes the command line unrecognised
     outcome = cli_adapter.invoke(("detk-norm", "-o", "a.csv", "deseq2", "c.csv"))
     assert outcome.parsed is None
-    assert outcome.code != 0
+    assert outcome.code == 2
 
 
 def test_double_dash_is_not_an_end_of_options_marker():
     outcome = cli_adapter.invoke(DESEQ2 + ("--", "c.csv"))
     assert outcome.parsed is None
-    assert outcome.code != 0
+    assert outcome.code == 2
 
 
 def test_single_value_option_given_twice_is_rejected():
     outcome = cli_adapter.invoke(DESEQ2 + ("-o", "a.csv", "-o", "b.csv", "c.csv"))
     assert outcome.parsed is None
-    assert outcome.code != 0
+    assert outcome.code == 2
     assert "-o" in outcome.stderr
 
 
 def test_flag_given_twice_is_rejected():
     outcome = cli_adapter.invoke(DESEQ2 + ("-v", "-v", "c.csv"))
     assert outcome.parsed is None
-    assert outcome.code != 0
+    assert outcome.code == 2
     assert "-v" in outcome.stderr
 
 
@@ -155,7 +155,7 @@ def test_version_after_an_unknown_subcommand_is_not_honoured(prog):
     if prog != "detk" and not cli_adapter.subparsers(cli_adapter.parser(prog)):
         pytest.skip(f"{prog} has no subcommands: 'anything' is its first positional")
     outcome = cli_adapter.invoke((prog, "anything", "--version", "else"))
-    assert outcome.code != 0
+    assert outcome.code == 2
     assert outcome.stdout == ""
     assert "anything" in outcome.stderr
 
@@ -165,7 +165,7 @@ def test_version_as_an_option_value_is_not_honoured():
     # the version option; argparse rejects -o without a value
     outcome = cli_adapter.invoke(DESEQ2 + ("-o", "--version", "c.csv"))
     assert outcome.parsed is None
-    assert outcome.code != 0
+    assert outcome.code == 2
     assert __version__ not in outcome.stdout
     assert "-o" in outcome.stderr
 
@@ -191,16 +191,15 @@ def counts_dir(tmp_path, monkeypatch):
         pytest.param(("detk-stats", "pca"), id="detk-stats-pca"),
     ],
 )
-def test_column_data_is_accepted_with_a_deprecation_warning(counts_dir, argv):
-    # each usage marks --column-data DEPRECATED in favour of the positional
-    # <cov_fn>; DETK-0030 decides filter's for 1.0 (it names only filter)
+def test_column_data_option_is_a_usage_error(counts_dir, argv):
+    # DETK-0030: the deprecated --column-data is removed from every command;
+    # the column data file is the positional <cov_fn>
     outcome = cli_adapter.run(
         argv + ("-o", "out.csv", "--no-report", "counts.csv", "--column-data=cov.csv")
     )
-    assert outcome.code == 0, outcome.stderr
-    assert (counts_dir / "out.csv").exists()
+    assert outcome.code == 2
     assert "--column-data" in outcome.stderr
-    assert "deprecated" in outcome.stderr.lower()
+    assert not (counts_dir / "out.csv").exists()
 
 
 def test_norm_deseq2_size_factors_writes_the_file(counts_dir):
@@ -224,7 +223,7 @@ def test_rlog_design_without_cov_fn_is_rejected():
     # optional group partially and took a design without column data
     outcome = cli_adapter.invoke(("detk-transform", "rlog", "c.csv", "d"))
     assert outcome.parsed is None
-    assert outcome.code != 0
+    assert outcome.code == 2
     assert "cov_fn" in outcome.stderr
 
 

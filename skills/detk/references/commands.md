@@ -20,6 +20,12 @@ common options:
   --shut-up             Turn off ALL logging
 ```
 
+Every command exits 0 on success, 2 on a usage error (the command line is
+wrong: fix it from the usage and `--help`) and 1 on any other failure (bad
+input, a missing R or R package, a failing step). A failure's cause is the
+last line on stderr, `<command>: error: <cause>`; `--verbose` adds the
+traceback above it.
+
 Most commands write their table to stdout unless given `-o FILE`, and log to
 stderr. Each run also writes a JSON document under `<report-dir>/json/`
 unless `--no-report` is given.
@@ -34,16 +40,14 @@ positional arguments:
   <cov_fn>     Column data file: samples in rows, covariates in columns
 
 options:
-  -h, --help          Print this help and exit
-  --column-data FILE  DEPRECATED: pass the column data file as the positional
-                      <cov_fn> instead
-  --color-col COL     Column of the column data to color the output plots by
-  --bins N            Number of bins of the calculated distributions
-                      (default: 20)
-  --log               log10 transform the counts first (zeros are left out)
-  --density           Report each distribution as a density, divided by its sum
-  -o, --output FILE   Destination of primary output (default: stdout)
-  -f, --format FMT    Format of output (choices: csv, table) (default: csv)
+  -h, --help         Print this help and exit
+  --color-col COL    Column of the column data to color the output plots by
+  --bins N           Number of bins of the calculated distributions
+                     (default: 20)
+  --log              log10 transform the counts first (zeros are left out)
+  --density          Report each distribution as a density, divided by its sum
+  -o, --output FILE  Destination of primary output (default: stdout)
+  -f, --format FMT   Format of output (choices: csv, table) (default: csv)
 ```
 
 ## `detk-filter`
@@ -58,10 +62,8 @@ positional arguments:
                group filters
 
 options:
-  -h, --help          Print this help and exit
-  -o, --output FILE   Name of the output file (default: stdout)
-  --column-data FILE  DEPRECATED: pass the column data file as the positional
-                      <cov_fn> instead
+  -h, --help         Print this help and exit
+  -o, --output FILE  Name of the output file (default: stdout)
 ```
 
 ## `detk-util gather`

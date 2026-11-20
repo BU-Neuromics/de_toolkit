@@ -317,14 +317,15 @@ def de_cli_files(tmp_path):
         ("firth", "category + counts", r"~ must be specified"),
     ],
 )
-def test_de_cli_exits_on_bad_design(de_cli_files, caplog, method, design, message):
-    "detk-de exits 1 and logs why, before it needs R, when the design is bad."
+def test_de_cli_exits_on_bad_design(de_cli_files, capsys, method, design, message):
+    """
+    detk-de exits 2, a usage error (DETK-0031), and says why on stderr,
+    before it needs R, when the design is bad.
+    """
     from de_toolkit.de import main
 
     counts_fn, cd_fn = de_cli_files
     with pytest.raises(SystemExit) as exit:
         main(["detk-de", method, "--no-report", design, counts_fn, cd_fn])
-    assert exit.value.code == 1
-    assert any(re.search(message, r.getMessage()) for r in caplog.records), [
-        r.getMessage() for r in caplog.records
-    ]
+    assert exit.value.code == 2
+    assert re.search(message, capsys.readouterr().err)

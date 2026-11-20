@@ -256,6 +256,7 @@ import re
 import sys
 
 from .common import (
+    cli_main,
     DetkModule,
     DetkParser,
     add_command_options,
@@ -485,25 +486,21 @@ def _annotate_main(args):
 
     from .report import DetkReport
 
-    try:
-        # read as text, so numeric IDs keep their leading zeros and every
-        # value is written back as it was read
-        result = read_delimited(args.result_fn, dtype=str, keep_default_na=False)
-        mapping = read_delimited(args.mapping_fn, dtype=str)
-        logger.info("shape of result: %s", result.shape)
-        logger.info("shape of mapping: %s", mapping.shape)
-        annotated = Annotate(
-            result,
-            mapping,
-            idcol=args.idcol,
-            map_from=args.map_from,
-            map_to=args.map_to,
-            strip_versions=args.strip_versions,
-            drop_unmapped=args.drop_unmapped,
-        )
-    except Exception as e:
-        logger.error(e)
-        sys.exit(1)
+    # read as text, so numeric IDs keep their leading zeros and every
+    # value is written back as it was read
+    result = read_delimited(args.result_fn, dtype=str, keep_default_na=False)
+    mapping = read_delimited(args.mapping_fn, dtype=str)
+    logger.info("shape of result: %s", result.shape)
+    logger.info("shape of mapping: %s", mapping.shape)
+    annotated = Annotate(
+        result,
+        mapping,
+        idcol=args.idcol,
+        map_from=args.map_from,
+        map_to=args.map_to,
+        strip_versions=args.strip_versions,
+        drop_unmapped=args.drop_unmapped,
+    )
 
     write_output(annotated.output, args)
 
@@ -859,17 +856,13 @@ def _gather_main(args):
 
     from .report import DetkReport
 
-    try:
-        gathered = Gather(
-            _expand_paths(args.files),
-            fmt=args.format,
-            column=args.column,
-            name_from=args.name_from,
-            on_mismatch=args.on_mismatch,
-        )
-    except Exception as e:
-        logger.error(e)
-        sys.exit(1)
+    gathered = Gather(
+        _expand_paths(args.files),
+        fmt=args.format,
+        column=args.column,
+        name_from=args.name_from,
+        on_mismatch=args.on_mismatch,
+    )
 
     write_output(gathered.output, args)
 
@@ -883,6 +876,7 @@ def _gather_main(args):
     logging.info("done")
 
 
+@cli_main
 def main(argv=sys.argv):
 
     args = parse_cli(build_parser(), argv)
@@ -933,26 +927,20 @@ def main(argv=sys.argv):
             # check to make sure the counts columns are a subset of the column
             # data rows
             if len(covs.index.difference(counts.columns)) != 0:
-                logger.error(
-                    Exception(
-                        "tidy-counts requires that all row IDs in the "
-                        "column data file exist as columns in the counts file."
-                    )
+                raise ValueError(
+                    "tidy-counts requires that all row IDs in the "
+                    "column data file exist as columns in the counts file."
                 )
-                sys.exit(1)
             out = count_obj.counts
 
         elif cmd == "tidy-covs":
             # check to make sure the column data rows are a subset of the counts
             # columns
             if len(counts.columns.difference(covs.index)) != 0:
-                logger.error(
-                    Exception(
-                        "tidy-covs requires that all column IDs in the "
-                        "counts data file exist as rows in the column data file."
-                    )
+                raise ValueError(
+                    "tidy-covs requires that all column IDs in the "
+                    "counts data file exist as rows in the column data file."
                 )
-                sys.exit(1)
             out = count_obj.column_data
 
     write_output(out, args)

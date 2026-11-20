@@ -128,6 +128,21 @@ predates everything below.
 - `detk-util gather` files may still come between its options
   (`a.sf --format=salmon b.sf`); an option given twice, and `--`, are still
   usage errors, as they were under docopt
+- Breaking: the deprecated `--column-data` option is removed from
+  `detk-filter`, `detk-stats summary` and `detk-stats pca` (DETK-0030);
+  pass the column data file as the positional `<cov_fn>` instead, as their
+  usage has shown since 0.9. `--column-data` is now an unknown option, a
+  usage error (exit 2). `detk-util tidy --column-data-output` is a
+  different option and stays
+- Breaking: every command exits 0 on success, 2 on a usage error and 1 on
+  any other failure (DETK-0031), and help ends with these codes. A usage
+  error includes the checks detk makes after parsing: a design without
+  `counts`, or one detk cannot parse, and a number option whose value is not
+  a number, now exit 2 with the usage (they exited 1). Any other failure (a
+  bad input file, a missing R or R package, a failing step) ends with one
+  line on stderr, `<command>: error: <cause>`, and no traceback unless
+  `--verbose` is given; an error R reports names R's error line and the
+  directory holding R's output
 
 ### Added
 - Versioned module JSON schema for report data

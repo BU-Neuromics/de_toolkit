@@ -52,7 +52,7 @@ def test_umbrella_help_lists_modules(argv):
 def test_umbrella_rejects(rest):
     outcome = cli_adapter.invoke(("detk",) + tuple(rest))
     assert outcome.parsed is None
-    assert outcome.code != 0
+    assert outcome.code == 2
     assert outcome.stdout == ""
     for word in rest[:1]:
         assert word in outcome.stderr

@@ -135,15 +135,21 @@ writes nothing to stdout, its messages go to stderr.
 Every --input must exist before the run and every --output after it. Record
 exits 1 and writes no module JSON when an input is missing, when the command
 is not found or exits non-zero, or when an output is missing after the run; it
-never deletes or rewrites a file. The module JSON holds the command, the tool
-and its version, and the SHA-256 checksum and size of every input (read before
-the run) and output (read after it).
+never deletes or rewrites a file. The check only asks that each output exists:
+a file that was there before the run passes it, including the empty file a
+shell redirect (> out.csv) creates before record starts. The module JSON holds
+the command, the tool and its version, and the SHA-256 checksum and size of
+every input (read before the run) and output (read after it), so the
+checksums say what the files held when recorded.
 
 The tool is the base name of the command's first word unless --tool names it
 (needed for sh -c '...' or Rscript script.R). Its version is the first line
 of '<command> --version', run with a 10 s timeout, unless --tool-version gives
 it; when that fails, or --tool names a tool other than the command's first
-word, the version is recorded as 'unknown' with a warning.""",
+word, the version is recorded as 'unknown' with a warning. When the command is
+your own script (./derive.py), give --tool-version: asking for the version
+runs '<script> --version', which runs a script that does not handle --version
+a second time.""",
         examples=[
             (
                 "Record a Miller step that adds an age_group column to the sample information",

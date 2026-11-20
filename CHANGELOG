@@ -219,6 +219,23 @@ predates everything below.
   job (#100)
 
 ### Fixed
+- A design that formula syntax reads but detk cannot build (a column the
+  column data does not have, a level its column lacks, a number-like term
+  under DETK-0190) is reported as `Invalid design: <reason>`, no longer as
+  `Invalid design, detk formula syntax could not parse it: ...`; a design
+  the syntax cannot read says `Invalid design: could not read the design
+  ...` (#124)
+- `detk-filter` writes nothing of its own on stderr: ply's `Generating
+  LALR tables` and `WARNING: 4 shift/reduce conflicts` are gone, and the
+  parser is built once, in memory. How `and` and `or` group without
+  parentheses is unchanged (equal precedence, grouped to the right: `A and
+  B or C` is `A and (B or C)`), now pinned by tests (#124, DETK-0270)
+- A design starting with `-`, such as `'-2.5 ~ counts'`, is read as the
+  design by `detk-de deseq2`, `detk-de firth` and `detk-transform rlog`,
+  and gets DETK-0190's message, where it was rejected as `unrecognized
+  arguments`. A word starting with `-` that holds a `~` or a space and is
+  none of the command's options is a value; options still parse anywhere
+  on the line (#124)
 - `detk-transform vst` and `detk-transform rlog` with `--rda FILE` write
   FILE, as their help says: the `DESeqTransform` object DESeq2 returns,
   with `saveRDS()`, as `detk-de deseq2 --rda` does. The option was accepted

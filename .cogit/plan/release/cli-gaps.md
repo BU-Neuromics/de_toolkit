@@ -10,6 +10,8 @@ acceptance:
 from: [DETK-0025, DETK-0030, DETK-0031, DETK-0032]
 scope: [de_toolkit/common.py, de_toolkit/norm.py, de_toolkit/de.py, de_toolkit/enrich.py, de_toolkit/transform.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolkit/outlier.py, de_toolkit/wrapr.py, de_toolkit/report.py, de_toolkit/util.py, de_toolkit/completions/, tests/cli/, tests/filter/, tests/stats/, +tests/report/test_report.py, tests/completion/, skills/detk/references/commands.md, pyproject.toml, uv.lock, +CHANGELOG]
 prev: [DETK-0030, DETK-0031, DETK-0032, release/cli-migrate, release/statsmodels-test]
+issue: 95
+visited: 60769b2
 ---
 
 # Close the remaining CLI gaps

@@ -88,12 +88,16 @@ def lines(sub):
                 forms.append((o.short, (o.short,)))
             value = True
         else:
-            # an option with choices takes one of them
-            value = o.choices[0] if o.choices else _value(o.key)
-            forms.append((f"{o.long}=", (f"{o.long}={value}",)))
-            forms.append((f"{o.long} ", (o.long, value)))
+            # an option with choices takes one of them; a BOOL takes True,
+            # which the parser hands the command as a bool (DETK-0081)
+            token = o.choices[0] if o.choices else _value(o.key)
+            value = token
+            if o.metavar == "BOOL":
+                token, value = "True", True
+            forms.append((f"{o.long}=", (f"{o.long}={token}",)))
+            forms.append((f"{o.long} ", (o.long, token)))
             if o.short:
-                forms.append((f"{o.short} ", (o.short, value)))
+                forms.append((f"{o.short} ", (o.short, token)))
         # a required option given in one of its forms is not given again
         o_req, o_args = required(sub, skip=o) if o.required else (req, req_args)
         for label, toks in forms:

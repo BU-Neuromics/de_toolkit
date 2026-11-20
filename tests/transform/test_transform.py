@@ -1,4 +1,5 @@
 import numpy
+import os
 import pandas
 import pytest
 import warnings
@@ -162,3 +163,153 @@ def test_rlog_not_blind_keeps_padded_ids(padded_ids_csvs):
         out = rlog(count_obj, blind=False)
     assert out.index.tolist() == PADDED_IDS
     assert out.columns.tolist() == PADDED_SAMPLES
+
+
+# ------------------------------------------------- DETK-0081: --rda, --blind
+@pytest.fixture
+def grouped_csvs(tmp_path):
+    "200 features in 6 samples of two groups, the second with twice the counts"
+    rng = numpy.random.default_rng(81)
+    samples = [f"s{_}" for _ in range(1, 7)]
+    means = rng.integers(10, 1000, size=200)
+    counts = pandas.DataFrame(
+        rng.poisson(means[:, None] * [1, 1, 1, 2, 2, 2]),
+        index=pandas.Index([f"g{_:03d}" for _ in range(200)], name="gene"),
+        columns=samples,
+    )
+    covs = pandas.DataFrame(
+        {"group": ["a"] * 3 + ["b"] * 3}, index=pandas.Index(samples, name="sample")
+    )
+    counts_fn, covs_fn = tmp_path / "counts.csv", tmp_path / "covs.csv"
+    counts.to_csv(counts_fn)
+    covs.to_csv(covs_fn)
+    return str(counts_fn), str(covs_fn)
+
+
+def _run(argv):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        main(["detk-transform", *argv])
+
+
+def _module_json(report_dir, name):
+    import json
+    from pathlib import Path
+
+    docs = [json.loads(p.read_text()) for p in Path(report_dir, "json").glob("*.json")]
+    (doc,) = [d for d in docs if d["name"] == name]
+    return doc
+
+
+@pytest.mark.parametrize("cmd", ["vst", "rlog"])
+@r_test
+@deseq2_test
+def test_rda_writes_the_deseq2_object(cmd, grouped_csvs, tmp_path):
+    import subprocess
+
+    counts_fn, _ = grouped_csvs
+    rda = tmp_path / f"{cmd}.rds"
+    _run([cmd, "--no-report", "-o", str(tmp_path / "out.csv"), "--rda", str(rda), counts_fn])
+    assert rda.exists()
+    # read back in R: the saveRDS() of the DESeqTransform DESeq2 returns
+    p = subprocess.run(
+        [
+            "Rscript",
+            "-e",
+            "suppressMessages(library(DESeq2)); x <- readRDS(commandArgs(TRUE)[1]); "
+            "cat(is(x, 'DESeqTransform'), nrow(x), ncol(x))",
+            str(rda),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert p.returncode == 0, p.stderr
+    assert p.stdout.split()[-3:] == ["TRUE", "200", "6"]
+
+
+@pytest.mark.parametrize("cmd", ["vst", "rlog"])
+@r_test
+@deseq2_test
+def test_without_rda_nothing_extra_is_written(cmd, grouped_csvs, tmp_path, monkeypatch):
+    counts_fn, _ = grouped_csvs
+    out = tmp_path / "out"
+    out.mkdir()
+    monkeypatch.chdir(out)
+    _run([cmd, "--no-report", "-o", "out.csv", counts_fn])
+    assert sorted(p.name for p in out.iterdir()) == ["out.csv"]
+
+
+@r_test
+@deseq2_test
+def test_rlog_blind_and_not_blind_differ(grouped_csvs, tmp_path):
+    counts_fn, covs_fn = grouped_csvs
+    outs = {}
+    for blind in ("True", "False"):
+        out = tmp_path / f"rlog_{blind}.csv"
+        report = tmp_path / f"report_{blind}"
+        _run(
+            [
+                "rlog",
+                "--blind",
+                blind,
+                "--report-dir",
+                str(report),
+                "-o",
+                str(out),
+                counts_fn,
+                "counts ~ group",
+                covs_fn,
+            ]
+        )
+        outs[blind] = pandas.read_csv(out, index_col=0)
+        params = _module_json(report, "rlogcounts")["params"]
+        assert params["blind"] is (blind == "True")
+        if blind == "True":
+            assert params["design"] == "~ 1"
+        else:
+            assert "group" in params["design"]
+    assert outs["True"].shape == outs["False"].shape == (200, 6)
+    # rlog shrinks toward a design-aware fit when not blind
+    assert not numpy.allclose(outs["True"].values, outs["False"].values)
+
+
+class _CapturedRlog:
+    "Stands in for RlogCounts: records how the command line asks for the rlog"
+
+    calls = []
+
+    def __init__(self, count_obj, blind=True, rda=None):
+        self.calls.append({"blind": blind, "rda": rda, "design": count_obj.design})
+        self.output = count_obj.counts
+
+
+@pytest.mark.parametrize(
+    "blind,expected",
+    [(None, True), ("True", True), ("true", True), ("False", False), ("FALSE", False)],
+)
+def test_rlog_blind_reaches_the_module_as_a_bool(blind, expected, grouped_csvs, monkeypatch):
+    import de_toolkit.transform as transform
+
+    monkeypatch.setattr(transform, "RlogCounts", _CapturedRlog)
+    _CapturedRlog.calls = []
+    counts_fn, covs_fn = grouped_csvs
+    argv = ["rlog", "--no-report", "-o", os.devnull, counts_fn, "counts ~ group", covs_fn]
+    if blind is not None:
+        argv[1:1] = ["--blind", blind]
+    _run(argv)
+    (call,) = _CapturedRlog.calls
+    assert call["blind"] is expected
+    assert call["rda"] is None
+
+
+@r_test
+@deseq2_test
+def test_rlog_not_blind_without_a_design_is_an_error(fake_counts_obj):
+    from de_toolkit.common import CountMatrix
+    from de_toolkit.transform import RlogCounts
+
+    no_column_data = CountMatrix(fake_counts_obj.counts)
+    no_design = CountMatrix(fake_counts_obj.counts, fake_counts_obj.column_data.copy())
+    for count_obj in (no_column_data, no_design):
+        with pytest.raises(ValueError, match="column data and a design"):
+            RlogCounts(count_obj, blind=False)

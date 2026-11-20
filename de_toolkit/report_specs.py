@@ -57,6 +57,31 @@ def _vl(spec):
 # ---------------------------------------------------------------------------
 
 
+# the field a view colors samples by, when the module carries color_by (the
+# --color-col of detk-stats summary); a fixed name, so a column name with a
+# dot or bracket in it is not read as a nested field
+_COLOR_FIELD = "color_by"
+
+
+def _color_by(mod):
+    """
+    The ``color_by`` of the module's properties, as ``(encoding, values)``:
+    the Vega-Lite color encoding titled by the column and the column's value
+    of each sample, or ``(None, {})`` when the plots are not colored
+    """
+    cb = mod["properties"].get("color_by")
+    if not cb:
+        return None, {}
+    values = cb["values"]
+    numeric = all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in values.values())
+    enc = {
+        "field": _COLOR_FIELD,
+        "type": "quantitative" if numeric else "nominal",
+        "title": cb["column"],
+    }
+    return enc, values
+
+
 def build_basestats(mod):
     p = mod["properties"]
     return {
@@ -83,6 +108,10 @@ def build_pca(mod):
         for cname, vals in covs.items():
             row[cname] = vals[i]
         rows.append(row)
+    color_enc, color_values = _color_by(mod)
+    if color_enc is not None:
+        for row in rows:
+            row[_COLOR_FIELD] = color_values.get(str(row["sample"]))
     color_field = "status" if "status" in covs else (list(covs)[0] if covs else None)
     tooltip = [
         {"field": "sample", "title": "sample"},
@@ -103,7 +132,9 @@ def build_pca(mod):
         },
         "tooltip": tooltip,
     }
-    if color_field is not None:
+    if color_enc is not None:
+        enc["color"] = color_enc
+    elif color_field is not None:
         enc["color"] = {"field": color_field, "type": "nominal", "title": color_field}
     return _vl(
         {
@@ -171,7 +202,8 @@ def build_entropy(mod):
 
 def build_colzero(mod):
     rows = [{"sample": z["name"], "zero_frac": z["zero_frac"]} for z in mod["properties"]["zeros"]]
-    return _vl(
+    color_enc, color_values = _color_by(mod)
+    spec = _vl(
         {
             "data": {"values": rows},
             "mark": {"type": "bar", "color": _CAT[2]},
@@ -191,6 +223,13 @@ def build_colzero(mod):
             "height": 300,
         }
     )
+    if color_enc is not None:
+        for row in rows:
+            row[_COLOR_FIELD] = color_values.get(str(row["sample"]))
+        enc = spec["spec"]["encoding"]
+        enc["color"] = color_enc
+        enc["tooltip"].append({"field": _COLOR_FIELD, "title": color_enc["title"]})
+    return spec
 
 
 def build_rowzero(mod):
@@ -237,7 +276,8 @@ def build_coldist(mod):
         name = d["name"]
         for frac, val in d["percentiles"]:
             rows.append({"sample": name, "quantile": frac, "value": val})
-    return _vl(
+    color_enc, color_values = _color_by(mod)
+    spec = _vl(
         {
             "data": {"values": rows},
             "mark": {"type": "line", "opacity": 0.6, "strokeWidth": 1.5},
@@ -263,6 +303,15 @@ def build_coldist(mod):
             },
         }
     )
+    if color_enc is not None:
+        # one line per sample still, colored by the sample's value of the column
+        for row in rows:
+            row[_COLOR_FIELD] = color_values.get(str(row["sample"]))
+        enc = spec["spec"]["encoding"]
+        enc["color"] = color_enc
+        enc["detail"] = {"field": "sample", "type": "nominal"}
+        enc["tooltip"].insert(1, {"field": _COLOR_FIELD, "title": color_enc["title"]})
+    return spec
 
 
 def build_rowdist(mod):

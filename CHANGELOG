@@ -188,8 +188,32 @@ predates everything below.
   pytest runner in `tests/tutorials/` runs each page's bash blocks in order
   and checks the outputs the page shows (DETK-0064); `docs/dev/tutorials.md`
   says how to write one (#83)
+- Tutorial: from quantifier outputs to a normalized matrix. Salmon
+  `quant.sf` files to a counts matrix, a sample sheet, CPM and TPM, a log
+  transform, summary statistics, the report and the crate, with no R, on
+  data simulated by a seeded script next to the page; it runs in every test
+  job (#100)
 
 ### Fixed
+- `detk-transform vst` and `detk-transform rlog` with `--rda FILE` write
+  FILE, as their help says: the `DESeqTransform` object DESeq2 returns,
+  with `saveRDS()`, as `detk-de deseq2 --rda` does. The option was accepted
+  and nothing was written (#101, DETK-0081)
+- `detk-stats summary --color-col COL` colors the summary's per-sample
+  plots in the report (the count distributions, the zero counts and the
+  PCA) by column COL of the column data, and records COL's value of each
+  sample in the module JSON (`color_by`). The option was accepted and
+  ignored; the CSV output is unchanged. A COL the column data does not
+  have, or `--color-col` without `<cov_fn>`, is a usage error (exit 2)
+  (#101, DETK-0081)
+- `detk-transform rlog --blind BOOL` takes `True` or `False`, in any case;
+  any other value is a usage error (exit 2). `--blind False` runs DESeq2's
+  non-blind rlog with the design and column data given, where it ran
+  against a placeholder design (the value reached detk as the text
+  `"False"`, which Python takes as true); without `<design>` and `<cov_fn>`
+  it is a usage error. Not given, the rlog is blind, as before. The module
+  JSON's params record `blind` and the design used (`~ 1` when blind)
+  (#101, DETK-0081)
 - `detk-norm deseq2 --size-factors=FILE` writes the size factors, as its
   help says: a tab separated file with a header line `sample`,
   `size_factor` (DETK-0082), then one row per sample of its name and size

@@ -10,15 +10,19 @@ acceptance:
 from: [DETK-0081]
 scope: [de_toolkit/transform.py, de_toolkit/stats.py, +de_toolkit/report.py, tests/transform/, tests/stats/, tests/cli/, +CHANGELOG]
 prev: [DETK-0081, release/cli-migrate, release/cli-gaps]
+issue: 101
+visited: f3a014f
+status: done
+done: a951264
 ---
 
 # Options do what their help says
 
 ## Implementation plan
 
-- [ ] @developer Make `--rda` (vst, rlog), `--color-col` (summary) and `--blind` (rlog) do what their help says, each with an end-to-end test, the blind vs non-blind rlog comparison in the R job, cli-pin rows; CHANGELOG under Fixed; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: each option tested end to end, the R job ran the rlog comparison <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Make `--rda` (vst, rlog), `--color-col` (summary) and `--blind` (rlog) do what their help says, each with an end-to-end test, the blind vs non-blind rlog comparison in the R job, cli-pin rows; CHANGELOG under Fixed; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: each option tested end to end, the R job ran the rlog comparison <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

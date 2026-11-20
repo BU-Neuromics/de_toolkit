@@ -13,6 +13,8 @@ scope: [tests/util/, tests/cli/, de_toolkit/completions/, +de_toolkit/util.py, +
 prev: [DETK-0051, DETK-0061, release/cli-gaps, DETK-0160]
 issue: 102
 visited: f3a014f
+status: done
+done: 3062cee
 ---
 
 # Record an external step with detk-util record
@@ -23,7 +25,7 @@ visited: f3a014f
 - [x] @reviewer Review the refusals and exit codes against DETK-0031 and DETK-0061, the module JSON and the crate (instrument, object, result, lineage into a later detk-de run), and the help from an agent's side <!-- s2 -->
 - [x] @developer Wire it into the umbrella command and completion, document it in docs/tools/util.md and the skill's commands.md, CHANGELOG <!-- s3 -->
 - [x] @reviewer Review the PR, CI and the docs build <!-- s4 -->
-- [ ] @human Accept <!-- s5 -->
+- [x] @human Accept <!-- s5 -->
 
 ## Notes
 

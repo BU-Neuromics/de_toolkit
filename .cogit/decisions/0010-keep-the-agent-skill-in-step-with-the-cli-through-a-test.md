@@ -66,15 +66,6 @@ Option A. It parses the command lines in code blocks, checks the commands
 and options named in prose, and checks the copied usage, in the CI that
 already runs, and leaves the writing of the skill to people.
 
-Revised 2026-11-20 by release/cli-migrate (DETK-0001 Option B, DETK-0023):
-docopt-ng is replaced by argparse, so the test parses each command line
-with the command's own argparse parser (`build_parser()` in its module,
-through `common.parse_cli`, as the installed command parses it), and takes
-the declared commands, subcommands and options from that parser rather
-than from the `--help` text. The copied usage blocks are still matched line
-for line against `--help`, which now has the DETK-0025 Option B layout.
-Where the text above says docopt, read argparse.
-
 ## Consequences
 
 - A pull request that renames or removes an option or subcommand used by the

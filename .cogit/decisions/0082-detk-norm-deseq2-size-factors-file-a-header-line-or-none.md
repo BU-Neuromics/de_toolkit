@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release/size-factors, step: s2}
 applies: [release/size-factors]
 issue: 93
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's delegation via the driver session, 2026-11-20: Option A, a sample<TAB>size_factor header line, stated in --help; within the 1.0 scope and doesn't change the promise"}
 ---
 
 # detk-norm deseq2 --size-factors file: a header line or none

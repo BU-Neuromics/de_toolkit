@@ -9,6 +9,8 @@ acceptance:
 from: [DETK-0064]
 scope: [new:docs/tutorials/, new:tests/tutorials/, +mkdocs.yml, +CHANGELOG]
 prev: [DETK-0064, release/tutorial-harness, release/cli-gaps]
+issue: 100
+visited: f3a014f
 ---
 
 # Tutorial: from quantifier outputs to a normalized matrix

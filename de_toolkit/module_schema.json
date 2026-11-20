@@ -24,7 +24,7 @@
     },
     "schema_version": {
       "type": "string",
-      "description": "version of this envelope format",
+      "description": "version of this envelope format, major.minor; this schema describes 1.1 and every 1.x document before it (1.1 added the optional in_file_paths and out_file_paths)",
       "pattern": "^\\d+\\.\\d+$"
     },
     "detk_version": {
@@ -57,6 +57,16 @@
     "out_file_path": {
       "type": ["string", "null"],
       "description": "primary output file path, if any"
+    },
+    "in_file_paths": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "every input file path, in order, for a step with several (since 1.1; optional, written by detk-util record); in_file_path is the first"
+    },
+    "out_file_paths": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "every output file path, in order, for a step with several (since 1.1; optional, written by detk-util record); out_file_path is the first"
     },
     "column_data_path": {
       "type": ["string", "null"],

@@ -896,6 +896,15 @@ REGISTRY = {
         "How many samples and features were gathered, and any filled or dropped.",
         build_gather,
     ),
+    # no view in 1.0 (DETK-0061 item 6): the card names the step, and its
+    # command, tool, version and file checksums are in its data
+    "record": (
+        "util",
+        "Recorded external step",
+        "A command run outside detk and recorded by detk-util record; its command, "
+        "tool and tool version are in the data below.",
+        lambda mod: {"type": "raw"},
+    ),
     # enrich family
     "fgseares": (
         "enrich",

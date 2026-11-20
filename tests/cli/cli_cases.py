@@ -32,20 +32,41 @@ def _value(name):
     return f"{name.upper()}_VALUE"
 
 
-def required(sub):
-    "Tokens and arguments for the subcommand's required positionals"
-    tokens, args = [], {}
+def given(o, value):
+    "The argument an option given once with *value* yields: a list for a repeat option"
+    return [value] if o.repeat else value
+
+
+def required_parts(sub, skip=None):
+    """
+    Tokens and arguments for the subcommand's required options (but *skip*)
+    and positionals: (the tokens before ``--``, the ``--`` and the words
+    after it, or () when the subcommand takes nothing after ``--``, args)
+    """
+    before, after, args = [], [], {}
+    for o in sub.options:
+        if o.required and o is not skip:
+            value = _value(o.key)
+            before += [o.long, value]
+            args[o.key] = given(o, value)
     for p in sub.positionals:
         if p.optional:
             continue
         if p.multi:
             vals = [f"{p.name}_1", f"{p.name}_2"]
-            tokens += vals
-            args[p.name] = vals
         else:
-            tokens.append(f"{p.name}_value")
-            args[p.name] = f"{p.name}_value"
-    return tokens, args
+            vals = [f"{p.name}_value"]
+        (after if p.after_dashdash else before).extend(vals)
+        args[p.name] = vals if p.multi else vals[0]
+    if after:
+        after = ["--"] + after
+    return tuple(before), tuple(after), args
+
+
+def required(sub, skip=None):
+    "Tokens and arguments for the subcommand's required options and positionals"
+    before, after, args = required_parts(sub, skip)
+    return before + after, args
 
 
 def lines(sub):
@@ -73,8 +94,10 @@ def lines(sub):
             forms.append((f"{o.long} ", (o.long, value)))
             if o.short:
                 forms.append((f"{o.short} ", (o.short, value)))
+        # a required option given in one of its forms is not given again
+        o_req, o_args = required(sub, skip=o) if o.required else (req, req_args)
         for label, toks in forms:
-            yield label.strip(), Line(toks + tuple(req), dict(req_args) | {o.key: value})
+            yield label.strip(), Line(toks + tuple(o_req), dict(o_args) | {o.key: given(o, value)})
 
     for i, line in enumerate(sub.lines):
         yield f"table{i}", line
@@ -82,26 +105,36 @@ def lines(sub):
 
 def bad(command, sub):
     "Every generated (id, Bad) for *sub*, then its table's"
-    req, _ = required(sub)
-    yield "unknown-option", Bad(tuple(req) + ("--bogus-option",), ("--bogus-option",))
+    # an argument added to a command line goes before its "--", if any
+    before, after, _ = required_parts(sub)
+    yield "unknown-option", Bad(before + ("--bogus-option",) + after, ("--bogus-option",))
 
+    opts = []
+    for o in sub.options:
+        if o.required:
+            opts += [o.long, _value(o.key)]
     for i, p in enumerate(sub.positionals):
         if p.optional:
             continue
         # drop this positional and every later one
-        kept = []
+        kept = list(opts)
         for q in sub.positionals[:i]:
-            if q.optional:
+            if q.optional or q.after_dashdash:
                 continue
             kept += [f"{q.name}_1", f"{q.name}_2"] if q.multi else [f"{q.name}_value"]
         yield f"missing-{p.name}", Bad(tuple(kept), (p.name,))
 
+    for o in sub.options:
+        if o.required:
+            b, a, _ = required_parts(sub, skip=o)
+            yield f"missing{o.long}", Bad(b + a, (o.long,))
+
     for o in options(sub):
         if o.flag:
             continue
-        yield f"no-value{o.long}", Bad(tuple(req) + (o.long,), (o.long,))
+        yield f"no-value{o.long}", Bad(before + (o.long,) + after, (o.long,))
         if o.short:
-            yield f"no-value{o.short}", Bad(tuple(req) + (o.short,), (o.short,))
+            yield f"no-value{o.short}", Bad(before + (o.short,) + after, (o.short,))
 
     for i, b in enumerate(sub.bad):
         yield f"table{i}", b

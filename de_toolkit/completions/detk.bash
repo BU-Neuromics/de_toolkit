@@ -10,7 +10,7 @@ _shtab_detk_stats_subparsers=(summary basestats coldist rowdist colzero rowzero 
 _shtab_detk_outlier_subparsers=(entropy shrink)
 _shtab_detk_wrapr_subparsers=(check run)
 _shtab_detk_report_subparsers=(generate clean)
-_shtab_detk_util_subparsers=(tidy tidy-counts tidy-covs annotate gather)
+_shtab_detk_util_subparsers=(tidy tidy-counts tidy-covs annotate gather record)
 _shtab_detk_subparsers=(norm de enrich transform filter stats outlier wrapr report util completion help)
 
 _shtab_detk_norm_deseq2_option_strings=(-h --help -o --output --size-factors -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
@@ -52,6 +52,7 @@ _shtab_detk_util_tidy_counts_option_strings=(-h --help -o --output -d --out-deli
 _shtab_detk_util_tidy_covs_option_strings=(-h --help -o --output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_util_annotate_option_strings=(-h --help -i --idcol --map-from --map-to --strip-versions --drop-unmapped -o --output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_util_gather_option_strings=(-h --help --format --column --name-from --on-mismatch -o --output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
+_shtab_detk_util_record_option_strings=(-h --help -i --input -o --output --tool --tool-version -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_util_option_strings=(-h --help --version)
 _shtab_detk_completion_option_strings=(-h --help)
 _shtab_detk_help_option_strings=()
@@ -209,6 +210,11 @@ _shtab_detk_util_gather_pos_0_COMPGEN=_shtab_compgen_files
 _shtab_detk_util_gather__o_COMPGEN=_shtab_compgen_files
 _shtab_detk_util_gather___output_COMPGEN=_shtab_compgen_files
 _shtab_detk_util_gather___report_dir_COMPGEN=_shtab_compgen_dirs
+_shtab_detk_util_record__i_COMPGEN=_shtab_compgen_files
+_shtab_detk_util_record___input_COMPGEN=_shtab_compgen_files
+_shtab_detk_util_record__o_COMPGEN=_shtab_compgen_files
+_shtab_detk_util_record___output_COMPGEN=_shtab_compgen_files
+_shtab_detk_util_record___report_dir_COMPGEN=_shtab_compgen_dirs
 
 _shtab_detk_norm_pos_0_choices=(deseq2 library fpkm cpm tpm)
 _shtab_detk_de_pos_0_choices=(deseq2 firth)
@@ -236,7 +242,7 @@ _shtab_detk_wrapr_pos_0_choices=(check run)
 _shtab_detk_report_pos_0_choices=(generate clean)
 _shtab_detk_util_gather___format_choices=(salmon kallisto htseq featurecounts auto)
 _shtab_detk_util_gather___on_mismatch_choices=(error fill drop)
-_shtab_detk_util_pos_0_choices=(tidy tidy-counts tidy-covs annotate gather)
+_shtab_detk_util_pos_0_choices=(tidy tidy-counts tidy-covs annotate gather record)
 _shtab_detk_completion_pos_0_choices=(bash zsh tcsh)
 _shtab_detk_pos_0_choices=(norm de enrich transform filter stats outlier wrapr report util completion help)
 
@@ -575,6 +581,16 @@ _shtab_detk_util_gather___verbose_nargs=0
 _shtab_detk_util_gather__q_nargs=0
 _shtab_detk_util_gather___quiet_nargs=0
 _shtab_detk_util_gather___shut_up_nargs=0
+_shtab_detk_util_record_pos_0_nargs='*'
+_shtab_detk_util_record__h_nargs=0
+_shtab_detk_util_record___help_nargs=0
+_shtab_detk_util_record___no_report_nargs=0
+_shtab_detk_util_record___version_nargs=0
+_shtab_detk_util_record__v_nargs=0
+_shtab_detk_util_record___verbose_nargs=0
+_shtab_detk_util_record__q_nargs=0
+_shtab_detk_util_record___quiet_nargs=0
+_shtab_detk_util_record___shut_up_nargs=0
 _shtab_detk_util_pos_0_nargs=A...
 _shtab_detk_util__h_nargs=0
 _shtab_detk_util___help_nargs=0
@@ -2630,13 +2646,14 @@ _shtab_detk_cmd_report() {
 
 complete -o bashdefault -F _shtab_detk_cmd_report detk-report
 
-_shtab_detk_cmd_util_subparsers=(tidy tidy-counts tidy-covs annotate gather)
+_shtab_detk_cmd_util_subparsers=(tidy tidy-counts tidy-covs annotate gather record)
 
 _shtab_detk_cmd_util_tidy_option_strings=(-h --help -o --output -p --column-data-output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_cmd_util_tidy_counts_option_strings=(-h --help -o --output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_cmd_util_tidy_covs_option_strings=(-h --help -o --output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_cmd_util_annotate_option_strings=(-h --help -i --idcol --map-from --map-to --strip-versions --drop-unmapped -o --output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_cmd_util_gather_option_strings=(-h --help --format --column --name-from --on-mismatch -o --output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
+_shtab_detk_cmd_util_record_option_strings=(-h --help -i --input -o --output --tool --tool-version -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_cmd_util_option_strings=(-h --help --version)
 
 _shtab_detk_cmd_util_tidy_pos_0_COMPGEN=_shtab_compgen_files
@@ -2665,10 +2682,15 @@ _shtab_detk_cmd_util_gather_pos_0_COMPGEN=_shtab_compgen_files
 _shtab_detk_cmd_util_gather__o_COMPGEN=_shtab_compgen_files
 _shtab_detk_cmd_util_gather___output_COMPGEN=_shtab_compgen_files
 _shtab_detk_cmd_util_gather___report_dir_COMPGEN=_shtab_compgen_dirs
+_shtab_detk_cmd_util_record__i_COMPGEN=_shtab_compgen_files
+_shtab_detk_cmd_util_record___input_COMPGEN=_shtab_compgen_files
+_shtab_detk_cmd_util_record__o_COMPGEN=_shtab_compgen_files
+_shtab_detk_cmd_util_record___output_COMPGEN=_shtab_compgen_files
+_shtab_detk_cmd_util_record___report_dir_COMPGEN=_shtab_compgen_dirs
 
 _shtab_detk_cmd_util_gather___format_choices=(salmon kallisto htseq featurecounts auto)
 _shtab_detk_cmd_util_gather___on_mismatch_choices=(error fill drop)
-_shtab_detk_cmd_util_pos_0_choices=(tidy tidy-counts tidy-covs annotate gather)
+_shtab_detk_cmd_util_pos_0_choices=(tidy tidy-counts tidy-covs annotate gather record)
 
 _shtab_detk_cmd_util_tidy__h_nargs=0
 _shtab_detk_cmd_util_tidy___help_nargs=0
@@ -2718,6 +2740,16 @@ _shtab_detk_cmd_util_gather___verbose_nargs=0
 _shtab_detk_cmd_util_gather__q_nargs=0
 _shtab_detk_cmd_util_gather___quiet_nargs=0
 _shtab_detk_cmd_util_gather___shut_up_nargs=0
+_shtab_detk_cmd_util_record_pos_0_nargs='*'
+_shtab_detk_cmd_util_record__h_nargs=0
+_shtab_detk_cmd_util_record___help_nargs=0
+_shtab_detk_cmd_util_record___no_report_nargs=0
+_shtab_detk_cmd_util_record___version_nargs=0
+_shtab_detk_cmd_util_record__v_nargs=0
+_shtab_detk_cmd_util_record___verbose_nargs=0
+_shtab_detk_cmd_util_record__q_nargs=0
+_shtab_detk_cmd_util_record___quiet_nargs=0
+_shtab_detk_cmd_util_record___shut_up_nargs=0
 _shtab_detk_cmd_util_pos_0_nargs=A...
 _shtab_detk_cmd_util__h_nargs=0
 _shtab_detk_cmd_util___help_nargs=0

@@ -11,7 +11,10 @@ every option in its short and long forms and every default, and check
 
 Values are written as on the command line (``"20"``, not ``20``). An
 option's ``default`` is the value the command acts on when the option is not
-given; for a flag it is False. ``metavar`` is None for a flag.
+given; for a flag it is False. ``metavar`` is None for a flag. A ``repeat``
+option may be given more than once and yields the list of its values; a
+``required`` one must be given. An ``after_dashdash`` positional is the
+words after ``--`` (detk-util record's command), never parsed as detk's.
 
 A change to the command line interface is a change to these tables
 (DETK-0001: the CLI is the 1.0 promise; DETK-0025 Option B: help promises
@@ -29,6 +32,8 @@ class Opt:
     metavar: str | None = None
     default: object = None
     choices: tuple = ()
+    repeat: bool = False
+    required: bool = False
 
     @property
     def key(self):
@@ -49,6 +54,7 @@ class Pos:
     name: str
     optional: bool = False
     multi: bool = False
+    after_dashdash: bool = False
 
 
 @dataclass(frozen=True)
@@ -432,6 +438,65 @@ UTIL = Command(
                     ("--on-mismatch=bogus", "missing.sf"),
                     ("--on-mismatch",),
                     "a value outside its choices is a parse error (DETK-0033)",
+                ),
+            ),
+        ),
+        Sub(
+            "record",
+            (Pos("command", multi=True, after_dashdash=True),),
+            (
+                Opt("--input", "-i", "FILE", repeat=True),
+                Opt("--output", "-o", "FILE", repeat=True, required=True),
+                Opt("--tool", None, "NAME"),
+                Opt("--tool-version", None, "TEXT"),
+            ),
+            lines=(
+                Line(
+                    ("-i", "a.csv", "-i", "b.csv", "-o", "c.csv", "--output=d.csv", "--", "mlr"),
+                    {"input": ["a.csv", "b.csv"], "output": ["c.csv", "d.csv"], "command": ["mlr"]},
+                    "--input and --output repeat, keeping their order (DETK-0061)",
+                ),
+                Line(
+                    ("-o", "c.csv", "--", "mlr", "--icsv", "-o", "x", "--version", "-h"),
+                    {
+                        "output": ["c.csv"],
+                        "command": ["mlr", "--icsv", "-o", "x", "--version", "-h"],
+                    },
+                    "every word after -- is the command's, detk's own options too",
+                ),
+                Line(
+                    ("-o", "c.csv", "--", "sh", "-c", "a -- b", "--", "x"),
+                    {"output": ["c.csv"], "command": ["sh", "-c", "a -- b", "--", "x"]},
+                    "only the first -- ends detk's arguments",
+                ),
+                Line(
+                    ("-o", "c.csv", "--tool=R", "--tool-version", "4.4.1", "--", "Rscript", "x.R"),
+                    {
+                        "output": ["c.csv"],
+                        "tool": "R",
+                        "tool_version": "4.4.1",
+                        "command": ["Rscript", "x.R"],
+                    },
+                    "--tool and --tool-version name the software that runs",
+                ),
+            ),
+            bad=(
+                Bad(
+                    ("-o", "c.csv", "stray", "--", "cmd"),
+                    ("stray", "--"),
+                    "a word before -- is not the command",
+                ),
+                Bad(("-o", "c.csv", "--"), ("command",), "-- with nothing after it"),
+                Bad(("-o", "c.csv", "cmd"), ("cmd",), "the command must come after --"),
+                Bad(
+                    ("--", "cmd", "-o", "c.csv"),
+                    ("--output",),
+                    "an -o after -- is the command's, so --output is missing",
+                ),
+                Bad(
+                    ("-o", "c.csv", "--bogus", "--", "cmd"),
+                    ("--bogus",),
+                    "an unknown option before -- is still an error",
                 ),
             ),
         ),

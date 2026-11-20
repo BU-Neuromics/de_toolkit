@@ -19,6 +19,12 @@ module JSON documents under ``<report_dir>/json/``:
   ``object`` list, alongside the input files
 - input/output files are shared ``File`` entities, so chaining is visible in
   the graph
+- a step ``detk-util record`` recorded (an external command, DETK-0061) is a
+  ``CreateAction`` whose ``instrument`` is the external tool with its version,
+  since that is the software that made its files; its ``object`` and
+  ``result`` list every input and output (the envelope's ``in_file_paths``
+  and ``out_file_paths``), each ``File`` with its ``sha256`` and
+  ``contentSize``
 
 The crate root is the analysis working directory: file paths are written
 relative to it when they fall inside, and as absolute ``file://`` URIs when
@@ -29,6 +35,7 @@ to avoid a runtime dependency; conformance is checked in the test suite.
 import json
 import os
 import pathlib
+import urllib.parse
 import uuid
 from datetime import datetime, UTC
 
@@ -37,6 +44,8 @@ from .version import __version__
 PROFILE_URI = "https://w3id.org/ro/wfrun/process/0.5"
 RO_CRATE_SPEC = "https://w3id.org/ro/crate/1.1"
 RO_CRATE_CONTEXT = "https://w3id.org/ro/crate/1.1/context"
+# the Workflow Run terms (sha256), added to the context when a file has one
+WFRUN_CONTEXT = "https://w3id.org/ro/terms/workflow-run/context"
 CRATE_FILENAME = "ro-crate-metadata.json"
 
 _REPO_URL = "https://github.com/BU-Neuromics/de_toolkit"
@@ -65,6 +74,7 @@ SUBTOOLS = {
     "fgseares": ("detk-enrich", "fgsea"),
     "annotate": ("detk-util", "annotate"),
     "gather": ("detk-util", "gather"),
+    "record": ("detk-util", "record"),
     "pmftransform": ("detk-outlier", "shrink"),
     "shrinkcounts": ("detk-outlier", "shrink"),
     "entropycounts": ("detk-outlier", "entropy"),
@@ -127,6 +137,39 @@ def _is_local(ref):
     return ref is not None and not ref.startswith("file://")
 
 
+def _paths(doc, many, one):
+    "The file paths of *doc*: the list *many* when written (schema 1.1), else [*one*]"
+    paths = doc.get(many)
+    if paths is None:
+        paths = [doc.get(one)]
+    return [p for p in paths if p is not None]
+
+
+def _link(files, path, workdir, crate_root, digest, produced):
+    """The reference to the File entity for *path*, made in *files* if new;
+    *digest* (record's sha256 and size of it) goes on the entity: the
+    producer's wins, a reader's fills one in"""
+    ref = _file_ref(path, workdir, crate_root)
+    ent = files.setdefault(ref, _file_entity(ref, crate_root))
+    if digest and digest.get("sha256") and (produced or "sha256" not in ent):
+        ent["sha256"] = digest["sha256"]
+        if digest.get("size") is not None:
+            ent["contentSize"] = str(digest["size"])
+    return {"@id": ref}
+
+
+def _recorded_tool(doc):
+    """(tool, version) of a step detk-util record recorded, from its params"""
+    params = doc.get("params") or {}
+    tool = params.get("tool") or "unknown"
+    version = params.get("tool_version") or "unknown"
+    return str(tool), str(version)
+
+
+def _recorded_tool_id(tool, version):
+    return "#tool-" + urllib.parse.quote(f"{tool}-{version}", safe="")
+
+
 def build_crate(docs, crate_root):
     """Build the crate JSON-LD (as a dict) for *docs*, a list of module JSON
     documents (as written by DetkModuleJSON), rooted at *crate_root*."""
@@ -140,23 +183,49 @@ def build_crate(docs, crate_root):
         doc_id = doc.get("id", name)
         workdir = doc.get("workdir")
 
-        sw_id = _software_id(name)
-        if sw_id not in software:
-            exe, sub = SUBTOOLS.get(name, ("detk", name))
-            software[sw_id] = {
-                "@id": sw_id,
-                "@type": "SoftwareApplication",
-                "name": _tool_label(name),
-                "url": _DOCS_URL,
-                "softwareVersion": doc.get("detk_version", __version__),
-            }
+        recorded = name == "record"
+        if recorded:
+            # the external tool made the files, so it is the instrument
+            tool, version = _recorded_tool(doc)
+            sw_id = _recorded_tool_id(tool, version)
+            action_name = f"{tool} run (recorded by {_tool_label(name)})"
+            if sw_id not in software:
+                software[sw_id] = {
+                    "@id": sw_id,
+                    "@type": "SoftwareApplication",
+                    "name": tool,
+                    "softwareVersion": version,
+                }
+        else:
+            sw_id = _software_id(name)
+            action_name = f"{_tool_label(name)} run"
+            if sw_id not in software:
+                software[sw_id] = {
+                    "@id": sw_id,
+                    "@type": "SoftwareApplication",
+                    "name": _tool_label(name),
+                    "url": _DOCS_URL,
+                    "softwareVersion": doc.get("detk_version", __version__),
+                }
+
+        # the checksums record took of its files, by path as given
+        digests = {}
+        if recorded:
+            props = doc.get("properties") or {}
+            for d in list(props.get("inputs") or []) + list(props.get("outputs") or []):
+                if isinstance(d, dict) and d.get("path") is not None:
+                    digests[d["path"]] = d
 
         objects = []
-        for key in ("in_file_path", "column_data_path"):
-            ref = _file_ref(doc.get(key), workdir, crate_root)
-            if ref is not None:
-                files.setdefault(ref, _file_entity(ref, crate_root))
-                objects.append({"@id": ref})
+        seen = set()
+        inputs = _paths(doc, "in_file_paths", "in_file_path")
+        if doc.get("column_data_path") is not None:
+            inputs.append(doc["column_data_path"])
+        for path in inputs:
+            ref = _link(files, path, workdir, crate_root, digests.get(path), produced=False)
+            if ref["@id"] not in seen:
+                seen.add(ref["@id"])
+                objects.append(ref)
 
         params = doc.get("params") or {}
         for key in sorted(params):
@@ -177,15 +246,17 @@ def build_crate(docs, crate_root):
             objects.append({"@id": pid})
 
         results = []
-        ref = _file_ref(doc.get("out_file_path"), workdir, crate_root)
-        if ref is not None:
-            files.setdefault(ref, _file_entity(ref, crate_root))
-            results.append({"@id": ref})
+        seen = set()
+        for path in _paths(doc, "out_file_paths", "out_file_path"):
+            ref = _link(files, path, workdir, crate_root, digests.get(path), produced=True)
+            if ref["@id"] not in seen:
+                seen.add(ref["@id"])
+                results.append(ref)
 
         action = {
             "@id": _action_id(doc_id),
             "@type": "CreateAction",
-            "name": f"{_tool_label(name)} run",
+            "name": action_name,
             "instrument": {"@id": sw_id},
         }
         if doc.get("start_time"):
@@ -246,7 +317,10 @@ def build_crate(docs, crate_root):
     graph.extend(param_entities)
     graph.extend(actions)
 
-    return {"@context": RO_CRATE_CONTEXT, "@graph": graph}
+    context = RO_CRATE_CONTEXT
+    if any("sha256" in ent for ent in files.values()):
+        context = [RO_CRATE_CONTEXT, WFRUN_CONTEXT]
+    return {"@context": context, "@graph": graph}
 
 
 def write_crate(docs, crate_root):

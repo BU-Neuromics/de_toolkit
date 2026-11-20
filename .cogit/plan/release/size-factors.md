@@ -8,16 +8,20 @@ acceptance:
   - 'the CHANGELOG says what changed'
 from: [DETK-0029]
 scope: [de_toolkit/norm.py, docs/example.md, examples/airway/run.sh, tests/norm/, tests/cli/, skills/detk/references/commands.md, +CHANGELOG]
-prev: [DETK-0029, release/cli-migrate]
+prev: [DETK-0029, release/cli-migrate, DETK-0082]
+issue: 86
+visited: 92d4fab
+status: done
+done: 4669f6f
 ---
 
 # --size-factors writes the size factors
 
 ## Implementation plan
 
-- [ ] @developer Write the size factors file from `self.size_factors` with tests, update the cli-pin row, check the example and the skill describe it; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Write the size factors file from `self.size_factors` with tests, update the cli-pin row, check the example and the skill describe it; CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

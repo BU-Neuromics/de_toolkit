@@ -118,8 +118,9 @@ options:
   -o, --output FILE    Destination of normalized output in CSV format
                        (default: stdout)
   --size-factors FILE  Write out the size factors found by the DESeq2 method to
-                       a two column tab separated file: sample name and size
-                       factor
+                       a two column tab separated file: a header line 'sample',
+                       'size_factor', then one line per sample of its name and
+                       size factor
 ```
 
 ## `detk-norm fpkm`

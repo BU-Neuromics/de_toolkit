@@ -19,7 +19,7 @@ visited: c3eca8f
 ## Implementation plan
 
 - [x] @developer Move statsmodels to the test extra and dev group, relock, add the runtime-only import check to CI, delete `environment.yml`, CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR and the CI run <!-- s2 -->
+- [x] @reviewer Review the PR and the CI run <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes

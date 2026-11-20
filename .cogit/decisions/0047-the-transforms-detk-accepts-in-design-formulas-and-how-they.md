@@ -5,7 +5,7 @@ superseded_by: DETK-0050
 authority: [human]
 date: 2026-11-19
 from: {node: release}
-applies: [release/augment]
+applies: [release/record]
 revisions:
   - {date: 2026-11-19, by: adamlabadorf, change: Superseded by DETK-0050, why: "from the terminal: Adam changed his mind on 2026-11-19: formulas specify the model only; derived columns come from a column data augmentation command (DETK-0051)"}
 ---

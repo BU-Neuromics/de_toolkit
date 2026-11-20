@@ -42,7 +42,7 @@ visited: f6503ed
 - [ ] [Quote design names before R reads them](release/r-design-names.md) <!-- s31 -->
 - [ ] [--size-factors writes the size factors](release/size-factors.md) <!-- s26 -->
 - [ ] [Close the remaining CLI gaps](release/cli-gaps.md) <!-- s29 -->
-- [ ] [Column data augmentation command](release/augment.md) <!-- s30 -->
+- [ ] [Column data augmentation command](release/record.md) <!-- s30 -->
 - [ ] [Update the docs for the 1.0 CLI](release/cli-docs.md) <!-- s25 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->

@@ -88,7 +88,9 @@ def check_calls(model, columns):
             raise FormulaParseError(
                 f"Formulas take column names only: {term} is not a column of the "
                 "column data file and looks like a call. Add the derived column to "
-                "the column data file and name it in the formula."
+                "the column data file and name it in the formula; for recipes that "
+                "derive a log, z-score or other column with Miller, see "
+                "https://bu-neuromics.github.io/de_toolkit/recipes/covariates/"
             )
 
 

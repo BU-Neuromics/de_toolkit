@@ -12,6 +12,8 @@ scope: [pyproject.toml, uv.lock, environment.yml, .github/workflows/, tests/, +C
 prev: [DETK-0026, DETK-0048]
 issue: 75
 visited: c3eca8f
+status: done
+done: b201889
 ---
 
 # Make statsmodels a test-only dependency
@@ -20,7 +22,7 @@ visited: c3eca8f
 
 - [x] @developer Move statsmodels to the test extra and dev group, relock, add the runtime-only import check to CI, delete `environment.yml`, CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR and the CI run <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

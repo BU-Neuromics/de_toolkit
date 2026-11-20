@@ -88,7 +88,15 @@ behaviour change.
 
 ## Decision
 
-<!-- Adam's -->
+Option A, accepted 2026-11-20 under Adam's delegation via the driver
+session (DETK-0063: within the 1.0 scope, and it keeps the 1.0 promise
+rather than changing it), on the reviewer's recommendation and DETK-0029's
+precedent: `--rda` in detk-transform vst and rlog saves the R objects as
+detk-de's does; `--color-col` colors detk-stats summary's plots (falling
+back to Option B for that option only if the summary has no plot it can
+color, recorded as a new decision); `--blind` is parsed to a bool, so
+`--blind False` runs the non-blind rlog with the user's design. The work is
+release/help-options.
 
 ## Consequences
 

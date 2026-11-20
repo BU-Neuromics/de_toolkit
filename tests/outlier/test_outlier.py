@@ -21,22 +21,6 @@ def test_shrink_cli(fake_counts_csv):
     # TODO need *actual* tests
 
 
-"""
-def test_transform_trim(fake_counts_obj):
-    from de_toolkit.transform import trim
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        trim(fake_counts_obj)
-
-def test_transform_trim_cli(fake_counts_csv):
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        main(['detk-outlier','trim',fake_counts_csv])
-"""
-
-
 @pytest.fixture
 def entropy_test_counts_obj(request):
     from de_toolkit.common import CountMatrix

@@ -1,26 +1,57 @@
 r"""
-Usage:
-    detk-report generate [options]
-    detk-report clean [options]
+Write or remove the detk HTML report: every detk command that runs with a
+report directory writes its module JSON there and re-renders the report;
+generate renders it again from the module JSON already in the directory, and
+clean removes the directory and the provenance crate.
 """
 
-cmd_opts = {
-    "generate": r"""
-Usage:
-    detk-report generate [options]
-
-Options:
-    --dev  Pretty-print the embedded JSON payload (larger file, easier to read)
-""",
-    "clean": r"""
-Usage:
-    detk-report clean [options]
-""",
+# each subcommand: the one line the command's help lists it with, its
+# description and its examples
+SUBCOMMANDS = {
+    "generate": dict(
+        help="Render the HTML report from the module JSON in the report directory",
+        description="""\
+Render the HTML report (detk_report.html) and the provenance crate again from
+the module JSON files the detk commands wrote into the report directory.""",
+        examples=[
+            ("Render ./detk_report/detk_report.html", "detk-report generate"),
+            (
+                "Render the report in results/report",
+                "detk-report generate --report-dir=results/report",
+            ),
+        ],
+    ),
+    "clean": dict(
+        help="Remove the report directory and the provenance crate",
+        description="""\
+Remove the report directory, with the module JSON and the HTML report in it,
+and the provenance crate (ro-crate-metadata.json) in the current directory.""",
+        examples=[("Remove ./detk_report and the crate", "detk-report clean")],
+    ),
 }
+
+
+def build_parser():
+    "The detk-report command line parser"
+    parser = DetkParser(prog="detk-report", description=__doc__.strip())
+    add_command_options(parser)
+    subs = add_subcommands(parser)
+    for name, spec in SUBCOMMANDS.items():
+        sub = subs.add_parser(
+            name, help=spec["help"], description=spec["description"], examples=spec["examples"]
+        )
+        if name == "generate":
+            sub.add_argument(
+                "--dev",
+                action="store_true",
+                help="Pretty-print the embedded JSON payload (larger file, easier to read)",
+            )
+        add_common_options(sub)
+    return parser
+
 
 from collections import OrderedDict
 from collections.abc import Mapping
-from docopt import docopt
 from glob import glob
 import hashlib
 from importlib.resources import files as _pkg_files
@@ -37,7 +68,15 @@ import time
 
 from datetime import datetime, UTC
 
-from .common import _PROCESS_START, _cli_doc, set_logging
+from .common import (
+    _PROCESS_START,
+    DetkParser,
+    add_command_options,
+    add_common_options,
+    add_subcommands,
+    parse_cli,
+    set_logging,
+)
 from .crate import CRATE_FILENAME, write_crate
 from .report_specs import clean, view_for
 from .version import __version__
@@ -339,42 +378,22 @@ class DetkReport:
 
 def main(argv=sys.argv):
 
-    if "--version" in argv:
-        from .version import __version__
+    args = parse_cli(build_parser(), argv)
+    cmd = args.subcommand
 
-        print(__version__)
-        return
-
-    # add the common opts to the docopt strings
-    cmd_opts_aug = {}
-    for k, v in cmd_opts.items():
-        cmd_opts_aug[k] = _cli_doc(v)
-
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts):
-        docopt(_cli_doc(__doc__))
-    argv = argv[1:]
-    cmd = argv[0]
+    set_logging(args)
+    logger.info("cmd: %s", " ".join(argv[1:]))
 
     if cmd == "generate":
-        args = docopt(cmd_opts_aug["generate"], argv)
-
-        set_logging(args)
-        logger.info("cmd: %s", " ".join(argv))
-
-        if args["--dev"]:
+        if args.dev:
             logger.info("pretty-printing embedded JSON due to --dev")
         # standalone generation: collect existing module JSON and render once
-        DetkReport(args["--report-dir"]).write(dev=bool(args["--dev"]))
+        DetkReport(args.report_dir).write(dev=bool(args.dev))
 
     elif cmd == "clean":
-        args = docopt(cmd_opts_aug["clean"], argv)
+        logger.info("cleaning report dir: %s", args.report_dir)
 
-        set_logging(args)
-        logger.info("cmd: %s", " ".join(argv))
-
-        logger.info("cleaning report dir: %s", args["--report-dir"])
-
-        shutil.rmtree(args["--report-dir"], ignore_errors=True)
+        shutil.rmtree(args.report_dir, ignore_errors=True)
 
         # the provenance crate is derived from the report JSON, so it goes too
         if os.path.exists(CRATE_FILENAME):

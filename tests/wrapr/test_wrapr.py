@@ -1,4 +1,3 @@
-import docopt
 import pytest
 from de_toolkit import wrapr
 import os
@@ -25,8 +24,8 @@ def test_wrapr_cli_check(monkeypatch):
             wrapr.main(["detk-wrapr", "run", f"--routput-dir={d}", f.name])
             assert os.path.exists(os.path.join(d, "script.R"))
 
-    with pytest.raises(docopt.DocoptExit):
-        wrapr.main()
+    with pytest.raises(SystemExit):
+        wrapr.main(["detk-wrapr"])
 
     monkeypatch.setattr(wrapr, "check_r", lambda: False)
     monkeypatch.setattr(wrapr, "check_r_package", lambda x: True)

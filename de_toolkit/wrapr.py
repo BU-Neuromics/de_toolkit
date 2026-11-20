@@ -1,30 +1,101 @@
 r"""
-Usage:
-    detk-wrapr check [options]
-    detk-wrapr run [options] <rscript> [<counts_in>] [<out>]
-
-Options:
-    --rpath=PATH        Path to Rscript executable, inferred from the environment
-                        by default
-    --routput-dir=PATH  A directory name to write all of the relevant files to
-                        when running this wrapr, useful for debugging an R
-                        script if things go wrong, by default the directory
-                        and files created are temporary and deleted after
-                        execution
-    --meta-in=PATH      Path to metadata file corresponding to columns in counts,
-                        same as is passed to other detk functions
-    --meta-out=PATH     Path to metadata file corresponding to columns in counts,
-                        same as is passed to other detk functions
-    --params-in=PATH    Path to JSON formatted file containing parameters needed
-                        by R script
-    --params-out=PATH   Path to JSON formatted file to be created with output
-                        from the R script
-    --strict            Ensure counts column names and the first row of the
-                        metadata file provided (if any) match, otherwise fail
+Run R from detk: check that R and the packages detk needs are installed
+(check), or run a standalone R script with a counts matrix, its sample
+information and parameters handed to it the way detk's own R steps receive
+them (run).
 """
 
+# each subcommand: the one line the command's help lists it with, its
+# description and its examples
+SUBCOMMANDS = {
+    "check": dict(
+        help="Check that Rscript and the jsonlite package are installed",
+        description="""\
+Check that the Rscript executable is found and that the R package jsonlite,
+which the wrapr interface needs, is installed. Exits 1 if either is missing.""",
+        examples=[("Check the R installation detk will use", "detk-wrapr check")],
+    ),
+    "run": dict(
+        help="Run an R script with a counts matrix and parameters",
+        description="""\
+Run the R script <rscript> with Rscript, handing it the counts file
+<counts_in> (and the sample information file given with --meta-in) and the
+parameters in --params-in, the way detk's own R steps receive them. The
+script's output goes to <out>.""",
+        examples=[
+            (
+                "Run script.R on counts.csv and its sample information",
+                "detk-wrapr run --meta-in=sample_info.csv script.R counts.csv out.csv",
+            ),
+        ],
+    ),
+}
+
+
+def build_parser():
+    "The detk-wrapr command line parser"
+    parser = DetkParser(prog="detk-wrapr", description=__doc__.strip())
+    add_command_options(parser)
+    subs = add_subcommands(parser)
+    for name, spec in SUBCOMMANDS.items():
+        sub = subs.add_parser(
+            name, help=spec["help"], description=spec["description"], examples=spec["examples"]
+        )
+        if name == "run":
+            sub.add_argument("rscript", metavar="<rscript>", help="The R script to run")
+            sub.add_argument(
+                "counts_in",
+                metavar="<counts_in>",
+                nargs="?",
+                help="Counts file handed to the script: features in rows, samples in columns",
+            )
+            sub.add_argument(
+                "out", metavar="<out>", nargs="?", help="File the script writes its output to"
+            )
+        # both subcommands take every option, as the one docopt usage block
+        # they shared gave them
+        sub.add_argument(
+            "--rpath",
+            metavar="FILE",
+            help="Path to the Rscript executable; found on the PATH when not given",
+        )
+        sub.add_argument(
+            "--routput-dir",
+            metavar="DIR",
+            help="Keep the files handed to and written by R in DIR, for debugging "
+            "(when not given, a temporary directory deleted after the run)",
+        )
+        sub.add_argument(
+            "--meta-in",
+            metavar="FILE",
+            help="Sample information file for the columns of the counts, as other "
+            "detk commands take it",
+        )
+        sub.add_argument(
+            "--meta-out",
+            metavar="FILE",
+            help="Destination of the sample information as the R script leaves it",
+        )
+        sub.add_argument(
+            "--params-in",
+            metavar="FILE",
+            help="JSON file of parameters handed to the R script",
+        )
+        sub.add_argument(
+            "--params-out",
+            metavar="FILE",
+            help="Destination of the JSON output parameters of the R script",
+        )
+        sub.add_argument(
+            "--strict",
+            action="store_true",
+            help="Require the counts columns and the --meta-in rows to match",
+        )
+        add_common_options(sub)
+    return parser
+
+
 from collections import defaultdict
-from docopt import docopt
 import json
 import logging
 import os
@@ -34,7 +105,16 @@ from pprint import pformat
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from .common import CountMatrixFile, _cli_doc, read_id_table, set_logging
+from .common import (
+    CountMatrixFile,
+    DetkParser,
+    add_command_options,
+    add_common_options,
+    add_subcommands,
+    parse_cli,
+    read_id_table,
+    set_logging,
+)
 from .util import which
 
 # setup logging, null on the library level
@@ -552,35 +632,20 @@ def wrapr(Rcode, **kwargs):
 
 def main(argv=sys.argv):
 
-    if "--version" in argv:
-        from .version import __version__
-
-        print(__version__)
-        return
-
-    doc = _cli_doc(__doc__)
-
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in ("check", "run")):
-        docopt(doc, argv=argv)
-    argv = argv[1:]
-    argv[0]
-
-    args = docopt(doc, argv=argv)
+    args = parse_cli(build_parser(), argv)
 
     set_logging(args)
-    logger.info("cmd: %s", " ".join(argv))
+    logger.info("cmd: %s", " ".join(argv[1:]))
 
-    if args["run"]:
+    if args.subcommand == "run":
         logger.info("Executing standalone R script")
 
         counts = None
         column_data = None
 
-        if args["<counts_in>"] is not None:
+        if args.counts_in is not None:
             try:
-                counts_obj = CountMatrixFile(
-                    args["<counts_in>"], args["--meta-in"], strict=args.get("--strict", False)
-                )
+                counts_obj = CountMatrixFile(args.counts_in, args.meta_in, strict=args.strict)
             except Exception as e:
                 logger.error(e)
                 sys.exit(1)
@@ -591,24 +656,24 @@ def main(argv=sys.argv):
             column_data = counts_obj.column_data
 
         params = None
-        if args["--params-in"] is not None and os.path.exists(args["--params-in"]):
-            with open(args["--params-in"]) as f:
+        if args.params_in is not None and os.path.exists(args.params_in):
+            with open(args.params_in) as f:
                 params = json.load(f)
 
         with WrapR(
-            args["<rscript>"],
+            args.rscript,
             counts,
             column_data,
             params=params,
-            output_fn=args["<out>"],
-            metadata_out_fn=args["--meta-out"],
-            params_out_fn=args["--params-out"],
-            rpath=args["--rpath"],
-            routput_dir=args["--routput-dir"],
+            output_fn=args.out,
+            metadata_out_fn=args.meta_out,
+            params_out_fn=args.params_out,
+            rpath=args.rpath,
+            routput_dir=args.routput_dir,
         ) as wr:
             wr.execute()
 
-    elif args["check"]:
+    elif args.subcommand == "check":
         r = check_r()
 
         if not r:

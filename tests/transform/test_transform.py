@@ -1,4 +1,3 @@
-import docopt
 import numpy
 import pandas
 import pytest
@@ -14,8 +13,8 @@ deseq2_test = pytest.mark.skipif(
 
 
 def test_transform_cli(fake_counts_csv):
-    with pytest.raises(docopt.DocoptExit):
-        main()
+    with pytest.raises(SystemExit):
+        main(["detk-transform"])
 
 
 @r_test

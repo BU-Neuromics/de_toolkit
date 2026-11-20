@@ -9,6 +9,8 @@ scope: [+de_toolkit/report.py, +de_toolkit/crate.py, +de_toolkit/module_schema.j
 prev: [release/record, release/help-options]
 issue: 116
 visited: 118283e
+status: done
+done: 08f461e
 ---
 
 # Module JSON is strictly valid JSON
@@ -17,7 +19,7 @@ visited: 118283e
 
 - [x] @developer Write non-finite numbers as null in the module JSON encoder and the crate, refuse bare NaN/Infinity at serialization, allow null in module_schema.json where needed, keep the views rendering nulls; the strict-parse test over every module's JSON and the crate (R-backed modules in the R job); CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: parse a real report directory's json/*.json with a strict parser (e.g. jq or Python with parse_constant), open the report with missing values <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

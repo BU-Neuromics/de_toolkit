@@ -20,7 +20,7 @@ visited: 9a704f1
 
 ## Implementation plan
 
-- [ ] @developer Rename the module to `formula.py`, the exception to `FormulaParseError`, the translation function and `tests/patsy_lite/` to `tests/formula/`; update the import and error text in `common.py`; rename the syntax in `docs/formulas.md` and drop its np.log claim; the clear error for a call in a formula (DETK-0050); the airway design pin; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Rename the module to `formula.py`, the exception to `FormulaParseError`, the translation function and `tests/patsy_lite/` to `tests/formula/`; update the import and error text in `common.py`; rename the syntax in `docs/formulas.md` and drop its np.log claim; the clear error for a call in a formula (DETK-0050); the airway design pin; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: nothing still names patsy-lite, the formula-pin fixtures unchanged but for names <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

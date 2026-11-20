@@ -6,7 +6,7 @@ acceptance:
   - 'detk-util tidy, tidy-counts and tidy-covs write to the report unless --no-report, as gather and annotate do: a module entry naming the subcommand, both input files and the output, and for tidy the -p output when given (through the optional in_file_paths and out_file_paths that release/record adds to the envelope); the Process Run Crate (ro-crate-metadata.json) then lists the tidy step with its inputs and outputs; a test runs tidy -p into a report dir and checks the module JSON and the crate, and one checks --no-report writes no report; their help''s --report-dir/--no-report now describe what happens'
   - docs/tutorials/quantifiers.md (release/tutorial-quant) uses detk-util tidy -p for the sample sheet to write the tidied sample sheet and uses it downstream, in place of its workaround (tidy without -p, then the original sheet), and lists tidy among the crate's steps, with the page's checked step count updated; the tutorial runs green under the tutorial harness; CHANGELOG under Fixed
 scope: [+de_toolkit/util.py, +de_toolkit/crate.py, tests/util/, +tests/cli/cli_cases.py, +tests/cli/cli_tables.py, +docs/tutorials/quantifiers.md, tests/tutorials/, +CHANGELOG]
-prev: [release/record, release/tutorial-quant]
+prev: [release/record, release/tutorial-quant, DETK-0230]
 issue: 114
 visited: 118283e
 ---

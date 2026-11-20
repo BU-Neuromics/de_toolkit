@@ -4,8 +4,9 @@
 
 Some of the important operations in detk, most notably the
 [`de` module](tools/de.md), require the user to specify a statistical model.
-The [patsy] Python package describes statistical models in just this way, but
-its syntax is not very machine-readable. A linear model relating a continuous
+General-purpose formula libraries such as R's `model.matrix` and the Python
+package [formulaic] describe statistical models in just this way, but their
+syntax is not very machine-readable. A linear model relating a continuous
 quantity to a categorical variable looks like:
 
 ```text
@@ -19,7 +20,8 @@ cont_var ~ Intercept + C(cat_var, levels=['A','B','C'])[T.B] + C(cat_var, levels
 ```
 
 This is at least a little bit yuck, and gets very yuck as the number of
-variables grows. detk therefore implements a "patsy-lite" formula syntax where
+variables grows. detk therefore implements its own formula syntax, called
+"patsy-lite" after the library it was first built on, where
 the same model is written:
 
 ```text
@@ -32,10 +34,11 @@ producing the full matrix:
 cont_var ~ Intercept + cat_var__B + cat_var__C
 ```
 
-These column names are much more amenable to programmatic use. patsy remains
-the brain behind resolving full-rank model matrices from column data.
+These column names are much more amenable to programmatic use. detk
+translates the formula for formulaic, which resolves the full-rank model
+matrix from the column data.
 
-[patsy]: https://patsy.readthedocs.io/en/latest/
+[formulaic]: https://matthewwardrop.github.io/formulaic/
 
 ## Syntax
 
@@ -43,16 +46,16 @@ Formula terms refer to column names of the
 [column data file](concepts.md#the-column-data-file). The examples below use
 this column data:
 
-| cont | binary_str | binary_int | cat_str | cat_int |
-|------|------------|------------|---------|---------|
-| 0.13 | case       | 1          | A       | 1       |
-| 0.97 | control    | 0          | B       | 2       |
-| 0.22 | case       | 1          | A       | 1       |
-| 0.76 | control    | 0          | C       | 3       |
-| 0.69 | control    | 0          | C       | 3       |
-| 0.08 | case       | 1          | A       | 1       |
-| 0.17 | case       | 1          | B       | 2       |
-| 0.53 | control    | 0          | C       | 3       |
+| cont | binary_str | binary_int | cat_str | cat_int | flag  |
+|------|------------|------------|---------|---------|-------|
+| 0.13 | case       | 1          | A       | 1       | TRUE  |
+| 0.97 | control    | 0          | B       | 2       | FALSE |
+| 0.22 | case       | 1          | A       | 1       | TRUE  |
+| 0.76 | control    | 0          | C       | 3       | FALSE |
+| 0.69 | control    | 0          | C       | 3       | TRUE  |
+| 0.08 | case       | 1          | A       | 1       | FALSE |
+| 0.17 | case       | 1          | B       | 2       | TRUE  |
+| 0.53 | control    | 0          | C       | 3       | FALSE |
 
 There are four types of terms:
 
@@ -61,14 +64,20 @@ There are four types of terms:
 - **binary** — two-level categories encoded as strings, written `binary_str`
   or, with an explicit reference group, `binary_str[control]`. Binary
   variables use a dummy encoding: a single binary vector in the full model
-  matrix.
+  matrix. A column of `TRUE`/`FALSE` values is binary too: `flag` gives
+  `flag__True`, with `FALSE` the reference, and `flag[TRUE]` gives
+  `flag__False`.
 - **multinomial** — categorical variables with more than two levels, written
   `cat_str` or `cat_str[A,B,C,D]` to specify the level order. The first level
   (or alphabetically first if omitted) is the reference group. Dummy encoding
   produces one binary vector per non-reference level.
-- **patsy** — limited support for passing other patsy term types (e.g.
-  interaction terms `binary_str:cat_str`, or expressions like `np.log(cont)`).
-  You do so at your own risk.
+- **interactions** — `binary_str:cat_str` is the interaction of two terms,
+  and `binary_str*cat_str` is short for
+  `binary_str + cat_str + binary_str:cat_str`. Either side of `:` or `*` may
+  be any term above, with a reference or level list
+  (`binary_str[control]:cat_str`).
+
+Other expressions, such as `np.log(cont)`, may be passed at your own risk.
 
 Every model has a left hand side and a right hand side separated by `~`. In
 general there should be a single term on the left hand side.
@@ -77,26 +86,48 @@ Output column names in the full model matrix follow three patterns:
 
 - literal pass-through — exactly the column name (scalar terms)
 - categorical — `<variable name>__<level>`
-- patsy-specific — e.g. `np.log(x)`
+- interaction — the columns of each term joined by `:`, e.g.
+  `binary_str__control:cat_str__B`
 
 The double underscore makes it easy to recognize which variable an output
 column refers to, and makes downstream programmatic analysis easier.
+
+The columns come in a fixed order: the `Intercept`, then the columns of the
+single terms in the order they are written, then the interactions. For
+example, `cont ~ binary_str*cat_str` gives:
+
+```text
+cont ~ Intercept + binary_str__control + cat_str__B + cat_str__C +
+    binary_str__control:cat_str__B + binary_str__control:cat_str__C
+```
+
+An interaction written alone is coded full rank, which brings in main-effect
+columns of one of its terms. `cont ~
+binary_str:cat_str` gives:
+
+```text
+cont ~ Intercept + cat_str__B + cat_str__C + binary_str__control:cat_str__A +
+    binary_str__control:cat_str__B + binary_str__control:cat_str__C
+```
 
 Some mostly non-differential-expression examples:
 
 ```text
 height ~ weight + age
-disease_status[control] ~ age_at_death + batch + counts
+disease_status[control] ~ age_at_death + batch[1] + counts
 gross_domestic_product ~ continent[NoAm] + population + election_year[no]
 ```
 
-giving full model matrix columns like:
+giving full model matrix columns like the ones below. `batch` holds the
+integers 1, 2 and 3, so `batch` alone would be a scalar term; `batch[1]` makes
+it categorical with 1 the reference. The levels of a category without a level
+list come in sorted order.
 
 ```text
 height ~ Intercept + weight + age
 disease_status__case ~ Intercept + age_at_death + batch__2 + batch__3 + counts
-gross_domestic_product ~ Intercept + continent__SoAm + continent__Asia +
-    continent__Aust + continent__Euro + continent__SoPo + population +
+gross_domestic_product ~ Intercept + continent__Asia + continent__Aust +
+    continent__Euro + continent__SoAm + continent__SoPo + population +
     election_year__yes
 ```
 

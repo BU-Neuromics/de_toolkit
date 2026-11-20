@@ -19,44 +19,63 @@ def model_data():
 
 
 def test_patsy_lite_to_patsy(model_data):
+    "patsy-lite translates to formulaic's formula syntax."
     from de_toolkit.patsy_lite import patsy_lite_to_patsy, PatsyLiteParseError
 
-    pltp = patsy_lite_to_patsy
-    assert pltp("A ~ B").describe() == "A ~ B"
-    assert pltp("A~B").describe() == "A ~ B"
-    assert pltp("A[one]~B[two]").describe() == "C(A, Treatment('one')) ~ C(B, Treatment('two'))"
-    assert pltp("A[one,two] ~ B").describe() == "C(A, levels=['one', 'two']) ~ B"
-    assert pltp("A[one,two] ~ B + C").describe() == "C(A, levels=['one', 'two']) ~ B + C"
+    def pltp(formula, **kwargs):
+        return patsy_lite_to_patsy(formula, **kwargs).describe()
+
+    assert pltp("A ~ B") == "A ~ B"
+    assert pltp("A~B") == "A ~ B"
+    assert pltp("A[one]~B[two]") == "C(A, Treatment('one')) ~ C(B, Treatment('two'))"
+    assert pltp("A[one,two] ~ B") == "C(A, levels=['one', 'two']) ~ B"
+    assert pltp("A[one,two] ~ B + C") == "C(A, levels=['one', 'two']) ~ B + C"
     assert (
-        pltp("A[one,two] ~ B + C[case,control]").describe()
+        pltp("A[one,two] ~ B + C[case,control]")
         == "C(A, levels=['one', 'two']) ~ B + C(C, levels=['case', 'control'])"
     )
+    # integer levels and references are passed as integers
+    assert pltp("y ~ batch[2]") == "y ~ C(batch, Treatment(2))"
+    assert pltp("y ~ batch[3,1,2]") == "y ~ C(batch, levels=[3, 1, 2])"
     with pytest.raises(PatsyLiteParseError):
         pltp("B")
     with pytest.raises(PatsyLiteParseError):
         pltp("A[one]~B[two]&C[three,four]")
-    assert pltp("count ~ RIN + age_at_death").describe() == "count ~ RIN + age_at_death"
+    assert pltp("count ~ RIN + age_at_death") == "count ~ RIN + age_at_death"
 
-    # test patsy passthrough
+    # : joins two terms, each translated on its own
+    assert pltp("y ~ a:b") == "y ~ a : b"
+    assert pltp("y ~ a[ref]:b") == "y ~ C(a, Treatment('ref')) : b"
+
+    # names formulaic would not read as names are quoted with backticks
+    assert pltp("fld.y ~ fld.a:b(c)") == "`fld.y` ~ `fld.a` : `b(c)`"
+    assert pltp("fld.y ~ fld.a[x]") == "`fld.y` ~ C(`fld.a`, Treatment('x'))"
+    assert pltp("np.log(x) ~ category[cont]") == "`np.log(x)` ~ C(category, Treatment('cont'))"
     assert (
-        pltp("np.log(x) ~ category[cont]").describe()
-        == "Q(\"np.log(x)\") ~ C(category, Treatment('cont'))"
+        pltp("1 + np.log(x) ~ 1 + category[cont]")
+        == "1 + `np.log(x)` ~ 1 + C(category, Treatment('cont'))"
+    )
+    assert (
+        pltp("np.log(x) ~ -1 + category[cont]")
+        == "`np.log(x)` ~ -1 + C(category, Treatment('cont'))"
     )
 
-    assert (
-        pltp("np.log(x) ~ a:b + category[cont]").describe()
-        == "Q(\"np.log(x)\") ~ a:b + C(category, Treatment('cont'))"
+    # the levels of a boolean column are read as booleans, in any case
+    assert pltp("y ~ flag[FALSE]", bool_columns=["flag"]) == "y ~ C(flag, Treatment(False))"
+    assert pltp("y ~ flag[true,false]", bool_columns=["flag"]) == (
+        "y ~ C(flag, levels=[True, False])"
     )
+    assert pltp("y ~ flag[FALSE]") == "y ~ C(flag, Treatment('FALSE'))"
 
-    assert (
-        pltp("1 + np.log(x) ~ 1 + category[cont]").describe()
-        == "1 + Q(\"np.log(x)\") ~ C(category, Treatment('cont'))"
-    )
-
-    assert (
-        pltp("np.log(x) ~ -1 + category[cont]").describe()
-        == "Q(\"np.log(x)\") ~ 0 + C(category, Treatment('cont'))"
-    )
+    # the name map takes each translated term back to its column name
+    model = patsy_lite_to_patsy("fld.y ~ a[one] + b[x,y] + c")
+    assert model.name_map == {
+        "`fld.y`": "fld.y",
+        "C(a, Treatment('one'))": "a",
+        "C(b, levels=['x', 'y'])": "b",
+        "c": "c",
+    }
+    assert model.levels == {"b": ["x", "y"]}
 
 
 def test_DesignMatrix(model_data):

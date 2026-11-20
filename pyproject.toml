@@ -18,11 +18,11 @@ dependencies = [
     "matplotlib",
     "numpy",
     "pandas",
-    "patsy>=1.0",
     "ply",
     "scipy",
     "scikit-learn",
     "terminaltables",
+    "formulaic>=1.1",
 ]
 keywords = ["bioinformatics", "biology", "sequencing", "NGS"]
 classifiers = [

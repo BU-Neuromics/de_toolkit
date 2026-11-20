@@ -135,7 +135,7 @@ _DE_POS = (Pos("design"), COUNTS, Pos("cov_fn"))
 _DE_SHARED = (
     OUTPUT,
     Opt("--routput-dir", None, "DIR"),
-    Opt("--rda", None, "RDA"),
+    Opt("--rda", None, "FILE"),
     Opt("--strict"),
 )
 DE = Command(
@@ -169,15 +169,15 @@ ENRICH = Command(
             (Pos("gmt_fn"), Pos("result_fn")),
             (
                 OUTPUT,
-                Opt("--cores", "-p", "PROCS"),
-                Opt("--idcol", "-i", "FIELD", "0"),
-                Opt("--statcol", "-c", "FIELD"),
+                Opt("--cores", "-p", "N"),
+                Opt("--idcol", "-i", "COL", "0"),
+                Opt("--statcol", "-c", "COL"),
                 Opt("--ascending", "-a"),
                 Opt("--abs"),
                 Opt("--filter-unannotated"),
-                Opt("--minSize", None, "INT", "15"),
-                Opt("--maxSize", None, "INT", "500"),
-                Opt("--nperm", None, "INT", "10000"),
+                Opt("--minSize", None, "N", "15"),
+                Opt("--maxSize", None, "N", "500"),
+                Opt("--nperm", None, "N", "10000"),
                 Opt("--multilevel"),
                 Opt("--routput-dir", None, "DIR"),
                 Opt("--rda", None, "FILE"),
@@ -195,19 +195,26 @@ TRANSFORM = Command(
             (COUNTS,),
             (
                 Opt("--pseudocount", "-c", "N", "1"),
-                Opt("--base", "-b", "B", "10"),
+                Opt("--base", "-b", "N", "10"),
                 OUTPUT,
             ),
         ),
-        Sub("vst", (COUNTS,), (OUTPUT, Opt("--rda", None, "RDA"))),
+        Sub("vst", (COUNTS,), (OUTPUT, Opt("--rda", None, "FILE"))),
         Sub(
             "rlog",
             (COUNTS, Pos("design", optional=True), Pos("cov_fn", optional=True)),
             (
                 OUTPUT,
-                Opt("--rda", None, "RDA"),
+                Opt("--rda", None, "FILE"),
                 Opt("--strict"),
-                Opt("--blind", None, "N"),
+                Opt("--blind", None, "BOOL"),
+            ),
+            bad=(
+                Bad(
+                    ("counts.csv", "counts ~ group"),
+                    ("cov_fn",),
+                    "rlog takes both or neither of <design> and <cov_fn> (DETK-0033)",
+                ),
             ),
         ),
     ),
@@ -221,8 +228,8 @@ FILTER = Command(
             None,
             (Pos("command"), COUNTS, Pos("cov_fn", optional=True)),
             (
-                Opt("--output", "-o", "<out_fn>", "stdout"),
-                Opt("--column-data", None, "<column_data_fn>"),
+                Opt("--output", "-o", "FILE", "stdout"),
+                Opt("--column-data", None, "FILE"),
             ),
             lines=(
                 Line(
@@ -256,15 +263,26 @@ STATS = Command(
             "summary",
             (COUNTS, Pos("cov_fn", optional=True)),
             (
-                Opt("--column-data", None, "FN"),
-                Opt("--color-col", None, "COLNAME"),
-                Opt("--bins", None, "BINS", "20"),
+                Opt("--column-data", None, "FILE"),
+                Opt("--color-col", None, "COL"),
+                Opt("--bins", None, "N", "20"),
                 Opt("--log"),
                 Opt("--density"),
             )
             + _STATS_OUT,
         ),
-        Sub("basestats", (COUNTS,), _STATS_OUT),
+        Sub(
+            "basestats",
+            (COUNTS,),
+            _STATS_OUT,
+            bad=(
+                Bad(
+                    ("-f", "bogus", "counts.csv"),
+                    ("--format",),
+                    "a value outside its choices is a parse error (DETK-0033)",
+                ),
+            ),
+        ),
         Sub("coldist", (COUNTS,), _STATS_DIST + _STATS_OUT),
         Sub("rowdist", (COUNTS,), _STATS_DIST + _STATS_OUT),
         Sub("colzero", (COUNTS,), _STATS_OUT),
@@ -273,7 +291,7 @@ STATS = Command(
         Sub(
             "pca",
             (COUNTS, Pos("cov_fn", optional=True)),
-            (Opt("--column-data", None, "FN"),) + _STATS_OUT,
+            (Opt("--column-data", None, "FILE"),) + _STATS_OUT,
         ),
     ),
 )
@@ -286,7 +304,7 @@ OUTLIER = Command(
             "entropy",
             (COUNTS,),
             (
-                Opt("--percentile", "-p", "P"),
+                Opt("--percentile", "-p", "N"),
                 # no [default: ...]: without -o the output is not written
                 Opt("--output", "-o", "FILE"),
                 Opt("--plot-output", None, "FILE"),
@@ -307,7 +325,7 @@ OUTLIER = Command(
         Bad(
             ("trim", "counts.csv"),
             ("trim",),
-            "main has a trim branch, but trim is not in the usage, so it is rejected",
+            "trim is not a subcommand (its unreachable branch is removed, DETK-0033)",
         ),
     ),
 )
@@ -315,12 +333,12 @@ OUTLIER = Command(
 # --------------------------------------------------------------- detk-wrapr
 # one usage block serves both subcommands, so both accept every option
 _WRAPR_OPTS = (
-    Opt("--rpath", None, "PATH"),
-    Opt("--routput-dir", None, "PATH"),
-    Opt("--meta-in", None, "PATH"),
-    Opt("--meta-out", None, "PATH"),
-    Opt("--params-in", None, "PATH"),
-    Opt("--params-out", None, "PATH"),
+    Opt("--rpath", None, "FILE"),
+    Opt("--routput-dir", None, "DIR"),
+    Opt("--meta-in", None, "FILE"),
+    Opt("--meta-out", None, "FILE"),
+    Opt("--params-in", None, "FILE"),
+    Opt("--params-out", None, "FILE"),
     Opt("--strict"),
 )
 WRAPR = Command(
@@ -362,7 +380,7 @@ UTIL = Command(
             "annotate",
             (Pos("result_fn"), Pos("mapping_fn")),
             (
-                Opt("--idcol", "-i", "FIELD", "0"),
+                Opt("--idcol", "-i", "COL", "0"),
                 Opt("--map-from", None, "COL", "0"),
                 Opt("--map-to", None, "COLS", "all"),
                 Opt("--strip-versions"),
@@ -402,14 +420,12 @@ UTIL = Command(
                 Bad(
                     ("--format=bogus", "missing.sf"),
                     ("--format",),
-                    "a value outside its choices",
-                    stage="run",
+                    "a value outside its choices is a parse error (DETK-0033)",
                 ),
                 Bad(
                     ("--on-mismatch=bogus", "missing.sf"),
                     ("--on-mismatch",),
-                    "a value outside its choices",
-                    stage="run",
+                    "a value outside its choices is a parse error (DETK-0033)",
                 ),
             ),
         ),

@@ -89,7 +89,7 @@ scaled so it sums to one million.
 def build_parser():
     "The detk-norm command line parser"
     parser = DetkParser(prog="detk-norm", description=__doc__.strip())
-    add_version_option(parser.add_argument_group("common options"))
+    add_command_options(parser)
     subs = add_subcommands(parser)
     for name, spec in SUBCOMMANDS.items():
         sub = subs.add_parser(
@@ -133,9 +133,9 @@ import os
 from .common import (
     DetkModule,
     DetkParser,
+    add_command_options,
     add_common_options,
     add_subcommands,
-    add_version_option,
     make_cli_count_obj,
     parse_cli,
     set_logging,

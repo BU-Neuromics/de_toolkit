@@ -151,15 +151,25 @@ class DetkParser(argparse.ArgumentParser):
     listed in full below it.
     """
 
-    def __init__(self, *args, examples=(), add_help=True, **kwargs):
+    def __init__(self, *args, examples=(), validate=None, add_help=True, **kwargs):
         kwargs.setdefault("formatter_class", DetkHelpFormatter)
         super().__init__(*args, add_help=False, **kwargs)
         self.examples = list(examples)
+        # validate(args) returns an error message for a combination of
+        # arguments argparse cannot express, or None; parse_cli reports it
+        # as a usage error of this parser
+        self.validate = validate
         if add_help:
             self.add_argument("-h", "--help", action="help", help="Print this help and exit")
         self.register("action", "store", _StoreOnce)
         self.register("action", None, _StoreOnce)
         self.register("action", "store_true", _StoreTrueOnce)
+
+    def parse_known_args(self, args=None, namespace=None):
+        namespace, extras = super().parse_known_args(args, namespace)
+        # the bookkeeping of _Once is not an argument
+        namespace.__dict__.pop("_detk_seen", None)
+        return namespace, extras
 
     # -- the pieces of help
     def _subcommands(self):
@@ -285,6 +295,20 @@ def add_common_options(parser):
     return group
 
 
+def add_command_options(parser, what="subcommand"):
+    """
+    The options of a command's top level, in its "common options" section:
+    ``--version``, with a line saying each *what* (subcommand) takes the
+    common options in its own help.
+    """
+    group = parser.add_argument_group(
+        "common options",
+        f"Each {what} also takes the common options:\nsee {parser.prog} <{what}> --help.",
+    )
+    add_version_option(group)
+    return group
+
+
 def add_version_option(group):
     "``--version``: print the detk version and exit, honoured as an argument of its own"
     group.add_argument(
@@ -320,21 +344,28 @@ def parse_cli(parser, argv):
     the tests in tests/cli/ stop a command at.
     """
     args = list(argv[1:])
-    if "--" in args:
-        # docopt took "--" for an argument no usage declared; it is not an
-        # end-of-options marker (pinned in tests/cli/test_cli_behaviours.py)
-        parser.error("unrecognized arguments: --")
+    # the parser that reports a usage error: the subcommand's, once it is
+    # named, so the error shows its usage and points at its help
     leaf, rest = parser, args
     subs = parser._subcommands()
     if subs is not None and args and args[0] in subs.choices:
         leaf, rest = subs.choices[args[0]], args[1:]
+    if "--" in rest:
+        # docopt took "--" for an argument no usage declared; it is not an
+        # end-of-options marker (pinned in tests/cli/test_cli_behaviours.py)
+        leaf.error("unrecognized arguments: --")
     unknown = [a for a in rest if leaf.unknown_option(a)]
     if unknown:
         # name an unknown option before a missing positional, as docopt did
         # (argparse would report only the missing positional)
         leaf.error("unrecognized arguments: " + " ".join(unknown))
-    namespace = parser.parse_args(args)
-    namespace.__dict__.pop("_detk_seen", None)
+    namespace, extras = parser.parse_known_args(args)
+    if extras:
+        leaf.error("unrecognized arguments: " + " ".join(extras))
+    if leaf.validate is not None:
+        message = leaf.validate(namespace)
+        if message:
+            leaf.error(message)
     return namespace
 
 
@@ -867,7 +898,7 @@ def build_parser():
     for cmd, line in MODULE_COMMANDS.items():
         subs.add_parser(cmd, help=line, add_help=False)
     subs.add_parser("help", help="Print this help", add_help=False)
-    add_version_option(parser.add_argument_group("common options"))
+    add_command_options(parser, "command")
     return parser
 
 

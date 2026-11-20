@@ -217,13 +217,37 @@ def test_norm_deseq2_size_factors_is_accepted_and_writes_nothing(counts_dir):
     assert not (counts_dir / "sf.tsv").exists()
 
 
-# ------------------------------------------------- open questions (DETK-0033)
-@pytest.mark.skip(
-    reason="DETK-0033: rlog [<design> <cov_fn>] accepts a design without cov_fn "
-    "(docopt matches the optional group partially); Option A accepted: release/cli-migrate "
-    "makes it a parse error and inverts this test"
+# ------------------------------------------------ DETK-0033 (Option A) pins
+def test_rlog_design_without_cov_fn_is_rejected():
+    # rlog takes both or neither of <design> and <cov_fn>; docopt matched the
+    # optional group partially and took a design without column data
+    outcome = cli_adapter.invoke(("detk-transform", "rlog", "c.csv", "d"))
+    assert outcome.parsed is None
+    assert outcome.code != 0
+    assert "cov_fn" in outcome.stderr
+
+
+def test_rlog_with_design_and_cov_fn_parses():
+    parsed = cli_adapter.parse(("detk-transform", "rlog", "c.csv", "d", "v.csv"))
+    assert (parsed.args["design"], parsed.args["cov_fn"]) == ("d", "v.csv")
+
+
+def test_outlier_trim_is_not_a_subcommand():
+    # the unreachable trim branch is removed, not exposed
+    assert "trim" not in cli_adapter.subparsers(cli_adapter.parser("detk-outlier"))
+
+
+@pytest.mark.parametrize(
+    "argv,option",
+    [
+        (("detk-stats", "basestats", "-f", "bogus", "c.csv"), "--format"),
+        (("detk-util", "gather", "--format=bogus", "a.sf"), "--format"),
+        (("detk-util", "gather", "--on-mismatch=bogus", "a.sf"), "--on-mismatch"),
+    ],
 )
-def test_rlog_design_without_cov_fn():
-    parsed = cli_adapter.parse(("detk-transform", "rlog", "c.csv", "d"))
-    assert parsed.args["design"] == "d"
-    assert parsed.args["cov_fn"] is None
+def test_value_outside_choices_is_a_parse_error(argv, option):
+    outcome = cli_adapter.invoke(argv)
+    assert outcome.parsed is None
+    assert outcome.code == 2
+    assert option in outcome.stderr
+    assert "bogus" in outcome.stderr

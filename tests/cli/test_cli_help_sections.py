@@ -19,10 +19,17 @@ import cli_adapter
 from cli_tables import COMMANDS
 
 SECTIONS = ("usage:", "positional arguments:", "options:", "common options:", "examples:")
+# every help has these; argparse leaves out a section with nothing in it, so
+# a subcommand without positionals has no "positional arguments:"
+REQUIRED = ("usage:", "options:", "examples:")
 
-# option metavars (DETK-0025 gap 3): FILE for a file, DIR for a directory,
-# N for a number, CHAR for a character
-METAVARS = {"FILE", "DIR", "N", "CHAR"}
+# option metavars (DETK-0025 gap 3), one closed list across commands: FILE
+# for a file, DIR for a directory, N for a number; and for values that are
+# none of those, CHAR (a character), COL (a column, by name or 0-based
+# index), COLS (comma-separated columns), FMT (a format name), REGEX (a
+# regular expression), WHAT (one of the listed choices) and BOOL (True or
+# False). A new kind of value adds a word here and to the CHANGELOG.
+METAVARS = {"FILE", "DIR", "N", "CHAR", "COL", "COLS", "FMT", "REGEX", "WHAT", "BOOL"}
 
 PROGS = ["detk"] + [c.prog for c in COMMANDS]
 
@@ -85,7 +92,10 @@ def test_help_sections_in_order(prog, sub):
         (i, h) for i, line in enumerate(lines) for h in SECTIONS if re.match(rf"{h}(\s|$)", line)
     ]
     headings = [h for _, h in found]
-    assert headings == list(SECTIONS), f"sections are {headings}"
+    assert headings == [h for h in SECTIONS if h in headings], f"sections out of order: {headings}"
+    assert len(set(headings)) == len(headings), f"a section is repeated: {headings}"
+    for h in REQUIRED:
+        assert h in headings, f"no {h!r} section: {headings}"
 
 
 @pytest.mark.parametrize("prog,sub", _help_params())

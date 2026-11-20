@@ -21,7 +21,9 @@ complete detk \
         'c/--column-data-output=/f/' \
         'c/--format=/(salmon kallisto htseq featurecounts auto)/' \
         'c/--on-mismatch=/(error fill drop)/' \
-        'c/--/(abs ascending base bins blind color-col column column-data-output cores density dev drop-unmapped filter-unannotated format gene-wise-disp help idcol iters last-term-only log map-from map-to maxSize meta-in meta-out minSize multilevel name-from no-report norm-counts nperm on-mismatch out-delim output p-max params-in params-out percentile plot-output pseudocount quiet rda report-dir routput-dir rpath shrink-factor shut-up size-factors standardize statcol strict strip-versions verbose version)/' \
+        'c/-i=/f/' \
+        'c/--input=/f/' \
+        'c/--/(abs ascending base bins blind color-col column column-data-output cores density dev drop-unmapped filter-unannotated format gene-wise-disp help idcol input iters last-term-only log map-from map-to maxSize meta-in meta-out minSize multilevel name-from no-report norm-counts nperm on-mismatch out-delim output p-max params-in params-out percentile plot-output pseudocount quiet rda report-dir routput-dir rpath shrink-factor shut-up size-factors standardize statcol strict strip-versions tool tool-version verbose version)/' \
         'c/-/(- a b c d f h i o p q v)/' \
         'n/-o/f/' \
         'n/--output/f/' \
@@ -41,6 +43,8 @@ complete detk \
         'n/--column-data-output/f/' \
         'n/--format/(salmon kallisto htseq featurecounts auto)/' \
         'n/--on-mismatch/(error fill drop)/' \
+        'n/-i/f/' \
+        'n/--input/f/' \
         'p/1/(norm de enrich transform filter stats outlier wrapr report util completion help)/' \
         'n/norm/(deseq2 library fpkm cpm tpm)/' \
         'n/de/(deseq2 firth)/' \
@@ -50,7 +54,7 @@ complete detk \
         'n/outlier/(entropy shrink)/' \
         'n/wrapr/(check run)/' \
         'n/report/(generate clean)/' \
-        'n/util/(tidy tidy-counts tidy-covs annotate gather)/' \
+        'n/util/(tidy tidy-counts tidy-covs annotate gather record)/' \
         'n/completion/(bash zsh tcsh)/' \
         'n/deseq2/f/' \
         'n/library/f/' \
@@ -241,7 +245,9 @@ complete detk-util \
         'c/--report-dir=/d/' \
         'c/--format=/(salmon kallisto htseq featurecounts auto)/' \
         'c/--on-mismatch=/(error fill drop)/' \
-        'c/--/(column column-data-output drop-unmapped format help idcol map-from map-to name-from no-report on-mismatch out-delim output quiet report-dir shut-up strip-versions verbose version)/' \
+        'c/-i=/f/' \
+        'c/--input=/f/' \
+        'c/--/(column column-data-output drop-unmapped format help idcol input map-from map-to name-from no-report on-mismatch out-delim output quiet report-dir shut-up strip-versions tool tool-version verbose version)/' \
         'c/-/(- d h i o p q v)/' \
         'n/-o/f/' \
         'n/--output/f/' \
@@ -250,7 +256,9 @@ complete detk-util \
         'n/--report-dir/d/' \
         'n/--format/(salmon kallisto htseq featurecounts auto)/' \
         'n/--on-mismatch/(error fill drop)/' \
-        'p/1/(tidy tidy-counts tidy-covs annotate gather)/' \
+        'n/-i/f/' \
+        'n/--input/f/' \
+        'p/1/(tidy tidy-counts tidy-covs annotate gather record)/' \
         'n/tidy/f/' \
         'n/tidy-counts/f/' \
         'n/tidy-covs/f/' \

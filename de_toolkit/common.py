@@ -366,10 +366,20 @@ def parse_cli(parser, argv):
     subs = parser._subcommands()
     if subs is not None and args and args[0] in subs.choices:
         leaf, rest = subs.choices[args[0]], args[1:]
+    # a subcommand that runs another command (detk-util record) sets
+    # command_dest on its parser: every word after the first "--" is that
+    # command, taken as given and never parsed as detk's arguments
+    command_dest = getattr(leaf, "command_dest", None)
+    command = []
     if "--" in rest:
-        # docopt took "--" for an argument no usage declared; it is not an
-        # end-of-options marker (pinned in tests/cli/test_cli_behaviours.py)
-        leaf.error("unrecognized arguments: --")
+        if command_dest is None:
+            # docopt took "--" for an argument no usage declared; it is not an
+            # end-of-options marker (pinned in tests/cli/test_cli_behaviours.py)
+            leaf.error("unrecognized arguments: --")
+        cut = rest.index("--")
+        command = rest[cut + 1 :]
+        args = args[: len(args) - len(rest) + cut]
+        rest = rest[:cut]
     unknown = [a for a in rest if leaf.unknown_option(a)]
     if unknown:
         # name an unknown option before a missing positional, as docopt did
@@ -378,6 +388,13 @@ def parse_cli(parser, argv):
     namespace, extras = parser.parse_known_args(args)
     if extras:
         leaf.error("unrecognized arguments: " + " ".join(extras))
+    if command_dest is not None:
+        stray = getattr(namespace, command_dest, None) or []
+        if stray:
+            leaf.error(
+                "unrecognized arguments: " + " ".join(stray) + " (the command to run goes after --)"
+            )
+        setattr(namespace, command_dest, command)
     if leaf.validate is not None:
         message = leaf.validate(namespace)
         if message:

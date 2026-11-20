@@ -6,6 +6,8 @@ Combined with `csvgrep` from [csvkit], this is useful for extracting subsets
 of samples for downstream differential expression analysis. `gather` builds
 the counts matrix from per-sample quantifier outputs in the first place, and
 `annotate` adds feature metadata, such as gene symbols, to a result table.
+`record` runs a command outside detk (Miller, awk, an R script) and records
+it as a step, so the files it writes have a producer in detk's provenance.
 
 [csvkit]: https://csvkit.readthedocs.io
 
@@ -213,3 +215,100 @@ The report records how many result rows were mapped, left unmapped, had an
 empty or missing ID, matched several mapping rows or were dropped (these count
 rows, so a duplicated ID counts once per row), the columns added and up to ten
 distinct unmapped IDs.
+
+## `record`
+
+Run a command outside detk and record it as a step of the analysis. A step
+outside detk otherwise leaves a gap in the provenance: a `detk-de` run would
+show its column data as a file no step produced. `record` runs the command
+and writes a module JSON document for it, so the [report](../report.md) lists
+the step and the provenance crate (`ro-crate-metadata.json`) shows it as the
+producer of its outputs, and a later detk command that reads them traces
+back to it.
+
+```text
+Usage:
+    detk-util record [options] [-i FILE]... -o FILE... -- <command> [<arg>...]
+
+Options:
+    -i FILE --input=FILE   A file the command reads; give it once per file,
+                           or not at all
+    -o FILE --output=FILE  A file the command writes; give it once per file
+                           (at least one)
+    --tool=NAME            Name of the tool that runs (default: the base name
+                           of the command's first word)
+    --tool-version=TEXT    Version of the tool to record (default: the first
+                           line of '<command> --version')
+```
+
+Derive an `age_group` column with [Miller] and use it in a design:
+
+```bash
+detk-util record -i sample_info.csv -o sample_info_derived.csv -- \
+    mlr --icsv --ocsv put '$age_group = $age >= 50 ? "old" : "young"' \
+    sample_info.csv > sample_info_derived.csv
+detk-de deseq2 -o de_results.csv "counts ~ age_group" counts.csv sample_info_derived.csv
+```
+
+**The command.** Everything after `--` is the command, run as given, without
+a shell: words after `--` that look like detk's options (`-o`, `--version`)
+are the command's. A pipeline, a redirect inside the step or a glob needs a
+shell, given explicitly as `sh -c '...'`; name the tool with `--tool` then:
+
+```bash
+detk-util record --tool=awk -i counts.csv -o counts_head.csv -- \
+    sh -c 'head -n 101 counts.csv | awk -F, "NF > 1" > counts_head.csv'
+```
+
+The command reads detk's stdin and writes to detk's stdout and stderr, so a
+redirect of the whole line, as in the Miller example, captures the command's
+own output; `record` itself writes nothing to stdout, and its messages go to
+stderr like every detk command's.
+
+**The checks.** Every `--input` must exist before the run (the command does
+not run otherwise) and every `--output` after it. `record` exits 1, with the
+cause on the last line of stderr, and writes no module JSON when an input is
+missing, when the command is not found, cannot be run or exits non-zero
+(whatever its status, `record`'s is 1), or when an output is missing after the
+run. It never deletes or rewrites a file, so what a failed command wrote is
+left as it is.
+
+!!! warning "An output that already existed passes the check"
+    The check asks only that each output exists after the run, not that the
+    command wrote it. A file left from an earlier run passes, and so does the
+    file a shell redirect creates: in `detk-util record ... -- cmd > out.csv`
+    the shell creates `out.csv` before `record` starts, so a command that
+    writes nothing still leaves an (empty) `out.csv`. The checksums the
+    record takes say what each output held after the run; check the file
+    itself when it matters, or delete stale outputs before recording.
+
+**The tool and its version.** The tool is the base name of the command's
+first word (`mlr`), unless `--tool` names it; give `--tool` when the first
+word is a launcher, as with `sh -c '...'` or `Rscript script.R`. The version
+is `--tool-version` when given; otherwise `record` runs
+`<first word> --version` (with a 10 second timeout, its output captured, not
+shown) and records the first line it prints. When that fails or prints
+nothing, or `--tool` names a tool other than the command's first word, the
+version is `unknown` and `record` warns; that is not an error, since some
+tools have no `--version`.
+
+!!! tip "Give `--tool-version` for your own scripts"
+    When the command is your own script (`./derive.py ...`), asking it for
+    its version runs `./derive.py --version`, and a script that does not
+    handle `--version` then runs a second time, with whatever it does. Give
+    the version yourself, such as a git commit of the script:
+    `--tool-version=$(git rev-parse --short HEAD)`.
+
+**What is recorded.** The module JSON document (name `record`) holds, in its
+parameters, the command (as one shell-quoted string, and as the list of its
+words), the tool, its version and the input and output files as given; in its
+properties, the SHA-256 checksum and size of every input (read before the run)
+and every output (read after it), and the exit status. Its envelope lists
+every file in `in_file_paths` and `out_file_paths` (schema 1.1), the first of
+each also being `in_file_path` and `out_file_path`. In the crate the step is a
+`CreateAction` whose instrument is the tool, with its version, and whose
+object and result are every input and output, each with its checksum. The
+HTML report lists the step as "Recorded external step" with its data; it has
+no chart.
+
+[Miller]: https://miller.readthedocs.io

@@ -93,6 +93,7 @@ _shtab_detk_util_commands() {
   local _commands=(
     annotate:'Annotate a result table (e.g. the output of detk-de) with feature metadata,'
     gather:'Gather per-sample quantifier outputs (salmon quant.sf, kallisto abundance.tsv,'
+    record:'Run an external command (Miller, awk, an R script, ...) and record it as a'
     tidy:'Subset both the counts columns and column data rows by intersection, returning'
     tidy-counts:'Subset and order the provided counts file columns according to the rows of the'
     tidy-covs:'Subset and order the provided column data file rows according to the columns of'
@@ -685,6 +686,25 @@ _shtab_detk_util_gather_options=(
 # guard to ensure default positional specs are added only once per session
 _shtab_detk_util_gather_defaults_added=0
 
+_shtab_detk_util_record_options=(
+  "(- : *)"{-h,--help}"[Print this help and exit]"
+  "*"{-i,--input}"[A file the command reads\; give it once per file, or not at all]:FILE:_files"
+  "*"{-o,--output}"[A file the command writes\; give it once per file (at least one)]:FILE:_files"
+  "--tool[Name of the tool that runs (without it\: the base name of the command\'s first word)]:NAME:"
+  "--tool-version[Version of the tool to record (without it\: the first line of \'\<command\> --version\')]:TEXT:"
+  {-d,--out-delim}"[Delimiter to use for the output file (default\: ,)]:CHAR:"
+  "--report-dir[Directory to write the HTML report and module JSON into (default\: .\/detk_report)]:DIR:_files -/"
+  "--no-report[Do not write the HTML report]"
+  "(- : *)--version[Print the detk version and exit]"
+  {-v,--verbose}"[Make log output verbose]"
+  {-q,--quiet}"[Turn off all logging except warnings and errors]"
+  "--shut-up[Turn off ALL logging]"
+  "(*)::The command to run and its arguments, after --\; run as given, without a shell:"
+)
+
+# guard to ensure default positional specs are added only once per session
+_shtab_detk_util_record_defaults_added=0
+
 _shtab_detk_util_tidy_options=(
   "(- : *)"{-h,--help}"[Print this help and exit]"
   {-o,--output}"[Destination of tidied counts data (default\: stdout)]:FILE:_files"
@@ -1022,6 +1042,7 @@ _shtab_detk_util() {
       case $line[1] in
         annotate) _arguments -C -s $_shtab_detk_util_annotate_options ;;
         gather) _arguments -C -s $_shtab_detk_util_gather_options ;;
+        record) _arguments -C -s $_shtab_detk_util_record_options ;;
         tidy) _arguments -C -s $_shtab_detk_util_tidy_options ;;
         tidy-counts) _arguments -C -s $_shtab_detk_util_tidy_counts_options ;;
         tidy-covs) _arguments -C -s $_shtab_detk_util_tidy_covs_options ;;
@@ -2087,6 +2108,7 @@ _shtab_detk_cmd_util_commands() {
   local _commands=(
     annotate:'Annotate a result table (e.g. the output of detk-de) with feature metadata,'
     gather:'Gather per-sample quantifier outputs (salmon quant.sf, kallisto abundance.tsv,'
+    record:'Run an external command (Miller, awk, an R script, ...) and record it as a'
     tidy:'Subset both the counts columns and column data rows by intersection, returning'
     tidy-counts:'Subset and order the provided counts file columns according to the rows of the'
     tidy-covs:'Subset and order the provided column data file rows according to the columns of'
@@ -2143,6 +2165,25 @@ _shtab_detk_cmd_util_gather_options=(
 
 # guard to ensure default positional specs are added only once per session
 _shtab_detk_cmd_util_gather_defaults_added=0
+
+_shtab_detk_cmd_util_record_options=(
+  "(- : *)"{-h,--help}"[Print this help and exit]"
+  "*"{-i,--input}"[A file the command reads\; give it once per file, or not at all]:FILE:_files"
+  "*"{-o,--output}"[A file the command writes\; give it once per file (at least one)]:FILE:_files"
+  "--tool[Name of the tool that runs (without it\: the base name of the command\'s first word)]:NAME:"
+  "--tool-version[Version of the tool to record (without it\: the first line of \'\<command\> --version\')]:TEXT:"
+  {-d,--out-delim}"[Delimiter to use for the output file (default\: ,)]:CHAR:"
+  "--report-dir[Directory to write the HTML report and module JSON into (default\: .\/detk_report)]:DIR:_files -/"
+  "--no-report[Do not write the HTML report]"
+  "(- : *)--version[Print the detk version and exit]"
+  {-v,--verbose}"[Make log output verbose]"
+  {-q,--quiet}"[Turn off all logging except warnings and errors]"
+  "--shut-up[Turn off ALL logging]"
+  "(*)::The command to run and its arguments, after --\; run as given, without a shell:"
+)
+
+# guard to ensure default positional specs are added only once per session
+_shtab_detk_cmd_util_record_defaults_added=0
 
 _shtab_detk_cmd_util_tidy_options=(
   "(- : *)"{-h,--help}"[Print this help and exit]"
@@ -2217,6 +2258,7 @@ _shtab_detk_cmd_util() {
       case $line[1] in
         annotate) _arguments -C -s $_shtab_detk_cmd_util_annotate_options ;;
         gather) _arguments -C -s $_shtab_detk_cmd_util_gather_options ;;
+        record) _arguments -C -s $_shtab_detk_cmd_util_record_options ;;
         tidy) _arguments -C -s $_shtab_detk_cmd_util_tidy_options ;;
         tidy-counts) _arguments -C -s $_shtab_detk_cmd_util_tidy_counts_options ;;
         tidy-covs) _arguments -C -s $_shtab_detk_cmd_util_tidy_covs_options ;;

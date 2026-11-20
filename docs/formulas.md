@@ -20,9 +20,8 @@ cont_var ~ Intercept + C(cat_var, levels=['A','B','C'])[T.B] + C(cat_var, levels
 ```
 
 This is at least a little bit yuck, and gets very yuck as the number of
-variables grows. detk therefore implements its own formula syntax, called
-"patsy-lite" after the library it was first built on, where
-the same model is written:
+variables grows. detk therefore implements its own formula syntax, the
+**detk formula syntax**, where the same model is written:
 
 ```text
 cont_var ~ cat_var[A,B,C]
@@ -77,7 +76,11 @@ There are four types of terms:
   be any term above, with a reference or level list
   (`binary_str[control]:cat_str`).
 
-Other expressions, such as `np.log(cont)`, may be passed at your own risk.
+Formulas take column names only. A term that is not a column and looks like
+a function call, such as `np.log(cont)` or `log2(cont)`, is an error: a
+derived column, such as a log-transformed covariate, belongs in the column
+data file, where the formula can name it. A column whose name really is such
+a string, say `log2(cont)`, is still a column.
 
 Every model has a left hand side and a right hand side separated by `~`. In
 general there should be a single term on the left hand side.

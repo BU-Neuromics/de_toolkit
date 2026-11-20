@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class PatsyLiteParseError(Exception):
+class FormulaParseError(Exception):
     pass
 
 
@@ -43,6 +43,25 @@ def t_FACTORTERM(t):
         else:
             t.term, t.ref = groups[0], args
     return t
+
+
+# a term that looks like a call, np.log(x) or log2(x): a name, then (...)
+CALL = re.compile(r"[A-Za-z_][\w.]*\(.*\)")
+
+
+def check_calls(model, columns):
+    """
+    Raise FormulaParseError for a term of *model* that is not one of
+    *columns* and looks like a call: formulas take column names only
+    (DETK-0050). A column whose name looks like a call is still a column.
+    """
+    for term in model.name_map.values():
+        if term not in columns and CALL.fullmatch(term):
+            raise FormulaParseError(
+                f"Formulas take column names only: {term} is not a column of the "
+                "column data file and looks like a call. Add the derived column to "
+                "the column data file and name it in the formula."
+            )
 
 
 def t_error(t):
@@ -91,11 +110,11 @@ def bool_level(level):
 @dataclass
 class TranslatedFormula:
     """
-    A patsy-lite formula translated to formulaic's syntax.
+    A detk formula translated to formulaic's syntax.
 
     *formula* is the formulaic formula string. *name_map* maps each term as
     written in it to the column name it stands for, and is used to give
-    the model matrix columns their patsy-lite names. *levels* maps a
+    the model matrix columns their detk formula names. *levels* maps a
     column given a level list to that list.
     """
 
@@ -107,9 +126,9 @@ class TranslatedFormula:
         return self.formula
 
 
-def patsy_lite_to_patsy(formula, bool_columns=()):
+def to_formulaic(formula, bool_columns=()):
     """
-    Translate the patsy-lite *formula* to formulaic's syntax.
+    Translate the detk *formula* to formulaic's syntax.
 
     The levels written for a column named in *bool_columns* are read as
     booleans, in any case (TRUE, False, ...).
@@ -117,7 +136,7 @@ def patsy_lite_to_patsy(formula, bool_columns=()):
 
     # I guess we assume there is always a lhs and a rhs?
     if "~" not in formula:
-        raise PatsyLiteParseError(
+        raise FormulaParseError(
             "A ~ must be specified, so that there is a left and right hand side"
         )
 
@@ -133,7 +152,7 @@ def patsy_lite_to_patsy(formula, bool_columns=()):
         try:
             tok = lexer.token()
         except lex.LexError as e:
-            raise PatsyLiteParseError(f"Error parsing formula:\n{formula}\n{e.args}") from e
+            raise FormulaParseError(f"Error parsing formula:\n{formula}\n{e.args}") from e
 
         if not tok:
             break
@@ -198,8 +217,9 @@ class DesignMatrix:
         for c in bool_columns:
             data[c] = pandas.Categorical(data[c], categories=[False, True])
 
-        model = patsy_lite_to_patsy(formula, bool_columns)
+        model = to_formulaic(formula, bool_columns)
         logger.debug("translated formulaic formula: %s", model.describe())
+        check_calls(model, data.columns)
 
         # formulaic turns a value outside a level list into a missing value
         # and drops its sample with a warning; report it as an error instead
@@ -207,7 +227,7 @@ class DesignMatrix:
             if column in data:
                 unlisted = sorted(set(data[column].dropna()) - set(column_levels), key=str)
                 if unlisted:
-                    raise PatsyLiteParseError(
+                    raise FormulaParseError(
                         f"Misspecified column in design, check term names. "
                         f"{column} has the level(s) {', '.join(map(repr, unlisted))}, "
                         f"which are not among the levels given: {column_levels}"
@@ -218,12 +238,12 @@ class DesignMatrix:
                 warnings.simplefilter("error", DataMismatchWarning)
                 matrices = formulaic.model_matrix(model.describe(), data)
         except Exception as e:
-            raise PatsyLiteParseError(
+            raise FormulaParseError(
                 f"Misspecified column in design, check term names. {e.args}"
             ) from e
 
         if not hasattr(matrices, "lhs"):
-            raise PatsyLiteParseError(
+            raise FormulaParseError(
                 f"The design {self._formula!r} has no left hand side: name the outcome "
                 "(counts, or the column to model) before the ~"
             )
@@ -234,7 +254,7 @@ class DesignMatrix:
         self.rhs = pandas.DataFrame(matrices.rhs).astype("float64")
 
         # formulaic's column names are ugly and not very machine (or
-        # human) readable; replace them with the patsy lite names
+        # human) readable; replace them with the detk formula names
         def rename_model_cols(c):
             for k, v in model.name_map.items():
                 if k in c:

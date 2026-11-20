@@ -12,15 +12,19 @@ acceptance:
 from: [DETK-0024, DETK-0027, DETK-0050]
 scope: [de_toolkit/patsy_lite.py, de_toolkit/formula.py, +de_toolkit/common.py, tests/patsy_lite/, tests/formula/, docs/formulas.md, +CHANGELOG]
 prev: [DETK-0027, DETK-0050, release/formula-migrate]
+issue: 89
+visited: 9a704f1
+status: done
+done: 56f23f6
 ---
 
 # Rename patsy-lite to formula
 
 ## Implementation plan
 
-- [ ] @developer Rename the module to `formula.py`, the exception to `FormulaParseError`, the translation function and `tests/patsy_lite/` to `tests/formula/`; update the import and error text in `common.py`; rename the syntax in `docs/formulas.md` and drop its np.log claim; the clear error for a call in a formula (DETK-0050); the airway design pin; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: nothing still names patsy-lite, the formula-pin fixtures unchanged but for names <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Rename the module to `formula.py`, the exception to `FormulaParseError`, the translation function and `tests/patsy_lite/` to `tests/formula/`; update the import and error text in `common.py`; rename the syntax in `docs/formulas.md` and drop its np.log claim; the clear error for a call in a formula (DETK-0050); the airway design pin; CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: nothing still names patsy-lite, the formula-pin fixtures unchanged but for names <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

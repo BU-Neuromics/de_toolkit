@@ -170,7 +170,7 @@ def test_version_as_an_option_value_is_not_honoured():
     assert "-o" in outcome.stderr
 
 
-# ------------------------------------------------- deprecated or inert options
+# ------------------------------------------- deprecated options, --size-factors
 COUNTS_CSV = "gene,s1,s2,s3,s4\ng1,10,20,30,40\ng2,100,150,120,90\ng3,5,7,9,11\n"
 COV_CSV = "sample,group\ns1,a\ns2,a\ns3,b\ns4,b\n"
 
@@ -203,14 +203,19 @@ def test_column_data_is_accepted_with_a_deprecation_warning(counts_dir, argv):
     assert "deprecated" in outcome.stderr.lower()
 
 
-def test_norm_deseq2_size_factors_is_accepted_and_writes_nothing(counts_dir):
-    # declared in help, never read (DETK-0029 decides its fate)
+def test_norm_deseq2_size_factors_writes_the_file(counts_dir):
+    # DETK-0029 Option A: the two column tab separated file the help
+    # describes, a header line and one row per sample (tests/norm checks
+    # the values)
     outcome = cli_adapter.run(
         DESEQ2 + ("--size-factors=sf.tsv", "-o", "out.csv", "--no-report", "counts.csv")
     )
     assert outcome.code == 0, outcome.stderr
     assert (counts_dir / "out.csv").exists()
-    assert not (counts_dir / "sf.tsv").exists()
+    header, *rows = [line.split("\t") for line in (counts_dir / "sf.tsv").read_text().splitlines()]
+    assert header == ["sample", "size_factor"]  # DETK-0082
+    assert [name for name, _ in rows] == ["s1", "s2", "s3", "s4"]
+    assert all(float(sf) > 0 for _, sf in rows)
 
 
 # ------------------------------------------------ DETK-0033 (Option A) pins

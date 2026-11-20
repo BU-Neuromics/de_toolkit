@@ -534,3 +534,112 @@ def test_cpm_tpm_report_specs_compile(name):
     vlc = pytest.importorskip("vl_convert")
     svg = vlc.vegalite_to_svg(json.dumps(view["spec"]))
     assert "<svg" in svg[:300]
+
+
+# ------------------------------------------- deseq2 --size-factors (DETK-0029)
+# zero-padded sample names, out of sorted order, so the test sees both that
+# names are kept as written (DETK-0015) and that the rows follow the counts
+# file's column order
+SF_COUNTS_CSV = (
+    "gene,010,002,001,003\ng1,10,20,30,40\ng2,100,150,120,90\ng3,5,7,9,11\ng4,60,40,80,50\n"
+)
+SF_SAMPLES = ["010", "002", "001", "003"]
+
+
+def _read_size_factors(path):
+    header, *rows = [line.split("\t") for line in path.read_text().splitlines()]
+    # DETK-0082: a header line, so default readers do not take the first
+    # sample for one
+    assert header == ["sample", "size_factor"]
+    assert all(len(r) == 2 for r in rows)
+    return [name for name, _ in rows], [float(sf) for _, sf in rows]
+
+
+def _run_deseq2_norm(tmp_path, *opts):
+    import json
+
+    from de_toolkit.norm import main
+
+    counts_fn = tmp_path / "counts.csv"
+    counts_fn.write_text(SF_COUNTS_CSV)
+    out_fn = tmp_path / "out.csv"
+    report_dir = tmp_path / "report"
+    main(
+        [
+            "detk-norm",
+            "deseq2",
+            f"--output={out_fn}",
+            f"--report-dir={report_dir}",
+            *opts,
+            str(counts_fn),
+        ]
+    )
+    docs = [json.loads(p.read_text()) for p in (report_dir / "json").glob("*.json")]
+    assert len(docs) == 1
+    return out_fn.read_text(), docs[0]
+
+
+def test_deseq2_size_factors_file(tmp_path):
+    from de_toolkit import CountMatrixFile
+    from de_toolkit.norm import DESeq2Norm
+
+    sf_dir = tmp_path / "with"
+    sf_dir.mkdir()
+    sf_fn = sf_dir / "sf.tsv"
+    out_with, doc = _run_deseq2_norm(sf_dir, f"--size-factors={sf_fn}")
+
+    names, factors = _read_size_factors(sf_fn)
+    # one row per sample, in the counts file's column order, names as written
+    assert names == SF_SAMPLES
+
+    # the values are the module's size factors, and the module JSON's
+    expected = DESeq2Norm(CountMatrixFile(str(sf_dir / "counts.csv"))).size_factors
+    assert list(expected) == SF_SAMPLES
+    assert factors == [expected[s] for s in SF_SAMPLES]
+    assert doc["properties"]["size_factors"] == dict(zip(names, factors))
+
+    # the counts output, and the JSON, are the same without the option, and
+    # without it nothing else is written
+    plain_dir = tmp_path / "without"
+    plain_dir.mkdir()
+    out_without, plain_doc = _run_deseq2_norm(plain_dir)
+    assert out_with == out_without
+    assert plain_doc["properties"] == doc["properties"]
+    assert sorted(p.name for p in plain_dir.iterdir()) == ["counts.csv", "out.csv", "report"]
+    assert sorted(p.name for p in sf_dir.iterdir()) == [
+        "counts.csv",
+        "out.csv",
+        "report",
+        "sf.tsv",
+    ]
+
+
+def test_deseq2_size_factors_unwritable_path_exits(tmp_path):
+    # it stops before the normalized counts or the report are written
+    with pytest.raises(SystemExit) as exc:
+        _run_deseq2_norm(tmp_path, f"--size-factors={tmp_path / 'no' / 'such' / 'sf.tsv'}")
+    assert exc.value.code == 1
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["counts.csv"]
+
+
+def test_deseq2_size_factors_file_reads_with_default_readers(tmp_path):
+    # pandas' and R's default readers take the header, and every sample
+    sf_fn = tmp_path / "sf.tsv"
+    _run_deseq2_norm(tmp_path, f"--size-factors={sf_fn}")
+    df = pandas.read_csv(sf_fn, sep="\t", dtype={"sample": str})
+    assert list(df.columns) == ["sample", "size_factor"]
+    assert list(df["sample"]) == SF_SAMPLES
+
+
+@deseq2_test
+def test_deseq2_size_factors_file_matches_deseq2(tmp_path):
+    # the file holds the size factors R's DESeq2::estimateSizeFactors finds
+    import io
+
+    from de_toolkit.norm import estimateSizeFactors_wrapr
+
+    sf_fn = tmp_path / "sf.tsv"
+    _run_deseq2_norm(tmp_path, f"--size-factors={sf_fn}")
+    _, factors = _read_size_factors(sf_fn)
+    cnts = pandas.read_csv(io.StringIO(SF_COUNTS_CSV), index_col=0).values
+    assert np.allclose(factors, estimateSizeFactors_wrapr(cnts))

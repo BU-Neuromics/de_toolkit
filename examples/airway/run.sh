@@ -31,7 +31,7 @@ detk-stats summary --log --color-col=dex -o raw_summary_stats.csv counts.csv sam
 echo "== filtering: keep genes with nonzero counts in at least half the samples"
 detk-filter 'nonzero(all) >= 0.5' -o counts_filtered.csv counts.csv
 
-echo "== DESeq2 normalization"
+echo "== DESeq2 normalization (size factors to size_factors.tsv)"
 detk-norm deseq2 -o norm_counts.csv --size-factors=size_factors.tsv counts_filtered.csv
 
 echo "== variance-stabilizing transform"

@@ -23,6 +23,22 @@ predates everything below.
   it, and only the test suite uses it, so it moved to the `test` extra
   (`pip install 'de_toolkit[test]'`) and the uv `dev` group. CI checks that
   every detk module imports, and a detk command runs, without it
+- Design formulas are built with formulaic instead of patsy (#78,
+  DETK-0024). The formula syntax, the `variable__level` column names and the
+  values of the model matrix are unchanged. patsy is no longer installed with
+  detk: only the test suite's statsmodels brings it in. Two things users can
+  see change:
+  - With an interaction in the design, the interaction columns now come
+    after all the main effects (DETK-0049), as in R: `counts ~ a*b` gives
+    `Intercept, a__x, b__y, a__x:b__y`, where it gave
+    `Intercept, a__x, a__x:b__y, b__y`. So the last column, the one
+    `detk-de deseq2 --last-term-only` reports, is now the interaction. The
+    DESeq2 and Firth result columns come in this order too
+  - The text of some design errors: an unknown column or level now reads
+    "Unable to evaluate factor ..." (formulaic's wording, where patsy's was
+    "Error evaluating factor ..."); a level list that leaves out a level the
+    data has names the missing level and the list; a design with nothing
+    before the `~` says it has no left hand side
 - `environment.yml`, an out-of-date conda environment file that nothing
   referred to, is removed; `pyproject.toml` is the one list of detk's
   dependencies
@@ -131,6 +147,16 @@ predates everything below.
 - The umbrella command `detk <command>` runs every module command:
   `detk enrich`, `detk report` and `detk util` printed the usage or did
   nothing, and its help now lists all ten commands (DETK-0025)
+- A design with an interaction of two categorical terms written alone,
+  such as `counts ~ binary_str:cat_str`, gives its interaction columns; it
+  used to be fitted silently as `counts ~ 1`. A reference level inside an
+  interaction, `binary_str[control]:cat_str`, and names that need quoting,
+  `fld.cat:age(yrs)`, are accepted where they were errors. The reference of
+  a `TRUE`/`FALSE` column can be named, in any case: `flag[FALSE]` (#78,
+  DETK-0040)
+- The design examples in the formulas documentation show the columns detk
+  gives: an integer `batch` needs `batch[1]` to be categorical, and
+  categories without a level list come in sorted order (#78, DETK-0040)
 - The report embeds its module JSON with `<`, `>` and `&` escaped, so a
   feature ID, sample name or annotation value containing `</script>` no
   longer breaks the report or injects markup; object keys (such as sample

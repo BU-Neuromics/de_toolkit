@@ -16,9 +16,21 @@ column data before the design is made.
 Error cases are pinned by exception type and by the substance of the
 message (what it names), not its exact wording.
 
-The documented ``np.log(...)`` pass-through and plain ``a:b`` interactions
-are pinned as they behave today, which is not as documented (see the
-comments at those cases); this module records that, it does not fix it.
+The documented ``np.log(...)`` pass-through is pinned as it behaves
+today, which is not as documented (see the comments at those cases); it is
+left to DETK-0028.
+
+Since the formulaic port (#78), some pins differ from the patsy ones, each
+for an accepted decision: columns come in formulaic's order, main effects
+before interactions (DETK-0049: ``interaction_star``,
+``interaction_star_refs``, ``quote_interaction_star``); ``a:b`` gives its
+interaction columns and takes a reference level inside it (DETK-0040:
+``interaction_colon``, ``interaction_colon_ref``, formerly an error); a
+boolean column's reference can be named (DETK-0040: ``boolean_ref_upper``,
+``boolean_ref_python``, formerly errors); and an ``a:b`` of names that
+need quoting is two names (``quote_interaction_colon``, formerly an
+error; DETK-0080). The new pins' values were checked against patsy's own
+matrices for the same terms.
 """
 
 from pathlib import Path
@@ -103,28 +115,45 @@ CASES = [
     # -- boolean columns (TRUE/FALSE in the file): categorical, False the reference
     ("boolean", "syntax", "cont ~ flag", ["cont"], ["Intercept", "flag__True"]),
     ("boolean_lhs", "syntax", "flag ~ cont", ["flag__True"], ["Intercept", "cont"]),
+    # the reference of a boolean column, in any case (DETK-0040)
+    ("boolean_ref_upper", "syntax", "cont ~ flag[FALSE]", ["cont"], ["Intercept", "flag__True"]),
+    ("boolean_ref_python", "syntax", "cont ~ flag[True]", ["cont"],
+     ["Intercept", "flag__False"]),
     # -- interactions
-    # a:b alone, as docs/formulas.md writes it (binary_str:cat_str), loses
-    # its columns today: only the Intercept is left
-    ("interaction_colon", "syntax", "cont ~ binary_str:cat_str", ["cont"], ["Intercept"]),
+    # a:b alone, as docs/formulas.md writes it (binary_str:cat_str): full
+    # rank, so cat_str's main-effect columns stand in for binary_str's
+    # reference level (DETK-0040; the patsy port lost every column but the
+    # Intercept)
+    ("interaction_colon", "syntax", "cont ~ binary_str:cat_str", ["cont"],
+     ["Intercept", "cat_str__B", "cat_str__C", "binary_str__control:cat_str__A",
+      "binary_str__control:cat_str__B", "binary_str__control:cat_str__C"]),
+    # a reference level inside a:b (DETK-0040; did not lex before)
+    ("interaction_colon_ref", "syntax", "cont ~ binary_str[control]:cat_str", ["cont"],
+     ["Intercept", "cat_str__B", "cat_str__C", "binary_str__case:cat_str__A",
+      "binary_str__case:cat_str__B", "binary_str__case:cat_str__C"]),
     ("interaction_colon_scalar", "syntax", "cont ~ cont:binary_int", ["cont"],
      ["Intercept", "cont:binary_int"]),
+    # main effects before interactions (DETK-0049)
     ("interaction_star", "syntax", "cont ~ binary_str*cat_str", ["cont"],
-     ["Intercept", "binary_str__control", "binary_str__control:cat_str__B",
-      "binary_str__control:cat_str__C", "cat_str__B", "cat_str__C"]),
+     ["Intercept", "binary_str__control", "cat_str__B", "cat_str__C",
+      "binary_str__control:cat_str__B", "binary_str__control:cat_str__C"]),
     ("interaction_star_refs", "syntax", "cont ~ binary_str[control]*cat_str[B]", ["cont"],
-     ["Intercept", "binary_str__case", "binary_str__case:cat_str__A",
-      "binary_str__case:cat_str__C", "cat_str__A", "cat_str__C"]),
+     ["Intercept", "binary_str__case", "cat_str__A", "cat_str__C",
+      "binary_str__case:cat_str__A", "binary_str__case:cat_str__C"]),
     # -- the examples in docs/formulas.md
     ("docs_intro", "docs_examples", "cont_var ~ cat_var[A,B,C]", ["cont_var"],
      ["Intercept", "cat_var__B", "cat_var__C"]),
     ("docs_height", "docs_examples", "height ~ weight + age", ["height"],
      ["Intercept", "weight", "age"]),
-    # the docs show batch__2 + batch__3; an integer batch column is scalar
+    # an integer batch column is scalar
     ("docs_disease_status", "docs_examples",
      "disease_status[control] ~ age_at_death + batch + counts", ["disease_status__case"],
      ["Intercept", "age_at_death", "batch", "counts"]),
-    # the docs list the continent levels in another order; they come sorted
+    # the example as docs/formulas.md now writes it, batch[1] (DETK-0040)
+    ("docs_disease_status_batch_ref", "docs_examples",
+     "disease_status[control] ~ age_at_death + batch[1] + counts", ["disease_status__case"],
+     ["Intercept", "age_at_death", "batch__2", "batch__3", "counts"]),
+    # the levels come sorted; docs/formulas.md lists them so since #78 (DETK-0040)
     ("docs_gdp", "docs_examples",
      "gross_domestic_product ~ continent[NoAm] + population + election_year[no]",
      ["gross_domestic_product"],
@@ -150,8 +179,12 @@ CASES = [
     ("quote_dot_parens_ref", "quoting", "fld.cont ~ grp.(a)[v]", ["fld.cont"],
      ["Intercept", "grp.(a)__u"]),
     ("quote_interaction_star", "quoting", "fld.cont ~ fld.cat*grp.(a)", ["fld.cont"],
-     ["Intercept", "fld.cat__B", "fld.cat__C", "fld.cat__B:grp.(a)__v",
-      "fld.cat__C:grp.(a)__v", "grp.(a)__v"]),
+     ["Intercept", "fld.cat__B", "fld.cat__C", "grp.(a)__v", "fld.cat__B:grp.(a)__v",
+      "fld.cat__C:grp.(a)__v"]),
+    # an a:b of names that need quoting is two names (DETK-0080; an error
+    # before, the pair quoted as one name)
+    ("quote_interaction_colon", "quoting", "fld.cont ~ fld.cat:age(yrs)", ["fld.cont"],
+     ["Intercept", "fld.cat__A:age(yrs)", "fld.cat__B:age(yrs)", "fld.cat__C:age(yrs)"]),
     # -- the designs the de tests use (tests/de/test_de.py), on their data
     ("de_counts_category", "de_fake", "counts ~ category", ["counts"],
      ["Intercept", "category__cont"]),
@@ -216,12 +249,8 @@ ERRORS = [
     # unknown level, as the reference and in a level list
     ("unknown_level_ref", "syntax", "cont ~ cat_str[Z]", r"'Z'"),
     ("unknown_level_list", "syntax", "cont ~ cat_str[A,B,Z]", r"'C'.*'Z'"),
-    # a boolean reference level cannot be named, in any spelling
-    ("boolean_ref_upper", "syntax", "cont ~ flag[FALSE]", r"'FALSE' not found"),
-    ("boolean_ref_python", "syntax", "cont ~ flag[True]", r"'True' not found"),
-    # a reference level inside an interaction does not lex
-    ("interaction_colon_ref", "syntax", "cont ~ binary_str[control]:cat_str",
-     r"Illegal character ':'"),
+    # a boolean column's levels are True and False
+    ("boolean_ref_unknown", "syntax", "cont ~ flag[yes]", r"'yes'"),
     # a character outside the patsy-lite grammar
     ("illegal_character", "syntax", "cont ~ cat_str[A]&binary_str", r"Illegal character '&'"),
     # the patsy C() form docs/formulas.md shows for comparison is not patsy-lite
@@ -235,9 +264,6 @@ ERRORS = [
     ("quote_brackets", "quoting", "fld.cont ~ x[1]", r"\bx\b"),
     ("quote_dot_brackets", "quoting", "fld.cont ~ b.c[2]", r"b\.c"),
     ("quote_q_form", "quoting", 'fld.cont ~ Q("x[1]")', r"Illegal character .{0,2}\""),
-    # an a:b interaction of names that need quoting is quoted as one name
-    ("quote_interaction_colon", "quoting", "fld.cont ~ fld.cat:age(yrs)",
-     r"fld\.cat:age\(yrs\)"),
 ]  # fmt: skip
 
 

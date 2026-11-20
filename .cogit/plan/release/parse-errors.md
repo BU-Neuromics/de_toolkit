@@ -8,6 +8,8 @@ acceptance:
 from: [DETK-0190]
 scope: [+de_toolkit/formula.py, +de_toolkit/filter.py, tests/formula/, tests/filter/, +tests/cli/cli_cases.py, +tests/cli/cli_tables.py, +docs/formulas.md, +CHANGELOG]
 prev: [DETK-0190, release/r-design-names, release/help-options]
+issue: 112
+visited: 09ef1fd
 ---
 
 # Formula and filter errors are clear and never silent

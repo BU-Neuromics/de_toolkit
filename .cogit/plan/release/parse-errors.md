@@ -16,7 +16,7 @@ visited: 09ef1fd
 
 ## Implementation plan
 
-- [ ] @developer Apply DETK-0190 to number-like terms in the formula module, make a filter group value not in its column a usage error (and match numeric and boolean values as written), turn every wrapped formulaic error into a clean message; tests and cli-pin rows; docs/formulas.md; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Apply DETK-0190 to number-like terms in the formula module, make a filter group value not in its column a usage error (and match numeric and boolean values as written), turn every wrapped formulaic error into a clean message; tests and cli-pin rows; docs/formulas.md; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: try 3, 2.5 and -2.5 on each side of ~, cond[Z] and a misspelled term on the command line, and read each message as a user would <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

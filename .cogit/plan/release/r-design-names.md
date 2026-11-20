@@ -9,6 +9,8 @@ acceptance:
 from: [DETK-0050]
 scope: [+de_toolkit/formula.py, +de_toolkit/de.py, +de_toolkit/transform.py, +de_toolkit/norm.py, tests/de/, tests/transform/, +CHANGELOG]
 prev: [DETK-0050, release/formula-rename, release/cli-migrate]
+issue: 94
+visited: b760aac
 ---
 
 # Quote design names before R reads them

@@ -196,3 +196,28 @@ def test_no_report_writes_no_report(work, command):
     assert (work / "out.csv").exists()
     assert not (work / "detk_report").exists()
     assert not (work / "ro-crate-metadata.json").exists()
+
+
+@pytest.mark.parametrize(
+    "command,counts_samples,sheet_samples",
+    [
+        ("tidy", ["A", "B", "C"], ["B", "A", "D"]),
+        ("tidy-counts", ["A", "B", "C"], ["B", "A"]),
+        ("tidy-covs", ["A", "B"], ["B", "A", "D"]),
+    ],
+)
+def test_tidy_report_view(command, counts_samples, sheet_samples):
+    from de_toolkit import report_specs
+
+    counts = pandas.DataFrame([range(len(counts_samples))], columns=counts_samples, index=["g"])
+    sheet = pandas.DataFrame({"x": "a"}, index=sheet_samples)
+    family, _, _, view = report_specs.view_for(Tidy(counts, sheet, command).json)
+    assert family == "util"
+    assert view["type"] == "kv"
+    assert {"label": "samples kept", "value": 2} in view["items"]
+
+
+def test_tidy_report_view_without_properties_is_raw():
+    from de_toolkit import report_specs
+
+    assert report_specs.view_for({"name": "tidy", "properties": {}})[3] == {"type": "raw"}

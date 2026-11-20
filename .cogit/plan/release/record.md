@@ -10,7 +10,7 @@ acceptance:
   - 'tests use a Python one-liner as the external command, so they need no Miller; docs/tools/util.md documents it; the skill''s commands.md usage block passes DETK-0010''s test; CHANGELOG'
 from: [DETK-0051, DETK-0061]
 scope: [tests/util/, tests/cli/, de_toolkit/completions/, +de_toolkit/util.py, +de_toolkit/crate.py, +de_toolkit/report.py, +de_toolkit/report_specs.py, +de_toolkit/module_schema.json, +docs/tools/util.md, +skills/detk/references/commands.md, +CHANGELOG]
-prev: [DETK-0051, DETK-0061, release/cli-gaps]
+prev: [DETK-0051, DETK-0061, release/cli-gaps, DETK-0160]
 issue: 102
 visited: f3a014f
 ---

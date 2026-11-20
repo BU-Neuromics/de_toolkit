@@ -11,6 +11,8 @@ scope: [de_toolkit/norm.py, docs/example.md, examples/airway/run.sh, tests/norm/
 prev: [DETK-0029, release/cli-migrate, DETK-0082]
 issue: 86
 visited: 92d4fab
+status: done
+done: 4669f6f
 ---
 
 # --size-factors writes the size factors
@@ -19,7 +21,7 @@ visited: 92d4fab
 
 - [x] @developer Write the size factors file from `self.size_factors` with tests, update the cli-pin row, check the example and the skill describe it; CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

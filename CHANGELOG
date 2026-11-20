@@ -212,6 +212,17 @@ predates everything below.
   job (#100)
 
 ### Fixed
+- `detk-util tidy -p FILE` and `detk-util tidy-covs` write the tidied
+  column data with the sample sheet's own header and columns, in its order,
+  each value as written: the first header cell is kept (`sample,condition`,
+  not `,condition,counts`) and no `counts` column of zeros is added. A
+  sheet with its own `counts` column keeps it. The tidied counts are
+  unchanged (#114)
+- `detk-util tidy`, `tidy-counts` and `tidy-covs` write to the report
+  unless `--no-report`, as their help says: a module entry (`tidy`,
+  `tidycounts`, `tidycovs`) naming both input files and every output,
+  `-p`'s included, so the Process Run Crate lists the step with its inputs
+  and outputs. They wrote no report before (#114)
 - `detk-transform vst` and `detk-transform rlog` with `--rda FILE` write
   FILE, as their help says: the `DESeqTransform` object DESeq2 returns,
   with `saveRDS()`, as `detk-de deseq2 --rda` does. The option was accepted

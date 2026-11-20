@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release/tutorial-airway}
 applies: [release/tutorial-airway]
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A (-p stays a fraction between 0 and 1; values outside are rejected): the recommendation, accepted under Adam's delegation via the driver session, 2026-11-20 (DETK-0063: within the 1.0 scope, the 1.0 promise unchanged). Implemented by release/outlier-entropy, which also updates the airway tutorial's flagged-gene count and regenerates docs/example/ after release/tutorial-airway (#117) lands."}
 ---
 
 # detk-outlier entropy -p reads a fraction but np.percentile takes a percent
@@ -64,8 +66,9 @@ the tutorials show) silently flags almost nothing.
 
 ## Decision
 
-Recommended: Option A, as a node of its own (it is outside
-release/tutorial-airway's scope): the documented meaning is the one users
+Option A, accepted on the recommendation under Adam's delegation via the
+driver session, 2026-11-20. It is implemented as a node of its own,
+release/outlier-entropy (it is outside release/tutorial-airway's scope): the documented meaning is the one users
 and the tutorials rely on, and a fraction out of range can be refused
 loudly. With it, fix the all-zero case and add tests for both
 (a percentile against `numpy.percentile(..., 5)`, and an input with an
@@ -74,8 +77,9 @@ all-zero gene in the middle).
 ## Consequences
 
 - `docs/tutorials/airway.md` checks the number of flagged genes (13 today);
-  the fix changes it to the 5th percentile's count, so that node updates the
-  page's expected output and regenerates `docs/example/` (the page's prose
+  the fix changes it to the 5th percentile's count (925 on airway), so
+  release/outlier-entropy updates the page's expected output and regenerates
+  `docs/example/` after release/tutorial-airway (#117) lands (the page's prose
   does not state the percentage, so only the count changes).
 - `tests/outlier/test_outlier.py` calls `entropy(..., 0.05)`; its expected
   flags change with the fix.

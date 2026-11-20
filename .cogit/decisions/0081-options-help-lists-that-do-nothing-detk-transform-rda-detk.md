@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release/cli-migrate, step: s4}
 applies: [release/cut]
 issue: 85
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A, make each option do what its help says, as DETK-0029 did for --size-factors: the reviewer's recommendation, accepted under Adam's delegation via the driver session, 2026-11-20 (DETK-0063: within the 1.0 scope, the 1.0 promise unchanged). Planned as release/help-options, after release/cli-migrate and release/cli-gaps, before release/cut."}
 ---
 
 # Options help lists that do nothing: detk-transform --rda, detk-stats summary --color-col, rlog --blind

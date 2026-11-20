@@ -1,6 +1,7 @@
 ---
 template: adr
-state: Accepted
+state: Superseded
+superseded_by: DETK-0070
 authority: [DETK/developer]
 date: 2026-11-09
 from: {node: release/agent-skills, step: s1}
@@ -10,6 +11,7 @@ reason: skill command lines are parsed with each command's docopt usage, prose c
 revisions:
   - {date: 2026-11-09, by: DETK/developer, change: "The test now parses block command lines with docopt and checks commands and options named in prose, in any fence but text", why: review of s2}
   - {date: 2026-11-09, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-09: accept with release/agent-skills"}
+  - {date: 2026-11-20, by: adamlabadorf, change: Superseded by DETK-0070, why: "from the terminal: Adam's delegation via the driver session, 2026-11-20: docopt-ng is replaced by argparse (DETK-0001 B, DETK-0023); the skill test checks against the argparse parsers"}
 ---
 
 # Keep the agent skill in step with the CLI through a test against --help

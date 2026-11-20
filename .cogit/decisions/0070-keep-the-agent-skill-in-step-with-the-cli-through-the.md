@@ -3,6 +3,7 @@ template: adr
 state: Accepted
 authority: [DETK/developer]
 date: 2026-11-20
+supersedes: [DETK-0010]
 from: {node: release/cli-migrate, step: s3}
 applies: [release/cli-migrate]
 allowed_by: [reasonable]

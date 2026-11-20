@@ -130,6 +130,7 @@ from .common import (
     set_logging,
     write_output,
 )
+from .formula import r_design
 from .wrapr import require_r, wrapr
 from .util import stub
 from .report import DetkReport
@@ -343,7 +344,7 @@ class RlogCounts(DetkModule):
         }
 
         blind <- params$blind
-        form <- params$design
+        form <- params$r_design
 
         dds <- DESeqDataSetFromMatrix(countData = cnts,
             colData = colData,
@@ -370,7 +371,7 @@ class RlogCounts(DetkModule):
             script,
             counts=count_obj.counts,
             metadata=column_data,
-            params=params,
+            params={**params, "r_design": r_design(params["design"])},
             raise_on_error=True,
         ) as r:
             vsd_values = r.output

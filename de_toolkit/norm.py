@@ -143,6 +143,7 @@ from .common import (
 )
 from .report import DetkReport
 from .util import stub
+from .formula import r_design
 from .wrapr import require_r, wrapr
 
 # setup logging, null on the library level
@@ -243,9 +244,10 @@ def deseq2_wrapr(count_obj):
     cnts <- as.matrix(read.csv(counts.fn,row.names=1,check.names=FALSE))
     colData <- read.csv(metadata.fn,row.names=1,check.names=FALSE)
     str(params$design)
+    # the design's names quoted for R (formula.r_design)
     dds <- DESeqDataSetFromMatrix(countData = cnts,
         colData = colData,
-        design = formula(params$design))
+        design = formula(params$r_design))
     dds <- estimateSizeFactors(dds)
     write.csv(counts(dds,normalized=TRUE),out.fn,row.names=TRUE)
     """
@@ -260,7 +262,7 @@ def deseq2_wrapr(count_obj):
         script,
         counts=count_obj.counts,
         metadata=count_obj.design_matrix.full_matrix,
-        params={"design": count_obj.design},
+        params={"design": count_obj.design, "r_design": r_design(count_obj.design)},
         raise_on_error=True,
     ) as r:
         norm_counts = r.output.values

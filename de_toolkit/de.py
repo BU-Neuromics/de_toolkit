@@ -145,6 +145,7 @@ from .common import (
 import numpy as np
 import pandas as pd
 
+from .formula import r_design
 from .wrapr import require_r, wrapr, require_r_package
 from .util import stub
 from .report import DetkReport
@@ -352,8 +353,8 @@ class DESeq2Counts(DetkModule):
                 parallel <- TRUE
             }
 
-            # design formula
-            form <- params$design
+            # design formula, its names quoted for R (formula.r_design)
+            form <- params$r_design
 
             # load design matrix
             # the sample names as text, as in the counts header (001 stays 001)
@@ -457,7 +458,7 @@ class DESeq2Counts(DetkModule):
             script,
             counts=count_obj.counts,
             metadata=count_obj.design_matrix.full_matrix,
-            params=params,
+            params={**params, "r_design": r_design(count_obj.design)},
             routput_dir=routput_dir,
         ) as wr:
             self.wr_output = wr.output
@@ -544,8 +545,8 @@ class FLGCounts(DetkModule):
                 cnts <- data.frame(t(scale(t(cnts))),check.names=FALSE)
             }
 
-            # design formula
-            form <- params$design
+            # design formula, its names quoted for R (formula.r_design)
+            form <- params$r_design
 
             # load design matrix
             # the sample names as text, as in the counts header (001 stays 001)
@@ -603,7 +604,7 @@ class FLGCounts(DetkModule):
             script,
             counts=count_obj.counts,
             metadata=count_obj.design_matrix.full_matrix,
-            params=params,
+            params={**params, "r_design": r_design(count_obj.design)},
             routput_dir=routput_dir,
         ) as wr:
             self.wr_output = wr.output

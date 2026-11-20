@@ -256,10 +256,10 @@ ERRORS = [
     # a boolean column's levels are True and False
     ("boolean_ref_unknown", "syntax", "cont ~ flag[yes]", r"'yes'"),
     # a character outside detk formula syntax
-    ("illegal_character", "syntax", "cont ~ cat_str[A]&binary_str", r"Illegal character '&'"),
+    ("illegal_character", "syntax", "cont ~ cat_str[A]&binary_str", r"illegal character '&'"),
     # the patsy C() form docs/formulas.md shows for comparison is not detk formula syntax
     ("patsy_c_form", "syntax", "cont ~ C(cat_str, levels=['A','B','C'])",
-     r"Illegal character ','"),
+     r"illegal character ','"),
     # formulas take column names only (DETK-0050): a call is an error
     ("np_log_rhs", "syntax", "cont ~ np.log(cont)", r"column names only.*np\.log\(cont\)"),
     ("np_log_lhs", "syntax", "np.log(cont) ~ binary_str",
@@ -267,7 +267,7 @@ ERRORS = [
     # names with brackets cannot be referred to: the bracket starts a level
     ("quote_brackets", "quoting", "fld.cont ~ x[1]", r"\bx\b"),
     ("quote_dot_brackets", "quoting", "fld.cont ~ b.c[2]", r"b\.c"),
-    ("quote_q_form", "quoting", 'fld.cont ~ Q("x[1]")', r"Illegal character .{0,2}\""),
+    ("quote_q_form", "quoting", 'fld.cont ~ Q("x[1]")', r"illegal character .{0,2}\""),
 ]  # fmt: skip
 
 

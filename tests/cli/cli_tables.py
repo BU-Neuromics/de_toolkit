@@ -272,6 +272,19 @@ FILTER = Command(
             None,
             (Pos("command"), COUNTS, Pos("cov_fn", optional=True)),
             (Opt("--output", "-o", "FILE", "stdout"),),
+            lines=(
+                Line(
+                    ("mean(flag[1]) > 10", "counts.csv", "cov.csv"),
+                    {
+                        "command": "mean(flag[1]) > 10",
+                        "counts_fn": "counts.csv",
+                        "cov_fn": "cov.csv",
+                    },
+                    "a group may be a number or true/false, matched as written in a column of "
+                    "numbers or booleans; a group its column does not have, as in cond[Z], is "
+                    "a usage error when the command runs (tests/filter/test_filter_groups.py)",
+                ),
+            ),
             bad=(
                 Bad(
                     ("mean(all) > 10", "counts.csv", "--column-data=cov.csv"),

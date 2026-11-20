@@ -88,8 +88,6 @@ class Command:
     prog: str
     subcommands: tuple
     bad: tuple = ()
-    # how the umbrella ``detk <module> ...`` treats this command today
-    umbrella: str = "dispatches"
 
     @property
     def module(self):
@@ -110,7 +108,7 @@ COMMON = (
 )
 
 # common options help lists that are not arguments a command acts on:
-# --version is answered before the command line is parsed
+# --version prints the version and exits; it is not handed to the command
 COMMON_HELP_ONLY = (Opt("--version"),)
 
 COUNTS = Pos("counts_fn")
@@ -186,8 +184,6 @@ ENRICH = Command(
             ),
         ),
     ),
-    # the umbrella's command list omits enrich, so it prints its usage
-    umbrella="rejected",
 )
 
 # ----------------------------------------------------------- detk-transform
@@ -346,9 +342,6 @@ REPORT = Command(
         Sub("generate", (), (Opt("--dev"),)),
         Sub("clean", (), ()),
     ),
-    # the umbrella's command list omits report, so it parses its own usage
-    # (which lists report), matches no branch and exits 0 having done nothing
-    umbrella="no-op",
 )
 
 # ---------------------------------------------------------------- detk-util
@@ -421,9 +414,6 @@ UTIL = Command(
             ),
         ),
     ),
-    # the umbrella's command list omits util, so it parses its own usage
-    # (which lists util), matches no branch and exits 0 having done nothing
-    umbrella="no-op",
 )
 
 COMMANDS = (NORM, DE, ENRICH, TRANSFORM, FILTER, STATS, OUTLIER, WRAPR, REPORT, UTIL)
@@ -434,10 +424,11 @@ COMMANDS = (NORM, DE, ENRICH, TRANSFORM, FILTER, STATS, OUTLIER, WRAPR, REPORT, 
 class Umbrella:
     "How ``detk`` itself answers command lines that name no module command"
 
-    # module names its help lists (it omits enrich)
+    # module names its help lists: every module command (DETK-0025 gap 1)
     help_lists: tuple = (
         "norm",
         "de",
+        "enrich",
         "transform",
         "filter",
         "stats",

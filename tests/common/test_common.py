@@ -1,13 +1,14 @@
 import os
-import docopt
 import pandas
 import pytest
 from de_toolkit.common import main, InvalidDesignException, DetkModule
 
 
 def test_cli():
-    with pytest.raises(docopt.DocoptExit):
-        main()
+    # detk without a command is a usage error
+    with pytest.raises(SystemExit) as e:
+        main(["detk"])
+    assert e.value.code == 2
 
 
 def test_cli_version(monkeypatch):
@@ -18,7 +19,9 @@ def test_cli_version(monkeypatch):
     stdout = StringIO()
     monkeypatch.setattr(sys, "stdout", stdout)
 
-    main(["detk", "--version"])
+    with pytest.raises(SystemExit) as e:
+        main(["detk", "--version"])
+    assert e.value.code == 0
 
     from de_toolkit.common import __version__
 

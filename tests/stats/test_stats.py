@@ -46,12 +46,13 @@ def fake_column_data(request):
 
 def test_stats_cli(fake_counts_csv):
     from de_toolkit.stats import main
-    from docopt import DocoptExit
 
     with tempfile.TemporaryDirectory() as d:
         for cmd in ("summary", "basestats", "coldist", "rowdist", "colzero", "rowzero", "entropy"):
-            with pytest.raises(DocoptExit):
+            # a missing <counts_fn> is a usage error
+            with pytest.raises(SystemExit) as e:
                 main(["detk-stats", cmd])
+            assert e.value.code == 2
             print(["detk-stats", cmd, f"--report-dir={d}", fake_counts_csv])
             main(["detk-stats", cmd, f"--report-dir={d}", fake_counts_csv])
 

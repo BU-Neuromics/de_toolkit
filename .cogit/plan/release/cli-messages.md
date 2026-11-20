@@ -7,6 +7,8 @@ acceptance:
   - a design argument beginning with '-' (e.g. '-2.5 ~ counts') is read as the design in every command that takes one (detk-de's subcommands, detk-transform vst), not rejected as 'unrecognized arguments', so it reaches DETK-0190's message; options still parse anywhere on the line, and '--' still ends them; cli-pin rows for the '-' design in tests/cli; CHANGELOG under Fixed
 from: [DETK-0190]
 scope: [+de_toolkit/common.py, +de_toolkit/filter.py, +de_toolkit/de.py, +de_toolkit/transform.py, tests/common/, tests/filter/, tests/formula/, tests/de/, +tests/cli/cli_cases.py, +tests/cli/cli_tables.py, +tests/cli/test_cli_parse.py, +CHANGELOG]
+issue: 124
+visited: 8628a94
 ---
 
 # Design and filter commands say only what went wrong

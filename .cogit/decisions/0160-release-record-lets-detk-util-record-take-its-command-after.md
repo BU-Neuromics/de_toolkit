@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release/record, step: s1}
 applies: [release/record]
 issue: 104
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's delegation via the driver session, 2026-11-20: Option A, parsers opt in to a command after '--' (only detk-util record), others still refuse it; docs/report.md's schema version updated in s3; implements the accepted DETK-0061 within the 1.0 scope"}
 ---
 
 # release/record lets detk-util record take its command after --, in common.parse_cli outside its scope

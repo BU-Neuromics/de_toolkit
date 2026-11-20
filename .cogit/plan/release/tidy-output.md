@@ -15,7 +15,7 @@ visited: 118283e
 
 ## Implementation plan
 
-- [ ] @developer Write the tidied column data as read (header, columns, no added counts column) for tidy -p and tidy-covs; make tidy, tidy-counts and tidy-covs record in the report and the crate; switch docs/tutorials/quantifiers.md to tidy -p and show tidy in its crate; tests for each; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Write the tidied column data as read (header, columns, no added counts column) for tidy -p and tidy-covs; make tidy, tidy-counts and tidy-covs record in the report and the crate; switch docs/tutorials/quantifiers.md to tidy -p and show tidy in its crate; tests for each; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: run tidy -p on a real sample sheet and read the file, check the module JSON and the crate, run the quantifiers tutorial <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

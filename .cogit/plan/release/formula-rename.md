@@ -12,6 +12,8 @@ acceptance:
 from: [DETK-0024, DETK-0027, DETK-0050]
 scope: [de_toolkit/patsy_lite.py, de_toolkit/formula.py, +de_toolkit/common.py, tests/patsy_lite/, tests/formula/, docs/formulas.md, +CHANGELOG]
 prev: [DETK-0027, DETK-0050, release/formula-migrate]
+issue: 89
+visited: 9a704f1
 ---
 
 # Rename patsy-lite to formula

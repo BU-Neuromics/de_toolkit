@@ -103,6 +103,51 @@ def test_a_number_option_that_is_not_a_number_is_a_usage_error(files, argv, opti
     assert re.search(rf"error: argument (-\w/)?{option}: invalid (int|float) value", outcome.stderr)
 
 
+# ---------------------------------------------- filter expressions: 2
+def assert_usage_error(outcome, prog, cause):
+    "exit 2, the usage first, and the cause on stderr's error line"
+    assert outcome.code == 2, outcome.stderr
+    assert outcome.stdout == ""
+    assert f"usage: {prog} " in outcome.stderr
+    errors = [line for line in outcome.stderr.splitlines() if line.startswith(f"{prog}: error: ")]
+    assert errors and re.search(cause, errors[-1]), outcome.stderr
+
+
+def test_filter_group_without_column_data_is_a_usage_error(files):
+    outcome = cli_adapter.run(("detk-filter", "--no-report", "mean(group[a]) > 1", "counts.csv"))
+    assert_usage_error(outcome, "detk-filter", r"'group'.*no column data.*<cov_fn>")
+
+
+def test_filter_expression_that_does_not_parse_is_a_usage_error(files):
+    outcome = cli_adapter.run(("detk-filter", "--no-report", "garbage(((", "counts.csv"))
+    assert_usage_error(
+        outcome, "detk-filter", r"could not parse the filter expression .*'garbage' at position 0"
+    )
+
+
+def test_filter_unknown_column_is_a_usage_error(files):
+    outcome = cli_adapter.run(
+        ("detk-filter", "--no-report", "mean(nope[a]) > 1", "counts.csv", "cov.csv")
+    )
+    assert_usage_error(outcome, "detk-filter", r"'nope', which is not in the column data.*group")
+
+
+def test_filter_single_letter_group_parses(files):
+    # a group or column of one character is a word of the filter language
+    outcome = cli_adapter.run(
+        (
+            "detk-filter",
+            "--no-report",
+            "-o",
+            "out.csv",
+            "mean(group[a]) > 1",
+            "counts.csv",
+            "cov.csv",
+        )
+    )
+    assert outcome.code == 0, outcome.stderr
+
+
 # ----------------------------------------------------------- failures: 1
 def test_bad_input_file_exits_1_with_its_cause(files):
     outcome = cli_adapter.run(("detk-norm", "cpm", "--no-report", "missing.csv"))
@@ -150,8 +195,39 @@ def test_failing_step_exits_1_with_its_cause(files):
     assert_failure(outcome, "detk-util", "tidy-covs requires")
 
 
+@pytest.mark.parametrize(
+    "stderr,cause",
+    [
+        # R splits the call and the message over two lines
+        (
+            "Error in f(x) : \n  this script fails on purpose\nCalls: f\nExecution halted\n",
+            "Error in f(x) : this script fails on purpose",
+        ),
+        (
+            "Error: this script fails on purpose\nExecution halted\n",
+            "Error: this script fails on purpose",
+        ),
+        ("Warning message:\nsomething odd\n", "something odd"),
+        ("", "no error message"),
+    ],
+)
+def test_r_error_cause_is_one_line(stderr, cause):
+    assert wrapr.r_error_cause(stderr) == cause
+
+
 @pytest.mark.skipif(not wrapr.check_r(), reason="R is not installed")
 def test_failing_r_step_exits_1_with_its_cause(files):
-    (files / "fail.R").write_text('stop("this script fails on purpose")\n')
+    (files / "fail.R").write_text('f <- function(x) stop("this script fails on purpose")\nf(1)\n')
     outcome = cli_adapter.run(("detk-wrapr", "run", "fail.R"))
-    assert_failure(outcome, "detk-wrapr", "R")
+    assert_failure(outcome, "detk-wrapr", r"Error in f\(1\) : this script fails on purpose")
+    # R's output went to a temporary directory: the line says how to keep it
+    assert "rerun with --routput-dir" in last_line(outcome)
+
+
+@pytest.mark.skipif(not wrapr.check_r(), reason="R is not installed")
+def test_failing_r_step_names_the_routput_dir_it_was_given(files):
+    (files / "fail.R").write_text('stop("this script fails on purpose")\n')
+    outcome = cli_adapter.run(("detk-wrapr", "run", "--routput-dir", "rout", "fail.R"))
+    assert_failure(outcome, "detk-wrapr", "this script fails on purpose")
+    assert "R's output is in rout" in last_line(outcome)
+    assert (files / "rout" / "stderr").exists()

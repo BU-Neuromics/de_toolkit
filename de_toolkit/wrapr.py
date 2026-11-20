@@ -135,6 +135,25 @@ class RExecutionError(Exception):
     pass
 
 
+def r_error_cause(stderr):
+    """
+    R's error from its *stderr*, on one line: the first line starting with
+    ``Error``, joined with the indented lines that continue it (R splits
+    ``Error in f(x) :`` and its message over two lines); else the last line.
+    """
+    lines = stderr.splitlines()
+    for i, line in enumerate(lines):
+        if line.startswith("Error"):
+            parts = [line.strip()]
+            for more in lines[i + 1 :]:
+                if not more.strip() or not more[0].isspace():
+                    break
+                parts.append(more.strip())
+            return " ".join(parts)
+    rest = [line.strip() for line in lines if line.strip()]
+    return rest[-1] if rest else "no error message"
+
+
 def get_r_path():
     "Return the path to Rscript found in the shell environment."
     return which("Rscript")
@@ -533,11 +552,14 @@ class WrapR:
         if self.raise_on_error and not self.success:
             # the first line is the cause a command prints (common.cli_main):
             # R's own error line, and where R's full output was written
-            errors = [line.strip() for line in self.stderr.splitlines() if line.strip()]
-            cause = next((e for e in errors if e.startswith("Error")), errors[-1] if errors else "")
+            if hasattr(self, "_tempdir"):
+                # the temporary directory goes when the command exits
+                where = "rerun with --routput-dir DIR to keep R's output"
+            else:
+                where = f"R's output is in {self.routput_dir}"
             raise RExecutionError(
-                f"R encountered an error (exit {self.returncode}): {cause} "
-                f"[R's output is in {self.routput_dir}]\n\n"
+                f"R encountered an error (exit {self.returncode}): "
+                f"{r_error_cause(self.stderr)} [{where}]\n\n"
                 + f"stdout:\n{self.stdout}\n\n"
                 + f"stderr:\n{self.stderr}\n"
             )

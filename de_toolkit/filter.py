@@ -23,6 +23,7 @@ from tempfile import TemporaryDirectory
 from warnings import warn
 
 from .common import (
+    UsageError,
     cli_main,
     DetkModule,
     DetkParser,
@@ -54,7 +55,7 @@ t_NUMBER = r"-?[0-9]+([.][0-9]+)?"
 
 # http://www.dabeaz.com/ply/ply.html#ply_nn6
 def t_WORD(t):
-    r"[a-zA-Z_.][a-zA-Z0-9_.]+"
+    r"[a-zA-Z_.][a-zA-Z0-9_.]*"
     t.type = reserved.get(t.value.upper(), "WORD")
     return t
 
@@ -63,9 +64,17 @@ def t_WORD(t):
 t_ignore = " "
 
 
+class FilterCommandError(ValueError):
+    """
+    A filter expression detk cannot use: it does not parse, or it names a
+    column the column data does not have, or a column without column data.
+    detk-filter reports it as a usage error (exit 2, DETK-0031).
+    """
+
+
 # Prints an error message if there's an invalid token
 def t_error(t):
-    raise Exception(f"Illegal character {t.value[0]}")
+    raise FilterCommandError(f"illegal character {t.value[0]!r} at position {t.lexpos}")
 
 
 # mini language is like:
@@ -180,10 +189,17 @@ class ColSpec(Expr):
             return [mat.counts]
         elif self.field is not None:
             if mat.column_data is None:
-                raise Exception(
-                    "Field specified, but no column data supplied, "
-                    "include a column data file with this call to filter "
-                    "using field and group value"
+                raise FilterCommandError(
+                    f"the filter expression names the column {self.field!r}, but no column "
+                    "data was supplied; give the column data file (<cov_fn>) to filter by "
+                    "its columns and groups"
+                )
+            # column_data always has a counts column of its own (CountMatrix)
+            columns = [c for c in mat.column_data.columns if c != "counts"]
+            if self.field not in columns:
+                raise FilterCommandError(
+                    f"the filter expression names the column {self.field!r}, which is not "
+                    f"in the column data (its columns: {', '.join(map(str, columns))})"
                 )
             if self.group is not None:
                 # only one group is selected, return just that subset
@@ -267,7 +283,9 @@ def p_spec(p):
 
 
 def p_error(p):
-    raise Exception(p)
+    if p is None:
+        raise FilterCommandError("it ends before the expression is complete")
+    raise FilterCommandError(f"unexpected {p.value!r} at position {p.lexpos}")
 
 
 def parse_filter_command(cmd):
@@ -279,9 +297,12 @@ def parse_filter_command(cmd):
 
         parser = yacc.yacc(outputdir=tmpdir)
 
-    parsed = parser.parse(cmd)
+    try:
+        parsed = parser.parse(cmd)
+    except FilterCommandError as e:
+        raise FilterCommandError(f"could not parse the filter expression {cmd!r}: {e}") from e
     if parsed is None:  # failed to parse
-        raise Exception(f"Could not parse filter command, check syntax: {cmd}")
+        raise FilterCommandError(f"could not parse the filter expression {cmd!r}")
 
     return parsed
 
@@ -368,7 +389,11 @@ def main(argv=sys.argv):
 
     count_obj = make_cli_count_obj(args)
 
-    filtered = FilterCounts(count_obj, args.command)
+    try:
+        filtered = FilterCounts(count_obj, args.command)
+    except FilterCommandError as e:
+        # the <command> argument is wrong: a usage error (DETK-0031)
+        raise UsageError(str(e)) from e
 
     write_output(filtered.output, args)
 

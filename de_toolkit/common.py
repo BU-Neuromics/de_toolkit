@@ -144,7 +144,10 @@ class DetkParser(argparse.ArgumentParser):
         self.validate = validate
         # intermixed: positionals may come between options (detk-util
         # gather's ``a.sf --format=salmon b.sf``, as docopt allowed); plain
-        # argparse gives a positional only one run of the command line
+        # argparse gives a positional only one run of the command line. A
+        # leaf parser with an optional positional is always intermixed (see
+        # _parses_intermixed), so Python 3.11 takes ``counts.csv -o out.csv
+        # cov.csv`` as 3.12+ and docopt do (DETK-0151)
         self.intermixed = intermixed
         self._intermixing = False
         if add_help:
@@ -153,8 +156,23 @@ class DetkParser(argparse.ArgumentParser):
         self.register("action", None, _StoreOnce)
         self.register("action", "store_true", _StoreTrueOnce)
 
+    def _parses_intermixed(self):
+        """
+        Whether this parser parses its options and positionals in two
+        passes: when asked to, and for a leaf parser (no subcommands) with an
+        optional positional, which Python 3.11's argparse gives only the run
+        of positionals before the first option (DETK-0151)
+        """
+        if self.intermixed:
+            return True
+        if self._subcommands() is not None:
+            return False
+        return any(
+            not action.option_strings and action.nargs in ("?", "*") for action in self._actions
+        )
+
     def parse_known_args(self, args=None, namespace=None):
-        if self.intermixed and not self._intermixing:
+        if self._parses_intermixed() and not self._intermixing:
             # parse_known_intermixed_args calls back here
             self._intermixing = True
             try:
@@ -634,7 +652,8 @@ class CountMatrix:
                 self.design_matrix = DesignMatrix(design, self.column_data)
             except FormulaParseError as e:
                 raise InvalidDesignException(
-                    f"Invalid design, detk formula syntax could not parse {e.args}"
+                    "Invalid design, detk formula syntax could not parse it: "
+                    + "; ".join(str(a) for a in e.args)
                 ) from e
 
             # check if the full design matrix has lost any rows due to

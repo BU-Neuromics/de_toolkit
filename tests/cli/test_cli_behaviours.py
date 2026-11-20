@@ -251,3 +251,40 @@ def test_value_outside_choices_is_a_parse_error(argv, option):
     assert outcome.code == 2
     assert option in outcome.stderr
     assert "bogus" in outcome.stderr
+
+
+# ------------------------------------------------------------ DETK-0151 pins
+@pytest.mark.parametrize(
+    "argv,expected",
+    [
+        (
+            ("detk-filter", "mean(all) > 10", "counts.csv", "-o", "out.csv", "cov.csv"),
+            {"counts_fn": "counts.csv", "cov_fn": "cov.csv", "output": "out.csv"},
+        ),
+        (
+            ("detk-stats", "summary", "counts.csv", "-o", "out.csv", "cov.csv"),
+            {"counts_fn": "counts.csv", "cov_fn": "cov.csv", "output": "out.csv"},
+        ),
+        (
+            ("detk-stats", "pca", "counts.csv", "-o", "out.csv", "cov.csv"),
+            {"counts_fn": "counts.csv", "cov_fn": "cov.csv", "output": "out.csv"},
+        ),
+        (
+            ("detk-transform", "rlog", "counts.csv", "-o", "out.csv", "counts ~ g", "cov.csv"),
+            {"counts_fn": "counts.csv", "design": "counts ~ g", "cov_fn": "cov.csv"},
+        ),
+        (
+            ("detk-wrapr", "run", "s.R", "--rpath", "Rscript", "counts.csv", "out.csv"),
+            {"rscript": "s.R", "counts_in": "counts.csv", "out": "out.csv", "rpath": "Rscript"},
+        ),
+    ],
+    ids=lambda v: "-".join(v[:2]) if isinstance(v, tuple) else None,
+)
+def test_option_between_positionals_is_accepted_on_every_python(argv, expected):
+    # Python 3.11's argparse gives an optional positional only the run of
+    # positionals before the first option; every parser with an optional
+    # positional parses intermixed, so the line means the same on 3.11 as
+    # on 3.12+ and under 0.9's docopt (DETK-0151; CI runs this on 3.11)
+    parsed = cli_adapter.parse(argv)
+    for key, value in expected.items():
+        assert parsed.args[key] == value, (key, parsed.args)

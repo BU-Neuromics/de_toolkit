@@ -138,11 +138,20 @@ predates everything below.
   any other failure (DETK-0031), and help ends with these codes. A usage
   error includes the checks detk makes after parsing: a design without
   `counts`, or one detk cannot parse, and a number option whose value is not
-  a number, now exit 2 with the usage (they exited 1). Any other failure (a
+  a number, and a `detk-filter` expression that does not parse, names a
+  column the column data lacks, or names a column with no column data
+  given, now exit 2 with the usage (they exited 1). Any other failure (a
   bad input file, a missing R or R package, a failing step) ends with one
   line on stderr, `<command>: error: <cause>`, and no traceback unless
-  `--verbose` is given; an error R reports names R's error line and the
-  directory holding R's output
+  `--verbose` is given; an error R reports names R's error line and, with
+  `--routput-dir`, the directory holding R's output
+- A command with an optional positional (`detk-filter`, `detk-stats summary`
+  and `pca`, `detk-transform rlog`, `detk-wrapr run`) accepts options
+  between its positionals on every supported Python, as 0.9 did
+  (DETK-0151): `detk-stats summary counts.csv -o out.csv cov.csv` was a
+  usage error on Python 3.11
+- `detk-filter` accepts a column or group name of one character
+  (`mean(cond[a]) > 1`), which its expression language rejected
 
 ### Added
 - Versioned module JSON schema for report data

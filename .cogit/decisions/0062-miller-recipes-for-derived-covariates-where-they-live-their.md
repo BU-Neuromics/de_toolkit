@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release}
 applies: [release/miller-recipes]
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's delegation via the driver session, 2026-11-20: accepted on the planning session's recommendation (the first option of each item); within the scope Adam set and no change to the 1.0 promise"}
 ---
 
 # Miller recipes for derived covariates: where they live, their checks and their tests

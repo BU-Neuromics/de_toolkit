@@ -10,6 +10,8 @@ acceptance:
 from: [DETK-0026, DETK-0048]
 scope: [pyproject.toml, uv.lock, environment.yml, .github/workflows/, tests/, +CHANGELOG]
 prev: [DETK-0026, DETK-0048]
+issue: 75
+visited: c3eca8f
 ---
 
 # Make statsmodels a test-only dependency

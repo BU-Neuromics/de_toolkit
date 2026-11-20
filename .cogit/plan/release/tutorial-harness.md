@@ -18,7 +18,7 @@ visited: e198df2
 
 ## Implementation plan
 
-- [ ] @developer Build the collector and its markers with fixture pages and tests, the tutorials index and nav, the CI wiring and the docs/dev how-to; open the PR <!-- s1 -->
+- [x] @developer Build the collector and its markers with fixture pages and tests, the tutorials index and nav, the CI wiring and the docs/dev how-to; open the PR <!-- s1 -->
 - [ ] @reviewer Review the collector (ordering, working directory, skips, failure messages) and the CI wiring; build the docs <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

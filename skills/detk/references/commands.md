@@ -84,55 +84,76 @@ Options:
 ## `detk-norm deseq2`
 
 ```text
-Usage:
-    detk-norm deseq2 [options] <counts_fn>
+usage: detk-norm deseq2 [options] <counts_fn>
 
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
-    --size-factors=FILE          Write out the size factors found by the DESeq2
-                                 method to two column tab separated file where
-                                 the first column is sample name and the second
-                                 column is the size factor
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help           Print this help and exit
+  -o, --output FILE    Destination of normalized output in CSV format
+                       (default: stdout)
+  --size-factors FILE  Write out the size factors found by the DESeq2 method to
+                       a two column tab separated file: sample name and size
+                       factor
 ```
 
 ## `detk-norm fpkm`
 
 ```text
-Usage:
-    detk-norm fpkm [options] <counts_fn> <lengths_fn>
+usage: detk-norm fpkm [options] <counts_fn> <lengths_fn>
 
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+positional arguments:
+  <counts_fn>   Counts file: features in rows, samples in columns, delimited
+  <lengths_fn>  Feature lengths file: feature name and length in bases
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of normalized output in CSV format
+                     (default: stdout)
 ```
 
 ## `detk-norm library`
 
 ```text
-Usage:
-    detk-norm library [options] <counts_fn>
+usage: detk-norm library [options] <counts_fn>
 
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of normalized output in CSV format
+                     (default: stdout)
 ```
 
 ## `detk-norm cpm`
 
 ```text
-Usage:
-    detk-norm cpm [options] <counts_fn>
+usage: detk-norm cpm [options] <counts_fn>
 
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of normalized output in CSV format
+                     (default: stdout)
 ```
 
 ## `detk-norm tpm`
 
 ```text
-Usage:
-    detk-norm tpm [options] <counts_fn> <lengths_fn>
+usage: detk-norm tpm [options] <counts_fn> <lengths_fn>
 
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
+positional arguments:
+  <counts_fn>   Counts file: features in rows, samples in columns, delimited
+  <lengths_fn>  Feature lengths file: feature name and length in bases
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of normalized output in CSV format
+                     (default: stdout)
 ```
 
 ## `detk-transform vst`

@@ -124,14 +124,54 @@ def test_help_flag_after_other_arguments_prints_help():
     assert "counts_fn" in outcome.stdout
 
 
+def _version_lines(prog):
+    "Command lines where --version is an argument of its own"
+    if prog == "detk":
+        return [(prog, "--version")]
+    command = next(c for c in COMMANDS if c.prog == prog)
+    sub = command.subcommands[0]
+    req, _ = required(sub)
+    return [
+        (prog, "--version"),
+        prefix(command, sub) + ("--version",),
+        prefix(command, sub) + tuple(req) + ("--version",),
+    ]
+
+
 @pytest.mark.parametrize("prog", [c.prog for c in COMMANDS] + ["detk"])
-def test_version_anywhere_prints_the_version(prog):
-    # --version is answered before the command line is parsed
-    for argv in ((prog, "--version"), (prog, "anything", "--version", "else")):
+def test_version_as_an_argument_of_its_own_prints_the_version(prog):
+    for argv in _version_lines(prog):
         outcome = cli_adapter.invoke(argv)
-        assert outcome.code == 0
+        assert outcome.code == 0, f"{argv}: {outcome.stderr}"
         assert outcome.parsed is None
         assert outcome.stdout.strip() == __version__
+
+
+def _on_argparse(prog):
+    return cli_adapter.parser(prog) is not None
+
+
+@pytest.mark.parametrize("prog", [c.prog for c in COMMANDS] + ["detk"])
+def test_version_after_an_unknown_subcommand_is_not_honoured(prog):
+    # DETK-0033 Option A: --version is honoured only as an argument of its
+    # own, as argparse's version action reads it; the unknown subcommand
+    # before it is the error. (docopt-ng printed the version.)
+    if not _on_argparse(prog):
+        pytest.skip(f"{prog} is not on argparse yet (release/cli-migrate s3)")
+    outcome = cli_adapter.invoke((prog, "anything", "--version", "else"))
+    assert outcome.code != 0
+    assert outcome.stdout == ""
+    assert "anything" in outcome.stderr
+
+
+def test_version_as_an_option_value_is_not_honoured():
+    # DETK-0033 Option A: --version given where -o expects its value is not
+    # the version option; argparse rejects -o without a value
+    outcome = cli_adapter.invoke(DESEQ2 + ("-o", "--version", "c.csv"))
+    assert outcome.parsed is None
+    assert outcome.code != 0
+    assert __version__ not in outcome.stdout
+    assert "-o" in outcome.stderr
 
 
 # ------------------------------------------------- deprecated or inert options

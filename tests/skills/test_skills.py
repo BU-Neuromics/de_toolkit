@@ -4,10 +4,11 @@ The skills tell an agent which detk commands to run. For every markdown file
 under skills/, these tests check that:
 
 - each ``detk-*`` command line in a fenced code block (any fence except
-  ``text``, which holds copied usage) parses with that command's own docopt
-  usage, as the installed CLI prints it with ``--help``: the command and
-  subcommand exist, every option is declared, and no positional argument is
-  missing or extra;
+  ``text``, which holds copied usage) parses with that command's own
+  parser: its argparse parser, or for a command still on docopt (until
+  release/cli-migrate s3) its docopt usage as ``--help`` prints it. The
+  command and subcommand exist, every option is declared, and no
+  positional argument is missing or extra;
 - each ``detk-*`` command named in an inline code span in the prose exists,
   with its subcommand, and each option named in an inline code span is
   declared by the nearest command named above it (or, before any command is
@@ -20,6 +21,9 @@ not run the commands: they check that what the skill names is valid usage,
 not that the commands do what the skill says they do.
 """
 
+import contextlib
+import importlib
+import io
 import os
 import re
 import shlex
@@ -61,9 +65,12 @@ def _help(*argv):
 
 @lru_cache
 def _subcommands(tool):
-    usage = [
-        line.split() for line in _help(tool).splitlines() if line.strip().startswith(tool + " ")
+    # the usage lines, docopt's under "Usage:", argparse's after "usage:"
+    lines = [
+        re.sub(r"^usage:", "", line.strip(), flags=re.I).strip()
+        for line in _help(tool).splitlines()
     ]
+    usage = [line.split() for line in lines if line.startswith(tool + " ")]
     subs = {u[1] for u in usage if len(u) > 1}
     return frozenset() if subs <= {"[options]"} else frozenset(subs)
 
@@ -114,6 +121,33 @@ def _doc(tool, sub):
     return _help(tool, sub) if sub else _help(tool)
 
 
+def _argparse_parser(tool):
+    "The argparse parser of *tool*, or None while it is on docopt"
+    module = importlib.import_module(f"de_toolkit.{tool.removeprefix('detk-')}")
+    build = getattr(module, "build_parser", None)
+    return build() if build else None
+
+
+def _parse(tool, sub, argv):
+    "Parse *argv* with the command's own parser; AssertionError with the error if it fails"
+    parser = _argparse_parser(tool)
+    if parser is None:
+        try:
+            docopt(_doc(tool, sub), argv[1:])
+        except DocoptExit as e:
+            raise AssertionError(str(e)) from None
+        return
+    from de_toolkit.common import parse_cli
+
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            parse_cli(parser, argv)
+    except SystemExit as e:
+        if e.code:
+            raise AssertionError(err.getvalue()) from None
+
+
 def _walk(text):
     """Yield, in document order, ("block", line, command) for each detk command
     line in a fenced block other than ``text``, and ("span", line, content) for
@@ -149,7 +183,7 @@ def _check_option(option, commands, where):
     """*option* must be declared by one of *commands*, a list of (tool, sub)."""
     option = option.split("=", 1)[0]
     if option in ("-h", "--help"):
-        return  # docopt answers --help for every command
+        return  # every command answers --help
     declared = set().union(*(_declared_options(_doc(*c)) for c in commands))
     named = ", ".join(f"{t} {s or ''}".rstrip() for t, s in commands)
     assert option in declared, f"{where}: {option} is not an option of {named}"
@@ -182,8 +216,8 @@ def check_markdown(text, name):
             tool, sub = _locate(argv, where)
             context = [(tool, sub)]
             try:
-                docopt(_doc(tool, sub), argv[1:])
-            except DocoptExit as e:
+                _parse(tool, sub, argv)
+            except AssertionError as e:
                 raise AssertionError(f"{where} does not parse with its usage:\n{e}") from None
         elif item.startswith(("detk-", "detk ")):
             # a command named in prose usually leaves out its positionals, so

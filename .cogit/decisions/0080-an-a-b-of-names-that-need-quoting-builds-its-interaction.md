@@ -1,6 +1,6 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release/formula-migrate, step: s1}
@@ -8,6 +8,7 @@ applies: [release/formula-migrate]
 allowed_by: [reasonable]
 revisions:
   - {date: 2026-11-20, by: DETK/developer, change: "Proposed for the driver/Adam: an error pin DETK-0040 does not list changes", why: "the node's acceptance lists the pins that may change; this one is not listed, so it is not the developer's to settle"}
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A, under Adam's delegation via the driver session, 2026-11-20: within the formula migration's scope, no change to the 1.0 promise"}
 ---
 
 # An a:b of names that need quoting builds its interaction instead of failing

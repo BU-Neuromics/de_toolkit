@@ -57,6 +57,7 @@ nav:
   - Worked example (airway): example.md
   - Tutorials:
     - tutorials/index.md
+    - From quantifier outputs to a normalized matrix: tutorials/quantifiers.md
   - Concepts & file formats: concepts.md
   - Tools:
     - Overview & common options: tools/index.md

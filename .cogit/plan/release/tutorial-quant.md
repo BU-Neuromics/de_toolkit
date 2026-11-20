@@ -9,15 +9,19 @@ acceptance:
 from: [DETK-0064]
 scope: [new:docs/tutorials/, new:tests/tutorials/, +mkdocs.yml, +CHANGELOG]
 prev: [DETK-0064, release/tutorial-harness, release/cli-gaps]
+issue: 100
+visited: f3a014f
+status: done
+done: fe2bf28
 ---
 
 # Tutorial: from quantifier outputs to a normalized matrix
 
 ## Implementation plan
 
-- [ ] @developer Write the data script and data, the page with its checked outputs and the TPM check, index and nav; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Follow the page as a new user would, run it locally, and check its outputs and the data script <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Write the data script and data, the page with its checked outputs and the TPM check, index and nav; CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Follow the page as a new user would, run it locally, and check its outputs and the data script <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

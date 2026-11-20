@@ -38,6 +38,17 @@ jobs:
       - name: Build docs
         run: uv run --group docs mkdocs build --strict
 
+      # the tutorial markers and hidden blocks must not show on the site; this
+      # test needs the docs group's Markdown, so it skips in the test jobs;
+      # here it must run and pass, not skip
+      - name: Tutorial markers do not render
+        run: |
+          set -o pipefail
+          uv run --group docs --group dev pytest tests/tutorials/test_tutorial_runner.py \
+            -o addopts="" -p no:cacheprovider -k site -rs | tee "$RUNNER_TEMP/site.txt"
+          grep -q " 1 passed" "$RUNNER_TEMP/site.txt"
+          if grep -q "skipped" "$RUNNER_TEMP/site.txt"; then exit 1; fi
+
   # statsmodels is test-only (DETK-0026): import every de_toolkit module and
   # run a detk command with only the runtime dependencies installed, so a
   # runtime use of a test-only package fails here instead of reaching users

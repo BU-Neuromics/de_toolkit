@@ -34,6 +34,9 @@ marker.
   install line, say), and ```` ```r ```` or ```` ```python ```` for code shown
   for reading.
 - A block may run for 30 minutes before it counts as failed.
+- Do not set a `trap ... EXIT` in a block: the runner saves the shell's state
+  in its own EXIT trap, which yours would replace, so nothing the block set
+  would carry to the next one.
 
 ## Markers
 
@@ -98,8 +101,8 @@ test "$(wc -l < coldata.csv)" -gt 100
 ````
 
 Right before a bash block: the block must exit non-zero (a check that rejects
-a bad value, say). An expect after it compares its stderr. Files and
-variables the failing block made do not carry to the next block.
+a bad value, say). An expect after it compares its stderr. Like any block, the files,
+variables and directory a failing block left carry to the next block.
 
 ### hidden
 
@@ -114,6 +117,9 @@ test -s results/deseq2.csv
 The bash blocks between `<!-- tutorial: hidden` and a `-->` on its own line
 run but are not shown on the site (the rendered code stays inside the HTML
 comment). Keep these rare: a check worth making is usually worth showing.
+An `expect` compares the output of the last bash block that ran, hidden or
+not, so do not put a hidden block between a command and the output shown
+for it.
 
 ## Deeper checks: tests/tutorials/test_&lt;page&gt;.py
 

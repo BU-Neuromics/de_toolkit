@@ -65,10 +65,10 @@ Leaves an irregular rule in the 1.0 formula promise.
 
 ## Decision
 
-Proposed: A. It is the same defect DETK-0040 fixes (`:` read as part of
+A, accepted on 2026-11-20 under Adam's delegation via the driver session
+(within the formula migration's scope; no change to the 1.0 promise). It is the same defect DETK-0040 fixes (`:` read as part of
 a name), it changes no existing matrix or column name, and keeping the
-error would take code written only to fail. Implemented that way in the
-PR for #78, so the pin can be reverted to the error if B is chosen.
+error would take code written only to fail. Implemented in the PR for #78 (#81).
 
 ## Consequences
 

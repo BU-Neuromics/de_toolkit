@@ -6,6 +6,8 @@ mean. The input is a delimited counts file, features in rows and samples in
 columns; the output is the transformed matrix in the same shape.
 """
 
+import argparse
+
 _RDA_HELP = "Write the R result objects of the analysis to FILE with saveRDS()"
 
 # each subcommand: the one line the command's help lists it with, its
@@ -41,10 +43,23 @@ built from the sample information file. Needs R with DESeq2.""",
 
 
 def _rlog_design_and_cov_fn(args):
-    "rlog takes both or neither of <design> and <cov_fn> (DETK-0033)"
+    """
+    rlog takes both or neither of <design> and <cov_fn> (DETK-0033), and a
+    non-blind rlog needs both (DETK-0081)
+    """
     if (args.design is None) != (args.cov_fn is None):
         return "<design> and <cov_fn> go together: give both, or neither (missing: <cov_fn>)"
+    if args.blind is False and args.design is None:
+        return "--blind False needs <design> and <cov_fn>: a non-blind rlog uses the design"
     return None
+
+
+def _bool(value):
+    "True or False, in any case, to a bool (the BOOL metavar); anything else is a usage error"
+    lowered = value.lower()
+    if lowered in ("true", "false"):
+        return lowered == "true"
+    raise argparse.ArgumentTypeError(f"invalid BOOL value: {value!r} (True or False)")
 
 
 def build_parser():
@@ -108,6 +123,7 @@ def build_parser():
             sub.add_argument(
                 "--blind",
                 metavar="BOOL",
+                type=_bool,
                 help="Passed to DESeq2 rlog(blind=); when not given, blind is True",
             )
         add_common_options(sub)
@@ -225,7 +241,7 @@ class PlogCounts(DetkModule):
         }
 
 
-def vst(count_obj):
+def vst(count_obj, rda=None):
     """
     Variance Stabilizing Transformation implemented in the DESeq2 bioconductor
     package.
@@ -241,15 +257,15 @@ def vst(count_obj):
         VST transformed counts dataframe with the same dimensionality as input
         counts
     """
-    obj = VstCounts(count_obj)
+    obj = VstCounts(count_obj, rda=rda)
     return obj.output
 
 
 class VstCounts(DetkModule):
     @require_r("DESeq2", "SummarizedExperiment")
-    def __init__(self, count_obj):
+    def __init__(self, count_obj, rda=None):
         self.count_obj = count_obj
-        self["params"] = {"blind": True}
+        self["params"] = {"blind": True, "rda": rda}
         script = """\
         library(DESeq2)
         library(SummarizedExperiment)
@@ -261,11 +277,14 @@ class VstCounts(DetkModule):
             colData = colData,
             design = ~ 1)
         dds <- varianceStabilizingTransformation(dds)
+        if(!is.null(params$rda)) {
+            saveRDS(dds,params$rda)
+        }
         write.csv(assay(dds),out.fn)
         """
         logger.debug("VST R script:\n%s", pformat(script))
 
-        with wrapr(script, counts=count_obj.counts, raise_on_error=True) as r:
+        with wrapr(script, counts=count_obj.counts, params={"rda": rda}, raise_on_error=True) as r:
             vsd_values = r.output
             self.vsd_values = vsd_values
 
@@ -283,7 +302,7 @@ class VstCounts(DetkModule):
         }
 
 
-def rlog(count_obj, blind=True):
+def rlog(count_obj, blind=True, rda=None):
     """
     Regularized log (rlog) transformation implemented in the DESeq2 bioconductor
     package.
@@ -296,6 +315,8 @@ def rlog(count_obj, blind=True):
         the `blind` parameter as passed to the `rlog` function in DESeq2. if
         False, `count_obj` is expected to have `column_data` and a valid
         design as required by the R function
+    rda : str, optional
+        write the DESeqTransform object rlog returns to this file with saveRDS()
 
     Returns
     -------
@@ -303,15 +324,15 @@ def rlog(count_obj, blind=True):
         rlog transformed counts dataframe with the same dimensionality as input
         counts
     """
-    obj = RlogCounts(count_obj, blind)
+    obj = RlogCounts(count_obj, blind, rda=rda)
     return obj.output
 
 
 class RlogCounts(DetkModule):
     @require_r("DESeq2", "SummarizedExperiment")
-    def __init__(self, count_obj, blind=True):
-        self["params"] = {"blind": blind}
-        logger.debug("rlog params:\n%s", pformat(self["params"]))
+    def __init__(self, count_obj, blind=True, rda=None):
+        if not blind and (count_obj.column_data is None or count_obj.design is None):
+            raise ValueError("a non-blind rlog needs column data and a design")
 
         self.count_obj = count_obj
 
@@ -354,11 +375,14 @@ class RlogCounts(DetkModule):
         )
 
         dds <- rlog(dds,blind=blind)
+        if(!is.null(params$rda)) {
+            saveRDS(dds,params$rda)
+        }
         write.csv(assay(dds),out.fn)
         """
-        logger.debug("VST R script:\n%s", script)
+        logger.debug("rlog R script:\n%s", script)
         column_data = None
-        if not blind and count_obj.column_data is not None:
+        if not blind:
             # as detk-de deseq2 does: DESeq2 adds its own intercept and takes
             # the counts from countData, so neither belongs in the design
             # (with both, the model matrix is not full rank)
@@ -366,8 +390,9 @@ class RlogCounts(DetkModule):
             count_obj.design_matrix.drop_from_rhs("Intercept", quiet=True)
             column_data = count_obj.design_matrix.full_matrix
 
-        params = {"design": "~ 1" if blind else count_obj.design, "blind": blind}
-        logger.debug("VST R script params:\n%s", pformat(params))
+        params = {"design": "~ 1" if blind else count_obj.design, "blind": blind, "rda": rda}
+        self["params"] = params
+        logger.debug("rlog R script params:\n%s", pformat(params))
 
         with wrapr(
             script,
@@ -409,7 +434,7 @@ def main(argv=sys.argv):
     count_obj = make_cli_count_obj(args)
 
     if cmd == "vst":
-        out = VstCounts(count_obj)
+        out = VstCounts(count_obj, rda=args.rda)
 
     elif cmd == "plog":
         out = PlogCounts(
@@ -419,9 +444,10 @@ def main(argv=sys.argv):
         )
 
     elif cmd == "rlog":
+        # --blind is parsed to a bool; not given, the rlog is blind
         blind = True if args.blind is None else args.blind
 
-        out = RlogCounts(count_obj, blind=blind)
+        out = RlogCounts(count_obj, blind=blind, rda=args.rda)
 
     write_output(out.output, args)
 

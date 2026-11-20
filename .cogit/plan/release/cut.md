@@ -6,7 +6,7 @@ acceptance:
   - the GitHub Release v1.0.0 carries the sdist and wheel, and Zenodo minted a DOI
   - the README shows the concept-DOI badge and the PyPI badge reads 1.0.0
 scope: [de_toolkit/version.py, pyproject.toml, CHANGELOG, README.md]
-prev: [DETK-0001, release/tpm-cpm, release/annotate, release/gather, release/agent-skills, release/fpkm, release/escape-json, release/padded-ids, release/single-column, release/deps, release/view-text, release/skill-update, release/quickstart-figure, release/r-ids, release/ci-lock, release/cli-pin, release/formula-pin, release/cli-migrate, release/formula-migrate, release/cli-docs, release/statsmodels-test, release/formula-rename, release/cli-gaps, release/size-factors, release/record, release/r-design-names, release/dep-guards, release/help-options]
+prev: [DETK-0001, release/tpm-cpm, release/annotate, release/gather, release/agent-skills, release/fpkm, release/escape-json, release/padded-ids, release/single-column, release/deps, release/view-text, release/skill-update, release/quickstart-figure, release/r-ids, release/ci-lock, release/cli-pin, release/formula-pin, release/cli-migrate, release/formula-migrate, release/cli-docs, release/statsmodels-test, release/formula-rename, release/cli-gaps, release/size-factors, release/record, release/r-design-names, release/dep-guards, release/help-options, release/tidy-output, release/parse-errors, release/strict-json]
 ---
 
 # Cut 1.0.0
@@ -14,7 +14,7 @@ prev: [DETK-0001, release/tpm-cpm, release/annotate, release/gather, release/age
 ## Implementation plan
 
 - [ ] @human Confirm PyPI Trusted Publishing (environment `pypi`) and the Zenodo integration are set up (the account steps on #20) <!-- s1 -->
-- [ ] @developer Bump `version.py` to 1.0.0, set `Development Status :: 5 - Production/Stable`, date the CHANGELOG heading; open the PR <!-- s2 -->
+- [ ] @developer Bump `version.py` to 1.0.0, set `Development Status :: 5 - Production/Stable`, date the CHANGELOG heading, and read the 1.0 entries against the released CLI: the option-names entry (about line 109) still lists `detk-filter --column-data` and `detk-stats --column-data` among renamed metavars, which 1.0 removes (DETK-0030); drop them there, as the entry on their removal already says; open the PR <!-- s2 -->
 - [ ] @human Answer DETK-0002 (deferred by Adam on 2026-11-20): leave the PCA_tester data in history, or rewrite it out before the tag <!-- s7 -->
 - [ ] @human Accept the PR and say to cut the release <!-- s3 -->
 - [ ] @developer Push the `v1.0.0` tag, create the GitHub Release, check PyPI, the attached artifacts and the DOI <!-- s4 -->

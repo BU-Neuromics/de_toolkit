@@ -547,7 +547,10 @@ SF_SAMPLES = ["010", "002", "001", "003"]
 
 
 def _read_size_factors(path):
-    rows = [line.split("\t") for line in path.read_text().splitlines()]
+    header, *rows = [line.split("\t") for line in path.read_text().splitlines()]
+    # DETK-0082: a header line, so default readers do not take the first
+    # sample for one
+    assert header == ["sample", "size_factor"]
     assert all(len(r) == 2 for r in rows)
     return [name for name, _ in rows], [float(sf) for _, sf in rows]
 
@@ -612,9 +615,20 @@ def test_deseq2_size_factors_file(tmp_path):
 
 
 def test_deseq2_size_factors_unwritable_path_exits(tmp_path):
+    # it stops before the normalized counts or the report are written
     with pytest.raises(SystemExit) as exc:
         _run_deseq2_norm(tmp_path, f"--size-factors={tmp_path / 'no' / 'such' / 'sf.tsv'}")
     assert exc.value.code == 1
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["counts.csv"]
+
+
+def test_deseq2_size_factors_file_reads_with_default_readers(tmp_path):
+    # pandas' and R's default readers take the header, and every sample
+    sf_fn = tmp_path / "sf.tsv"
+    _run_deseq2_norm(tmp_path, f"--size-factors={sf_fn}")
+    df = pandas.read_csv(sf_fn, sep="\t", dtype={"sample": str})
+    assert list(df.columns) == ["sample", "size_factor"]
+    assert list(df["sample"]) == SF_SAMPLES
 
 
 @deseq2_test

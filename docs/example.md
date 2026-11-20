@@ -50,8 +50,9 @@ detk-filter 'nonzero(all) >= 0.5' -o counts_filtered.csv counts.csv
 ```
 
 **3. Normalize** with the DESeq2 median-of-ratios method (pure Python — no R
-needed for this step), writing the size factors to `size_factors.tsv` (sample
-name and size factor, tab separated; the report records them too):
+needed for this step), writing the size factors to `size_factors.tsv` (a
+`sample`, `size_factor` header, then one tab separated line per sample; the
+report records them too):
 
 ```bash
 detk-norm deseq2 -o norm_counts.csv --size-factors=size_factors.tsv counts_filtered.csv

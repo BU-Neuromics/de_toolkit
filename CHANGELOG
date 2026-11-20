@@ -149,11 +149,14 @@ predates everything below.
 
 ### Fixed
 - `detk-norm deseq2 --size-factors=FILE` writes the size factors, as its
-  help says: a tab separated file with no header, one row per sample of its
-  name and size factor, in the counts file's column order, with sample
-  names as written (`001` stays `001`). The option was accepted and nothing
-  was written. The values are the ones the report's module JSON records,
-  and the normalized counts are unchanged (#44, DETK-0029)
+  help says: a tab separated file with a header line `sample`,
+  `size_factor` (DETK-0082), then one row per sample of its name and size
+  factor, in the counts file's column order, with sample names as written
+  (`001` stays `001`). The option was accepted and nothing was written. The
+  values are the ones the report's module JSON records, and the normalized
+  counts are unchanged. The file is written before the normalized counts, so
+  a path that cannot be written stops the command before any output (#44,
+  DETK-0029)
 - The umbrella command `detk <command>` runs every module command:
   `detk enrich`, `detk report` and `detk util` printed the usage or did
   nothing, and its help now lists all ten commands (DETK-0025)

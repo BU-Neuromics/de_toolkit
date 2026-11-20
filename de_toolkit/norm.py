@@ -118,7 +118,8 @@ def build_parser():
                 "--size-factors",
                 metavar="FILE",
                 help="Write out the size factors found by the DESeq2 method to a two "
-                "column tab separated file: sample name and size factor",
+                "column tab separated file: a header line 'sample', 'size_factor', "
+                "then one line per sample of its name and size factor",
             )
         add_common_options(sub)
     return parser
@@ -292,12 +293,14 @@ class DESeq2Norm(DetkModule):
 
     def write_size_factors(self, path):
         """
-        Write the size factors to *path*: tab separated, no header, one row
-        per sample of its name and size factor, in the counts file's column
-        order, with the sample names as they were written
+        Write the size factors to *path*: tab separated, a ``sample`` and
+        ``size_factor`` header line (DETK-0082), then one row per sample of
+        its name and size factor, in the counts file's column order, with the
+        sample names as they were written
         """
         logger.info("writing size factors to %s", path)
         with open(path, "w", newline="") as f:
+            f.write("sample\tsize_factor\n")
             for sample, factor in self.size_factors.items():
                 f.write(f"{sample}\t{factor!r}\n")
 
@@ -612,14 +615,16 @@ def main(argv=sys.argv):
             logger.error(e)
             sys.exit(1)
 
-    write_output(out.output, args)
-
+    # the size factors first, so an unwritable path stops the command before
+    # any normalized counts are written
     if cmd == "deseq2" and args.size_factors:
         try:
             out.write_size_factors(args.size_factors)
         except OSError as e:
             logger.error(e)
             sys.exit(1)
+
+    write_output(out.output, args)
 
     if not args.no_report:
         logging.info("writing report to %s", args.report_dir)

@@ -5,6 +5,8 @@ fixed DETK-0025 gap 1, it printed its usage for enrich and did nothing for
 report and util.)
 """
 
+import re
+
 import pytest
 
 import cli_adapter
@@ -93,4 +95,5 @@ def test_completion_rejects(rest, name):
 def test_completion_is_listed_in_detk_help():
     outcome = cli_adapter.invoke(("detk", "--help"))
     assert "detk completion <shell>" in outcome.stdout
-    assert "  completion " in outcome.stdout
+    # listed with its line (Python 3.11 puts a long name's line under it)
+    assert re.search(r"^ {4}completion\s+Print the shell completion", outcome.stdout, re.M)

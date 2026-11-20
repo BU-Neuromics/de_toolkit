@@ -10,6 +10,8 @@ acceptance:
 from: [DETK-0064]
 scope: [new:docs/tutorials/, new:tests/tutorials/, docs/dev/, +mkdocs.yml, +.github/workflows/ci.yml, +pyproject.toml, +CHANGELOG]
 prev: [DETK-0064, release/statsmodels-test]
+issue: 83
+visited: e198df2
 ---
 
 # Run tutorials as tests

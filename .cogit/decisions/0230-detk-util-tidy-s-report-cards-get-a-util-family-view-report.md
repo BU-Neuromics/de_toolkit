@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release/tidy-output, step: s1}
 applies: [release/tidy-output]
 issue: 118
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: from the terminal: Adam's delegation via the driver session, 2026-11-20: Option A, keep the small tidy summary view in report_specs.py; within 1.0 scope and matches how other steps appear in the report"}
 ---
 
 # detk-util tidy's report cards get a util-family view (report_specs.py, outside release/tidy-output's scope)

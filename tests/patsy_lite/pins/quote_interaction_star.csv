@@ -1,6 +1,6 @@
-sample,fld.cont,Intercept,fld.cat__B,fld.cat__C,fld.cat__B:grp.(a)__v,fld.cat__C:grp.(a)__v,grp.(a)__v
+sample,fld.cont,Intercept,fld.cat__B,fld.cat__C,grp.(a)__v,fld.cat__B:grp.(a)__v,fld.cat__C:grp.(a)__v
 q1,0.13,1.0,0.0,0.0,0.0,0.0,0.0
-q2,0.97,1.0,1.0,0.0,1.0,0.0,1.0
+q2,0.97,1.0,1.0,0.0,1.0,1.0,0.0
 q3,0.22,1.0,0.0,1.0,0.0,0.0,0.0
-q4,0.76,1.0,0.0,0.0,0.0,0.0,1.0
+q4,0.76,1.0,0.0,0.0,1.0,0.0,0.0
 q5,0.41,1.0,1.0,0.0,0.0,0.0,0.0

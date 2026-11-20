@@ -158,6 +158,8 @@ def test_version_after_an_unknown_subcommand_is_not_honoured(prog):
     # before it is the error. (docopt-ng printed the version.)
     if not _on_argparse(prog):
         pytest.skip(f"{prog} is not on argparse yet (release/cli-migrate s3)")
+    if prog != "detk" and not cli_adapter.subparsers(cli_adapter.parser(prog)):
+        pytest.skip(f"{prog} has no subcommands: 'anything' is its first positional")
     outcome = cli_adapter.invoke((prog, "anything", "--version", "else"))
     assert outcome.code != 0
     assert outcome.stdout == ""

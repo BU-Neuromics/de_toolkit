@@ -18,7 +18,7 @@ visited: f3a014f
 ## Implementation plan
 
 - [x] @developer Write the data script and data, the page with its checked outputs and the TPM check, index and nav; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Follow the page as a new user would, run it locally, and check its outputs and the data script <!-- s2 -->
+- [x] @reviewer Follow the page as a new user would, run it locally, and check its outputs and the data script <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes

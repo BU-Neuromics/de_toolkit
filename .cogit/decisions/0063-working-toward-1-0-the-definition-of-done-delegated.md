@@ -1,10 +1,12 @@
 ---
 template: note
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release}
 applies: [release]
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's words relayed by the driver session, 2026-11-20: \"I'd like for us to develop a set of stopping criteria that describes what done means for a 1.0 release, then you work autonomously through cogit to complete it.\" \"Decisions: delegate.\" \"Plan PR: they may merge on green CI.\" \"Wait for my go ahead on final release.\" On DETK-0002: \"let's defer.\""}
 ---
 
 # Working toward 1.0: the definition of done, delegated decisions, plan PRs on green, the release Adam's

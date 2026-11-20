@@ -15,7 +15,7 @@ visited: 118283e
 
 ## Implementation plan
 
-- [ ] @developer Write non-finite numbers as null in the module JSON encoder and the crate, refuse bare NaN/Infinity at serialization, allow null in module_schema.json where needed, keep the views rendering nulls; the strict-parse test over every module's JSON and the crate (R-backed modules in the R job); CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Write non-finite numbers as null in the module JSON encoder and the crate, refuse bare NaN/Infinity at serialization, allow null in module_schema.json where needed, keep the views rendering nulls; the strict-parse test over every module's JSON and the crate (R-backed modules in the R job); CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: parse a real report directory's json/*.json with a strict parser (e.g. jq or Python with parse_constant), open the report with missing values <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

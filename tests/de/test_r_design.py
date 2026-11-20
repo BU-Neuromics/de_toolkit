@@ -7,7 +7,6 @@ file named ``1`` in the working directory, which these tests set to a fresh
 temporary directory and check stays empty of it.
 """
 
-import logging
 import re
 
 import numpy
@@ -170,13 +169,14 @@ def assert_not_run(tmp_path):
 
 
 @deseq2_test
-def test_deseq2_call_shaped_column(r_data, caplog):
+def test_deseq2_call_shaped_column(r_data, capsys):
     tmp_path, counts_fn, column_data_fn = r_data
-    with caplog.at_level(logging.ERROR), pytest.raises(SystemExit):
+    with pytest.raises(SystemExit):
         de_main(
             ["detk-de", "deseq2", f"counts ~ {CALL}", counts_fn, column_data_fn, "-o", "out.csv"]
         )
-    assert NOT_FOUND.search(caplog.text)
+    # the command names R's error on stderr
+    assert NOT_FOUND.search(capsys.readouterr().err)
     assert_not_run(tmp_path)
 
 

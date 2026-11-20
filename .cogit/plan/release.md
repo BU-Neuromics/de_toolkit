@@ -51,6 +51,7 @@ visited: f6503ed
 - [ ] [Update the docs for the 1.0 CLI](release/cli-docs.md) <!-- s25 -->
 - [ ] [Guard the removed dependencies and fix the E402 note](release/dep-guards.md) <!-- s37 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
+- [ ] [Options do what their help says](release/help-options.md) <!-- s38 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
 
 ## Notes

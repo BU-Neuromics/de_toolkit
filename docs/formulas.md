@@ -82,6 +82,26 @@ derived column, such as a log-transformed covariate, belongs in the column
 data file, where the formula can name it. A column whose name really is such
 a string, say `log2(cont)`, is still a column.
 
+[Derived covariates with Miller](recipes/covariates.md) gives tested recipes
+for the usual derived columns (a log, a log with a pseudocount, a z-score,
+centring, min-max and a constant column), each with the checks that stop it
+on a missing value or a log of zero, and each recorded with
+`detk-util record` so the step shows in the report and the provenance.
+
+Column names in a formula start with a letter or underscore. A term that
+looks like a number, such as `3`, `2.5` or `-2.5`, is an error on either side
+of `~`, whether or not the column data has a column by that name: a number
+is never a column name. Only `0` and `1` have a meaning, the intercept:
+`counts ~ 0 + cont` and `counts ~ cont - 1` leave it out, `counts ~ 1` is the
+intercept alone. A column whose name looks like a number, a time point or a
+dose written as a header, has to be renamed in the column data file before a
+formula can name it; the error message says so (DETK-0190).
+
+An error in a formula is reported in one line naming the offending term: a
+term that is not a column of the column data file (with the columns it
+has), a reference level its column does not have (with the values it has),
+or a part of the formula detk cannot read.
+
 Every model has a left hand side and a right hand side separated by `~`. In
 general there should be a single term on the left hand side.
 

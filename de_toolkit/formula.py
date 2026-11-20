@@ -45,6 +45,34 @@ def t_FACTORTERM(t):
     return t
 
 
+# a token that looks like a number: 3, 2.5, -2.5, .5, 1e3 (DETK-0190)
+NUMBER_LIKE = re.compile(r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
+# the numbers with a meaning in a formula: the intercept, ~ 0 + x, ~ 1, x - 1
+INTERCEPT_NUMBERS = re.compile(r"[-+]?[01]")
+
+
+def check_number(token, columns):
+    """
+    Raise FormulaParseError for a *token* of a formula that looks like a
+    number and is not one of the intercept numbers 0 and 1 (DETK-0190
+    Option A): formulas take column names, and a number-like name is not one.
+    The message says to rename the column when *columns* has one by that name.
+    """
+    if not NUMBER_LIKE.fullmatch(token) or INTERCEPT_NUMBERS.fullmatch(token):
+        return
+    named = next((_ for _ in (token, token.lstrip("-+")) if _ in columns), None)
+    if named is not None:
+        raise FormulaParseError(
+            f"{token} in the design looks like a number, and formulas take column names: "
+            f"rename the column {named!r} of the column data file to start with a letter or "
+            "underscore (for instance with Miller's rename verb) and use the new name"
+        )
+    raise FormulaParseError(
+        f"{token} in the design is a number, and formulas take column names; only 0 and 1 "
+        "have a meaning, the intercept (counts ~ 0 + x, counts ~ 1)"
+    )
+
+
 # a term that looks like a call, np.log(x) or log2(x): a name, then (...)
 CALL = re.compile(r"[A-Za-z_][\w.]*\(.*\)")
 
@@ -60,12 +88,60 @@ def check_calls(model, columns):
             raise FormulaParseError(
                 f"Formulas take column names only: {term} is not a column of the "
                 "column data file and looks like a call. Add the derived column to "
-                "the column data file and name it in the formula."
+                "the column data file and name it in the formula; for recipes that "
+                "derive a log, z-score or other column with Miller, see "
+                "https://bu-neuromics.github.io/de_toolkit/recipes/covariates/"
             )
 
 
+def column_list(data):
+    "The columns of *data* for a message, without the counts column detk adds"
+    return ", ".join(str(_) for _ in data.columns if _ != "counts")
+
+
+def check_columns(model, data):
+    """
+    Raise FormulaParseError for a term of *model* that is not a column of
+    *data*, or a reference level its column does not have; each message
+    names the term and what the column data has instead.
+    """
+    for term in model.name_map.values():
+        if term not in data.columns:
+            raise FormulaParseError(
+                f"{term} in the design is not a column of the column data file "
+                f"(its columns: {column_list(data)})"
+            )
+    for column, (written, value) in model.refs.items():
+        present = data[column].dropna().unique()
+        if value not in set(present):
+            raise FormulaParseError(
+                f"{column}[{written}] in the design names the reference level {written!r}, "
+                f"which {column} does not have (its values: "
+                f"{', '.join(sorted(map(str, present)))})"
+            )
+
+
+# formulaic marks the offending part of a formula with these, in colour
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
+_MARKED = re.compile(r"⧛(.*?)⧚", re.S)
+
+
+def formulaic_message(formula, error):
+    """
+    formulaic's *error* for the design *formula* as one plain line: its
+    first line, with the part it marks named, and no ANSI colour codes.
+    """
+    text = _ANSI.sub("", str(error))
+    lines = [_.strip() for _ in text.splitlines() if _.strip()]
+    first = lines[0] if lines else type(error).__name__
+    marked = next((m.group(1) for _ in lines[1:] for m in [_MARKED.search(_)] if m), None)
+    first = _MARKED.sub(r"\1", first)
+    at = f" (at {marked!r})" if marked else ""
+    return f"could not read the design {formula!r}: {first}{at}"
+
+
 def t_error(t):
-    return t
+    raise FormulaParseError(f"illegal character {t.value[0]!r} in the design")
 
 
 lexer = lex.lex()
@@ -89,9 +165,9 @@ R_RESERVED = frozenset(
 # would also read plainly is harmless.
 R_SYNTACTIC = re.compile(r"(?:[A-Za-z]|\.(?![0-9]))[A-Za-z0-9._]*|\.")
 # the only numeral detk writes in a resolved design: the 1 of a trivial
-# model, counts ~ 1 (DesignMatrix.design). Any other number-shaped term,
-# such as 2.5 or 1.0, is a column name (the parser takes decimals as
-# columns) and is quoted, or R would read it as a constant.
+# model, counts ~ 1 (DesignMatrix.design). A number-like term is never a
+# column of a design (DETK-0190); should one reach r_design all the same it
+# is quoted, so R never reads a name as a constant.
 R_INTERCEPT = "1"
 
 
@@ -118,8 +194,8 @@ def r_design(design):
     would not read as a plain name is backtick-quoted, so R's ``formula()``
     reads each as a column name and runs none as code (DETK-0050). An
     interaction ``a:b`` stays an interaction of the names ``a`` and ``b``.
-    Only the intercept ``1`` of ``counts ~ 1`` is left bare: a number-shaped
-    column name such as ``2.5`` is quoted like any other.
+    Only the intercept ``1`` of ``counts ~ 1`` is left bare: any other
+    number-shaped name, which a design does not take (DETK-0190), is quoted.
     The resolved design itself, unquoted, is what detk records.
     """
     if "~" not in design:
@@ -175,23 +251,27 @@ class TranslatedFormula:
     *formula* is the formulaic formula string. *name_map* maps each term as
     written in it to the column name it stands for, and is used to give
     the model matrix columns their detk formula names. *levels* maps a
-    column given a level list to that list.
+    column given a level list to that list, *refs* a column given a
+    reference level to that level, as written and as a value.
     """
 
     formula: str
     name_map: dict = field(default_factory=dict)
     levels: dict = field(default_factory=dict)
+    refs: dict = field(default_factory=dict)
 
     def describe(self):
         return self.formula
 
 
-def to_formulaic(formula, bool_columns=()):
+def to_formulaic(formula, bool_columns=(), columns=()):
     """
     Translate the detk *formula* to formulaic's syntax.
 
     The levels written for a column named in *bool_columns* are read as
-    booleans, in any case (TRUE, False, ...).
+    booleans, in any case (TRUE, False, ...). A token that looks like a
+    number other than 0 and 1 is a :class:`FormulaParseError` (DETK-0190),
+    which says to rename the column when *columns* has one by that name.
     """
 
     # I guess we assume there is always a lhs and a rhs?
@@ -207,17 +287,25 @@ def to_formulaic(formula, bool_columns=()):
     # the column names as written in the formula
     name_map = {}
     levels = {}
+    refs = {}
 
     while True:
-        try:
-            tok = lexer.token()
-        except lex.LexError as e:
-            raise FormulaParseError(f"Error parsing formula:\n{formula}\n{e.args}") from e
+        tok = lexer.token()
 
         if not tok:
             break
 
-        if tok.type in ("CONSTANT", "RELATION", "OP", "COUNT"):
+        if tok.type == "CONSTANT" or (tok.type == "FACTORTERM" and NUMBER_LIKE.fullmatch(tok.term)):
+            check_number(tok.term if tok.type == "FACTORTERM" else tok.value, columns)
+            if tok.type == "FACTORTERM" and tok.value != tok.term:
+                # 1[a]: an intercept number given levels
+                raise FormulaParseError(
+                    f"{tok.value} in the design is not a column name: {tok.term} is the intercept"
+                )
+            translated.append(tok.value)
+            continue
+
+        if tok.type in ("RELATION", "OP", "COUNT"):
             translated.append(tok.value)
 
         # term
@@ -233,6 +321,7 @@ def to_formulaic(formula, bool_columns=()):
             if hasattr(tok, "ref"):
                 term = f"C({quote_var(tok.term)}, Treatment({to_val(tok.ref)!r}))"
                 name_map[term] = tok.term
+                refs[tok.term] = (tok.ref, to_val(tok.ref))
             elif hasattr(tok, "levels"):
                 term_levels = [to_val(_) for _ in tok.levels]
                 term = f"C({quote_var(tok.term)}, levels={term_levels})"
@@ -243,7 +332,7 @@ def to_formulaic(formula, bool_columns=()):
                 name_map[term] = tok.value
             translated.append(term)
 
-    return TranslatedFormula(" ".join(translated), name_map, levels)
+    return TranslatedFormula(" ".join(translated), name_map, levels, refs)
 
 
 class ModelError(Exception):
@@ -277,9 +366,10 @@ class DesignMatrix:
         for c in bool_columns:
             data[c] = pandas.Categorical(data[c], categories=[False, True])
 
-        model = to_formulaic(formula, bool_columns)
+        model = to_formulaic(formula, bool_columns, data.columns)
         logger.debug("translated formulaic formula: %s", model.describe())
         check_calls(model, data.columns)
+        check_columns(model, data)
 
         # formulaic turns a value outside a level list into a missing value
         # and drops its sample with a warning; report it as an error instead
@@ -288,9 +378,9 @@ class DesignMatrix:
                 unlisted = sorted(set(data[column].dropna()) - set(column_levels), key=str)
                 if unlisted:
                     raise FormulaParseError(
-                        f"Misspecified column in design, check term names. "
                         f"{column} has the level(s) {', '.join(map(repr, unlisted))}, "
-                        f"which are not among the levels given: {column_levels}"
+                        f"which are not among the levels the design gives it: "
+                        f"{', '.join(map(repr, column_levels))}"
                     )
 
         try:
@@ -298,9 +388,7 @@ class DesignMatrix:
                 warnings.simplefilter("error", DataMismatchWarning)
                 matrices = formulaic.model_matrix(model.describe(), data)
         except Exception as e:
-            raise FormulaParseError(
-                f"Misspecified column in design, check term names. {e.args}"
-            ) from e
+            raise FormulaParseError(formulaic_message(self._formula, e)) from e
 
         if not hasattr(matrices, "lhs"):
             raise FormulaParseError(

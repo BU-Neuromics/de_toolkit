@@ -131,6 +131,10 @@ detk-util gather -o counts.csv featurecounts.txt
   matrix and recorded in the report.
 - salmon and kallisto counts are estimates with fractions; `detk-de deseq2`
   rounds them, so they can go to it as they are.
+- `detk-util gather` is not tidyr's or csvtk's `gather`, which pivot a
+  table from wide to long format, the opposite direction. Do not use those
+  to build a counts matrix from quantifier files. Miller's own wide/long
+  verb is `reshape`.
 
 ### Check the two files
 
@@ -241,6 +245,13 @@ The design uses detk's formula mini-language:
   default of the last term only). The first column holds the feature IDs.
 - No Cook's distance filtering or independent filtering is done, so filter
   beforehand.
+- The formula takes column names only: `log2(conc)`, `np.log(x)` or a
+  z-score in a formula is an error. Derive the column in the sample info
+  first, with the tested Miller recipes in
+  [references/covariates.md](references/covariates.md) (log, log with a
+  pseudocount, z-score, centring, min-max, a constant), each run through
+  `detk-util record`, and name the derived column (`age_zscore`,
+  `conc_log2`) in the design.
 
 For two classes with many replicates (about ten or more per class), Firth
 logistic regression puts `counts` on the right and the class on the left, and
@@ -334,6 +345,10 @@ why.
   example detk's own documentation uses. It starts from a counts matrix
   taken from the airway Bioconductor package, so it does not use
   `detk-util gather`.
+- [references/covariates.md](references/covariates.md): Miller recipes, with
+  their checks, for derived covariates (log, z-score, centring, min-max, a
+  constant column), each recorded with `detk-util record`, and the warning
+  that tidyr's and csvtk's `gather` are not `detk-util gather`.
 - [references/commands.md](references/commands.md): the usage of every command
   above. `<command> <subcommand> --help` prints the authoritative usage for
   the installed version; check it when in doubt rather than guessing an

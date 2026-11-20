@@ -8,6 +8,8 @@ acceptance:
 from: [DETK-0001, DETK-0026]
 scope: [tests/check_runtime_deps.py, +pyproject.toml]
 prev: [DETK-0001, DETK-0026, release/cli-migrate]
+issue: 90
+visited: 9a704f1
 ---
 
 # Guard the removed dependencies and fix the E402 note

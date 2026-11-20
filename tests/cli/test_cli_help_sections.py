@@ -16,6 +16,7 @@ import re
 import pytest
 
 import cli_adapter
+from de_toolkit import wrapr
 from cli_tables import COMMANDS
 
 SECTIONS = ("usage:", "positional arguments:", "options:", "common options:", "examples:")
@@ -33,12 +34,40 @@ METAVARS = {"FILE", "DIR", "N", "CHAR", "COL", "COLS", "FMT", "REGEX", "WHAT", "
 
 PROGS = ["detk"] + [c.prog for c in COMMANDS]
 
-# the files an example may name, so it can be run
-COUNTS_CSV = "gene,s1,s2,s3,s4\ng1,10,20,30,40\ng2,100,150,120,90\ng3,5,7,9,11\n"
+
+# the files an example may name, so it can be run: 200 features in 6
+# samples of two groups, deterministic (a linear congruential generator), with
+# enough spread for DESeq2's dispersion fit
+def _counts_csv(n_genes=200, samples=("s1", "s2", "s3", "s4", "s5", "s6")):
+    x = 12345
+    rows = ["gene," + ",".join(samples)]
+    for g in range(n_genes):
+        base = 5 + (g * 37) % 500
+        vals = []
+        for j, _ in enumerate(samples):
+            x = (1103515245 * x + 12345) % 2**31
+            effect = 3 if (g % 10 == 0 and j >= 3) else 1
+            vals.append(str(int(base * effect * (0.6 + 0.8 * x / 2**31))))
+        rows.append(f"g{g}," + ",".join(vals))
+    return "\n".join(rows) + "\n"
+
+
 EXAMPLE_DATA = {
-    "counts.csv": COUNTS_CSV,
-    "lengths.csv": "gene,length\ng1,1000\ng2,2500\ng3,800\n",
-    "sample_info.csv": "sample,group\ns1,a\ns2,a\ns3,b\ns4,b\n",
+    "counts.csv": _counts_csv(),
+    "lengths.csv": "gene,length\n" + "".join(f"g{g},{500 + (g * 53) % 4000}\n" for g in range(200)),
+    "sample_info.csv": "sample,group,age\ns1,a,31\ns2,a,45\ns3,a,52\ns4,b,38\ns5,b,61\ns6,b,47\n",
+}
+
+# subcommands whose examples run R; they run where R is installed (the CI
+# test-r job)
+NEEDS_R = {
+    ("detk-de", "deseq2"),
+    ("detk-de", "firth"),
+    ("detk-enrich", "fgsea"),
+    ("detk-transform", "vst"),
+    ("detk-transform", "rlog"),
+    ("detk-wrapr", "check"),
+    ("detk-wrapr", "run"),
 }
 
 
@@ -156,6 +185,8 @@ def _runnable(parsed):
 @pytest.mark.parametrize("prog,sub", _leaf_params())
 def test_examples_run_where_test_data_allows(prog, sub, tmp_path, monkeypatch):
     _parser_or_skip(prog)
+    if (prog, sub) in NEEDS_R and not wrapr.check_r():
+        pytest.skip("this subcommand runs R, which is not installed")
     for name, text in EXAMPLE_DATA.items():
         (tmp_path / name).write_text(text)
     monkeypatch.chdir(tmp_path)

@@ -17,7 +17,7 @@ visited: 92d4fab
 
 ## Implementation plan
 
-- [ ] @developer Write the size factors file from `self.size_factors` with tests, update the cli-pin row, check the example and the skill describe it; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Write the size factors file from `self.size_factors` with tests, update the cli-pin row, check the example and the skill describe it; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

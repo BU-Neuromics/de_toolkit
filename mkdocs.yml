@@ -57,6 +57,7 @@ nav:
   - Worked example (airway): example.md
   - Tutorials:
     - tutorials/index.md
+    - Differential expression on airway: tutorials/airway.md
     - From quantifier outputs to a normalized matrix: tutorials/quantifiers.md
   - Concepts & file formats: concepts.md
   - Tools:

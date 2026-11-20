@@ -1,53 +1,59 @@
 r"""
-Usage:
-    detk-util tidy [options] <counts_fn> <cov_fn>
-    detk-util tidy-counts [options] <counts_fn> <cov_fn>
-    detk-util tidy-covs [options] <counts_fn> <cov_fn>
-    detk-util annotate [options] <result_fn> <mapping_fn>
-    detk-util gather [options] <files>...
+Utilities around a detk analysis: tidy a counts file and its sample
+information so their samples match (tidy, tidy-counts, tidy-covs), annotate
+a result table with feature metadata such as gene symbols (annotate), and
+gather per-sample quantifier outputs into one counts matrix (gather).
 """
 
-cmd_opts = {
-    "tidy": r"""
+_GATHER_FORMATS = ("salmon", "kallisto", "htseq", "featurecounts", "auto")
+_ON_MISMATCH = ("error", "fill", "drop")
 
+# each subcommand: the one line the command's help lists it with, its
+# description and its examples
+SUBCOMMANDS = {
+    "tidy": dict(
+        help="Subset counts columns and sample information rows to the samples in both",
+        description="""\
 Subset both the counts columns and column data rows by intersection, returning
 new outputs for both. Note the tidied column data is not output by default, and
-the user must specify the -p argument to obtain it.
-
-Usage:
-    detk-util tidy [options] <counts_fn> <cov_fn>
-
-Options:
-    -o FILE --output=FILE  Destination of tidied counts data [default: stdout]
-    -p FILE --column-data-output=FILE  Destination of tidied column data
-""",
-    "tidy-counts": r"""
-
+the user must specify the -p argument to obtain it.""",
+        examples=[
+            (
+                "Keep the samples in both files, writing both tidied files",
+                "detk-util tidy -o counts_tidy.csv -p sample_info_tidy.csv counts.csv "
+                "sample_info.csv",
+            ),
+        ],
+    ),
+    "tidy-counts": dict(
+        help="Subset and order the counts columns by the sample information rows",
+        description="""\
 Subset and order the provided counts file columns according to the rows of the
 provided column data file. Operation will fail if there are rows in the column
-data file that do not exist as columns in the counts file.
-
-Usage:
-    detk-util tidy-counts [options] <counts_fn> <cov_fn>
-
-Options:
-    -o FILE --output=FILE  Destination of tidied counts data [default: stdout]
-""",
-    "tidy-covs": r"""
-
+data file that do not exist as columns in the counts file.""",
+        examples=[
+            (
+                "Order the counts columns as the samples in sample_info.csv",
+                "detk-util tidy-counts -o counts_tidy.csv counts.csv sample_info.csv",
+            ),
+        ],
+    ),
+    "tidy-covs": dict(
+        help="Subset and order the sample information rows by the counts columns",
+        description="""\
 Subset and order the provided column data file rows according to the columns of
-the provided ccounts data file. Operation will fail if there are columns in the
-counts file that do not exist as rows in the column data file.
-
-
-Usage:
-    detk-util tidy-covs [options] <counts_fn> <cov_fn>
-
-Options:
-    -o FILE --output=FILE  Destination of tidied column data [default: stdout]
-""",
-    "annotate": r"""
-
+the provided counts data file. Operation will fail if there are columns in the
+counts file that do not exist as rows in the column data file.""",
+        examples=[
+            (
+                "Order the sample information rows as the counts columns",
+                "detk-util tidy-covs -o sample_info_tidy.csv counts.csv sample_info.csv",
+            ),
+        ],
+    ),
+    "annotate": dict(
+        help="Add feature metadata, such as gene symbols, to a result table",
+        description="""\
 Annotate a result table (e.g. the output of detk-de) with feature metadata,
 such as gene symbols, from a user-supplied mapping table. Both files are
 delimited text files whose delimiter (comma, tab, semicolon, pipe or space)
@@ -58,26 +64,18 @@ and the added columns come last: an ID with several mapping rows gets the
 distinct values joined with ';', and an ID with no mapping row (or only rows
 whose added columns are empty), or an empty or NA ID, gets empty columns; to
 drop it, use the option --drop-unmapped. Columns are given by name or by
-0-based position.
-
-Usage:
-    detk-util annotate [options] <result_fn> <mapping_fn>
-
-Options:
-    -i FIELD --idcol=FIELD  Column in the result file holding the feature IDs to
-                            join on [default: 0]
-    --map-from=COL          Column in the mapping file matching the result IDs
-                            [default: 0]
-    --map-to=COLS           Comma-separated mapping columns to add, or 'all' for
-                            every column but --map-from [default: all]
-    --strip-versions        Strip trailing .N version suffixes from Ensembl-style
-                            IDs on both sides before joining
-    --drop-unmapped         Drop result rows with no mapping instead of leaving
-                            their added columns empty
-    -o FILE --output=FILE   Destination of the annotated table [default: stdout]
-""",
-    "gather": r"""
-
+0-based position.""",
+        examples=[
+            (
+                "Add the symbol column of genes.csv to the DE results, matching on gene_id",
+                "detk-util annotate --map-from=gene_id --map-to=symbol -o de_annotated.csv "
+                "de_results.csv genes.csv",
+            ),
+        ],
+    ),
+    "gather": dict(
+        help="Gather per-sample salmon, kallisto, htseq or featureCounts output into a matrix",
+        description="""\
 Gather per-sample quantifier outputs (salmon quant.sf, kallisto abundance.tsv,
 htseq-count or featureCounts output) into one counts matrix with a row per
 feature and a column per sample. One column is extracted from each file as
@@ -107,25 +105,148 @@ the column's header (the BAM file's path) rather than the file's path.
 
 Every sample must list the same features, or gather stops with an error naming
 the differences: --on-mismatch=fill keeps every feature and fills the absent
-ones with 0, --on-mismatch=drop keeps only the features every sample lists.
-
-Usage:
-    detk-util gather [options] <files>...
-
-Options:
-    --format=FMT           salmon, kallisto, htseq, featurecounts or auto
-                           [default: auto]
-    --column=COL           Column to extract from each file, by name or 0-based
-                           position (default: the format's count column)
-    --name-from=REGEX      Regular expression deriving each sample name from
-                           its file path (the first group, or the whole match)
-    --on-mismatch=WHAT     What to do when the samples list different features:
-                           error, fill (with 0) or drop [default: error]
-    -o FILE --output=FILE  Destination of the counts matrix [default: stdout]
-""",
+ones with 0, --on-mismatch=drop keeps only the features every sample lists.""",
+        examples=[
+            (
+                "Gather the NumReads of every salmon sample into one counts matrix",
+                "detk-util gather -o counts.csv 'salmon/*/quant.sf'",
+            ),
+            (
+                "Gather htseq-count files, keeping only the features every sample lists",
+                "detk-util gather --on-mismatch=drop -o counts.csv s1.htseq s2.htseq s3.htseq",
+            ),
+        ],
+    ),
 }
 
-from docopt import docopt
+
+def _counts_and_covs(sub):
+    sub.add_argument(
+        "counts_fn",
+        metavar="<counts_fn>",
+        help="Counts file: features in rows, samples in columns, delimited",
+    )
+    sub.add_argument(
+        "cov_fn",
+        metavar="<cov_fn>",
+        help="Sample information file: samples in rows, delimited",
+    )
+
+
+def _output(sub, what):
+    sub.add_argument(
+        "-o", "--output", metavar="FILE", default="stdout", help=f"Destination of {what}"
+    )
+
+
+def build_parser():
+    "The detk-util command line parser"
+    parser = DetkParser(prog="detk-util", description=__doc__.strip())
+    add_command_options(parser)
+    subs = add_subcommands(parser)
+    for name, spec in SUBCOMMANDS.items():
+        # gather's files may be interleaved with its options
+        subs._parser_class = _IntermixedParser if name == "gather" else DetkParser
+        sub = subs.add_parser(
+            name, help=spec["help"], description=spec["description"], examples=spec["examples"]
+        )
+        if name == "tidy":
+            _counts_and_covs(sub)
+            _output(sub, "tidied counts data")
+            sub.add_argument(
+                "-p",
+                "--column-data-output",
+                metavar="FILE",
+                help="Destination of tidied column data (not written without it)",
+            )
+        elif name == "tidy-counts":
+            _counts_and_covs(sub)
+            _output(sub, "tidied counts data")
+        elif name == "tidy-covs":
+            _counts_and_covs(sub)
+            _output(sub, "tidied column data")
+        elif name == "annotate":
+            sub.add_argument(
+                "result_fn",
+                metavar="<result_fn>",
+                help="Result table to annotate, e.g. the output of detk-de",
+            )
+            sub.add_argument(
+                "mapping_fn",
+                metavar="<mapping_fn>",
+                help="Mapping table: feature IDs and the metadata columns to add",
+            )
+            sub.add_argument(
+                "-i",
+                "--idcol",
+                metavar="COL",
+                default="0",
+                help="Column in the result file holding the feature IDs to join on",
+            )
+            sub.add_argument(
+                "--map-from",
+                metavar="COL",
+                default="0",
+                help="Column in the mapping file matching the result IDs",
+            )
+            sub.add_argument(
+                "--map-to",
+                metavar="COLS",
+                default="all",
+                help="Comma-separated mapping columns to add, or 'all' for every column "
+                "but --map-from",
+            )
+            sub.add_argument(
+                "--strip-versions",
+                action="store_true",
+                help="Strip trailing .N version suffixes from Ensembl-style IDs before joining",
+            )
+            sub.add_argument(
+                "--drop-unmapped",
+                action="store_true",
+                help="Drop result rows with no mapping instead of leaving their added "
+                "columns empty",
+            )
+            _output(sub, "the annotated table")
+        elif name == "gather":
+            sub.add_argument(
+                "files",
+                metavar="<files>",
+                nargs="+",
+                help="Quantifier output files, one per sample (a quoted glob is expanded)",
+            )
+            sub.add_argument(
+                "--format",
+                metavar="FMT",
+                default="auto",
+                choices=_GATHER_FORMATS,
+                help="Format of the files; auto detects it from each file's header",
+            )
+            sub.add_argument(
+                "--column",
+                metavar="COL",
+                help="Column to extract from each file, by name or 0-based position "
+                "(without it: the format's count column)",
+            )
+            sub.add_argument(
+                "--name-from",
+                metavar="REGEX",
+                help="Regular expression deriving each sample name from its file path "
+                "(the first group, or the whole match)",
+            )
+            sub.add_argument(
+                "--on-mismatch",
+                metavar="WHAT",
+                default="error",
+                choices=_ON_MISMATCH,
+                help="What to do when the samples list different features: stop with an "
+                "error, fill with 0 or drop them",
+            )
+            _output(sub, "the counts matrix")
+        add_common_options(sub)
+    return parser
+
+
 import logging
 import pandas
 import re
@@ -133,8 +254,12 @@ import sys
 
 from .common import (
     DetkModule,
-    _cli_doc,
+    DetkParser,
+    add_command_options,
+    add_common_options,
+    add_subcommands,
     make_cli_count_obj,
+    parse_cli,
     read_delimited,
     read_id_table,
     set_logging,
@@ -360,18 +485,18 @@ def _annotate_main(args):
     try:
         # read as text, so numeric IDs keep their leading zeros and every
         # value is written back as it was read
-        result = read_delimited(args["<result_fn>"], dtype=str, keep_default_na=False)
-        mapping = read_delimited(args["<mapping_fn>"], dtype=str)
+        result = read_delimited(args.result_fn, dtype=str, keep_default_na=False)
+        mapping = read_delimited(args.mapping_fn, dtype=str)
         logger.info("shape of result: %s", result.shape)
         logger.info("shape of mapping: %s", mapping.shape)
         annotated = Annotate(
             result,
             mapping,
-            idcol=args["--idcol"],
-            map_from=args["--map-from"],
-            map_to=args["--map-to"],
-            strip_versions=args["--strip-versions"],
-            drop_unmapped=args["--drop-unmapped"],
+            idcol=args.idcol,
+            map_from=args.map_from,
+            map_to=args.map_to,
+            strip_versions=args.strip_versions,
+            drop_unmapped=args.drop_unmapped,
         )
     except Exception as e:
         logger.error(e)
@@ -379,16 +504,16 @@ def _annotate_main(args):
 
     write_output(annotated.output, args)
 
-    if not args["--no-report"]:
+    if not args.no_report:
         # the module JSON has no slot for a second input file; keep the
         # mapping file's path with the parameters so the provenance names it
-        annotated["params"]["mapping_fn"] = args["<mapping_fn>"]
-        logging.info("writing report to %s", args["--report-dir"])
-        with DetkReport(args["--report-dir"]) as r:
+        annotated["params"]["mapping_fn"] = args.mapping_fn
+        logging.info("writing report to %s", args.report_dir)
+        with DetkReport(args.report_dir) as r:
             r.add_module(
                 annotated,
-                in_file_path=args["<result_fn>"],
-                out_file_path=args["--output"],
+                in_file_path=args.result_fn,
+                out_file_path=args.output,
                 workdir=os.getcwd(),
             )
 
@@ -733,11 +858,11 @@ def _gather_main(args):
 
     try:
         gathered = Gather(
-            _expand_paths(args["<files>"]),
-            fmt=args["--format"],
-            column=args["--column"],
-            name_from=args["--name-from"],
-            on_mismatch=args["--on-mismatch"],
+            _expand_paths(args.files),
+            fmt=args.format,
+            column=args.column,
+            name_from=args.name_from,
+            on_mismatch=args.on_mismatch,
         )
     except Exception as e:
         logger.error(e)
@@ -745,35 +870,44 @@ def _gather_main(args):
 
     write_output(gathered.output, args)
 
-    if not args["--no-report"]:
+    if not args.no_report:
         # there are many inputs and the module JSON has one input slot; the
         # files are listed in the parameters (params["files"]) instead
-        logging.info("writing report to %s", args["--report-dir"])
-        with DetkReport(args["--report-dir"]) as r:
-            r.add_module(gathered, out_file_path=args["--output"], workdir=os.getcwd())
+        logging.info("writing report to %s", args.report_dir)
+        with DetkReport(args.report_dir) as r:
+            r.add_module(gathered, out_file_path=args.output, workdir=os.getcwd())
 
     logging.info("done")
 
 
+class _IntermixedParser(DetkParser):
+    """
+    A parser whose positionals may come between its options, as gather's
+    <files>... could under docopt (``a.sf --format=salmon b.sf``; pinned in
+    tests/cli/cli_tables.py): argparse gives a positional only one run of
+    the command line unless it is parsed with parse_known_intermixed_args.
+    """
+
+    _intermixing = False
+
+    def parse_known_args(self, args=None, namespace=None):
+        if self._intermixing:
+            # parse_known_intermixed_args calls back here on some Pythons
+            return super().parse_known_args(args, namespace)
+        self._intermixing = True
+        try:
+            namespace, extras = self.parse_known_intermixed_args(args, namespace)
+        finally:
+            self._intermixing = False
+        namespace.__dict__.pop("_detk_seen", None)
+        return namespace, extras
+
+
 def main(argv=sys.argv):
 
-    if "--version" in argv:
-        from .version import __version__
-
-        print(__version__)
-        return
-
-    if len(argv) < 2 or (len(argv) > 1 and argv[1] not in cmd_opts):
-        docopt(_cli_doc(__doc__))
+    args = parse_cli(build_parser(), argv)
+    cmd = args.subcommand
     argv = argv[1:]
-    cmd = argv[0]
-
-    # add the common opts to the docopt strings
-    cmd_opts_aug = {}
-    for k, v in cmd_opts.items():
-        cmd_opts_aug[k] = _cli_doc(v)
-
-    args = docopt(cmd_opts_aug[cmd], argv)
 
     if cmd == "annotate":
         set_logging(args)
@@ -794,25 +928,19 @@ def main(argv=sys.argv):
 
         out = count_obj.counts
 
-        if args["--column-data-output"]:
-            logger.info("...and covs to --column-data-output=%s", args["--column-data-output"])
-            count_obj.column_data.to_csv(
-                args["--column-data-output"], sep=args.get("--out-delim", ",")
-            )
+        if args.column_data_output:
+            logger.info("...and covs to --column-data-output=%s", args.column_data_output)
+            count_obj.column_data.to_csv(args.column_data_output, sep=args.out_delim)
 
     elif cmd in ("tidy-counts", "tidy-covs"):
         logger.info("performing %s", cmd)
 
-        args = docopt(cmd_opts_aug[cmd], argv)
-        set_logging(args)
-        logger.info("cmd: %s", " ".join(argv))
-
         # read in the counts and covs so we can compare; the IDs and sample
         # names are read as text, as the counts header is, so a sample named
         # 001 in the covariates matches the counts column 001
-        counts = read_id_table(args["<counts_fn>"])
+        counts = read_id_table(args.counts_fn)
         logger.info("shape of counts: %s", counts.shape)
-        covs = read_id_table(args["<cov_fn>"])
+        covs = read_id_table(args.cov_fn)
         logger.info("shape of covs: %s", covs.shape)
 
         logger.info("shape of counts after merge: %s", count_obj.counts.shape)

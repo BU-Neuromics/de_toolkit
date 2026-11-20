@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release/cli-gaps, step: s2}
 applies: [release/cli-gaps]
 issue: 99
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's delegation via the driver session, 2026-11-20: Option B, fix it in release/cli-gaps' next round (intermixed leaf parsers for every parser with an optional positional, a 3.11-run test per command); restores DETK-0001's CLI promise on a supported Python, no scope change"}
 ---
 
 # On Python 3.11 an optional positional after an option is rejected: fix before 1.0, and where

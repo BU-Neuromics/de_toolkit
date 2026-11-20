@@ -22,7 +22,6 @@ dependencies = [
     "ply",
     "scipy",
     "scikit-learn",
-    "statsmodels>=0.14",
     "terminaltables",
 ]
 keywords = ["bioinformatics", "biology", "sequencing", "NGS"]
@@ -44,9 +43,11 @@ Repository = "https://github.com/BU-Neuromics/de_toolkit"
 Documentation = "https://bu-neuromics.github.io/de_toolkit/"
 
 # kept for plain-pip users (`pip install -e '.[test]'`); uv users get the same
-# packages via the dev dependency group below
+# packages via the dev dependency group below. statsmodels is test-only
+# (DETK-0026): tests/de/test_de.py compares Firth regression with its logistic
+# regression; no module of de_toolkit imports it (tests/check_runtime_deps.py)
 [project.optional-dependencies]
-test = ["pytest", "pytest-cov"]
+test = ["pytest", "pytest-cov", "statsmodels>=0.14"]
 
 [dependency-groups]
 dev = [
@@ -55,6 +56,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "ruff",
+    "statsmodels>=0.14",
     "vl-convert-python",
 ]
 docs = [

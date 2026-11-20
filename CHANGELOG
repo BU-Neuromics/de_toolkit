@@ -19,6 +19,13 @@ predates everything below.
 - Report frontend rebuilt on vendored Vega-Lite, removing the Highcharts
   licensing conflict; every module now has report views
 - Snakemake removed from the internal machinery
+- statsmodels is no longer installed with detk: no module of detk imports
+  it, and only the test suite uses it, so it moved to the `test` extra
+  (`pip install 'de_toolkit[test]'`) and the uv `dev` group. CI checks that
+  every detk module imports, and a detk command runs, without it
+- `environment.yml`, an out-of-date conda environment file that nothing
+  referred to, is removed; `pyproject.toml` is the one list of detk's
+  dependencies
 - Many latent bug fixes, including: FLGCounts params were never recorded,
   FPKM report emission was unserializable, and shadowed tests were revived;
   `detk-norm library` and `detk-norm fpkm` failed on every CLI run (the

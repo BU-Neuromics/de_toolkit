@@ -89,6 +89,14 @@ class DetkHelpFormatter(argparse.RawDescriptionHelpFormatter):
     def __init__(self, prog):
         super().__init__(prog, width=HELP_WIDTH, max_help_position=30)
 
+    def _format_action_invocation(self, action):
+        # "-o, --output FILE" on every Python (3.11 and 3.12 repeat the
+        # metavar: "-o FILE, --output FILE")
+        if not action.option_strings or action.nargs == 0:
+            return super()._format_action_invocation(action)
+        default = self._get_default_metavar_for_optional(action)
+        return ", ".join(action.option_strings) + " " + self._format_args(action, default)
+
     def _split_lines(self, text, width):
         # keep "(default: x)" on one line
         glued = text.replace("(default: ", "(default:\0")

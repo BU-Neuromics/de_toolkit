@@ -1,10 +1,12 @@
 ---
 template: analysis
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release}
 applies: [release]
+revisions:
+  - {date: 2026-11-20, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's answer relayed by the driver session, 2026-11-20: the research behind DETK-0051 (\"go with c\"), kept at his word (\"I'd like to keep it for later\")"}
 ---
 
 # Survey of CSV command-line tools for deriving covariates

@@ -48,8 +48,9 @@ predates everything below.
 - Formulas take column names only (DETK-0050): a term that is not a column
   of the column data file and looks like a call, such as `np.log(x)` or
   `log2(x)`, is an error that says so; a derived column belongs in the
-  column data file. docs/formulas.md no longer says such expressions may be
-  passed; they never worked (`np.log(x)` was read as a column name)
+  column data file, and points to the Miller recipes page. docs/formulas.md
+  no longer says such expressions may be passed; they never worked
+  (`np.log(x)` was read as a column name)
 - A term of a design formula that looks like a number, other than the
   intercept numbers `0` and `1` (`counts ~ 0 + x`, `counts ~ 1`), is a usage
   error (exit 2) naming it, on either side of `~` (DETK-0190). A column
@@ -217,6 +218,31 @@ predates everything below.
   transform, summary statistics, the report and the crate, with no R, on
   data simulated by a seeded script next to the page; it runs in every test
   job (#100)
+- Tutorial: differential expression on airway. The airway analysis
+  (statistics, filtering, DESeq2 normalization with `--size-factors`, VST,
+  entropy outliers, `detk-de deseq2` with the cell + dex design, gene
+  symbols with `detk-util annotate`, the report and the crate) as one page
+  that runs in the CI job with R; a test checks its DESeq2 results and size
+  factors against DESeq2 run directly in R. The airway commands now exist
+  only on that page: `docs/example.md` links it, `examples/airway/run.sh`
+  runs it and publishes its report and crate as `docs/example/` (regenerated
+  from it), and `tests/example/` is gone. The agent skill's airway reference
+  shows the same workflow, `--size-factors` restored, and a test keeps it in
+  step with the page (#111)
+- Derived covariates with Miller (`docs/recipes/covariates.md`): tested
+  Miller recipes for the derived columns a design formula no longer computes
+  (DETK-0051, DETK-0062): a constant column, `<column>_log2`, `_log10`,
+  `_ln`, `_log2_pc1`, `_zscore` (sd over n - 1), `_center` and `_minmax`,
+  each run through `detk-util record`. Each checks its input first: a
+  missing or non-numeric value, a value at or below zero for a log (after
+  the pseudocount), or a column that does not vary for the z-score and
+  min-max exits 1, names the samples on stderr and leaves no output file.
+  The page runs as a tutorial; tests check the values against numpy and
+  R's `scale()`, the IDs as written and every failure. Miller is not a detk
+  dependency: the tests skip without `mlr`, and the CI job with R installs
+  it. The agent skill carries the recipes (`references/covariates.md`) and
+  warns that tidyr's and csvtk's `gather` pivot to long format, unlike
+  `detk-util gather` (#115)
 
 ### Fixed
 - `detk-outlier entropy -p P` flags the features below the P-th fraction of
@@ -236,6 +262,25 @@ predates everything below.
   order: past the failing line, the rows were relabelled by position, which
   would have put another feature's result on every feature after an all-zero
   one (#123)
+- `detk-util tidy -p FILE` and `detk-util tidy-covs` write the tidied
+  column data with the sample sheet's own header and columns, in its order,
+  each value as written: the first header cell is kept (`sample,condition`,
+  not `,condition,counts`) and no `counts` column of zeros is added. A
+  sheet with its own `counts` column keeps it. The tidied counts are
+  unchanged (#114)
+- `detk-util tidy`, `tidy-counts` and `tidy-covs` write to the report
+  unless `--no-report`, as their help says: a module entry (`tidy`,
+  `tidycounts`, `tidycovs`) naming both input files and every output,
+  `-p`'s included, so the Process Run Crate lists the step with its inputs
+  and outputs. They wrote no report before (#114)
+- Module JSON (`detk_report/json/*.json`), the report's embedded payload
+  and `ro-crate-metadata.json` are strictly valid JSON: a missing or
+  non-finite number (NaN, inf, -inf) is written as `null`, where detk wrote
+  the bare tokens `NaN` and `inf` that jq, `JSON.parse` and other strict
+  readers reject (seen with a missing `--color-col` value, PCA and
+  `rowzero`). Serialization refuses a bare NaN or Infinity, the report's
+  views show the nulls as missing, and `detk-report` still re-renders a
+  report directory written before, with bare NaN in its module JSON (#116)
 - `detk-transform vst` and `detk-transform rlog` with `--rda FILE` write
   FILE, as their help says: the `DESeqTransform` object DESeq2 returns,
   with `saveRDS()`, as `detk-de deseq2 --rda` does. The option was accepted

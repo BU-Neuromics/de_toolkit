@@ -359,7 +359,7 @@ from .common import (
     add_command_options,
     add_common_options,
     add_subcommands,
-    make_cli_count_obj,
+    CountMatrix,
     parse_cli,
     read_delimited,
     read_id_table,
@@ -401,6 +401,169 @@ def stub(f):
         raise Stub(f"Not yet implemented - {f.__module__}.{f.__name__}")
 
     return stub
+
+
+# ---------------------------------------------------------------------------
+# tidy, tidy-counts, tidy-covs: match a counts file and its sample information
+# ---------------------------------------------------------------------------
+
+# the module name each tidy subcommand records in the report
+_TIDY_NAMES = {"tidy": "tidy", "tidy-counts": "tidycounts", "tidy-covs": "tidycovs"}
+
+
+class Tidy(DetkModule):
+    """
+    Match the samples of the counts table *counts* (samples in columns) and
+    the column data *column_data* (samples in rows): keep the samples in
+    both, in the order of the counts columns, the way detk's other commands
+    match them (:class:`~de_toolkit.common.CountMatrix`).
+
+    :attr:`counts` is the tidied counts and :attr:`column_data` the tidied
+    column data with exactly the columns of *column_data*, in its order and
+    under its index name: the ``counts`` column CountMatrix adds for its
+    design machinery is not part of it. *command* names the subcommand
+    (``tidy``, ``tidy-counts`` or ``tidy-covs``), which is the module's name
+    in the report, and :attr:`output` its main output: the counts for tidy
+    and tidy-counts, the column data for tidy-covs. tidy-counts raises
+    ValueError when a column data sample is not a counts column, tidy-covs
+    when a counts column is not a column data sample.
+    """
+
+    def __init__(self, counts, column_data, command="tidy"):
+        if command not in _TIDY_NAMES:
+            raise ValueError(f"unknown tidy command {command!r}")
+        self.command = command
+        self["params"] = {}
+
+        if command == "tidy-counts" and len(column_data.index.difference(counts.columns)):
+            raise ValueError(
+                "tidy-counts requires that all row IDs in the "
+                "column data file exist as columns in the counts file."
+            )
+        if command == "tidy-covs" and len(counts.columns.difference(column_data.index)):
+            raise ValueError(
+                "tidy-covs requires that all column IDs in the "
+                "counts data file exist as rows in the column data file."
+            )
+
+        # CountMatrix adds a counts column to the frame it is given
+        matched = CountMatrix(counts, column_data.copy())
+        samples = matched.counts.columns
+        self.counts = matched.counts
+        tidied = column_data.loc[list(samples), list(column_data.columns)]
+        # indexing by the counts columns would name the index as they are
+        tidied.index.name = column_data.index.name
+        self.column_data = tidied
+
+        kept = set(samples)
+        self["properties"] = {
+            "num_features": int(counts.shape[0]),
+            "num_counts_samples": int(counts.shape[1]),
+            "num_column_data_samples": int(column_data.shape[0]),
+            "num_samples": int(len(samples)),
+            "counts_samples_dropped": [str(s) for s in counts.columns if s not in kept],
+            "column_data_samples_dropped": [str(s) for s in column_data.index if s not in kept],
+        }
+        logger.info("samples in both: %d", len(samples))
+        logger.info("counts columns lost: %d", len(self["properties"]["counts_samples_dropped"]))
+        logger.info(
+            "column data rows lost: %d", len(self["properties"]["column_data_samples_dropped"])
+        )
+
+    @property
+    def name(self):
+        return _TIDY_NAMES[self.command]
+
+    @property
+    def output(self):
+        return self.column_data if self.command == "tidy-covs" else self.counts
+
+
+def read_column_data(f):
+    """
+    Read the column data (sample information) file *f*, samples in rows,
+    indexed by its first column, every field (the IDs too) as text exactly as
+    written (empty cells stay empty), so the tidied file is written as it was
+    read. The header may name the ID column (``sample,condition``), leave it
+    empty (``,condition``, R's write.csv) or leave it out, one field short
+    (``condition``, R's write.table with ``sep=","``); the index is named by
+    the header's first cell in the first case only.
+    """
+    from pandas.errors import EmptyDataError
+
+    from .common import _first_line, _read_with, _rewindable, sniff_delimiter
+
+    # every line is read as fields of text, the header too, so pandas types
+    # nothing: an index pandas infers from a short header would be typed
+    # (001 read as 1), so the layout is told from the field counts instead
+    f, compression = _rewindable(f)
+    sep = sniff_delimiter(_first_line(f, compression))
+
+    def read(**kwargs):
+        return _read_with(
+            f, compression, sep, header=None, dtype=str, keep_default_na=False, **kwargs
+        )
+
+    header = read(nrows=1).iloc[0].tolist()
+    try:
+        width = read(skiprows=1, nrows=1).shape[1]
+    except EmptyDataError:
+        width = len(header)
+    short = width == len(header) + 1
+    if not short and width != len(header):
+        raise ValueError(
+            f"the header of the column data has {len(header)} fields and its first "
+            f"row {width}; they must be as many, or the header one fewer"
+        )
+    try:
+        rows = read(skiprows=1, names=list(range(width)))
+    except EmptyDataError:
+        rows = pandas.DataFrame(columns=list(range(width)), dtype=str)
+
+    table = rows.iloc[:, 1:]
+    table.index = pandas.Index(rows[0].to_numpy(), name=None if short else (header[0] or None))
+    table.columns = header if short else header[1:]
+    return table
+
+
+def _tidy_main(args):
+    import os
+
+    from .report import DetkReport
+
+    cmd = args.subcommand
+    logger.info("performing %s", cmd)
+    # the IDs and sample names are read as text, as the counts header is, so
+    # a sample named 001 in the column data matches the counts column 001
+    counts = read_id_table(args.counts_fn)
+    logger.info("shape of counts: %s", counts.shape)
+    column_data = read_column_data(args.cov_fn)
+    logger.info("shape of column data: %s", column_data.shape)
+
+    tidied = Tidy(counts, column_data, command=cmd)
+
+    write_output(tidied.output, args)
+    outputs = [args.output]
+    p_output = getattr(args, "column_data_output", None)
+    if p_output:
+        logger.info("writing tidied column data to %s", p_output)
+        tidied.column_data.to_csv(p_output, sep=args.out_delim)
+        outputs.append(p_output)
+
+    if not args.no_report:
+        logging.info("writing report to %s", args.report_dir)
+        with DetkReport(args.report_dir) as r:
+            r.add_module(
+                tidied,
+                in_file_path=args.counts_fn,
+                out_file_path=args.output,
+                column_data_path=args.cov_fn,
+                workdir=os.getcwd(),
+                in_file_paths=[args.counts_fn, args.cov_fn],
+                out_file_paths=outputs,
+            )
+
+    logging.info("done")
 
 
 # ---------------------------------------------------------------------------
@@ -1179,59 +1342,9 @@ def main(argv=sys.argv):
         logger.info("cmd: %s", " ".join(argv))
         return _record_main(args)
 
-    count_obj = make_cli_count_obj(args)
     set_logging(args)
     logger.info("cmd: %s", " ".join(argv))
-
-    if cmd == "tidy":
-        logger.info("tidying counts...")
-
-        out = count_obj.counts
-
-        if args.column_data_output:
-            logger.info("...and covs to --column-data-output=%s", args.column_data_output)
-            count_obj.column_data.to_csv(args.column_data_output, sep=args.out_delim)
-
-    elif cmd in ("tidy-counts", "tidy-covs"):
-        logger.info("performing %s", cmd)
-
-        # read in the counts and covs so we can compare; the IDs and sample
-        # names are read as text, as the counts header is, so a sample named
-        # 001 in the covariates matches the counts column 001
-        counts = read_id_table(args.counts_fn)
-        logger.info("shape of counts: %s", counts.shape)
-        covs = read_id_table(args.cov_fn)
-        logger.info("shape of covs: %s", covs.shape)
-
-        logger.info("shape of counts after merge: %s", count_obj.counts.shape)
-        logger.info("counts columns lost: %s", counts.shape[1] - count_obj.counts.shape[1])
-
-        logger.info("shape of covs after merge: %s", count_obj.column_data.shape)
-        logger.info("cov rows lost: %s", covs.shape[1] - count_obj.column_data.shape[1])
-
-        if cmd == "tidy-counts":
-            # check to make sure the counts columns are a subset of the column
-            # data rows
-            if len(covs.index.difference(counts.columns)) != 0:
-                raise ValueError(
-                    "tidy-counts requires that all row IDs in the "
-                    "column data file exist as columns in the counts file."
-                )
-            out = count_obj.counts
-
-        elif cmd == "tidy-covs":
-            # check to make sure the column data rows are a subset of the counts
-            # columns
-            if len(counts.columns.difference(covs.index)) != 0:
-                raise ValueError(
-                    "tidy-covs requires that all column IDs in the "
-                    "counts data file exist as rows in the column data file."
-                )
-            out = count_obj.column_data
-
-    write_output(out, args)
-
-    logging.info("done")
+    return _tidy_main(args)
 
 
 if __name__ == "__main__":

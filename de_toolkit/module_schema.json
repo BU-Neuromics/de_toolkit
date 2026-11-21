@@ -78,11 +78,11 @@
     },
     "params": {
       "type": "object",
-      "description": "module invocation parameters; empty only for modules that genuinely take none"
+      "description": "module invocation parameters; empty only for modules that genuinely take none. A number that is missing or not finite (NaN, inf) is null: the document is strictly valid JSON, with no bare NaN or Infinity"
     },
     "properties": {
       "type": "object",
-      "description": "module-specific results used by the report views"
+      "description": "module-specific results used by the report views. A number that is missing or not finite (NaN, inf) is null, at any nesting level: the document is strictly valid JSON, with no bare NaN or Infinity"
     }
   }
 }

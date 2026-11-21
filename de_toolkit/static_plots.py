@@ -39,8 +39,15 @@ def scatter_svg(rows, x, y, xlabel, ylabel, color_by="sig", title=None):
     try:
         order = ("ns", "down", "up")  # significant points drawn on top
         for cls in order:
-            xs = [r[x] for r in rows if r.get(color_by, "ns") == cls and r.get(x) is not None]
-            ys = [r[y] for r in rows if r.get(color_by, "ns") == cls and r.get(y) is not None]
+            # a point missing either coordinate (null) is left out whole, so
+            # the two lists stay paired
+            pts = [
+                (r[x], r[y])
+                for r in rows
+                if r.get(color_by, "ns") == cls and r.get(x) is not None and r.get(y) is not None
+            ]
+            xs = [px for px, _ in pts]
+            ys = [py for _, py in pts]
             if not xs:
                 continue
             ax.scatter(

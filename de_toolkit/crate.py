@@ -33,11 +33,14 @@ to avoid a runtime dependency; conformance is checked in the test suite.
 """
 
 import json
+import math
 import os
 import pathlib
 import urllib.parse
 import uuid
 from datetime import datetime, UTC
+
+import numpy as np
 
 from .version import __version__
 
@@ -47,6 +50,28 @@ RO_CRATE_CONTEXT = "https://w3id.org/ro/crate/1.1/context"
 # the Workflow Run terms (sha256), added to the context when a file has one
 WFRUN_CONTEXT = "https://w3id.org/ro/terms/workflow-run/context"
 CRATE_FILENAME = "ro-crate-metadata.json"
+
+
+def finite_json(obj):
+    """A copy of *obj* that is strictly valid JSON when serialized (#116):
+    a non-finite number (NaN, inf, -inf), Python or numpy, at any nesting
+    level, becomes None (JSON null); numpy scalars and arrays become their
+    Python values; tuples become lists. Mappings keep their key order."""
+    if isinstance(obj, (bool, np.bool_)):
+        return bool(obj)
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if isinstance(obj, (float, np.floating)):
+        value = float(obj)
+        return value if math.isfinite(value) else None
+    if isinstance(obj, dict):
+        return {k: finite_json(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [finite_json(v) for v in obj]
+    if isinstance(obj, np.ndarray):
+        return finite_json(obj.tolist())
+    return obj
+
 
 _REPO_URL = "https://github.com/BU-Neuromics/de_toolkit"
 _DOCS_URL = "https://bu-neuromics.github.io/de_toolkit/"
@@ -72,6 +97,9 @@ SUBTOOLS = {
     "deseq2counts": ("detk-de", "deseq2"),
     "flgcounts": ("detk-de", "firth"),
     "fgseares": ("detk-enrich", "fgsea"),
+    "tidy": ("detk-util", "tidy"),
+    "tidycounts": ("detk-util", "tidy-counts"),
+    "tidycovs": ("detk-util", "tidy-covs"),
     "annotate": ("detk-util", "annotate"),
     "gather": ("detk-util", "gather"),
     "record": ("detk-util", "record"),
@@ -240,7 +268,7 @@ def build_crate(docs, crate_root):
                     "name": f"{_tool_label(name)} {key}",
                     "value": value
                     if isinstance(value, (str, int, float, bool))
-                    else json.dumps(value),
+                    else json.dumps(finite_json(value), allow_nan=False),
                 }
             )
             objects.append({"@id": pid})
@@ -331,5 +359,5 @@ def write_crate(docs, crate_root):
     crate = build_crate(docs, crate_root)
     path = os.path.join(crate_root, CRATE_FILENAME)
     with open(path, "w") as f:
-        json.dump(crate, f, indent=2)
+        json.dump(finite_json(crate), f, indent=2, allow_nan=False)
     return path

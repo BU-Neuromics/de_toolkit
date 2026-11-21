@@ -73,7 +73,12 @@ def _color_by(mod):
     if not cb:
         return None, {}
     values = cb["values"]
-    numeric = all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in values.values())
+    # a missing value (null in the module JSON) neither makes a numeric
+    # column nominal nor a nominal one numeric
+    present = [v for v in values.values() if v is not None]
+    numeric = bool(present) and all(
+        isinstance(v, (int, float)) and not isinstance(v, bool) for v in present
+    )
     enc = {
         "field": _COLOR_FIELD,
         "type": "quantitative" if numeric else "nominal",
@@ -437,6 +442,29 @@ def build_gather(mod):
         )
     if p.get("htseq_counters"):
         notes.append("htseq-count summary lines left out: " + ", ".join(p["htseq_counters"]))
+    # plain text: the page renders every view text field as text (#65)
+    note = "; ".join(notes) if notes else None
+    return {"type": "kv", "items": items, "note": note}
+
+
+def build_tidy(mod):
+    p = mod.get("properties", {})
+    kept = p.get("num_samples")
+    if kept is None:
+        return {"type": "raw"}
+    items = [
+        {"label": "samples kept", "value": kept},
+        {"label": "counts samples", "value": p.get("num_counts_samples")},
+        {"label": "column data samples", "value": p.get("num_column_data_samples")},
+        {"label": "features", "value": p.get("num_features")},
+    ]
+    notes = []
+    if p.get("counts_samples_dropped"):
+        notes.append("counts samples dropped: " + ", ".join(map(str, p["counts_samples_dropped"])))
+    if p.get("column_data_samples_dropped"):
+        notes.append(
+            "column data samples dropped: " + ", ".join(map(str, p["column_data_samples_dropped"]))
+        )
     # plain text: the page renders every view text field as text (#65)
     note = "; ".join(notes) if notes else None
     return {"type": "kv", "items": items, "note": note}
@@ -944,6 +972,24 @@ REGISTRY = {
         "Gathered counts matrix",
         "How many samples and features were gathered, and any filled or dropped.",
         build_gather,
+    ),
+    "tidy": (
+        "util",
+        "Tidied counts and column data",
+        "The samples in both the counts and the column data, and those either lost.",
+        build_tidy,
+    ),
+    "tidycounts": (
+        "util",
+        "Counts tidied to the column data",
+        "The counts columns kept and ordered by the column data's samples.",
+        build_tidy,
+    ),
+    "tidycovs": (
+        "util",
+        "Column data tidied to the counts",
+        "The column data rows kept and ordered by the counts' samples.",
+        build_tidy,
     ),
     # no view in 1.0 (DETK-0061 item 6): the card names the step, and its
     # command, tool, version and file checksums are in its data

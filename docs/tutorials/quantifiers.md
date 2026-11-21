@@ -102,18 +102,24 @@ S5,treat
 S6,treat
 ```
 
-`detk-util tidy` keeps the samples that are in both files, so the counts lose
-P1:
+`detk-util tidy` keeps the samples that are in both files, in the order of
+the counts columns, so the counts lose P1. `-p` writes the sample sheet of
+those samples too, with the same columns and header as `samples.csv`:
 
 ```bash
-detk-util tidy -o counts_tidy.csv counts.csv samples.csv
+detk-util tidy -o counts_tidy.csv -p samples_tidy.csv counts.csv samples.csv
 head -n 1 counts_tidy.csv
+head -n 2 samples_tidy.csv
 ```
 
 <!-- tutorial: expect -->
 ```text
 ,S1,S2,S3,S4,S5,S6
+sample,condition
+S1,ctrl
 ```
+
+The steps below use the two tidied files.
 
 ## Counts per million
 
@@ -181,7 +187,7 @@ entropy and a principal component analysis. With the sample sheet it colors
 the report's plots by condition:
 
 ```bash
-detk-stats summary --color-col=condition -o summary.csv log2cpm.csv samples.csv
+detk-stats summary --color-col=condition -o summary.csv log2cpm.csv samples_tidy.csv
 head -n 4 summary.csv
 ```
 
@@ -217,8 +223,7 @@ detk wrote `ro-crate-metadata.json`, a
 [Process Run Crate](../report.md#standards-based-provenance-the-process-run-crate)
 that describes each step's command, its parameters and the files it read and
 wrote, in terms any RO-Crate tool can read. The steps it lists (the summary
-is listed as the six statistics it is made of; tidy writes no report, so it
-is not listed):
+is listed as the six statistics it is made of):
 
 ```bash
 grep -o '"name": "detk-[^"]* run"' ro-crate-metadata.json | sort -u
@@ -236,6 +241,7 @@ grep -o '"name": "detk-[^"]* run"' ro-crate-metadata.json | sort -u
 "name": "detk-stats rowzero run"
 "name": "detk-transform plog run"
 "name": "detk-util gather run"
+"name": "detk-util tidy run"
 ```
 
 ## Where next

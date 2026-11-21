@@ -10,15 +10,19 @@ acceptance:
 from: [DETK-0064]
 scope: [new:docs/tutorials/, docs/example.md, docs/example/, examples/airway/, tests/example/, new:tests/tutorials/, +skills/detk/references/airway.md, +tests/skills/test_skills.py, +mkdocs.yml, +CHANGELOG]
 prev: [DETK-0064, release/tutorial-harness, release/cli-gaps, release/size-factors, release/formula-rename, release/r-design-names]
+issue: 111
+visited: 09ef1fd
+status: done
+done: 1fa11d1
 ---
 
 # Tutorial: differential expression on airway
 
 ## Implementation plan
 
-- [ ] @developer Turn the airway example into the tutorial page with checked outputs and the DESeq2 comparison, retire the copies in run.sh and tests/example, regenerate the published report and crate; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Follow the page as a new user would, check its outputs against the report, and confirm the R job ran it <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Turn the airway example into the tutorial page with checked outputs and the DESeq2 comparison, retire the copies in run.sh and tests/example, regenerate the published report and crate; CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Follow the page as a new user would, check its outputs against the report, and confirm the R job ran it <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

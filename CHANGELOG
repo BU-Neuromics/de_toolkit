@@ -160,6 +160,13 @@ predates everything below.
   usage error on Python 3.11
 - `detk-filter` accepts a column or group name of one character
   (`mean(cond[a]) > 1`), which its expression language rejected
+- In a `detk-filter` expression, `and` binds tighter than `or` and both
+  group to the left, as in Python, SQL and R (DETK-0270, #124). An
+  expression that mixes `and` and `or` without parentheses now groups
+  differently and may keep different rows: `A and B or C` is `(A and B) or
+  C`, where 0.x read it as `A and (B or C)`. Parenthesized expressions, and
+  ones using only `and` or only `or`, keep the same rows. To keep the 0.x
+  result, add the parentheses: `A and (B or C)`
 
 ### Added
 - Shell completion for bash, zsh and tcsh, for `detk` and every
@@ -245,6 +252,21 @@ predates everything below.
   `detk-util gather` (#115)
 
 ### Fixed
+- A design that formula syntax reads but detk cannot build (a column the
+  column data does not have, a level its column lacks, a number-like term
+  under DETK-0190) is reported as `Invalid design: <reason>`, no longer as
+  `Invalid design, detk formula syntax could not parse it: ...`; a design
+  the syntax cannot read says `Invalid design: could not read the design
+  ...` (#124)
+- `detk-filter` writes nothing of its own on stderr: ply's `Generating
+  LALR tables` and `WARNING: 4 shift/reduce conflicts` are gone, and the
+  parser is built once, in memory, and its grammar has no conflicts (#124)
+- A design starting with `-`, such as `'-2.5 ~ counts'`, is read as the
+  design by `detk-de deseq2`, `detk-de firth` and `detk-transform rlog`,
+  and gets DETK-0190's message, where it was rejected as `unrecognized
+  arguments`. A word starting with `-` that holds a `~` or a space and is
+  none of the command's options is a value; options still parse anywhere
+  on the line (#124)
 - `detk-util tidy -p FILE` and `detk-util tidy-covs` write the tidied
   column data with the sample sheet's own header and columns, in its order,
   each value as written: the first header cell is kept (`sample,condition`,

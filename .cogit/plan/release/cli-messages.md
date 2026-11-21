@@ -4,18 +4,22 @@ objective: 'detk commands that take a design or a filter expression print only w
 acceptance:
   - 'an invalid design that formula syntax parsed but could not build (an unknown column, a level missing from the data, a number-like term under DETK-0190) prints ''Invalid design: <reason>'', not ''Invalid design, detk formula syntax could not parse it: ...'' (common.py, the InvalidDesignException raised from the design setter); a design the syntax cannot parse at all may say so; tests assert the message for an unknown column, a missing level and a syntax error, through CountMatrix and through detk-de on the command line'
   - 'a successful detk-filter run writes nothing to stderr: no ''Generating LALR tables'' and no ''WARNING: 4 shift/reduce conflicts'' from ply.yacc (filter.py builds the parser with its logs quiet, or once); the four shift/reduce conflicts are resolved by precedence or pinned: a test fails if the grammar''s conflict count changes, and the existing filter tests show each ambiguous expression parses as documented; a test runs detk-filter and asserts empty stderr'
-  - a design argument beginning with '-' (e.g. '-2.5 ~ counts') is read as the design in every command that takes one (detk-de's subcommands, detk-transform vst), not rejected as 'unrecognized arguments', so it reaches DETK-0190's message; options still parse anywhere on the line, and '--' still ends them; cli-pin rows for the '-' design in tests/cli; CHANGELOG under Fixed
+  - a design argument beginning with '-' (e.g. '-2.5 ~ counts') is read as the design in every command that takes one (detk-de's subcommands, detk-transform rlog), not rejected as 'unrecognized arguments', so it reaches DETK-0190's message; options still parse anywhere on the line (and '--' stays refused outside detk-util record, DETK-0160); cli-pin rows for the '-' design in tests/cli; CHANGELOG under Fixed
 from: [DETK-0190]
 scope: [+de_toolkit/common.py, +de_toolkit/filter.py, +de_toolkit/de.py, +de_toolkit/transform.py, tests/common/, tests/filter/, tests/formula/, tests/de/, +tests/cli/cli_cases.py, +tests/cli/cli_tables.py, +tests/cli/test_cli_parse.py, +CHANGELOG]
+issue: 124
+visited: 8628a94
+status: done
+done: 3160662
 ---
 
 # Design and filter commands say only what went wrong
 
 ## Implementation plan
 
-- [ ] @developer Say 'Invalid design: <reason>' for designs that parsed but could not be built, quiet ply.yacc's table and conflict output in detk-filter (pinning the conflict count), read a design beginning with '-' as the design; tests and cli-pin rows; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: run detk-de with an unknown column, a missing level and '-2.5 ~ counts', and detk-filter on a real expression, and read stderr as a user would <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Say 'Invalid design: <reason>' for designs that parsed but could not be built, quiet ply.yacc's table and conflict output in detk-filter (pinning the conflict count), read a design beginning with '-' as the design; tests and cli-pin rows; CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: run detk-de with an unknown column, a missing level and '-2.5 ~ counts', and detk-filter on a real expression, and read stderr as a user would <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

@@ -8,20 +8,24 @@ expression describes the rows to keep:
 The functions are mean, median, max, min, zero and nonzero (for zero and
 nonzero, a number strictly between 0 and 1 is a fraction of samples, 0 or
 >= 1 a number of samples); the inequalities >, >=, <, <=, == and !=. Terms
-combine with and / or and group with parentheses. The column spec is all
-(every sample), a column of <cov_fn> (the filter is applied to each of its
-groups, and a row is kept if any group passes), or one group of it, as in
-condition[test]: a group is a value of the column as written, a number for
-a column of numbers (flag[1]) and true or false for a column of booleans. A
+combine with and / or, where and binds tighter than or and both group to
+the left: "mean(all) > 5 and zero(all) < 2 or max(all) > 100" is
+"(mean(all) > 5 and zero(all) < 2) or max(all) > 100", the rows that pass
+both of the first two terms plus every row with a max above 100.
+Parentheses group as written. The column spec is all (every sample), a
+column of <cov_fn> (the filter is applied to each of its groups, and a row
+is kept if any group passes), or one group of it, as in condition[test]: a
+group is a value of the column as written, a number for a column of numbers
+(flag[1]) and true or false for a column of booleans. A
 group the column does not have is an error.
 """
 
+import functools
 import logging
 import os.path
 import ply.lex as lex
 import ply.yacc as yacc
 import sys
-from tempfile import TemporaryDirectory
 
 import pandas
 
@@ -309,17 +313,67 @@ def p_error(p):
     raise FilterCommandError(f"unexpected {p.value!r} at position {p.lexpos}")
 
 
+# and binds tighter than or, and both group to the left (DETK-0270), as in
+# Python, SQL and R: "a and b or c" is "(a and b) or c", "a or b and c" is
+# "a or (b and c)". The table resolves every conflict between AND and OR, so
+# the grammar has none; tests/filter pins the count and the grouping.
+precedence = (
+    ("left", "OR"),
+    ("left", "AND"),
+)
+SHIFT_REDUCE_CONFLICTS = 0
+
+
+class _CountingLog:
+    "A ply log that keeps quiet and counts the shift/reduce conflicts it is told of"
+
+    def __init__(self):
+        self.conflicts = {"shift/reduce": 0, "reduce/reduce": 0}
+
+    def warning(self, msg, *args, **kwargs):
+        for kind in self.conflicts:
+            if msg.endswith((f"{kind} conflict", f"{kind} conflicts")):
+                self.conflicts[kind] = args[0] if args else 1
+
+    def error(self, msg, *args, **kwargs):
+        raise FilterCommandError("the filter grammar is invalid: " + (msg % args))
+
+    def info(self, msg, *args, **kwargs):
+        pass
+
+    debug = critical = info
+
+
+def build_filter_parser():
+    """
+    The lexer and parser of the filter mini language, built in memory and
+    quietly: ply writes no table or parser.out file and nothing on stderr.
+    Returns (lexer, parser, conflicts), *conflicts* the grammar's number of
+    shift/reduce and of reduce/reduce conflicts by kind (ply counts them
+    only when it builds the tables with debug on, into the quiet log).
+    """
+    log = _CountingLog()
+    lexer = lex.lex(module=sys.modules[__name__], errorlog=log)
+    parser = yacc.yacc(
+        module=sys.modules[__name__],
+        debug=True,
+        debuglog=log,
+        write_tables=False,
+        errorlog=log,
+    )
+    return lexer, parser, log.conflicts
+
+
+@functools.cache
+def _filter_parser():
+    lexer, parser, _ = build_filter_parser()
+    return lexer, parser
+
+
 def parse_filter_command(cmd):
-
-    # lex and yacc write out some files when they run
-    # put them in a tempdir to keep things tidy
-    with TemporaryDirectory() as tmpdir:
-        lex.lex(outputdir=tmpdir)
-
-        parser = yacc.yacc(outputdir=tmpdir)
-
+    lexer, parser = _filter_parser()
     try:
-        parsed = parser.parse(cmd)
+        parsed = parser.parse(cmd, lexer=lexer.clone())
     except FilterCommandError as e:
         raise FilterCommandError(f"could not parse the filter expression {cmd!r}: {e}") from e
     if parsed is None:  # failed to parse

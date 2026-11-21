@@ -43,7 +43,15 @@ The supported inequalities are `>`, `>=`, `<`, `<=`, `==`, and `!=`. Numbers
 may be positive or negative, integer or floating point. Whitespace is
 ignored: `mean(all)>10` ≡ `mean(all) > 10`.
 
-Terms combine with `and` / `or`, and parentheses group arbitrarily:
+Terms combine with `and` / `or`. `and` binds tighter than `or`, and both
+group to the left, as in Python, SQL and R. So
+
+```text
+mean(all) > 5 and nonzero(all) > 0.9 or mean(all) > 100
+```
+
+is read as `(mean(all) > 5 and nonzero(all) > 0.9) or mean(all) > 100`, and
+`a or b and c` as `a or (b and c)`. Parentheses group as written:
 
 ```text
 mean(all) > 10 and zero(all) < 0.5

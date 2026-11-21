@@ -8,7 +8,7 @@ acceptance:
   - 'it is in the tutorials index and nav; mkdocs build --strict passes; CHANGELOG'
 from: [DETK-0050, DETK-0051, DETK-0064]
 scope: [new:docs/tutorials/, new:tests/tutorials/, +mkdocs.yml, +CHANGELOG]
-prev: [DETK-0064, release/tutorial-airway, release/miller-recipes, release/record]
+prev: [DETK-0064, release/tutorial-airway, release/miller-recipes, release/record, release/recipe-notes]
 ---
 
 # Tutorial: derived covariates and recorded steps
@@ -24,3 +24,6 @@ prev: [DETK-0064, release/tutorial-airway, release/miller-recipes, release/recor
 Planned 2026-11-20 (DETK-0064, tutorial 3). After release/tutorial-airway,
 whose data step it reuses (keeping avgLength in the sample sheet). New pages
 go under `docs/tutorials/`.
+
+After release/recipe-notes (planned 2026-11-21), which changes record's
+failure line and the header-only messages this page's failing recipe shows.

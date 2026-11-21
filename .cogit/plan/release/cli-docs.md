@@ -7,10 +7,11 @@ acceptance:
   - 'the exit codes are documented as 0 success, 2 usage error, 1 anything else (DETK-0031), on docs/concepts.md; how to enable bash, zsh and tcsh completion from the shipped scripts is documented (DETK-0032); detk-filter''s usage shows no --column-data (DETK-0030)'
   - 'no page describes command lines as built from docopt docstrings; docs/dev/ says how to add a command or option with argparse, including its help example'
   - 'the README, quickstart and example commands run as written on the migrated CLI'
+  - 'docs/agent-skills.md lists every file under skills/detk/references/ (today it leaves out covariates.md, the Miller recipes reference of release/miller-recipes), and a test in tests/docs/ fails when a file there is not listed'
   - 'uv run --group docs mkdocs build --strict passes'
 from: [DETK-0001, DETK-0025, DETK-0031, DETK-0032]
-scope: [docs/tools/, docs/report.md, docs/index.md, docs/quickstart.md, docs/concepts.md, docs/api.md, docs/agent-skills.md, docs/example.md, docs/dev/, README.md, tests/docs/, +CHANGELOG]
-prev: [release/cli-migrate, release/cli-gaps, release/size-factors, release/formula-rename, release/record, release/miller-recipes, release/tutorial-quant, release/tutorial-airway, release/tutorial-covariates, release/help-options, release/tidy-output, release/record-help]
+scope: [docs/tools/, docs/report.md, docs/index.md, docs/quickstart.md, docs/concepts.md, docs/api.md, docs/agent-skills.md, docs/example.md, docs/dev/, README.md, new:tests/docs/, +CHANGELOG]
+prev: [release/cli-migrate, release/cli-gaps, release/size-factors, release/formula-rename, release/record, release/miller-recipes, release/tutorial-quant, release/tutorial-airway, release/tutorial-covariates, release/help-options, release/tidy-output, release/record-help, release/report-paths, release/example-paths, release/recipe-notes]
 ---
 
 # Update the docs for the 1.0 CLI
@@ -30,3 +31,10 @@ the tutorials (DETK-0064), so the CLI pages and the tutorials are written agains
 The airway walkthrough in `docs/example.md` becomes release/tutorial-airway's.
 `docs/formulas.md` belongs to release/formula-migrate and
 release/formula-rename.
+
+Widened 2026-11-21: docs/agent-skills.md does not list
+`skills/detk/references/covariates.md` (#121); this node owns that page, so
+it lists it and a test keeps the list complete. Now also after
+release/report-paths (which changes detk-report clean's help and where the
+docs say the crate goes), release/example-paths (docs/example/) and
+release/recipe-notes (the recipes page and record's failure message).

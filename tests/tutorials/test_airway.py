@@ -99,4 +99,4 @@ def test_report_has_every_step(tutorial_workdir):
         "deseq2counts",
     ):
         assert module in html, f"{module} missing from the airway report"
-    assert (workdir / "ro-crate-metadata.json").exists()
+    assert (workdir / "detk_report" / "ro-crate-metadata.json").exists()

@@ -93,7 +93,7 @@ def test_detk_report(fake_module):
     from de_toolkit.report import DetkReport
 
     with TemporaryDirectory() as d:
-        with DetkReport(d, crate_dir=d) as r:
+        with DetkReport(d) as r:
             r.add_module(fake_module, "counts.csv", "new_counts.csv")
 
         assert os.path.exists(os.path.join(d, "detk_report.html"))
@@ -173,10 +173,12 @@ def test_report_generate(tmp_path):
     for jf in json_files:
         jsonschema.validate(json.loads(jf.read_text()), schema)
 
-    # the provenance crate is written at the workdir (= crate) root and
-    # records the filter invocation with its input and output files chained
-    crate_path = tmp_path / "ro-crate-metadata.json"
+    # the provenance crate is written into the report directory, rooted
+    # there (DETK-0280), and records the filter invocation with its input
+    # and output files chained, relative to the report directory
+    crate_path = tmp_path / "detk_report" / "ro-crate-metadata.json"
     assert crate_path.exists()
+    assert not (tmp_path / "ro-crate-metadata.json").exists()
     graph = {e["@id"]: e for e in json.loads(crate_path.read_text())["@graph"]}
     assert graph["./"]["conformsTo"]["@id"].startswith("https://w3id.org/ro/wfrun/process/")
     actions = [e for e in graph.values() if e["@type"] == "CreateAction"]
@@ -184,5 +186,5 @@ def test_report_generate(tmp_path):
     filter_actions = [a for a in actions if graph[a["instrument"]["@id"]]["name"] == "detk-filter"]
     assert len(filter_actions) == 1
     objs = {o["@id"] for o in filter_actions[0]["object"]}
-    assert "all_mRNA_nonzero_norm_counts_trim.csv" in objs
-    assert {r["@id"] for r in filter_actions[0]["result"]} == {"norm_filtered.csv"}
+    assert "../all_mRNA_nonzero_norm_counts_trim.csv" in objs
+    assert {r["@id"] for r in filter_actions[0]["result"]} == {"../norm_filtered.csv"}

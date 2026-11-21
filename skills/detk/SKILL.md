@@ -11,7 +11,8 @@ transformation, differential expression and gene set enrichment. Every tool
 reads and writes plain delimited text, so you drive an analysis with a short
 sequence of shell commands. Each command also records a JSON document under
 `./detk_report/json/`, and `detk-report generate` renders all of them into one
-self-contained HTML report plus a provenance file (`ro-crate-metadata.json`).
+self-contained HTML report plus a provenance file
+(`./detk_report/ro-crate-metadata.json`).
 
 The command line is detk's stable interface. Do not import `de_toolkit` in
 Python to do what a command does.
@@ -323,11 +324,12 @@ detk-report generate
 ```
 
 This writes `detk_report/detk_report.html` (self-contained, works offline) and
-`ro-crate-metadata.json` (Process Run Crate provenance of every invocation).
-The crate is written in the directory where `detk-report generate` runs, not
-under `detk_report/`.
+`detk_report/ro-crate-metadata.json` (Process Run Crate provenance of every
+invocation). The crate is written into the report directory, beside the
+report, and names files by their path from there (`../counts.csv`).
 Re-running a command with the same parameters replaces its entry rather than
-duplicating it. `detk-report clean` deletes the report directory to start over.
+duplicating it. `detk-report clean` deletes the report directory, crate
+included, to start over.
 
 ## 4. Report back
 

@@ -222,7 +222,8 @@ Run a command outside detk and record it as a step of the analysis. A step
 outside detk otherwise leaves a gap in the provenance: a `detk-de` run would
 show its column data as a file no step produced. `record` runs the command
 and writes a module JSON document for it, so the [report](../report.md) lists
-the step and the provenance crate (`ro-crate-metadata.json`) shows it as the
+the step and the provenance crate (`ro-crate-metadata.json`, in the report
+directory) shows it as the
 producer of its outputs, and a later detk command that reads them traces
 back to it.
 

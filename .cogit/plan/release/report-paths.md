@@ -9,13 +9,15 @@ acceptance:
 from: [DETK-0280]
 scope: [+de_toolkit/crate.py, +de_toolkit/report.py, +de_toolkit/util.py, +de_toolkit/module_schema.json, tests/report/test_crate.py, +tests/report/test_report.py, new:tests/report/test_report_paths.py, +tests/util/test_tidy.py, +tests/util/test_record.py, +tests/example/test_airway_example.py, +tests/cli/test_cli_help.py, +docs/report.md, +docs/tools/util.md, +docs/agent-skills.md, +docs/tutorials/quantifiers.md, +skills/detk/SKILL.md, +skills/detk/references/airway.md, +skills/detk/references/commands.md, +examples/airway/run.sh, +examples/airway/README.md, +CHANGELOG]
 prev: [DETK-0280]
+issue: 133
+visited: 73b7582
 ---
 
 # The crate goes with its report and recorded paths are relative
 
 ## Implementation plan
 
-- [ ] @developer As DETK-0280 is answered: write the crate into the report directory, rooted there; record workdir, argv[0] and the file paths relative as it says; the crate's references relative to its root; tests for two report directories, clean, the absence of machine paths and profile conformance; the docs, skill, tutorial and tests that name ./ro-crate-metadata.json; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer As DETK-0280 is answered: write the crate into the report directory, rooted there; record workdir, argv[0] and the file paths relative as it says; the crate's references relative to its root; tests for two report directories, clean, the absence of machine paths and profile conformance; the docs, skill, tutorial and tests that name ./ro-crate-metadata.json; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: in one directory run two detk commands with --report-dir a and --report-dir b, read both crates and grep both reports and crates for the directory's absolute path and $HOME; run the quantifiers tutorial; check the crate with rocrate-validator <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

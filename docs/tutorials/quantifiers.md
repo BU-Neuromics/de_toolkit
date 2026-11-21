@@ -215,18 +215,20 @@ ls detk_report
 ```text
 detk_report.html
 json
+ro-crate-metadata.json
 ```
 
 Open `detk_report/detk_report.html` in a browser: it is one self-contained
-file, with a section for each step. Next to it, in the working directory,
+file, with a section for each step. Next to it, in the report directory,
 detk wrote `ro-crate-metadata.json`, a
 [Process Run Crate](../report.md#standards-based-provenance-the-process-run-crate)
 that describes each step's command, its parameters and the files it read and
-wrote, in terms any RO-Crate tool can read. The steps it lists (the summary
+wrote, in terms any RO-Crate tool can read; it names each file by its path
+from the report directory (`../counts.csv`). The steps it lists (the summary
 is listed as the six statistics it is made of):
 
 ```bash
-grep -o '"name": "detk-[^"]* run"' ro-crate-metadata.json | sort -u
+grep -o '"name": "detk-[^"]* run"' detk_report/ro-crate-metadata.json | sort -u
 ```
 
 <!-- tutorial: expect -->

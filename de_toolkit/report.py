@@ -2,7 +2,7 @@ r"""
 Write or remove the detk HTML report: every detk command that runs with a
 report directory writes its module JSON there and re-renders the report;
 generate renders it again from the module JSON already in the directory, and
-clean removes the directory and the provenance crate.
+clean removes the directory, and the provenance crate in it, with it.
 """
 
 # each subcommand: the one line the command's help lists it with, its
@@ -22,11 +22,12 @@ the module JSON files the detk commands wrote into the report directory.""",
         ],
     ),
     "clean": dict(
-        help="Remove the report directory and the provenance crate",
+        help="Remove the report directory, with its provenance crate",
         description="""\
-Remove the report directory, with the module JSON and the HTML report in it,
-and the provenance crate (ro-crate-metadata.json) in the current directory.""",
-        examples=[("Remove ./detk_report and the crate", "detk-report clean")],
+Remove the report directory, with the module JSON, the HTML report and the
+provenance crate (ro-crate-metadata.json) in it. A ro-crate-metadata.json an
+earlier detk version wrote into the current directory is left alone.""",
+        examples=[("Remove ./detk_report and the crate in it", "detk-report clean")],
     ),
 }
 
@@ -87,8 +88,11 @@ from .version import __version__
 # DetkModuleJSON), major.minor: the major goes up on a backward-incompatible
 # change, the minor on an addition every older document still satisfies;
 # update module_schema.json to match. 1.1 adds the optional in_file_paths and
-# out_file_paths (detk-util record, DETK-0061)
-MODULE_SCHEMA_VERSION = "1.1"
+# out_file_paths (detk-util record, DETK-0061); 1.2 records workdir relative
+# to the report directory, argv[0] as the command's name and the file paths
+# relative to workdir (DETK-0280). A 1.1 document's absolute workdir still
+# resolves the same way: joined to the report directory, it is itself
+MODULE_SCHEMA_VERSION = "1.2"
 
 # setup logging, null on the library level
 logger = logging.getLogger(__name__)
@@ -175,6 +179,37 @@ def hash_str(st):
     return hashlib.md5(st.encode()).hexdigest()
 
 
+def _relpath(path, start):
+    """*path* relative to the directory *start*, as a POSIX path; *path*
+    unchanged when it has no relative form (another Windows drive)"""
+    try:
+        return pathlib.PurePath(os.path.relpath(path, start)).as_posix()
+    except ValueError:
+        return path
+
+
+def _file_relpath(path, workdir):
+    """A file path as recorded in module JSON: relative to *workdir* (an
+    absolute directory), whether it was typed relative or absolute (DETK-0280).
+    None, ``-`` (a standard stream) and anything not a string are kept."""
+    if not isinstance(path, str) or path in ("", "-"):
+        return path
+    if os.path.isabs(path):
+        # resolve the directories (/tmp and /private/tmp are one), not the
+        # file itself: a symlinked file keeps the name it was given
+        head, tail = os.path.split(path)
+        path = os.path.join(os.path.realpath(head), tail)
+    return _relpath(os.path.normpath(os.path.join(workdir, path)), workdir)
+
+
+def _argv():
+    "The process argument vector as recorded: argv[0] the command's name only"
+    argv = list(sys.argv)
+    if argv:
+        argv[0] = os.path.basename(argv[0])
+    return argv
+
+
 class DetkModuleJSON:
     def __init__(
         self,
@@ -187,6 +222,7 @@ class DetkModuleJSON:
         json_path=None,
         in_file_paths=None,
         out_file_paths=None,
+        report_dir=None,
     ):
 
         # the json filename is calculated as the combination of
@@ -209,8 +245,16 @@ class DetkModuleJSON:
             self.filepath = os.path.realpath(os.path.join(json_dir, filename))
         logger.debug("writing module JSON to: %s", self.filepath)
 
-        if workdir is None:
-            workdir = os.getcwd()
+        # recorded paths name no directory of this machine (DETK-0280):
+        # workdir relative to the report directory, the file paths relative
+        # to workdir
+        if report_dir is None:
+            report_dir = os.path.dirname(os.path.realpath(json_dir))
+        report_dir = os.path.realpath(report_dir)
+        workdir = os.path.realpath(os.getcwd() if workdir is None else workdir)
+
+        def rel(path):
+            return _file_relpath(path, workdir)
 
         module_json = module.json
         self.out_d = OrderedDict(
@@ -224,11 +268,11 @@ class DetkModuleJSON:
                 # end_time is when the module was recorded
                 ("start_time", _PROCESS_START.isoformat()),
                 ("end_time", datetime.now(UTC).isoformat()),
-                ("argv", list(sys.argv)),
-                ("in_file_path", in_file_path),
-                ("out_file_path", out_file_path),
-                ("column_data_path", column_data_path),
-                ("workdir", workdir),
+                ("argv", _argv()),
+                ("in_file_path", rel(in_file_path)),
+                ("out_file_path", rel(out_file_path)),
+                ("column_data_path", rel(column_data_path)),
+                ("workdir", _relpath(workdir, report_dir)),
                 ("params", module_json["params"]),
                 ("properties", module_json["properties"]),
             ]
@@ -236,9 +280,9 @@ class DetkModuleJSON:
         # every input and output file of a step with several (schema 1.1);
         # left out otherwise, so other modules' documents are as before
         if in_file_paths is not None:
-            self.out_d["in_file_paths"] = list(in_file_paths)
+            self.out_d["in_file_paths"] = [rel(p) for p in in_file_paths]
         if out_file_paths is not None:
-            self.out_d["out_file_paths"] = list(out_file_paths)
+            self.out_d["out_file_paths"] = [rel(p) for p in out_file_paths]
 
     def write(self, indent=None):
         """
@@ -250,12 +294,16 @@ class DetkModuleJSON:
         - ``detk_version``: version of detk that generated this file
         - ``last_modified``: local system timestamp in milliseconds when this
           file was created/modified
-        - ``workdir``: path to the directory where detk was run
+        - ``argv``: the command line, ``argv[0]`` the command's name only
+        - ``workdir``: the directory where detk was run, relative to the
+          report directory (``..`` for the default ``./detk_report``)
         - ``in_file_path``: path to the file that was processed
         - ``out_file_path``: path to the file that was output, if available
         - ``column_data_path``: path to the column data file used, if available
         - ``in_file_paths``, ``out_file_paths``: every input and output file,
           for a step with several (optional, schema 1.1)
+
+        Every file path is relative to ``workdir`` (schema 1.2, DETK-0280).
         """
 
         logger.debug(
@@ -282,10 +330,11 @@ class DetkReport:
         self.report_dir = os.path.realpath(report_dir)
         logger.debug("creating DetkReport at report dir: %s", self.report_dir)
 
-        # the Process Run Crate is rooted at the analysis working directory,
-        # so file references in the provenance resolve relative to where the
-        # tools ran; pass crate_dir to root it elsewhere
-        self.crate_dir = os.path.realpath(crate_dir) if crate_dir is not None else os.getcwd()
+        # the Process Run Crate goes with the report and is rooted in the
+        # report directory (DETK-0280), so each report has its own and its
+        # file references resolve from where it sits; pass crate_dir to
+        # root it elsewhere
+        self.crate_dir = os.path.realpath(crate_dir) if crate_dir is not None else self.report_dir
 
         self.json_dir = os.path.join(self.report_dir, "json")
         logger.debug("json dir: %s", self.json_dir)
@@ -318,6 +367,7 @@ class DetkReport:
             json_dir=self.json_dir,
             in_file_paths=in_file_paths,
             out_file_paths=out_file_paths,
+            report_dir=self.report_dir,
         )
         logger.debug("adding detk module json for module %s", module.name)
         self.modules.append(module_json)
@@ -388,8 +438,8 @@ class DetkReport:
         logger.info("wrote report (%d modules) to %s", len(modules), self.report_path)
 
         # standards-facing provenance: a Process Run Crate describing every
-        # recorded invocation, rooted at the analysis working directory
-        crate_path = write_crate(list(raw.values()), self.crate_dir)
+        # recorded invocation, rooted in the report directory
+        crate_path = write_crate(list(raw.values()), self.crate_dir, report_dir=self.report_dir)
         if crate_path:
             logger.info("wrote provenance crate to %s", crate_path)
 
@@ -418,12 +468,15 @@ def main(argv=sys.argv):
     elif cmd == "clean":
         logger.info("cleaning report dir: %s", args.report_dir)
 
+        # the provenance crate is in the report directory and goes with it;
+        # a ./ro-crate-metadata.json an earlier version wrote is left alone
         shutil.rmtree(args.report_dir, ignore_errors=True)
-
-        # the provenance crate is derived from the report JSON, so it goes too
         if os.path.exists(CRATE_FILENAME):
-            logger.info("removing provenance crate: %s", CRATE_FILENAME)
-            os.remove(CRATE_FILENAME)
+            logger.info(
+                "leaving %s in the current directory: detk now writes the crate "
+                "into the report directory",
+                CRATE_FILENAME,
+            )
 
     logger.info("done")
 

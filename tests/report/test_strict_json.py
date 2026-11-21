@@ -318,7 +318,7 @@ def _check_report_dir(d, expected_modules):
         jsonschema.validate(doc, schema)
         docs.setdefault(doc["name"], []).append(doc)
     assert expected_modules <= set(docs), expected_modules - set(docs)
-    strict_loads((d / CRATE_FILENAME).read_text())
+    strict_loads((d / "detk_report" / CRATE_FILENAME).read_text())
     html = (d / "detk_report" / "detk_report.html").read_text()
     for el in ("detk-modules", "detk-raw"):
         payload = re.search(rf'id="{el}">(.*?)</script>', html, re.S).group(1)
@@ -425,7 +425,7 @@ def test_old_report_dir_with_bare_nan_rerenders(tmp_path):
     assert {m["module"] for m in mods} >= {"rowzero", "pca"}
     assert all(m["view"]["type"] == "vega" for m in mods)
     assert _nulls(raw)
-    strict_loads((tmp_path / CRATE_FILENAME).read_text())
+    strict_loads((rdir / CRATE_FILENAME).read_text())
 
 
 # --------------------------------------------------------------------------

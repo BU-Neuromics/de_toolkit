@@ -279,12 +279,13 @@ ls detk_report
 ```text
 detk_report.html
 json
+ro-crate-metadata.json
 ```
 
 Open `detk_report/detk_report.html` in a browser: it is one self-contained
 file, with a section for each step. The differential expression section is a
 volcano and an MA plot with a menu of the design's terms: switch between the
-treatment (`dex__trt`) and the cell lines. Next to the report, in the working
+treatment (`dex__trt`) and the cell lines. Next to the report, in the report
 directory, detk wrote `ro-crate-metadata.json`, a
 [Process Run Crate](../report.md#standards-based-provenance-the-process-run-crate)
 that describes each step's command, its parameters and the files it read and
@@ -292,7 +293,7 @@ wrote. The steps it lists (the summary is listed as the six statistics it is
 made of):
 
 ```bash
-grep -o '"name": "detk-[^"]* run"' ro-crate-metadata.json | sort -u
+grep -o '"name": "detk-[^"]* run"' detk_report/ro-crate-metadata.json | sort -u
 ```
 
 <!-- tutorial: expect -->

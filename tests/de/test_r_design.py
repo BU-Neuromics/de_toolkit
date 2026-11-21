@@ -13,7 +13,7 @@ import numpy
 import pandas
 import pytest
 
-from de_toolkit.common import CountMatrix
+from de_toolkit.common import CountMatrix, InvalidDesignException
 from de_toolkit.de import main as de_main
 from de_toolkit.formula import r_design, r_name
 from de_toolkit.wrapr import RExecutionError, check_r_package
@@ -105,20 +105,17 @@ def test_r_design_of_resolved_design():
     assert r_design(cm.design) == f"counts ~ Intercept + fld.cont + `{CALL}`"
 
 
-def test_r_design_of_resolved_number_shaped_design():
-    "A column named 2.5 is resolved as a column and quoted for R."
+def test_number_shaped_column_is_not_a_design_term():
+    "A column named 2.5 or 1.0 is not a column of a design (DETK-0190): rename it."
     counts = pandas.DataFrame(
         numpy.arange(1, 25).reshape(6, 4), columns=[f"s{_}" for _ in range(4)]
     )
     column_data = pandas.DataFrame(
         {"2.5": [0.1, 0.5, 0.2, 0.9], "1.0": [0, 1, 0, 1]}, index=counts.columns
     )
-    cm = CountMatrix(counts, column_data, "counts ~ 2.5")
-    assert cm.design == "counts ~ Intercept + 2.5"
-    assert r_design(cm.design) == "counts ~ Intercept + `2.5`"
-    cm = CountMatrix(counts, column_data, "1.0 ~ counts + 2.5")
-    assert cm.design == "1.0 ~ Intercept + counts + 2.5"
-    assert r_design(cm.design) == "`1.0` ~ Intercept + counts + `2.5`"
+    for design, name in (("counts ~ 2.5", "2.5"), ("1.0 ~ counts", "1.0")):
+        with pytest.raises(InvalidDesignException, match=rf"rename the column '{name}'"):
+            CountMatrix(counts, column_data, design)
 
 
 # R: the call-shaped column is a column name, and no code runs
@@ -201,15 +198,14 @@ def test_firth_call_shaped_column(r_data):
     assert len(res) == 20
 
 
-@logistf_test
-def test_firth_number_shaped_column(r_data):
-    "A column named 2.5 is fitted as the outcome, not read as the constant 2.5."
+def test_firth_number_shaped_column(r_data, capsys):
+    "A column named 2.5 as the outcome is a usage error naming it, before R runs (DETK-0190)."
     tmp_path, counts_fn, column_data_fn = r_data
-    de_main(["detk-de", "firth", "2.5 ~ counts", counts_fn, column_data_fn, "-o", "out.csv"])
-    res = pandas.read_csv(tmp_path / "out.csv", index_col=0)
-    assert "counts__beta" in res.columns
-    assert len(res) == 20
-    assert (res["status"] == "OK").all()
+    with pytest.raises(SystemExit) as e:
+        de_main(["detk-de", "firth", "2.5 ~ counts", counts_fn, column_data_fn, "-o", "out.csv"])
+    assert e.value.code == 2
+    assert "rename the column '2.5'" in capsys.readouterr().err
+    assert not (tmp_path / "out.csv").exists()
 
 
 @deseq2_test

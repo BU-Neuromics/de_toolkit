@@ -7,15 +7,19 @@ acceptance:
   - the HTML report still renders the views of modules with null values (the charts skip or show them as missing, the static fallback too), checked in the render tests; detk-report re-renders a report directory written by 0.x or earlier main (bare NaN in module JSON) without failing; CHANGELOG under Fixed
 scope: [+de_toolkit/report.py, +de_toolkit/crate.py, +de_toolkit/module_schema.json, de_toolkit/templates/, tests/report/, +CHANGELOG]
 prev: [release/record, release/help-options]
+issue: 116
+visited: 118283e
+status: done
+done: 08f461e
 ---
 
 # Module JSON is strictly valid JSON
 
 ## Implementation plan
 
-- [ ] @developer Write non-finite numbers as null in the module JSON encoder and the crate, refuse bare NaN/Infinity at serialization, allow null in module_schema.json where needed, keep the views rendering nulls; the strict-parse test over every module's JSON and the crate (R-backed modules in the R job); CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: parse a real report directory's json/*.json with a strict parser (e.g. jq or Python with parse_constant), open the report with missing values <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Write non-finite numbers as null in the module JSON encoder and the crate, refuse bare NaN/Infinity at serialization, allow null in module_schema.json where needed, keep the views rendering nulls; the strict-parse test over every module's JSON and the crate (R-backed modules in the R job); CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: parse a real report directory's json/*.json with a strict parser (e.g. jq or Python with parse_constant), open the report with missing values <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

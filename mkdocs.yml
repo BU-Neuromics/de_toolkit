@@ -71,6 +71,7 @@ nav:
     - util — file utilities: tools/util.md
     - wrapr — R bridge: tools/wrapr.md
   - Design formulas: formulas.md
+  - Derived covariates with Miller: recipes/covariates.md
   - Reports: report.md
   - API reference: api.md
   - Agent skills: agent-skills.md

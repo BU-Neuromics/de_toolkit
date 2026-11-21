@@ -73,7 +73,12 @@ def _color_by(mod):
     if not cb:
         return None, {}
     values = cb["values"]
-    numeric = all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in values.values())
+    # a missing value (null in the module JSON) neither makes a numeric
+    # column nominal nor a nominal one numeric
+    present = [v for v in values.values() if v is not None]
+    numeric = bool(present) and all(
+        isinstance(v, (int, float)) and not isinstance(v, bool) for v in present
+    )
     enc = {
         "field": _COLOR_FIELD,
         "type": "quantitative" if numeric else "nominal",

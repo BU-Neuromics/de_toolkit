@@ -9,6 +9,8 @@ from: [DETK-0190]
 scope: [+de_toolkit/common.py, +de_toolkit/filter.py, +de_toolkit/de.py, +de_toolkit/transform.py, tests/common/, tests/filter/, tests/formula/, tests/de/, +tests/cli/cli_cases.py, +tests/cli/cli_tables.py, +tests/cli/test_cli_parse.py, +CHANGELOG]
 issue: 124
 visited: 8628a94
+status: done
+done: 3160662
 ---
 
 # Design and filter commands say only what went wrong
@@ -17,7 +19,7 @@ visited: 8628a94
 
 - [x] @developer Say 'Invalid design: <reason>' for designs that parsed but could not be built, quiet ply.yacc's table and conflict output in detk-filter (pinning the conflict count), read a design beginning with '-' as the design; tests and cli-pin rows; CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: run detk-de with an unknown column, a missing level and '-2.5 ~ counts', and detk-filter on a real expression, and read stderr as a user would <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

@@ -6,16 +6,20 @@ acceptance:
   - 'detk-util tidy, tidy-counts and tidy-covs write to the report unless --no-report, as gather and annotate do: a module entry naming the subcommand, both input files and the output, and for tidy the -p output when given (through the optional in_file_paths and out_file_paths that release/record adds to the envelope); the Process Run Crate (ro-crate-metadata.json) then lists the tidy step with its inputs and outputs; a test runs tidy -p into a report dir and checks the module JSON and the crate, and one checks --no-report writes no report; their help''s --report-dir/--no-report now describe what happens'
   - docs/tutorials/quantifiers.md (release/tutorial-quant) uses detk-util tidy -p for the sample sheet to write the tidied sample sheet and uses it downstream, in place of its workaround (tidy without -p, then the original sheet), and lists tidy among the crate's steps, with the page's checked step count updated; the tutorial runs green under the tutorial harness; CHANGELOG under Fixed
 scope: [+de_toolkit/util.py, +de_toolkit/crate.py, tests/util/, +tests/cli/cli_cases.py, +tests/cli/cli_tables.py, +docs/tutorials/quantifiers.md, tests/tutorials/, +CHANGELOG]
-prev: [release/record, release/tutorial-quant]
+prev: [release/record, release/tutorial-quant, DETK-0230]
+issue: 114
+visited: 118283e
+status: done
+done: ea995b3
 ---
 
 # detk-util tidy writes the sample sheet as read and records in the report
 
 ## Implementation plan
 
-- [ ] @developer Write the tidied column data as read (header, columns, no added counts column) for tidy -p and tidy-covs; make tidy, tidy-counts and tidy-covs record in the report and the crate; switch docs/tutorials/quantifiers.md to tidy -p and show tidy in its crate; tests for each; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: run tidy -p on a real sample sheet and read the file, check the module JSON and the crate, run the quantifiers tutorial <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Write the tidied column data as read (header, columns, no added counts column) for tidy -p and tidy-covs; make tidy, tidy-counts and tidy-covs record in the report and the crate; switch docs/tutorials/quantifiers.md to tidy -p and show tidy in its crate; tests for each; CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: run tidy -p on a real sample sheet and read the file, check the module JSON and the crate, run the quantifiers tutorial <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

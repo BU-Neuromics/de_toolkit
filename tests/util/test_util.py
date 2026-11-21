@@ -45,6 +45,12 @@ def fake_untidy_column_data_csv(request):
         yield f.name
 
 
+@pytest.fixture(autouse=True)
+def _in_tmp_path(tmp_path, monkeypatch):
+    # tidy writes its report into the working directory
+    monkeypatch.chdir(tmp_path)
+
+
 def test_util_cli():
     with pytest.raises(SystemExit):
         main(["detk-util"])

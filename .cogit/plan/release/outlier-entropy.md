@@ -15,7 +15,7 @@ visited: 8628a94
 
 ## Implementation plan
 
-- [ ] @developer Replace the dropped_df.replace line and the positional relabel in EntropyCounts with a reindex by feature name; all-zero features get a missing entropy and a False flag with one warning; tests with all-zero features first, in the middle and last, each row checked against scipy.stats.entropy, through the API and the CLI; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Replace the dropped_df.replace line and the positional relabel in EntropyCounts with a reindex by feature name; all-zero features get a missing entropy and a False flag with one warning; tests with all-zero features first, in the middle and last, each row checked against scipy.stats.entropy, through the API and the CLI; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: run detk-outlier entropy on a counts file with an all-zero gene in the middle and check a few genes after it against their own entropies <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

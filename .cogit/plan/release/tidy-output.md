@@ -9,6 +9,8 @@ scope: [+de_toolkit/util.py, +de_toolkit/crate.py, tests/util/, +tests/cli/cli_c
 prev: [release/record, release/tutorial-quant, DETK-0230]
 issue: 114
 visited: 118283e
+status: done
+done: ea995b3
 ---
 
 # detk-util tidy writes the sample sheet as read and records in the report
@@ -17,7 +19,7 @@ visited: 118283e
 
 - [x] @developer Write the tidied column data as read (header, columns, no added counts column) for tidy -p and tidy-covs; make tidy, tidy-counts and tidy-covs record in the report and the crate; switch docs/tutorials/quantifiers.md to tidy -p and show tidy in its crate; tests for each; CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: run tidy -p on a real sample sheet and read the file, check the module JSON and the crate, run the quantifiers tutorial <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

@@ -245,6 +245,23 @@ predates everything below.
   `detk-util gather` (#115)
 
 ### Fixed
+- `detk-outlier entropy -p P` flags the features below the P-th fraction of
+  the entropies, as its help says: `-p 0.05` is the 5th percentile. It was
+  passed to numpy as a percent, so `-p 0.05` flagged the features below the
+  0.05th percentile (13 of the airway tutorial's 24,706 genes, where the 5th
+  percentile flags 925). A `-p` that is not strictly between 0 and 1 is a
+  usage error (exit 2); 0.x runs that passed `-p 5` for the 5th percentile
+  must now pass `-p 0.05` (#123, DETK-0200)
+- `detk-outlier entropy` runs on a counts matrix with features that are zero
+  in every sample: their entropy is missing (empty in the CSV) and they are
+  not flagged, the percentile is taken over the other features, and one
+  warning gives how many there are. It failed with "Series.replace cannot
+  specify both a dict-like 'to_replace' and a 'value'" (pandas 1.x and 2.x
+  raise the same error, so 0.x on those failed too). Each entropy and flag is
+  written on the row of the feature it was computed for, in the input's
+  order: past the failing line, the rows were relabelled by position, which
+  would have put another feature's result on every feature after an all-zero
+  one (#123)
 - `detk-util tidy -p FILE` and `detk-util tidy-covs` write the tidied
   column data with the sample sheet's own header and columns, in its order,
   each value as written: the first header cell is kept (`sample,condition`,

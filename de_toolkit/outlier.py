@@ -105,6 +105,7 @@ import scipy.stats as sc
 import sys
 
 from .common import (
+    UsageError,
     cli_main,
     option_value,
     CountMatrixFile,
@@ -268,7 +269,8 @@ def entropy(counts_obj, threshold):
     counts_obj: de_toolkit.CountMatrix
         count matrix object
     threshold: float
-        the lower percentile below which to flag genes
+        the percentile below which to flag genes, as a fraction strictly
+        between 0 and 1 (0.05 is the 5th percentile)
 
     Returns
     -------
@@ -278,8 +280,12 @@ def entropy(counts_obj, threshold):
 
         - *entropy*: the calculated entropy value for that row
         - *entropy_p0_XX*: a True/False column for genes flagged as having an
-          entropy value less than the 0.XX percentile; *XX* is the
-          first two digits of the selected threshold
+          entropy value less than the *threshold* percentile; *XX* is the
+          digits of the threshold after the decimal point
+
+        A feature with no counts in any sample has no entropy: its *entropy*
+        is missing (NaN) and it is not flagged, and the percentile is taken
+        over the other features.
     """
     obj = EntropyCounts(counts_obj, threshold)
     return obj.output
@@ -291,42 +297,47 @@ class EntropyCounts(DetkModule):
         self.counts_obj = counts_obj
         logger.info("entropy thresholding")
 
-        counts_transpose = counts_obj.counts.copy().transpose()
+        # -p is a fraction of the features, between 0 and 1 (DETK-0200);
+        # numpy's percentile takes a percent
+        if not 0 < threshold < 1:
+            raise ValueError(
+                f"the entropy percentile must be a fraction between 0 and 1, got {threshold}"
+            )
         trshld_name = str(threshold).split(".")[1]
+        flag_col = f"entropy_p0_{trshld_name}"
 
-        # check that no features have a total of zero
-        all_features = counts_transpose.columns.tolist()
-        counts_transpose = counts_transpose.loc[:, (counts_transpose != 0).any(axis=0)]
-        nonzero_features = counts_transpose.columns.tolist()
-        dropped_features = set(all_features) - set(nonzero_features)
+        counts = counts_obj.counts
+        # entropy is undefined for a feature with no counts: it is left out of
+        # the percentile, written missing and not flagged
+        nonzero = (counts != 0).any(axis=1)
+        num_zero = int((~nonzero).sum())
+        if num_zero:
+            logger.warning(
+                "%d feature(s) have no counts in any sample: their entropy is written "
+                "missing and they are not flagged",
+                num_zero,
+            )
 
-        # create a null results df for all of the dropped features
-        dropped_df = pd.DataFrame(
-            columns=["entropy", f"entropy_p0_{trshld_name}"], index=sorted(dropped_features)
-        )
-        dropped_df.replace(dropped_df, "Null")
+        # entropy of each non-zero feature across the samples
+        entropy = counts.loc[nonzero].apply(func=sc.entropy, axis=1).astype(float)
 
-        # calculate the entropy over all of the features
-        entropy = counts_transpose.apply(func=sc.entropy, axis=0)
+        # the entropy below which a feature is flagged
+        entropy_threshold = np.percentile(entropy, q=threshold * 100) if len(entropy) else np.nan
+        flagged = entropy < entropy_threshold
+        logger.info("number of flagged features: %d", flagged.sum())
 
-        # gathers the features and entropy values for the respective quantile groups
-        entropy_threshold = np.percentile(entropy, q=threshold)
-
-        # create the results of the entropy test
-        # column 1 is the entropy value
-        # column 2 is a boolean indication whether the value is under the user described threshold
-        results_df = pd.DataFrame(entropy, columns=["entropy"])
-        results_df[f"entropy_p0_{trshld_name}"] = entropy < entropy_threshold
-        logger.info("number of flagged features: %d", (entropy < entropy_threshold).sum())
-
-        frames = [results_df, dropped_df]
-        results_df = pd.concat(frames)
-        # set the results index to be in the same order as the counts index
-        results_df.index = counts_obj.counts.index
+        # one row per input feature, on the input's index and in its order: the
+        # non-zero features' results go on the rows they were computed from
+        # (by the same mask, so duplicate feature names cannot shift them)
+        results_df = pd.DataFrame(index=counts.index)
+        results_df["entropy"] = np.nan
+        results_df.loc[nonzero, "entropy"] = entropy.to_numpy()
+        results_df[flag_col] = False
+        results_df.loc[nonzero, flag_col] = flagged.to_numpy()
 
         self.results_df = results_df
         self.entropy_threshold = float(entropy_threshold)
-        self.num_flagged = int((entropy < entropy_threshold).sum())
+        self.num_flagged = int(flagged.sum())
         logger.info("entropy threshold done")
 
     @property
@@ -359,11 +370,13 @@ def plot_entropy(entropy_res, threshold, name=None, show=None):
 
     import matplotlib.pyplot as plt
 
-    entropy = entropy_res["entropy"]
+    # all-zero features have no entropy
+    entropy = entropy_res["entropy"].dropna()
 
     # sort the entropy values in ascending order
     entropy = entropy.sort_values(ascending=True)
-    entropy_threshold = np.percentile(entropy, q=threshold)
+    # threshold is a fraction, numpy's percentile takes a percent
+    entropy_threshold = np.percentile(entropy, q=threshold * 100)
 
     # plot histogram
     fig = plt.gcf()
@@ -393,6 +406,11 @@ def main(argv=sys.argv):
     if cmd == "entropy":
         count_obj = make_cli_count_obj(args)
         pval = option_value(args, "percentile", float)
+        if not 0 < pval < 1:
+            raise UsageError(
+                f"argument -p/--percentile: must be a fraction between 0 and 1 "
+                f"(0.05 is the 5th percentile), got {args.percentile}"
+            )
 
         # run the entropy_calc function
         out = EntropyCounts(count_obj, pval)

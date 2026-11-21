@@ -31,7 +31,12 @@ Ordering: after release/report-paths (the source fix), and after
 release/tutorial-airway (#117, which regenerates docs/example/ from the
 tutorial and owns that directory until it merges) and
 release/outlier-entropy (#125, which changes the entropy values the
-example's outlier card shows). Regenerating needs R with DESeq2 and the
+example's outlier card shows).
+The regeneration also picks up release/outlier-entropy's DETK-0200 changes
+to the example: -p 0.05 now flags the 5th percentile (925 airway genes, was
+13), so the outlier card's flags and threshold change; release/outlier-entropy
+did not regenerate docs/example/ itself (Adam's delegation via the driver
+session, 2026-11-20). Regenerating needs R with DESeq2 and the
 airway data, as release/tutorial-airway's run does; if that run is only
 possible in the R job, the developer takes the files from the job's
 artifacts the way release/tutorial-airway does.

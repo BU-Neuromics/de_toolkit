@@ -16,7 +16,7 @@ visited: 8628a94
 ## Implementation plan
 
 - [x] @developer Say 'Invalid design: <reason>' for designs that parsed but could not be built, quiet ply.yacc's table and conflict output in detk-filter (pinning the conflict count), read a design beginning with '-' as the design; tests and cli-pin rows; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: run detk-de with an unknown column, a missing level and '-2.5 ~ counts', and detk-filter on a real expression, and read stderr as a user would <!-- s2 -->
+- [x] @reviewer Review the PR: run detk-de with an unknown column, a missing level and '-2.5 ~ counts', and detk-filter on a real expression, and read stderr as a user would <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes

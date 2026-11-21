@@ -1,7 +1,8 @@
 """
 The filter mini language's parser: built quietly (detk-filter writes nothing
-on stderr when it succeeds), its grammar's conflicts pinned, and the
-grouping of and / or without parentheses as ply resolves those conflicts.
+on stderr when it succeeds), its grammar free of conflicts, and the
+grouping of and / or without parentheses: and binds tighter than or, both
+group to the left (DETK-0270).
 """
 
 import os
@@ -23,12 +24,11 @@ BIN_DIR = os.path.dirname(sys.executable)
 
 
 def test_grammar_conflicts_are_pinned():
-    # each conflict is AND or OR after "expression AND|OR expression"; a
-    # grammar change that adds, removes or resolves one fails here, and the
-    # grouping tests below say how the expressions then parse
+    # the precedence table resolves the 4 conflicts between AND and OR the
+    # bare grammar has; a grammar change that adds one fails here
     _, _, conflicts = build_filter_parser()
     assert conflicts == {"shift/reduce": SHIFT_REDUCE_CONFLICTS, "reduce/reduce": 0}
-    assert SHIFT_REDUCE_CONFLICTS == 4
+    assert SHIFT_REDUCE_CONFLICTS == 0
 
 
 def test_building_the_parser_is_quiet(capsys, tmp_path, monkeypatch):
@@ -51,15 +51,18 @@ def shape(expr):
     return int(expr.val)
 
 
-# the four conflicts are resolved as shifts: and / or have equal precedence
-# and group to the right; parentheses group as written
+# and binds tighter than or, both group to the left (DETK-0270);
+# parentheses group as written
 @pytest.mark.parametrize(
     "command, tree",
     [
-        (f"{A} and {B} or {C}", ("And", 1, ("Or", 2, 3))),
+        (f"{A} and {B} or {C}", ("Or", ("And", 1, 2), 3)),
         (f"{A} or {B} and {C}", ("Or", 1, ("And", 2, 3))),
-        (f"{A} and {B} and {C}", ("And", 1, ("And", 2, 3))),
-        (f"{A} or {B} or {C}", ("Or", 1, ("Or", 2, 3))),
+        (f"{A} and {B} and {C}", ("And", ("And", 1, 2), 3)),
+        (f"{A} or {B} or {C}", ("Or", ("Or", 1, 2), 3)),
+        (f"{A} or {B} and {C} or {A}", ("Or", ("Or", 1, ("And", 2, 3)), 1)),
+        (f"{A} and {B} or {C} and {A}", ("Or", ("And", 1, 2), ("And", 3, 1))),
+        (f"{A} and ({B} or {C})", ("And", 1, ("Or", 2, 3))),
         (f"({A} and {B}) or {C}", ("Or", ("And", 1, 2), 3)),
         (f"({A} or {B}) and {C}", ("And", ("Or", 1, 2), 3)),
     ],
@@ -105,3 +108,21 @@ def test_detk_filter_logs_carry_no_parser_generator_output(tmp_path):
     assert p.returncode == 0
     for noise in ("LALR", "shift/reduce", "WARNING", "parsetab"):
         assert noise not in p.stderr
+
+
+def test_and_binds_tighter_than_or_in_the_rows_kept():
+    import pandas
+
+    from de_toolkit.common import CountMatrix
+
+    counts = pandas.DataFrame(
+        [[1, 9], [100, 100], [0, 0]], index=["g1", "g2", "g3"], columns=["s1", "s2"]
+    )
+    mat = CountMatrix(counts)
+    # g1 fails the mean, passes nonzero and max: kept by (A and B) or C,
+    # where A and (B or C), the grouping before DETK-0270, dropped it
+    command = "mean(all) > 50 and nonzero(all) > 1 or max(all) > 5"
+    assert parse_filter_command(command)(mat) == {"g1", "g2"}
+    assert parse_filter_command("mean(all) > 50 and (nonzero(all) > 1 or max(all) > 5)")(mat) == {
+        "g2"
+    }

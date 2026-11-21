@@ -8,11 +8,15 @@ expression describes the rows to keep:
 The functions are mean, median, max, min, zero and nonzero (for zero and
 nonzero, a number strictly between 0 and 1 is a fraction of samples, 0 or
 >= 1 a number of samples); the inequalities >, >=, <, <=, == and !=. Terms
-combine with and / or and group with parentheses. The column spec is all
-(every sample), a column of <cov_fn> (the filter is applied to each of its
-groups, and a row is kept if any group passes), or one group of it, as in
-condition[test]: a group is a value of the column as written, a number for
-a column of numbers (flag[1]) and true or false for a column of booleans. A
+combine with and / or, where and binds tighter than or and both group to
+the left: "mean(all) > 5 and zero(all) < 2 or max(all) > 100" is
+"(mean(all) > 5 and zero(all) < 2) or max(all) > 100", the rows that pass
+both of the first two terms plus every row with a max above 100.
+Parentheses group as written. The column spec is all (every sample), a
+column of <cov_fn> (the filter is applied to each of its groups, and a row
+is kept if any group passes), or one group of it, as in condition[test]: a
+group is a value of the column as written, a number for a column of numbers
+(flag[1]) and true or false for a column of booleans. A
 group the column does not have is an error.
 """
 
@@ -309,11 +313,15 @@ def p_error(p):
     raise FilterCommandError(f"unexpected {p.value!r} at position {p.lexpos}")
 
 
-# The grammar has 4 shift/reduce conflicts, all between AND and OR: ply
-# resolves each as a shift, so and/or have equal precedence and group to
-# the right, "a and b or c" as "a and (b or c)". tests/filter pins the
-# count and the grouping; parentheses group as written.
-SHIFT_REDUCE_CONFLICTS = 4
+# and binds tighter than or, and both group to the left (DETK-0270), as in
+# Python, SQL and R: "a and b or c" is "(a and b) or c", "a or b and c" is
+# "a or (b and c)". The table resolves every conflict between AND and OR, so
+# the grammar has none; tests/filter pins the count and the grouping.
+precedence = (
+    ("left", "OR"),
+    ("left", "AND"),
+)
+SHIFT_REDUCE_CONFLICTS = 0
 
 
 class _CountingLog:

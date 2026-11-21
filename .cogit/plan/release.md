@@ -57,6 +57,11 @@ visited: f6503ed
 - [ ] [detk-outlier entropy handles all-zero features and keeps each result on its feature](release/outlier-entropy.md) <!-- s42 -->
 - [ ] [Design and filter commands say only what went wrong](release/cli-messages.md) <!-- s43 -->
 - [ ] [detk-util record's help says what it does and lists only its options](release/record-help.md) <!-- s44 -->
+- [ ] [The crate goes with its report and recorded paths are relative](release/report-paths.md) <!-- s45 -->
+- [ ] [The published example holds no machine paths](release/example-paths.md) <!-- s46 -->
+- [ ] [A one-field header over wider rows reads as R writes it](release/short-header.md) <!-- s47 -->
+- [ ] [Recipe page notes and record's failure line](release/recipe-notes.md) <!-- s48 -->
+- [ ] [CI runs the report's browser render tests](release/ci-jsdom.md) <!-- s49 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
 
@@ -82,3 +87,6 @@ project runs toward 1.0 (DETK-0063: a definition of done he approves, delegated 
 plan PRs merged on green, the release his), and deferred DETK-0002, which is now a step of
 release/cut rather than a gate on it.
 release/size-factors moved here from features on 2026-11-19.
+On 2026-11-20 Adam also decided that the absolute machine paths in the published example
+(docs/example/) go before 1.0, fixed at the source: release/report-paths (with DETK-0280, where
+the crate is written) and release/example-paths.

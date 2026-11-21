@@ -6,9 +6,21 @@ and a builder's error text all carry user strings; the page must show them as
 written and never parse them as HTML. Only the static SVG chart is markup.
 
 The DOM tests render a real report and run the page's own script in jsdom
-(``render_dom.js``). They need node and jsdom (``npm install jsdom``, then
-point ``NODE_PATH`` at its ``node_modules``) and are skipped without them; the
-template checks below run everywhere. The harness renders the Vega charts
+(``render_dom.js``). They need node and jsdom and are skipped without them; the
+template checks below run everywhere. CI runs them in the ``test (python
+3.13)`` job of ``.github/workflows/ci.yml``, which installs the jsdom pinned in
+``package.json``/``package-lock.json`` here, points ``NODE_PATH`` at it and
+sets ``DETK_REQUIRE_JSDOM=1``, so a missing node or jsdom fails those tests
+there instead of skipping them; the other jobs skip them. To run them locally
+(node 18 or later), install the same jsdom outside the tree::
+
+    mkdir -p /tmp/detk-jsdom
+    cp tests/report/package.json tests/report/package-lock.json /tmp/detk-jsdom/
+    npm ci --prefix /tmp/detk-jsdom
+    NODE_PATH=/tmp/detk-jsdom/node_modules DETK_REQUIRE_JSDOM=1 \
+        uv run pytest tests/report/test_report_view_text.py -v
+
+The harness renders the Vega charts
 too (it stubs a canvas and ``structuredClone``), hovers every mark that has a
 tooltip (through the view's own tooltip handler), clicks every action in their
 menus, waits for every export and fails on any page error.
@@ -18,6 +30,7 @@ import json
 import os
 import re
 import shutil
+import functools
 import subprocess
 
 import pytest
@@ -38,6 +51,12 @@ UNKNOWN = "x" + EVIL
 BUILT = {"a", "button", "div", "h2", "p", "pre", "section", "table", "tbody", "td", "th", "tr"}
 
 
+# when set (to anything but "0"), a missing node or jsdom fails the DOM tests
+# instead of skipping them, so the CI job that runs them cannot pass by skipping
+REQUIRE_JSDOM_ENV = "DETK_REQUIRE_JSDOM"
+
+
+@functools.cache
 def _jsdom_available():
     node = shutil.which("node")
     if not node:
@@ -48,9 +67,40 @@ def _jsdom_available():
     return p.returncode == 0
 
 
-needs_jsdom = pytest.mark.skipif(
-    not _jsdom_available(), reason="node with jsdom is required (set NODE_PATH)"
-)
+def _check_jsdom(available, required):
+    """Skip (or, when ``required``, fail) a DOM test that has no node with jsdom."""
+    if available:
+        return
+    reason = "node with jsdom is required (set NODE_PATH)"
+    if required:
+        pytest.fail(f"{reason}, and {REQUIRE_JSDOM_ENV} is set")
+    pytest.skip(reason)
+
+
+def _jsdom_required():
+    return os.environ.get(REQUIRE_JSDOM_ENV, "") not in ("", "0")
+
+
+@pytest.fixture
+def _jsdom():
+    _check_jsdom(_jsdom_available(), _jsdom_required())
+
+
+needs_jsdom = pytest.mark.usefixtures("_jsdom")
+
+
+@pytest.mark.parametrize(("setting", "required"), [(None, False), ("0", False), ("1", True)])
+def test_needs_jsdom_skips_or_fails_without_jsdom(setting, required, monkeypatch):
+    """Without jsdom the marker skips, or fails when DETK_REQUIRE_JSDOM is set."""
+    if setting is None:
+        monkeypatch.delenv(REQUIRE_JSDOM_ENV, raising=False)
+    else:
+        monkeypatch.setenv(REQUIRE_JSDOM_ENV, setting)
+    assert _jsdom_required() is required
+    _check_jsdom(True, required)  # with jsdom the test runs either way
+    expected = pytest.fail.Exception if required else pytest.skip.Exception
+    with pytest.raises(expected, match="node with jsdom is required"):
+        _check_jsdom(False, required)
 
 
 def _mod(name, properties, params=None):

@@ -89,6 +89,24 @@ jobs:
       - name: Install the project
         run: uv sync --locked --dev
 
+      # the report's DOM render tests (tests/report/test_report_view_text.py)
+      # need node and jsdom; one matrix job installs the jsdom pinned in
+      # tests/report/package-lock.json outside the tree and requires them
+      # (DETK_REQUIRE_JSDOM below), the others skip them
+      - name: Set up node (report render tests)
+        if: matrix.python-version == '3.13'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install jsdom (report render tests)
+        if: matrix.python-version == '3.13'
+        run: |
+          mkdir -p "$RUNNER_TEMP/jsdom"
+          cp tests/report/package.json tests/report/package-lock.json "$RUNNER_TEMP/jsdom/"
+          npm ci --prefix "$RUNNER_TEMP/jsdom"
+          echo "NODE_PATH=$RUNNER_TEMP/jsdom/node_modules" >> "$GITHUB_ENV"
+
       # R and Bioconductor are not installed in this job, so the R-backed tests
       # (DESeq2, fgsea, logistf) skip automatically. The test-r job below
       # exercises the R integration.
@@ -97,9 +115,22 @@ jobs:
           # unique, combinable data file per matrix job (picked up by the
           # coverage job below via `coverage combine`)
           COVERAGE_FILE: .coverage.py${{ matrix.python-version }}
+          # a missing node or jsdom fails the report render tests here
+          DETK_REQUIRE_JSDOM: ${{ matrix.python-version == '3.13' && '1' || '' }}
         run: |
           uv run pytest tests -o addopts="" -p no:cacheprovider \
             --cov=de_toolkit --cov-report=term-missing
+
+      # list each render test by name, so the log shows every one ran and passed
+      - name: Report render tests ran in jsdom
+        if: matrix.python-version == '3.13'
+        env:
+          DETK_REQUIRE_JSDOM: "1"
+        run: |
+          set -o pipefail
+          uv run pytest tests/report/test_report_view_text.py -o addopts="" \
+            -p no:cacheprovider -v -rs | tee "$RUNNER_TEMP/jsdom.txt"
+          if grep -Eq "skipped|SKIPPED|failed|error" "$RUNNER_TEMP/jsdom.txt"; then exit 1; fi
 
       - name: Upload coverage data
         uses: actions/upload-artifact@v4

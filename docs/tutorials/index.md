@@ -8,7 +8,7 @@ test suite before it reaches you.
 
 | Tutorial | What it covers | Needs |
 | --- | --- | --- |
-| Differential expression on airway | statistics, filtering, DESeq2 normalization, VST, outliers, `detk-de deseq2`, gene symbols, the report and the crate | detk, R with DESeq2 and airway |
+| [Differential expression on airway](airway.md) | statistics, filtering, DESeq2 normalization, VST, outliers, `detk-de deseq2`, gene symbols, the report and the crate | detk, R with DESeq2 and airway |
 | [From quantifier outputs to a normalized matrix](quantifiers.md) | gathering salmon `quant.sf` files, a sample sheet, CPM and TPM, transforms, statistics and the report | detk only |
 | Derived covariates and recorded steps | deriving covariates with Miller, recording each step with `detk-util record`, using a derived covariate in a DESeq2 design | detk, R with DESeq2 and airway, [Miller](https://miller.readthedocs.io/) (`mlr`) |
 

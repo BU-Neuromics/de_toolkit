@@ -3,9 +3,11 @@
 The airway dataset (GEO GSE52778; Himes et al. 2014, PMID 24926665): human
 airway smooth muscle cells from four donor cell lines, treated with
 dexamethasone (`trt`) or untreated (`untrt`); 8 samples, 63,677 Ensembl
-genes. detk's documentation runs this same pipeline:
-https://bu-neuromics.github.io/de_toolkit/example/ (script:
-`examples/airway/run.sh` in the de_toolkit repository).
+genes. detk's documentation runs this same pipeline as a tutorial, with the
+outputs to expect at each step:
+https://bu-neuromics.github.io/de_toolkit/tutorials/airway/ (the page
+`docs/tutorials/airway.md` in the de_toolkit repository, which detk's tests
+run).
 
 Use it to check that an installation works end to end, or as the template for
 a two-condition design with a blocking covariate.
@@ -69,8 +71,8 @@ detk-stats summary --log --color-col=dex -o raw_summary_stats.csv counts.csv sam
 # keep genes with nonzero counts in at least half the samples
 detk-filter 'nonzero(all) >= 0.5' -o counts_filtered.csv counts.csv
 
-# DESeq2 median-of-ratios normalization (the size factors go into the report)
-detk-norm deseq2 -o norm_counts.csv counts_filtered.csv
+# DESeq2 median-of-ratios normalization, the size factors to size_factors.tsv
+detk-norm deseq2 -o norm_counts.csv --size-factors=size_factors.tsv counts_filtered.csv
 
 # optional: variance-stabilizing transform and entropy outlier flags
 detk-transform vst -o vst_counts.csv counts_filtered.csv
@@ -80,13 +82,17 @@ detk-outlier entropy counts_filtered.csv -p 0.05 -o entropy_flags.csv
 detk-de deseq2 -o deseq2_results.csv "counts ~ cell + dex[untrt]" counts_filtered.csv sample_info.csv
 ```
 
-The filter keeps about 24,700 of the 63,677 genes. The treatment effect is in
+The filter keeps 24,706 of the 63,677 genes. `size_factors.tsv` has a
+`sample`, `size_factor` header, then a sample and its factor on each line
+(SRR1039508 1.0236..., SRR1039513 0.6700..., ...). The treatment effect is in
 the `dex__trt__*` columns of `deseq2_results.csv`
 (`dex__trt__log2FoldChange`, `dex__trt__padj`, ...); the `cell__*` columns
 hold the cell line terms.
 
 Add gene symbols from the map written in step 1, for reading the results
-(Ensembl IDs without a symbol get an empty `symbol`):
+(Ensembl IDs without a symbol get an empty `symbol`; the top genes by
+`dex__trt__padj` are SPARCL1, CACNB2, SAMHD1 and DUSP1, all up with
+dexamethasone):
 
 ```bash
 detk-util annotate --map-to=symbol -o deseq2_results_symbols.csv deseq2_results.csv gene_map.csv
@@ -98,10 +104,10 @@ WikiPathways GMT files are keyed by Entrez gene ID, the results by Ensembl
 ID, so join the map onto the results first. `detk-util annotate` would add
 the `entrez` column, but several Ensembl genes map to one Entrez ID and
 fgsea refuses an ID that appears twice, so this join also keeps one row per
-Entrez ID (the first, as `examples/airway/run.sh` does). It needs pandas, which detk
+Entrez ID (the first, as the tutorial does). It needs pandas, which detk
 itself depends on, so run it with the Python detk is installed in (the
 `python` on `PATH` may lack pandas when detk was installed with
-`uv tool install` or pipx); `examples/airway/run.sh` does the same:
+`uv tool install` or pipx); the tutorial does the same:
 
 ```bash
 DETK_PY="$(dirname "$(command -v detk-de)")/python3"

@@ -250,6 +250,29 @@ def test_skill_usage_blocks_match_help(path):
             )
 
 
+AIRWAY_TUTORIAL = SKILLS_DIR.parent / "docs" / "tutorials" / "airway.md"
+
+
+def _command_lines(text):
+    "Each detk command line in the fenced blocks of *text*, spaces normalized"
+    return [" ".join(item.split()) for kind, _, item in _walk(text) if kind == "block"]
+
+
+def test_airway_reference_follows_the_tutorial():
+    """skills/detk/references/airway.md shows the workflow of the airway
+    tutorial, which the tests run: each detk command line in the skill is a
+    command line of docs/tutorials/airway.md."""
+    skill = SKILLS_DIR / "detk" / "references" / "airway.md"
+    tutorial = set(_command_lines(AIRWAY_TUTORIAL.read_text()))
+    lines = _command_lines(skill.read_text())
+    assert lines, f"no detk command lines in {skill}"
+    missing = [line for line in lines if line not in tutorial]
+    assert not missing, (
+        f"detk command lines in {skill.relative_to(SKILLS_DIR)} that "
+        f"docs/tutorials/airway.md does not run or show: {missing}"
+    )
+
+
 GOOD = """\
 ```bash
 detk-de deseq2 -o out.csv "counts ~ a[b]" counts.csv info.csv

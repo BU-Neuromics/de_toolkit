@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-20
 from: {node: release/cli-messages, step: s1}
 applies: [release/cli-messages]
 issue: 126
+revisions:
+  - {date: 2026-11-21, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's choice, relayed via the driver session, 2026-11-20: Option B, and binds tighter than or, both left-associative; folded into release/cli-messages (PR #127)"}
 ---
 
 # How and / or group in detk-filter expressions for 1.0

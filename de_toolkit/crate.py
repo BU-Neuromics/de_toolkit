@@ -26,9 +26,11 @@ module JSON documents under ``<report_dir>/json/``:
   and ``out_file_paths``), each ``File`` with its ``sha256`` and
   ``contentSize``
 
-The crate root is the analysis working directory: file paths are written
-relative to it when they fall inside, and as absolute ``file://`` URIs when
-they do not. The emitter is hand-rolled (the crate is a single JSON-LD file)
+The crate is written into the report directory and rooted there
+(DETK-0280): each report has its own, and a file is named by its path
+relative to the report directory (``../counts.csv`` for a file in the working
+directory of the default ``./detk_report``), never by an absolute ``file://``
+URI. The emitter is hand-rolled (the crate is a single JSON-LD file)
 to avoid a runtime dependency; conformance is checked in the test suite.
 """
 
@@ -138,20 +140,27 @@ def _action_id(doc_id):
     return "urn:uuid:" + str(uuid.uuid5(uuid.NAMESPACE_URL, f"{_REPO_URL}/run/{doc_id}"))
 
 
-def _file_ref(path, workdir, crate_root):
-    """Crate identifier for *path*: relative POSIX path when the file lies
-    under the crate root, absolute file:// URI otherwise."""
+def _file_ref(path, workdir, crate_root, report_dir=None):
+    """Crate identifier for *path*: its POSIX path relative to the crate
+    root. *path* is relative to the document's *workdir*, which is relative
+    to *report_dir* (the crate root unless given; an absolute workdir, as
+    schema 1.0 and 1.1 documents hold, is itself). An absolute ``file://``
+    URI only when no relative path exists (another Windows drive)."""
     if path is None:
         return None
-    base = workdir or crate_root
+    if workdir is None:
+        base = os.getcwd()
+    else:
+        base = os.path.join(report_dir or crate_root, workdir)
     abspath = os.path.normpath(os.path.join(base, path))
-    rel = os.path.relpath(abspath, crate_root)
-    if rel.startswith(".."):
+    try:
+        rel = os.path.relpath(abspath, crate_root)
+    except ValueError:
         return pathlib.Path(abspath).as_uri()
     return pathlib.PurePath(rel).as_posix()
 
 
-def _file_entity(ref, crate_root):
+def _file_entity(ref):
     ent = {"@id": ref, "@type": "File"}
     name = ref.rsplit("/", 1)[-1]
     ent["name"] = name
@@ -173,12 +182,11 @@ def _paths(doc, many, one):
     return [p for p in paths if p is not None]
 
 
-def _link(files, path, workdir, crate_root, digest, produced):
-    """The reference to the File entity for *path*, made in *files* if new;
+def _link(files, ref, digest, produced):
+    """The reference to the File entity *ref*, made in *files* if new;
     *digest* (record's sha256 and size of it) goes on the entity: the
     producer's wins, a reader's fills one in"""
-    ref = _file_ref(path, workdir, crate_root)
-    ent = files.setdefault(ref, _file_entity(ref, crate_root))
+    ent = files.setdefault(ref, _file_entity(ref))
     if digest and digest.get("sha256") and (produced or "sha256" not in ent):
         ent["sha256"] = digest["sha256"]
         if digest.get("size") is not None:
@@ -198,9 +206,11 @@ def _recorded_tool_id(tool, version):
     return "#tool-" + urllib.parse.quote(f"{tool}-{version}", safe="")
 
 
-def build_crate(docs, crate_root):
+def build_crate(docs, crate_root, report_dir=None):
     """Build the crate JSON-LD (as a dict) for *docs*, a list of module JSON
-    documents (as written by DetkModuleJSON), rooted at *crate_root*."""
+    documents (as written by DetkModuleJSON), rooted at *crate_root*;
+    *report_dir*, the directory the documents' workdir is relative to, is
+    the crate root unless given."""
     files = {}  # ref -> entity, shared across actions so lineage is visible
     software = {}
     actions = []
@@ -210,6 +220,9 @@ def build_crate(docs, crate_root):
         name = doc.get("name", "unknown")
         doc_id = doc.get("id", name)
         workdir = doc.get("workdir")
+
+        def ref_of(path, workdir=workdir):
+            return _file_ref(path, workdir, crate_root, report_dir)
 
         recorded = name == "record"
         if recorded:
@@ -236,13 +249,13 @@ def build_crate(docs, crate_root):
                     "softwareVersion": doc.get("detk_version", __version__),
                 }
 
-        # the checksums record took of its files, by path as given
+        # the checksums record took of its files, by the file they name
         digests = {}
         if recorded:
             props = doc.get("properties") or {}
             for d in list(props.get("inputs") or []) + list(props.get("outputs") or []):
                 if isinstance(d, dict) and d.get("path") is not None:
-                    digests[d["path"]] = d
+                    digests[ref_of(d["path"])] = d
 
         objects = []
         seen = set()
@@ -250,7 +263,7 @@ def build_crate(docs, crate_root):
         if doc.get("column_data_path") is not None:
             inputs.append(doc["column_data_path"])
         for path in inputs:
-            ref = _link(files, path, workdir, crate_root, digests.get(path), produced=False)
+            ref = _link(files, ref_of(path), digests.get(ref_of(path)), produced=False)
             if ref["@id"] not in seen:
                 seen.add(ref["@id"])
                 objects.append(ref)
@@ -276,7 +289,7 @@ def build_crate(docs, crate_root):
         results = []
         seen = set()
         for path in _paths(doc, "out_file_paths", "out_file_path"):
-            ref = _link(files, path, workdir, crate_root, digests.get(path), produced=True)
+            ref = _link(files, ref_of(path), digests.get(ref_of(path)), produced=True)
             if ref["@id"] not in seen:
                 seen.add(ref["@id"])
                 results.append(ref)
@@ -309,10 +322,11 @@ def build_crate(docs, crate_root):
         "conformsTo": {"@id": PROFILE_URI},
         "name": "detk analysis provenance",
         "description": (
-            "Provenance of de_toolkit (detk) tool executions in this directory, "
-            "recorded as a Process Run Crate. Each CreateAction is one detk "
-            "invocation; the same facts in detk's native format are under "
-            "the report directory's json/ folder."
+            "Provenance of the de_toolkit (detk) tool executions in the report "
+            "in this directory, recorded as a Process Run Crate. Each "
+            "CreateAction is one detk invocation; the same facts in detk's "
+            "native format are in the json/ folder beside this file. File "
+            "paths are relative to this directory."
         ),
         # detk cannot assert a license over the user's data; RO-Crate allows a
         # textual statement, and the owner may replace it with a license URI
@@ -351,12 +365,13 @@ def build_crate(docs, crate_root):
     return {"@context": context, "@graph": graph}
 
 
-def write_crate(docs, crate_root):
-    """Write ro-crate-metadata.json for *docs* at *crate_root*. Returns the
-    path written, or None if there are no documents to describe."""
+def write_crate(docs, crate_root, report_dir=None):
+    """Write ro-crate-metadata.json for *docs* at *crate_root* (the report
+    directory, which *report_dir* is unless given). Returns the path
+    written, or None if there are no documents to describe."""
     if not docs:
         return None
-    crate = build_crate(docs, crate_root)
+    crate = build_crate(docs, crate_root, report_dir)
     path = os.path.join(crate_root, CRATE_FILENAME)
     with open(path, "w") as f:
         json.dump(finite_json(crate), f, indent=2, allow_nan=False)

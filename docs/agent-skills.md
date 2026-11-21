@@ -58,7 +58,7 @@ name it (in Claude Code, `/detk`). The agent then:
    mapping, and `detk-enrich fgsea` with your design formula;
 4. runs `detk-report generate`, and reports the result tables, the number of
    significant genes, the top gene sets, and the paths to
-   `detk_report/detk_report.html` and `ro-crate-metadata.json`.
+   `detk_report/detk_report.html` and `detk_report/ro-crate-metadata.json`.
 
 It asks rather than guesses when the request leaves out the condition of
 interest, the reference level or the gene set collection.

@@ -44,7 +44,8 @@ Options:
     --report-dir=DIR     Specify the report directory [default: ./detk_report]
 ```
 
-`detk-report clean` deletes the report directory and its accumulated JSON.
+`detk-report clean` deletes the report directory, with its accumulated JSON,
+the HTML report and the provenance crate in it.
 
 ## The report
 
@@ -85,7 +86,7 @@ it in detk's test suite. For example (abbreviated):
 
 ### Document schema
 
-The envelope is versioned (`schema_version`, currently **1.1**) and specified
+The envelope is versioned (`schema_version`, currently **1.2**) and specified
 by a JSON Schema shipped inside the package at `de_toolkit/module_schema.json`
 ([view on GitHub](https://github.com/BU-Neuromics/de_toolkit/blob/main/de_toolkit/module_schema.json)).
 Required fields:
@@ -100,15 +101,27 @@ Required fields:
 | `params` | object | invocation parameters (empty only for modules that take none) |
 | `properties` | object | module-specific results consumed by the report views |
 
-Optional fields: `start_time` / `end_time` (ISO 8601 UTC), `argv` (the process
-argument vector), `in_file_path`, `out_file_path`, `column_data_path`,
-`workdir`, and since 1.1 `in_file_paths` and `out_file_paths`: lists of every
-input and output file of a step with several, written by
-[`detk-util record`](tools/util.md#record), whose first entries are also
-`in_file_path` and `out_file_path`. The version is `major.minor`: the minor
-version goes up for an addition every older document still satisfies (1.1
-added the two optional lists, so every 1.0 document is a valid 1.1 one), the
-major version for a change that is not. Every document detk emits is validated against the schema in the
+Optional fields:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `start_time` / `end_time` | string | ISO 8601 UTC |
+| `argv` | array | the command line; `argv[0]` is the command's name only (`detk-stats`), the other arguments as typed |
+| `workdir` | string | the directory the command ran in, **relative to the report directory**: `..` for the default `./detk_report` |
+| `in_file_path`, `out_file_path`, `column_data_path` | string | the input, output and column data files, **relative to `workdir`** (a path typed as absolute is written relative too) |
+| `in_file_paths`, `out_file_paths` | array | since 1.1: every input and output file of a step with several, written by [`detk-util record`](tools/util.md#record), each relative to `workdir`; their first entries are also `in_file_path` and `out_file_path` |
+
+So a file's location is the report directory, then `workdir`, then the
+path: `detk_report/../counts.csv`. No recorded path names a directory of the
+machine the analysis ran on, so a report directory can be moved or published
+as it is. Since 1.2; documents of 1.0 and 1.1 hold `workdir` and `argv[0]`
+absolute, and an absolute `workdir` joined to the report directory is itself,
+so the same rule reads them.
+
+The version is `major.minor`: the minor version goes up for an addition every
+older document still satisfies, or a change of what a field holds that the
+same rule still reads in older documents (1.1 added the two optional lists;
+1.2 made the paths relative), the major version for a change that is not. Every document detk emits is validated against the schema in the
 test suite; validate your own consumers against the same file. Small
 p-values never appear as raw floats in `properties` — the encoder rounds
 floats to 3 decimals, so modules emit `-log10` values or preformatted strings
@@ -122,8 +135,8 @@ chart travels with it.
 
 ## Standards-based provenance: the Process Run Crate
 
-Alongside the report, detk writes an `ro-crate-metadata.json` at the analysis
-working directory, describing every recorded invocation in community-standard
+Alongside the report, in the report directory, detk writes an
+`ro-crate-metadata.json`, describing every recorded invocation in community-standard
 terms: the [Process Run Crate] profile of [Workflow Run RO-Crate], built on
 [RO-Crate]. This is a second, standards-facing view of the same facts as the
 module JSON:
@@ -135,8 +148,14 @@ module JSON:
 - input and output files are shared `File` entities, so the chaining of tools
   through files — the *implicit workflow* — is visible in the metadata graph
 
-Because the crate root is the working directory, the directory as a whole
-becomes a self-describing research object: standard RO-Crate tooling
+The crate is rooted in the report directory, so each report directory has
+its own crate: two analyses run in one directory with different
+`--report-dir` values never overwrite each other's provenance. Every file is
+named by its path relative to the report directory (`../counts.csv` for a
+file in the working directory of the default `./detk_report`), never by an
+absolute path or `file://` URI, so the report directory is a self-describing
+research object wherever it is copied, as long as the files beside it come
+too. Standard RO-Crate tooling
 (`rocrate-validator`, `runcrate report`, WorkflowHub, Zenodo RO-Crate
 deposits) can inspect it without detk installed, and the crate maps to W3C
 PROV-O via the profile's published mapping. detk validates its emitted crates
@@ -144,14 +163,16 @@ against the Process Run Crate profile in its test suite.
 
 The crate is derived entirely from the module JSON under
 `<report-dir>/json/`, is rewritten on every report generation, and is removed
-by `detk-report clean`. detk does not assert a license over your data — the
+with the report directory by `detk-report clean`. (detk before 1.0 wrote it to
+the working directory; `clean` leaves such a `./ro-crate-metadata.json`
+alone.) detk does not assert a license over your data — the
 crate's `license` field says so explicitly; replace it with your license when
 publishing.
 
 **Archiving:** if you publish the analysis directory to Zenodo/OSF (e.g. with
-a sync tool such as [datapin]), the deposit *is* a valid RO-Crate — the
-metadata file travels with the data, so the archived object remains
-machine-readable provenance, not just a pile of CSVs.
+a sync tool such as [datapin]), the report directory in the deposit *is* a
+valid RO-Crate whose references reach the data beside it, so the archived
+object remains machine-readable provenance, not just a pile of CSVs.
 
 [Process Run Crate]: https://www.researchobject.org/workflow-run-crate/profiles/process_run_crate/
 [Workflow Run RO-Crate]: https://www.researchobject.org/workflow-run-crate/

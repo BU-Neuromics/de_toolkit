@@ -24,7 +24,7 @@
     },
     "schema_version": {
       "type": "string",
-      "description": "version of this envelope format, major.minor; this schema describes 1.1 and every 1.x document before it (1.1 added the optional in_file_paths and out_file_paths)",
+      "description": "version of this envelope format, major.minor; this schema describes 1.2 and every 1.x document before it (1.1 added the optional in_file_paths and out_file_paths; 1.2 records workdir relative to the report directory, argv[0] as the command's name and every file path relative to workdir, where 1.0 and 1.1 wrote workdir and argv[0] absolute)",
       "pattern": "^\\d+\\.\\d+$"
     },
     "detk_version": {
@@ -48,33 +48,33 @@
     "argv": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "process argument vector at recording time"
+      "description": "process argument vector at recording time; argv[0] is the command's name only (e.g. detk-stats, since 1.2), the other arguments as typed"
     },
     "in_file_path": {
       "type": ["string", "null"],
-      "description": "primary input file path as given on the command line"
+      "description": "primary input file path, relative to workdir (since 1.2; a path typed as absolute too)"
     },
     "out_file_path": {
       "type": ["string", "null"],
-      "description": "primary output file path, if any"
+      "description": "primary output file path, if any, relative to workdir (since 1.2)"
     },
     "in_file_paths": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "every input file path, in order, for a step with several (since 1.1; optional, written by detk-util record); in_file_path is the first"
+      "description": "every input file path, in order, for a step with several (since 1.1; optional, written by detk-util record), each relative to workdir (since 1.2); in_file_path is the first"
     },
     "out_file_paths": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "every output file path, in order, for a step with several (since 1.1; optional, written by detk-util record); out_file_path is the first"
+      "description": "every output file path, in order, for a step with several (since 1.1; optional, written by detk-util record), each relative to workdir (since 1.2); out_file_path is the first"
     },
     "column_data_path": {
       "type": ["string", "null"],
-      "description": "column data (sample metadata) file path, if any"
+      "description": "column data (sample metadata) file path, if any, relative to workdir (since 1.2)"
     },
     "workdir": {
       "type": ["string", "null"],
-      "description": "working directory of the invocation"
+      "description": "working directory of the invocation, relative to the report directory (since 1.2; .. for the default ./detk_report); 1.0 and 1.1 documents hold it absolute, which resolves the same way when joined to the report directory"
     },
     "params": {
       "type": "object",

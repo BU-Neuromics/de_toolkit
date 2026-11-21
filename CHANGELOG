@@ -160,6 +160,21 @@ predates everything below.
   usage error on Python 3.11
 - `detk-filter` accepts a column or group name of one character
   (`mean(cond[a]) > 1`), which its expression language rejected
+- The provenance crate (`ro-crate-metadata.json`) is written into the report
+  directory, beside `detk_report.html`, and rooted there (#133, DETK-0280);
+  it was written to the working directory, where two reports with different
+  `--report-dir` values overwrote each other's crate. Its files are named
+  relative to the report directory (`../counts.csv`), never by a `file://`
+  URI. `detk-report clean` removes the crate with the report directory and
+  leaves a `./ro-crate-metadata.json` an earlier version wrote alone
+- Module JSON (schema 1.2) holds no absolute path of the machine: `workdir`
+  is relative to the report directory (`..` for the default
+  `./detk_report`), `argv[0]` is the command's name (`detk-stats`), and the
+  file paths (`in_file_path`, `out_file_path`, `column_data_path`,
+  `in_file_paths`, `out_file_paths`) are relative to `workdir`, a path typed
+  as absolute too. A consumer resolves a file as report directory, then
+  `workdir`, then the path; an older document's absolute `workdir` resolves
+  the same way
 
 ### Added
 - Shell completion for bash, zsh and tcsh, for `detk` and every

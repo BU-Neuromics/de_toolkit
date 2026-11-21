@@ -145,8 +145,8 @@ Without network access, skip this step and say so.
 detk-report generate
 ```
 
-This writes `detk_report/detk_report.html` and, in the current directory,
-`ro-crate-metadata.json`. Open `detk_report/detk_report.html`. Compare it with the published report at
+This writes `detk_report/detk_report.html` and, beside it,
+`detk_report/ro-crate-metadata.json`. Open `detk_report/detk_report.html`. Compare it with the published report at
 https://bu-neuromics.github.io/de_toolkit/example/detk_report.html: samples
 separate by treatment on one principal component and by cell line on
 another, and the volcano plot's term menu switches between `dex__trt` and the

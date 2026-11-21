@@ -60,7 +60,7 @@ _shtab_detk_outlier_commands() {
 
 _shtab_detk_report_commands() {
   local _commands=(
-    clean:'Remove the report directory, with the module JSON and the HTML report in it,'
+    clean:'Remove the report directory, with the module JSON, the HTML report and the'
     generate:'Render the HTML report (detk_report.html) and the provenance crate again from'
   )
   _describe 'detk report commands' _commands
@@ -2020,7 +2020,7 @@ fi
 
 _shtab_detk_cmd_report_commands() {
   local _commands=(
-    clean:'Remove the report directory, with the module JSON and the HTML report in it,'
+    clean:'Remove the report directory, with the module JSON, the HTML report and the'
     generate:'Render the HTML report (detk_report.html) and the provenance crate again from'
   )
   _describe 'detk-report commands' _commands

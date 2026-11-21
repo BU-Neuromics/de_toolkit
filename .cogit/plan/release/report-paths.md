@@ -9,6 +9,8 @@ acceptance:
 from: [DETK-0280]
 scope: [+de_toolkit/crate.py, +de_toolkit/report.py, +de_toolkit/util.py, +de_toolkit/module_schema.json, tests/report/test_crate.py, +tests/report/test_report.py, new:tests/report/test_report_paths.py, +tests/util/test_tidy.py, +tests/util/test_record.py, +tests/example/test_airway_example.py, +tests/cli/test_cli_help.py, +docs/report.md, +docs/tools/util.md, +docs/agent-skills.md, +docs/tutorials/quantifiers.md, +skills/detk/SKILL.md, +skills/detk/references/airway.md, +skills/detk/references/commands.md, +examples/airway/run.sh, +examples/airway/README.md, +CHANGELOG]
 prev: [DETK-0280]
+issue: 133
+visited: 73b7582
 ---
 
 # The crate goes with its report and recorded paths are relative

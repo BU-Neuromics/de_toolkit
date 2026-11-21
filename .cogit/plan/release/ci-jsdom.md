@@ -6,6 +6,8 @@ acceptance:
   - in that job the jsdom tests fail rather than skip when node or jsdom is missing (an environment variable such as DETK_REQUIRE_JSDOM=1, read by the needs_jsdom marker, as DETK_TUTORIALS_REQUIRE_ALL does for the tutorials); a test of the marker covers both settings; the job's log on the PR shows every needs_jsdom test passed (test_views_with_null_values_render included) and none skipped; other jobs keep skipping them
   - tests/report/test_report_view_text.py's module docstring says which CI job runs the render tests and how to run them locally; ci.yml passes actionlint or the existing workflow checks, and every other job is unchanged
 scope: [.github/workflows/ci.yml, +tests/report/test_report_view_text.py, new:tests/report/package.json, new:tests/report/package-lock.json]
+issue: 130
+visited: 903ac76
 ---
 
 # CI runs the report's browser render tests

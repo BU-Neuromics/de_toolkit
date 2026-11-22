@@ -281,7 +281,8 @@ def entropy(counts_obj, threshold):
         - *entropy*: the calculated entropy value for that row
         - *entropy_p0_XX*: a True/False column for genes flagged as having an
           entropy value less than the *threshold* percentile; *XX* is the
-          digits of the threshold after the decimal point
+          digits of the threshold after the decimal point, at least two
+          (0.05 gives *entropy_p0_05*, 0.1 *entropy_p0_10*)
 
         A feature with no counts in any sample has no entropy: its *entropy*
         is missing (NaN) and it is not flagged, and the percentile is taken
@@ -289,6 +290,17 @@ def entropy(counts_obj, threshold):
     """
     obj = EntropyCounts(counts_obj, threshold)
     return obj.output
+
+
+def flag_column(threshold):
+    """
+    The name of the flag column for the fraction *threshold*: ``entropy_p0_``
+    and the threshold's decimal digits, at least two (0.05 gives
+    ``entropy_p0_05``, 0.1 ``entropy_p0_10``, 0.125 ``entropy_p0_125``, 1e-05
+    ``entropy_p0_00001``).
+    """
+    digits = np.format_float_positional(float(threshold), trim="-").partition(".")[2]
+    return f"entropy_p0_{digits.ljust(2, '0')}"
 
 
 class EntropyCounts(DetkModule):
@@ -303,8 +315,7 @@ class EntropyCounts(DetkModule):
             raise ValueError(
                 f"the entropy percentile must be a fraction between 0 and 1, got {threshold}"
             )
-        trshld_name = str(threshold).split(".")[1]
-        flag_col = f"entropy_p0_{trshld_name}"
+        flag_col = flag_column(threshold)
 
         counts = counts_obj.counts
         # entropy is undefined for a feature with no counts: it is left out of

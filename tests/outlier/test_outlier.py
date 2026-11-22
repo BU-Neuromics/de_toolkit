@@ -227,3 +227,40 @@ def test_entropy_cli_percentile_out_of_range(tmp_path, fake_counts_csv, value, c
     assert exc.value.code == 2
     err = capsys.readouterr().err
     assert "-p/--percentile" in err and "between 0 and 1" in err
+
+
+@pytest.mark.parametrize(
+    "threshold, name",
+    [
+        (0.05, "entropy_p0_05"),
+        (0.1, "entropy_p0_10"),
+        (0.10, "entropy_p0_10"),
+        (0.5, "entropy_p0_50"),
+        (0.25, "entropy_p0_25"),
+        (0.125, "entropy_p0_125"),
+        (0.001, "entropy_p0_001"),
+        (1e-05, "entropy_p0_00001"),
+        (0.999, "entropy_p0_999"),
+    ],
+)
+def test_entropy_flag_column_name(threshold, name):
+    from de_toolkit.outlier import entropy, flag_column
+
+    assert flag_column(threshold) == name
+    results = entropy(_entropy_counts([5]), threshold)
+    assert list(results.columns) == ["entropy", name]
+
+
+@pytest.mark.parametrize(
+    "value, name",
+    [("1e-05", "entropy_p0_00001"), ("0.1", "entropy_p0_10"), ("0.10", "entropy_p0_10")],
+)
+def test_entropy_cli_flag_column_name(tmp_path, value, name):
+    # -p 1e-05 passed the range check and then failed naming the column (exit 1)
+    from de_toolkit.outlier import main
+
+    counts_fn = tmp_path / "counts.csv"
+    _entropy_counts([]).counts.to_csv(counts_fn)
+    out = tmp_path / "flags.csv"
+    main(["detk-outlier", "entropy", str(counts_fn), "-p", value, "-o", str(out), "--no-report"])
+    assert out.read_text().splitlines()[0].split(",")[1:] == ["entropy", name]

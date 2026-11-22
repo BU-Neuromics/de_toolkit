@@ -5,6 +5,8 @@ acceptance:
   - 'crate.py treats the out_file_path (and out_file_paths entry) ''stdout'' as the standard-output marker it is: the CreateAction lists no File for it, and the crate holds no @id ending in stdout; a file the user actually named stdout (-o stdout is the marker, so -o ./stdout) is still listed as a File; tests in tests/report/test_crate.py for detk-norm cpm to stdout (no stdout entity, the input still listed) and to -o out.csv (out.csv listed)'
   - the crate still validates under the process-run-crate profile at REQUIRED level (test_crate_validates_against_profile passes, and a case with output to stdout is validated too); module JSON's out_file_path stays 'stdout' as module_schema.json documents it; CHANGELOG under Fixed
 scope: [+de_toolkit/crate.py, +tests/report/test_crate.py, +CHANGELOG]
+issue: 147
+visited: 501927d
 ---
 
 # The crate does not list stdout as a file

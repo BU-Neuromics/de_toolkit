@@ -13,7 +13,7 @@ visited: 501927d
 
 ## Implementation plan
 
-- [ ] @developer Leave the stdout marker out of the crate's files, keep a file really named stdout, tests including profile validation; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Leave the stdout marker out of the crate's files, keep a file really named stdout, tests including profile validation; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: run a detk command to stdout and one to a file, read both crates, and check them with rocrate-validator <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

@@ -7,6 +7,8 @@ acceptance:
   - detk-util tidy -p out.csv with counts 'gene,S1,S2,S3' and the sheet 'condition' / 'S1,a' / 'S2' / 'S3' exits 1 with that message on one line and writes neither the counts output nor out.csv (today it exits 0 and drops S1, logging only at INFO); a test in tests/util/test_tidy.py; read_delimited's and _sniff's docstrings say when the error is raised; CHANGELOG under Fixed
 from: [DETK-0320]
 scope: [+de_toolkit/common.py, +tests/common/test_read_delimited.py, +tests/util/test_tidy.py, +CHANGELOG]
+issue: 145
+visited: 501927d
 ---
 
 # A sample sheet with ragged rows is an error, not one column

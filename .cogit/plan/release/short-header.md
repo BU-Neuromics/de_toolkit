@@ -6,16 +6,20 @@ acceptance:
   - 'a real one-column table still reads as one column: a quoted header over quoted IDs (''"gene_id"'' / ''"ENSG1"''), an unquoted one, and a header-only file; the existing tests/common/test_read_delimited.py cases pass unchanged'
   - detk-util tidy -p with the sheet '"condition"' / '"S1","a"' against counts 'gene,S1,S2' succeeds and writes the sheet with its condition column, and a detk command that reads column data (detk-de or detk-filter on a design over condition) reads it; tests in tests/common/ and tests/util/test_tidy.py; CHANGELOG under Fixed
 scope: [+de_toolkit/common.py, +de_toolkit/util.py, +tests/common/test_read_delimited.py, +tests/util/test_tidy.py, +CHANGELOG]
-prev: [release/cli-messages]
+prev: [release/cli-messages, DETK-0320]
+issue: 136
+visited: 06c6a10
+status: done
+done: b8a736e
 ---
 
 # A one-field header over wider rows reads as R writes it
 
 ## Implementation plan
 
-- [ ] @developer When the first line has no delimiter, sniff the first data line before reading the table as one column; tests for the short one-field header (quoted, unquoted, tab, padded IDs) and for real one-column tables, through read_delimited, detk-util tidy and a command that reads column data; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: run detk-util tidy -p on '"condition"' over '"S1","a"' rows, and on a bare quoted ID list, and read both outputs <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer When the first line has no delimiter, sniff the first data line before reading the table as one column; tests for the short one-field header (quoted, unquoted, tab, padded IDs) and for real one-column tables, through read_delimited, detk-util tidy and a command that reads column data; CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: run detk-util tidy -p on '"condition"' over '"S1","a"' rows, and on a bare quoted ID list, and read both outputs <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

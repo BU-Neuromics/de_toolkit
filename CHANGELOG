@@ -276,6 +276,20 @@ predates everything below.
   `detk-util gather` (#115)
 
 ### Fixed
+- A sample sheet with one column in R's `write.table(sep=",")` layout, a
+  header of one field over rows of two (`"condition"` over `"S1","a"`), is
+  read with the rows' delimiter, where `detk-util tidy` and every command
+  that reads column data stopped with `'' expected after '"'`. When a
+  table's first line has no delimiter, the delimiter is sniffed from its
+  first data line. It counts only when the first data lines (up to 10) all
+  split on it, outside quotes, into the same number of fields, at least 2,
+  and, for space, only when the line's first field is quoted, as R's
+  default `write.table` writes it (`"condition"` over `"S1" "a"`).
+  Otherwise the table is one column, as before: a bare list of IDs, quoted
+  or not, stays one column, an unquoted ID with a space in it
+  (`ctrl 1`, as Excel exports it) included. R's `write.table(quote=FALSE,
+  sep=" ")` one-column sheet (`condition` over `S1 a`) cannot be told from
+  such a list and is still read as one column (#136, DETK-0320)
 - `detk-outlier entropy` names the flag column from all of the threshold's
   decimal digits, at least two: `-p 0.05` gives `entropy_p0_05`, `-p 0.1`
   (or `0.10`) `entropy_p0_10`, `-p 1e-05` `entropy_p0_00001`. A `-p` written

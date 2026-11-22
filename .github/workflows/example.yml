@@ -1,0 +1,77 @@
+name: Regenerate example
+
+# Regenerate the published example report (docs/example/) from the airway
+# tutorial, in the same bioconda R environment as CI's "test with R
+# (bioconda)" job, and upload docs/example/ as an artifact to commit (Adam,
+# 2026-11-22: the example is regenerated through CI, not locally). Run it
+# from the Actions tab or with
+#
+#   gh workflow run example.yml --ref <branch>
+#   gh run download <run-id> -n docs-example -D docs/example
+#
+# A push that changes this workflow or examples/airway/run.sh also runs it,
+# so a branch can use it before it reaches main (workflow_dispatch needs the
+# file on the default branch).
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/example.yml
+      - examples/airway/run.sh
+
+jobs:
+  example:
+    name: regenerate docs/example (airway, bioconda R)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # the environment of ci.yml's test-r job
+      - name: Set up micromamba with R packages
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          condarc: |
+            channels:
+              - conda-forge
+              - bioconda
+          environment-name: detk-r
+          create-args: >-
+            python=3.12
+            r-base
+            r-jsonlite
+            r-data.table
+            bioconductor-deseq2
+            bioconductor-fgsea
+            bioconductor-airway
+            bioconductor-org.hs.eg.db
+            r-logistf
+            miller
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+
+      # run.sh runs the tutorial's test under `uv run`, which syncs the
+      # project from uv.lock; R comes from the micromamba environment on PATH
+      - name: Run the airway tutorial and publish into docs/example/
+        shell: bash -el {0}
+        run: |
+          Rscript --version
+          examples/airway/run.sh
+
+      # the published files must hold no machine path
+      - name: Check docs/example/ for absolute paths
+        shell: bash -el {0}
+        run: |
+          uv run pytest tests/report/test_example_paths.py -o addopts="" \
+            -p no:cacheprovider -v
+
+      - name: Upload docs/example/
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-example
+          path: docs/example/
+          if-no-files-found: error

@@ -15,7 +15,7 @@ visited: d201819
 
 ## Implementation plan
 
-- [ ] @developer Show a failed command on one line in detk-util record's messages (multi-line arguments elided), give the z-score and min-max recipes their own header-only message, and add the page and skill notes (zero-padded numbers, the constant recipe's rule, the stddev figure); tests in tests/util and tests/recipes; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Show a failed command on one line in detk-util record's messages (multi-line arguments elided), give the z-score and min-max recipes their own header-only message, and add the page and skill notes (zero-padded numbers, the constant recipe's rule, the stddev figure); tests in tests/util and tests/recipes; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: run the failing recipe on the page through detk-util record and read its last line, run each recipe on a header-only sheet, and read the skill's covariates reference as an agent would <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

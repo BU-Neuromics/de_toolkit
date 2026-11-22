@@ -6,7 +6,8 @@ own `--help` output (de_toolkit's test suite checks that they still match).
 version: description, usage, arguments, options, common options and
 examples.
 
-Every command also accepts the common options:
+Every command also accepts the common options (all but `-d`/`--out-delim`
+for `detk-util record`, which writes no table):
 
 ```text
 common options:
@@ -363,8 +364,9 @@ outputs. Everything after `--` is the command, run without a shell (use
 `sh -c '...'` for a pipeline, with `--tool`); it exits 1 and records nothing
 if an input is missing, the command fails or an output is missing. An output
 that existed before the run, such as the file a shell redirect creates,
-passes that check. For your own script as the command, give `--tool-version`:
-the version check runs the script with `--version`.
+passes that check. Without `--tool-version`, record runs `<command> --version`
+once to read the version, so a script that ignores `--version` would run its
+whole step a second time: give `--tool-version` for your own scripts.
 
 ```bash
 detk-util record -i sample_info.csv -o sample_info_derived.csv -- mlr --icsv --ocsv put '$age_group = $age >= 50 ? "old" : "young"' sample_info.csv > sample_info_derived.csv

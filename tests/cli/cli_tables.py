@@ -87,6 +87,8 @@ class Sub:
     options: tuple = ()
     lines: tuple = ()
     bad: tuple = ()
+    # long names of the common options (COMMON) this subcommand does not take
+    without_common: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -609,7 +611,18 @@ UTIL = Command(
                     ("--bogus",),
                     "an unknown option before -- is still an error",
                 ),
+                Bad(
+                    ("-d", ",", "-o", "c.csv", "--", "cmd"),
+                    ("-d",),
+                    "record writes no table, so it takes no -d",
+                ),
+                Bad(
+                    ("--out-delim=,", "-o", "c.csv", "--", "cmd"),
+                    ("--out-delim",),
+                    "record writes no table, so it takes no --out-delim",
+                ),
             ),
+            without_common=("--out-delim",),
         ),
     ),
 )

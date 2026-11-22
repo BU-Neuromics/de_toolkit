@@ -9,6 +9,8 @@ scope: [+de_toolkit/common.py, +de_toolkit/util.py, +tests/common/test_read_deli
 prev: [release/cli-messages, DETK-0320]
 issue: 136
 visited: 06c6a10
+status: done
+done: b8a736e
 ---
 
 # A one-field header over wider rows reads as R writes it
@@ -17,7 +19,7 @@ visited: 06c6a10
 
 - [x] @developer When the first line has no delimiter, sniff the first data line before reading the table as one column; tests for the short one-field header (quoted, unquoted, tab, padded IDs) and for real one-column tables, through read_delimited, detk-util tidy and a command that reads column data; CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: run detk-util tidy -p on '"condition"' over '"S1","a"' rows, and on a bare quoted ID list, and read both outputs <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

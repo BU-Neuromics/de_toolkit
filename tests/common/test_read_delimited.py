@@ -340,3 +340,159 @@ def test_enrich_fgsea_cli_reads_result(tmp_path, caplog, text, shape):
         with pytest.raises(SystemExit):
             main(["detk-enrich", "fgsea", "--statcol=nope", str(_gmt(tmp_path)), str(res_fn)])
     assert f"result data frame shape: {shape}" in caplog.text
+
+
+# ------------------------------------- a one-field header over wider rows
+#
+# R's write.table(sep=...) leaves out the header cell over the row names, so
+# a sheet with one column has a header with no delimiter and rows with one
+# (release/short-header). The delimiter is sniffed from the first data line;
+# the table is one column only when that line has none either.
+
+_SHORT_HEADER = {
+    "quoted": '"condition"\n"S1","a"\n"S2","b"\n',
+    "unquoted": 'condition\n"S1","a"\n"S2","b"\n',
+    "tab": "condition\nS1\ta\nS2\tb\n",
+    "quoted tab": '"condition"\n"S1"\t"a"\n"S2"\t"b"\n',
+    # R's default write.table: quoted, space-separated (DETK-0320)
+    "quoted space": '"condition"\n"S1" "a"\n"S2" "b"\n',
+}
+
+
+@pytest.mark.parametrize("text", _SHORT_HEADER.values(), ids=_SHORT_HEADER.keys())
+def test_read_delimited_one_field_header_over_wider_rows(tmp_path, text):
+    fn = tmp_path / "samples.csv"
+    fn.write_text(text)
+    df = read_delimited(str(fn))
+    assert list(df.index) == ["S1", "S2"]
+    assert list(df.columns) == ["condition"]
+    assert list(df["condition"]) == ["a", "b"]
+
+
+@pytest.mark.parametrize("text", _SHORT_HEADER.values(), ids=_SHORT_HEADER.keys())
+def test_read_id_table_one_field_header_over_wider_rows(tmp_path, text):
+    fn = tmp_path / "samples.csv"
+    fn.write_text(text)
+    df = read_id_table(str(fn))
+    assert list(df.index) == ["S1", "S2"]
+    assert list(df.columns) == ["condition"]
+    assert list(df["condition"]) == ["a", "b"]
+
+
+@pytest.mark.parametrize(
+    "text",
+    ['"condition"\n"001","a"\n"002","b"\n', "condition\n001\ta\n002\tb\n"],
+    ids=["quoted", "tab"],
+)
+def test_one_field_header_keeps_padded_ids_as_written(tmp_path, text):
+    fn = tmp_path / "samples.csv"
+    fn.write_text(text)
+    # read_id_table reads the IDs as text (pandas types the index it infers
+    # from a short header, whatever dtype it is given)
+    df = read_id_table(str(fn))
+    assert list(df.index) == ["001", "002"]
+    assert list(df["condition"]) == ["a", "b"]
+
+
+def test_one_field_header_after_skiprows(tmp_path):
+    fn = tmp_path / "samples.csv"
+    fn.write_text('# written by R\n"condition"\n"S1","a"\n"S2","b"\n')
+    df = read_delimited(str(fn), skiprows=1)
+    assert list(df.index) == ["S1", "S2"]
+    assert list(df.columns) == ["condition"]
+
+
+@pytest.mark.parametrize(
+    "text, header, ids",
+    [
+        ('"gene_id"\n"ENSG1"\n"ENSG2"\n', "gene_id", ["ENSG1", "ENSG2"]),
+        ("gene_id\nENSG1\nENSG2\n", "gene_id", ["ENSG1", "ENSG2"]),
+        # a space inside quotes does not split an ID
+        ('"sample"\n"sample 1"\n"sample 2"\n', "sample", ["sample 1", "sample 2"]),
+        ('"gene_id"\n', "gene_id", []),
+        ("gene_id\n", "gene_id", []),
+        ("gene_id", "gene_id", []),
+    ],
+    ids=["quoted", "unquoted", "quoted space", "header only quoted", "header only", "no newline"],
+)
+def test_a_real_one_column_table_stays_one_column(tmp_path, text, header, ids):
+    fn = tmp_path / "ids.txt"
+    fn.write_text(text)
+    df = read_delimited(str(fn))
+    assert list(df.columns) == [header]
+    assert list(df[header]) == ids
+
+
+# DETK-0320: space from a data line counts only when the line's first field
+# is quoted, and the first data lines must split alike into 2 or more fields
+
+_SPACED_LISTS = {
+    # one ID with a space, as Excel exports it (unquoted)
+    "first spaced": ("sample\nctrl 1\nS2\nS3\n", ["ctrl 1", "S2", "S3"]),
+    "every spaced": ("sample\nsample 1\nsample 2\n", ["sample 1", "sample 2"]),
+    "later spaced": ("sample\nS2\nctrl 1\nS3\n", ["S2", "ctrl 1", "S3"]),
+}
+
+
+@pytest.mark.parametrize("text, ids", _SPACED_LISTS.values(), ids=_SPACED_LISTS.keys())
+def test_an_unquoted_id_list_with_spaces_stays_one_column(tmp_path, text, ids):
+    fn = tmp_path / "ids.txt"
+    fn.write_text(text)
+    df = read_delimited(str(fn))
+    assert list(df.columns) == ["sample"]
+    assert list(df["sample"]) == ids
+    # read_id_table indexes by the one column
+    assert list(read_id_table(str(fn)).index) == ids
+
+
+def test_an_unquoted_space_separated_short_header_is_one_column(tmp_path):
+    # R's write.table(quote=FALSE, sep=" ") cannot be told from a list of
+    # IDs with spaces; it is read as one, as before #136 (DETK-0320)
+    fn = tmp_path / "samples.txt"
+    fn.write_text("condition\nS1 a\nS2 b\n")
+    df = read_delimited(str(fn))
+    assert list(df.columns) == ["condition"]
+    assert list(df["condition"]) == ["S1 a", "S2 b"]
+
+
+@pytest.mark.parametrize(
+    "text, values",
+    [
+        ("condition\nS1,a\nS2\nS3\n", ["S1,a", "S2", "S3"]),
+        ("condition\nS1,a\nS2,b,c\n", ["S1,a", "S2,b,c"]),
+    ],
+    ids=["then one field", "then three fields"],
+)
+def test_data_lines_that_split_unalike_mean_one_column(tmp_path, text, values):
+    fn = tmp_path / "samples.txt"
+    fn.write_text(text)
+    df = read_delimited(str(fn))
+    assert list(df.columns) == ["condition"]
+    assert list(df["condition"]) == values
+
+
+def test_data_lines_past_the_sniffed_ones_do_not_count(tmp_path):
+    # only the first lines are sniffed; a short header sheet of many rows
+    # still reads by its rows' delimiter
+    fn = tmp_path / "samples.csv"
+    fn.write_text('"condition"\n' + "".join(f'"S{i}","a"\n' for i in range(50)))
+    df = read_id_table(str(fn))
+    assert list(df.columns) == ["condition"]
+    assert len(df) == 50
+
+
+def test_filter_cli_reads_a_one_field_short_header_sheet(tmp_path, monkeypatch):
+    # a command that reads column data through read_id_table: detk-filter
+    # groups by the sheet's one column (release/short-header)
+    from de_toolkit.filter import main
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "counts.csv").write_text("gene,S1,S2,S3,S4\ng1,10,20,30,40\ng2,5,0,15,25\n")
+    (tmp_path / "cov.csv").write_text('"condition"\n"S1","A"\n"S2","A"\n"S3","B"\n"S4","B"\n')
+    main(
+        ["detk-filter", "--no-report", "-o", "out.csv", "mean(condition[A]) > 12"]
+        + ["counts.csv", "cov.csv"]
+    )
+    kept = [line.split(",")[0] for line in (tmp_path / "out.csv").read_text().splitlines()[1:]]
+    # g1's mean in A is 15, g2's 2.5
+    assert kept == ["g1"]

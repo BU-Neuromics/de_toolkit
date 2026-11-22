@@ -883,35 +883,78 @@ def _first_lines(f, compression, skiprows=None, n=1):
 _SNIFF_DATA_LINES = 10
 
 
-def _sniff(f, compression, skiprows=None):
+class RaggedTableError(ValueError):
+    """
+    A table whose header has one field over data lines that split unalike
+    on a delimiter (see :func:`_sniff`): malformed, so it is an error rather
+    than a one-column table that silently loses the rows that split.
+    """
+
+
+# the delimiters by name, for messages
+_DELIMITER_NAMES = {",": "comma", "\t": "tab", ";": "semicolon", "|": "pipe", " ": "space"}
+
+
+def _source_name(f):
+    "The name of the table *f* (a path, URL or file-like object) for messages"
+    if hasattr(f, "read"):
+        return str(getattr(f, "name", "<stream>"))
+    return os.fspath(f)
+
+
+def _sniff(f, compression, skiprows=None, name=None):
     """
     The delimiter of *f*, as :func:`_rewindable` returned it, or None for a
     one-column table: sniffed from its first line, or, when that line has
-    none of ``SNIFF_DELIMITERS``, from its first data line. R's
+    none of ``SNIFF_DELIMITERS``, from its first data lines. R's
     ``write.table`` leaves out the header cell over the row names, so a
     one-column sheet is ``"condition"`` over ``"S1","a"``: the header has no
     delimiter, its rows do.
 
-    The data line's delimiter counts only when (DETK-0320) it is not space,
-    or the line's first field is quoted, as R's default ``write.table``
-    writes it (``"S1" "a"``); and the first data lines (up to
-    ``_SNIFF_DATA_LINES``) all split on it, outside quotes, into the same
-    number of fields, at least 2. Otherwise the table is one column, so a
-    list of IDs with spaces in them, quoted (``"sample 1"``) or not
-    (``ctrl 1``), stays a list of IDs.
+    A data line's delimiter counts only when (DETK-0320) it splits the line
+    outside quotes and is not space, or is space and the line's first field
+    is quoted, as R's default ``write.table`` writes it (``"S1" "a"``). The
+    first data line (up to ``_SNIFF_DATA_LINES``) with a delimiter that
+    counts gives the delimiter, and the first data lines must all split on
+    it, outside quotes, into the same number of fields: then the table is
+    read with it. When they split unalike (``condition`` over ``S1,a`` and
+    ``S2``), the table is malformed and :class:`RaggedTableError` is raised,
+    naming the file *name*, the delimiter and the first two lines whose
+    field counts differ (release/ragged-sheet). When no data line has a
+    delimiter that counts, the table is one column, so a list of IDs with
+    spaces in them, quoted (``"sample 1"``) or not (``ctrl 1``), stays a
+    list of IDs.
     """
     header, *data = _first_lines(f, compression, skiprows, n=1 + _SNIFF_DATA_LINES)
     sep = sniff_delimiter(header)
     if sep is not None:
         return sep
     data = [line for line in data if line]
-    if not data:
+    for line in data:
+        sep = sniff_delimiter(line)
+        if sep is None or (sep == " " and not line.startswith('"')):
+            continue
+        if len(next(csv.reader([line], delimiter=sep))) > 1:
+            break
+    else:
         return None
-    sep = sniff_delimiter(data[0])
-    if sep is None or (sep == " " and not data[0].startswith('"')):
-        return None
-    widths = {len(fields) for fields in csv.reader(data, delimiter=sep)}
-    return sep if len(widths) == 1 and widths.pop() >= 2 else None
+    widths = [len(fields) for fields in csv.reader(data, delimiter=sep)]
+    differ = next((i for i, width in enumerate(widths) if width != widths[0]), None)
+    if differ is None:
+        return sep
+    # the header is line 1, after the rows skipped
+    first = 2 + (skiprows if isinstance(skiprows, int) else 0)
+
+    def fields(n):
+        return "1 field" if n == 1 else f"{n} fields"
+
+    raise RaggedTableError(
+        f"{name if name is not None else _source_name(f)}: the header {header!r} has one"
+        f" field and its data lines split unalike on {_DELIMITER_NAMES[sep]}:"
+        f" line {first} {data[0]!r} has {fields(widths[0])},"
+        f" line {first + differ} {data[differ]!r} has {fields(widths[differ])};"
+        " quote a field that holds the delimiter, or give every line the same fields"
+    )
 
 
 def read_delimited(f, **kwargs):
@@ -919,16 +962,21 @@ def read_delimited(f, **kwargs):
     Read the delimited table *f* with pandas.read_csv, passing on *kwargs*,
     its delimiter sniffed from its first line among ``SNIFF_DELIMITERS``
     (comma, tab, semicolon, pipe, then space). A first line with none of them
-    is sniffed again from the first data line, for R's layout of a
+    is sniffed again from the first data lines, for R's layout of a
     one-column sheet (``"condition"`` over ``"S1","a"``; see :func:`_sniff`
-    for when that line's delimiter counts); otherwise the table is read as
-    one column, so a bare list of IDs is not split on a letter of its
-    header. *f* is a path or URL (compression
+    for when a data line's delimiter counts); when none has one, the table
+    is read as one column, so a bare list of IDs is not split on a letter of
+    its header. When one does but the first data lines split unalike on it
+    (``condition`` over ``S1,a`` and ``S2``), the table is malformed:
+    :class:`RaggedTableError` is raised, naming the file, the delimiter and
+    the first two lines whose field counts differ, and a detk command exits
+    1 with that message. *f* is a path or URL (compression
     is inferred from the name) or a file-like object; a URL, or a path that
     can be read only once, is read once into memory.
     """
+    name = _source_name(f)
     f, compression = _rewindable(f)
-    sep = _sniff(f, compression, kwargs.get("skiprows"))
+    sep = _sniff(f, compression, kwargs.get("skiprows"), name)
     return _read_with(f, compression, sep, **kwargs)
 
 
@@ -947,7 +995,8 @@ def _read_with(f, compression, sep, **kwargs):
 def read_id_table(f):
     """
     Read a delimited table (the delimiter is sniffed, see
-    :func:`read_delimited`) whose first column holds IDs, such as a counts
+    :func:`read_delimited`, which also says when a one-field header over
+    ragged rows raises :class:`RaggedTableError`) whose first column holds IDs, such as a counts
     file (feature IDs) or a sample-info file (sample names), into a
     pandas.DataFrame indexed by that column.
 
@@ -964,7 +1013,7 @@ def read_id_table(f):
     # the table is parsed twice below, so make it rewindable (and fetch a
     # URL) once here, and sniff its delimiter once
     f, compression = _rewindable(f)
-    sep = _sniff(f, compression)
+    sep = _sniff(f, compression, name=_source_name(source))
 
     def read(**kwargs):
         return _read_with(f, compression, sep, **kwargs)

@@ -8,7 +8,7 @@ acceptance:
   - docs/report.md (the crate section and the schema table) says the crate is written into the report directory and what every recorded path is relative to; detk-report clean's help, docs/tools/util.md, skills/detk/SKILL.md, docs/agent-skills.md, docs/tutorials/quantifiers.md (its crate grep, still passing under the harness) and the tests that look for ./ro-crate-metadata.json follow; CHANGELOG under Changed says where the crate now is and that clean leaves an old ./ro-crate-metadata.json
 from: [DETK-0280]
 scope: [+de_toolkit/crate.py, +de_toolkit/report.py, +de_toolkit/util.py, +de_toolkit/module_schema.json, tests/report/test_crate.py, +tests/report/test_report.py, new:tests/report/test_report_paths.py, +tests/util/test_tidy.py, +tests/util/test_record.py, +tests/example/test_airway_example.py, +tests/cli/test_cli_help.py, +docs/report.md, +docs/tools/util.md, +docs/agent-skills.md, +docs/tutorials/quantifiers.md, +skills/detk/SKILL.md, +skills/detk/references/airway.md, +skills/detk/references/commands.md, +examples/airway/run.sh, +examples/airway/README.md, +CHANGELOG]
-prev: [DETK-0280]
+prev: [DETK-0280, DETK-0281]
 issue: 133
 visited: 73b7582
 ---

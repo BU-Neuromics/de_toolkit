@@ -252,6 +252,14 @@ predates everything below.
   `detk-util gather` (#115)
 
 ### Fixed
+- A sample sheet with one column in R's `write.table(sep=",")` layout, a
+  header of one field over rows of two (`"condition"` over `"S1","a"`), is
+  read with the rows' delimiter, where `detk-util tidy` and every command
+  that reads column data stopped with `'' expected after '"'`: when a
+  table's first line has no delimiter, the delimiter is sniffed from its
+  first data line, and the table is one column only when that line has
+  none either (outside quotes), so a bare list of IDs, quoted or not, is
+  still one column (#136)
 - A design that formula syntax reads but detk cannot build (a column the
   column data does not have, a level its column lacks, a number-like term
   under DETK-0190) is reported as `Invalid design: <reason>`, no longer as

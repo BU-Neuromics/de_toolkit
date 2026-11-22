@@ -787,7 +787,8 @@ _COMPRESSION_EXTS = {
 
 
 # the delimiters a table's first line is sniffed for (comma, tab, semicolon,
-# pipe, space); a first line with none of them is a one-column table. (The
+# pipe, space); a first line with none of them is sniffed again from the
+# first data line, and with none there either is a one-column table. (The
 # csv sniffer, left to any character, splits a bare list of IDs on a letter
 # of its header: ``gene_id`` became ``g``, ``n``, ``_id``.)
 SNIFF_DELIMITERS = ",\t;| "
@@ -849,17 +850,20 @@ def _rewindable(f):
     return f, "infer"
 
 
-def _first_line(f, compression, skiprows=None):
-    "The first line of *f* (after *skiprows*), as written, or '' when there is none."
+def _first_lines(f, compression, skiprows=None, n=1):
+    """
+    The first *n* lines of *f* (after *skiprows*), as written, padded with
+    '' when it has fewer.
+    """
     if hasattr(f, "seek"):
         f.seek(0)
     try:
-        line = pandas.read_csv(
+        lines = pandas.read_csv(
             f,
             sep=_ONE_COLUMN,
             engine="python",
             header=None,
-            nrows=1,
+            nrows=n,
             skiprows=skiprows,
             quoting=csv.QUOTE_NONE,
             dtype=str,
@@ -867,8 +871,29 @@ def _first_line(f, compression, skiprows=None):
             compression=compression,
         )
     except pandas.errors.EmptyDataError:
-        return ""
-    return _ONE_COLUMN.join(line.iloc[0]) if len(line) else ""
+        lines = pandas.DataFrame()
+    found = [_ONE_COLUMN.join(row) for row in lines.itertuples(index=False)]
+    return found + [""] * (n - len(found))
+
+
+def _sniff(f, compression, skiprows=None):
+    """
+    The delimiter of *f*, as :func:`_rewindable` returned it, or None for a
+    one-column table: sniffed from its first line, or, when that line has
+    none of ``SNIFF_DELIMITERS``, from its first data line. R's
+    ``write.table`` leaves out the header cell over the row names, so a
+    one-column sheet is ``"condition"`` over ``"S1","a"``: the header has no
+    delimiter, its rows do. The data line's delimiter counts only when it
+    splits the line outside quotes, so a quoted ID with a space in it
+    (``"sample 1"``) keeps a list of IDs one column.
+    """
+    header, data = _first_lines(f, compression, skiprows, n=2)
+    sep = sniff_delimiter(header)
+    if sep is None:
+        sep = sniff_delimiter(data)
+        if sep is not None and len(next(csv.reader([data], delimiter=sep))) < 2:
+            sep = None
+    return sep
 
 
 def read_delimited(f, **kwargs):
@@ -876,13 +901,15 @@ def read_delimited(f, **kwargs):
     Read the delimited table *f* with pandas.read_csv, passing on *kwargs*,
     its delimiter sniffed from its first line among ``SNIFF_DELIMITERS``
     (comma, tab, semicolon, pipe, then space). A first line with none of them
-    makes a one-column table, read as one column, so a bare list of IDs is
+    is sniffed again from the first data line, for R's layout of a
+    one-column sheet (``"condition"`` over ``"S1","a"``); when that line has
+    none either, the table is read as one column, so a bare list of IDs is
     not split on a letter of its header. *f* is a path or URL (compression
     is inferred from the name) or a file-like object; a URL, or a path that
     can be read only once, is read once into memory.
     """
     f, compression = _rewindable(f)
-    sep = sniff_delimiter(_first_line(f, compression, kwargs.get("skiprows")))
+    sep = _sniff(f, compression, kwargs.get("skiprows"))
     return _read_with(f, compression, sep, **kwargs)
 
 
@@ -918,7 +945,7 @@ def read_id_table(f):
     # the table is parsed twice below, so make it rewindable (and fetch a
     # URL) once here, and sniff its delimiter once
     f, compression = _rewindable(f)
-    sep = sniff_delimiter(_first_line(f, compression))
+    sep = _sniff(f, compression)
 
     def read(**kwargs):
         return _read_with(f, compression, sep, **kwargs)

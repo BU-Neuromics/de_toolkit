@@ -128,6 +128,76 @@ def test_a_short_header_sheet_with_numeric_looking_ids(work, ids):
     assert lines(work / "s.csv") == [",condition,dose", f"{a},ctrl,1.50", f"{b},treat,"]
 
 
+@pytest.mark.parametrize(
+    "sheet",
+    [
+        '"condition"\n"S1","a"\n"S2","b"\n',
+        'condition\n"S1","a"\n"S2","b"\n',
+        "condition\nS1\ta\nS2\tb\n",
+    ],
+    ids=["quoted", "unquoted", "tab"],
+)
+def test_a_one_field_short_header_sheet(work, sheet):
+    # R's write.table(sep=...) with one column: the header has no delimiter,
+    # its rows do (release/short-header)
+    (work / "counts.csv").write_text("gene,S1,S2\ng1,1,2\ng2,3,4\n")
+    (work / "samples.csv").write_text(sheet)
+    main(
+        [
+            "detk-util",
+            "tidy",
+            "--no-report",
+            "-o",
+            "c.csv",
+            "-p",
+            "s.csv",
+            "counts.csv",
+            "samples.csv",
+        ]
+    )
+    assert lines(work / "c.csv") == ["gene,S1,S2", "g1,1,2", "g2,3,4"]
+    assert lines(work / "s.csv") == [",condition", "S1,a", "S2,b"]
+
+
+def test_a_one_field_short_header_sheet_with_padded_ids(work):
+    (work / "counts.csv").write_text("gene,001,002\ng1,1,2\n")
+    (work / "samples.csv").write_text('"condition"\n"002","b"\n"001","a"\n')
+    main(
+        [
+            "detk-util",
+            "tidy",
+            "--no-report",
+            "-o",
+            "c.csv",
+            "-p",
+            "s.csv",
+            "counts.csv",
+            "samples.csv",
+        ]
+    )
+    assert lines(work / "s.csv") == [",condition", "001,a", "002,b"]
+
+
+def test_a_bare_quoted_id_list_stays_one_column(work):
+    (work / "counts.csv").write_text("gene,S1,S2,S3\ng1,1,2,3\n")
+    (work / "samples.csv").write_text('"sample"\n"S3"\n"S1"\n')
+    main(
+        [
+            "detk-util",
+            "tidy",
+            "--no-report",
+            "-o",
+            "c.csv",
+            "-p",
+            "s.csv",
+            "counts.csv",
+            "samples.csv",
+        ]
+    )
+    assert lines(work / "c.csv") == ["gene,S1,S3", "g1,1,3"]
+    assert lines(work / "s.csv") == ["sample", "S1", "S3"]
+
+
 def test_a_header_neither_as_long_nor_one_short_is_an_error(work):
     (work / "samples.csv").write_text("condition\nS1,a,b\nS2,a,b\n")
     with pytest.raises(SystemExit):

@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-22
 from: {node: release/short-header, step: s2}
 applies: [release/short-header]
+revisions:
+  - {date: 2026-11-22, by: adamlabadorf, change: Accepted, why: "from the terminal: Option B, under Adam's delegation via the driver session, 2026-11-20: B avoids silently dropping a sample and stays within the 1.0 scope (DETK-0063); implemented in release/short-header (PR #138)"}
 ---
 
 # A one-field header over unquoted space-separated rows: one column or two

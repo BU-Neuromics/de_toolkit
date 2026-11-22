@@ -21,5 +21,5 @@ DETK_TUTORIALS_REQUIRE_ALL=1 uv run pytest tests/tutorials/test_tutorials.py \
 
 mkdir -p docs/example
 cp "$run/airway0/detk_report/detk_report.html" docs/example/detk_report.html
-cp "$run/airway0/ro-crate-metadata.json" docs/example/ro-crate-metadata.json
+cp "$run/airway0/detk_report/ro-crate-metadata.json" docs/example/ro-crate-metadata.json
 echo "published: docs/example/detk_report.html, docs/example/ro-crate-metadata.json"

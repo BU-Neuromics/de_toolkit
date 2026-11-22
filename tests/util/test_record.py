@@ -72,8 +72,15 @@ def module_docs(cwd):
 
 
 def crate_graph(cwd):
-    crate = json.loads((cwd / "ro-crate-metadata.json").read_text())
+    "the crate and its graph; it is in the report directory (DETK-0280)"
+    crate = json.loads((cwd / "detk_report" / "ro-crate-metadata.json").read_text())
     return crate, {e["@id"]: e for e in crate["@graph"]}
+
+
+def _recorded(path, work):
+    "an absolute *path* as module JSON records it: relative to workdir (DETK-0281)"
+    real = os.path.join(os.path.realpath(os.path.dirname(path)), os.path.basename(path))
+    return os.path.relpath(real, os.path.realpath(work)).replace(os.sep, "/")
 
 
 def sha256(path):
@@ -102,7 +109,7 @@ def test_records_the_step_in_the_module_json(work):
 
     (doc,) = module_docs(work)
     assert doc["name"] == "record"
-    assert doc["schema_version"] == MODULE_SCHEMA_VERSION == "1.1"
+    assert doc["schema_version"] == MODULE_SCHEMA_VERSION == "1.2"
     assert doc["in_file_path"] == "sample_info.csv"
     assert doc["out_file_path"] == "covs.csv"
     assert doc["column_data_path"] is None
@@ -110,7 +117,9 @@ def test_records_the_step_in_the_module_json(work):
     assert doc["out_file_paths"] == ["covs.csv"]
 
     params = doc["params"]
-    assert params["argv"] == [PY, "-c", DERIVE]
+    # the interpreter, typed absolute, is recorded relative to workdir (DETK-0281)
+    py = _recorded(PY, work)
+    assert params["argv"] == [py, "-c", DERIVE]
     assert shlex.split(params["command"]) == params["argv"]
     assert params["tool"] == TOOL
     # the first line of 'python --version'
@@ -437,16 +446,17 @@ def test_crate_instrument_object_and_result(work):
     assert tool["softwareVersion"] == f"Python {sys.version.split()[0]}"
 
     objects = [o["@id"] for o in action["object"]]
-    assert objects[:2] == ["sample_info.csv", "counts.csv"]
+    assert objects[:2] == ["../sample_info.csv", "../counts.csv"]
     values = {g[o]["name"]: g[o]["value"] for o in objects[2:]}
     assert all(g[o]["@type"] == "PropertyValue" for o in objects[2:])
-    assert shlex.split(values["detk-util record command"]) == [PY, "-c", DERIVE]
+    py = _recorded(PY, work)
+    assert shlex.split(values["detk-util record command"]) == [py, "-c", DERIVE]
     assert values["detk-util record tool"] == TOOL
 
-    assert [r["@id"] for r in action["result"]] == ["covs.csv"]
-    assert g["covs.csv"]["sha256"] == sha256(work / "covs.csv")
-    assert g["covs.csv"]["contentSize"] == str((work / "covs.csv").stat().st_size)
-    assert g["sample_info.csv"]["sha256"] == sha256(work / "sample_info.csv")
+    assert [r["@id"] for r in action["result"]] == ["../covs.csv"]
+    assert g["../covs.csv"]["sha256"] == sha256(work / "covs.csv")
+    assert g["../covs.csv"]["contentSize"] == str((work / "covs.csv").stat().st_size)
+    assert g["../sample_info.csv"]["sha256"] == sha256(work / "sample_info.csv")
     assert crate["@context"][1] == WFRUN_CONTEXT
 
 
@@ -466,7 +476,7 @@ def test_crate_validates_with_a_recorded_step(work):
     p = record(work, "-i", "sample_info.csv", "-o", "covs.csv")
     assert p.returncode == 0, p.stderr
     settings = services.ValidationSettings(
-        rocrate_uri=str(work),
+        rocrate_uri=str(work / "detk_report"),
         profile_identifier="process-run-crate",
         requirement_severity=models.Severity.REQUIRED,
     )
@@ -504,14 +514,14 @@ def test_lineage_into_a_later_detk_step(work):
     assert p.returncode == 0, p.stderr
 
     _, g = crate_graph(work)
-    producer = _producer(g, "covs.csv")
+    producer = _producer(g, "../covs.csv")
     assert g[producer["instrument"]["@id"]]["name"] == TOOL
     assert "recorded by detk-util record" in producer["name"]
-    (reader,) = _readers(g, "covs.csv")
+    (reader,) = _readers(g, "../covs.csv")
     assert g[reader["instrument"]["@id"]]["name"] == "detk-filter"
-    assert [r["@id"] for r in reader["result"]] == ["filtered.csv"]
+    assert [r["@id"] for r in reader["result"]] == ["../filtered.csv"]
     # the producer's input is the original sample information
-    assert "sample_info.csv" in [o["@id"] for o in producer["object"]]
+    assert "../sample_info.csv" in [o["@id"] for o in producer["object"]]
 
 
 @pytest.mark.skipif(not wrapr.check_r(), reason="R is not installed")
@@ -524,9 +534,9 @@ def test_lineage_into_detk_de(work):
     )
     assert p.returncode == 0, p.stderr
     _, g = crate_graph(work)
-    producer = _producer(g, "covs.csv")
+    producer = _producer(g, "../covs.csv")
     assert g[producer["instrument"]["@id"]]["name"] == TOOL
-    readers = _readers(g, "covs.csv")
+    readers = _readers(g, "../covs.csv")
     assert any(g[r["instrument"]["@id"]]["name"] == "detk-de deseq2" for r in readers)
 
 
@@ -536,7 +546,7 @@ def test_lineage_into_detk_de(work):
 def test_report_lists_the_step_without_a_view(work):
     p = record(work, "-i", "sample_info.csv", "-o", "covs.csv")
     assert p.returncode == 0, p.stderr
-    modules, raw = DetkReport(str(work / "detk_report"), crate_dir=str(work)).build_modules()
+    modules, raw = DetkReport(str(work / "detk_report")).build_modules()
     (m,) = modules
     assert m["module"] == "record"
     assert m["family"] == "util"

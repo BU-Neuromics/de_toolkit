@@ -222,7 +222,8 @@ Run a command outside detk and record it as a step of the analysis. A step
 outside detk otherwise leaves a gap in the provenance: a `detk-de` run would
 show its column data as a file no step produced. `record` runs the command
 and writes a module JSON document for it, so the [report](../report.md) lists
-the step and the provenance crate (`ro-crate-metadata.json`) shows it as the
+the step and the provenance crate (`ro-crate-metadata.json`, in the report
+directory) shows it as the
 producer of its outputs, and a later detk command that reads them traces
 back to it.
 
@@ -304,9 +305,12 @@ table, so it has no delimiter to set.
 
 **What is recorded.** The module JSON document (name `record`) holds, in its
 parameters, the command (as one shell-quoted string, and as the list of its
-words), the tool, its version and the input and output files as given; in its
+words), the tool, its version and the input and output files; in its
 properties, the SHA-256 checksum and size of every input (read before the run)
-and every output (read after it), and the exit status. Its envelope lists
+and every output (read after it), and the exit status. The command runs as
+you typed it, but is recorded with every absolute path in it, and in the file
+lists, written relative to the working directory (DETK-0281), so the record
+names no directory of your machine and re-runs the same from there. Its envelope lists
 every file in `in_file_paths` and `out_file_paths` (schema 1.1), the first of
 each also being `in_file_path` and `out_file_path`. In the crate the step is a
 `CreateAction` whose instrument is the tool, with its version, and whose

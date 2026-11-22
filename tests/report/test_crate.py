@@ -1,5 +1,7 @@
 """Tests for the Process Run Crate emitter (de_toolkit.crate)."""
 
+import json
+
 import pytest
 
 from de_toolkit.crate import (
@@ -124,22 +126,47 @@ def test_file_chaining_shares_entities(tmp_path):
     assert files[0]["encodingFormat"] == "text/csv"
 
 
-def test_file_outside_root_uses_absolute_uri(tmp_path):
-    inside = tmp_path / "work"
-    inside.mkdir()
-    outside = tmp_path / "elsewhere" / "counts.csv"
+def test_file_outside_root_is_relative_to_the_root(tmp_path):
+    # the crate is rooted in the report directory; a file in the working
+    # directory, or anywhere else, is named by its path relative to the root
+    # (DETK-0280), never by an absolute file:// URI
+    work = tmp_path / "work"
+    report = work / "detk_report"
+    report.mkdir(parents=True)
+    (work / "counts.csv").write_text("x\n")
+    outside = tmp_path / "elsewhere" / "sample_info.csv"
     outside.parent.mkdir()
     outside.write_text("x\n")
     crate = build_crate(
-        [doc("basestats", "s1", in_file_path=str(outside), workdir=str(inside))],
-        str(inside),
+        [
+            doc(
+                "basestats",
+                "s1",
+                in_file_path="counts.csv",
+                column_data_path="../elsewhere/sample_info.csv",
+                workdir="..",
+            )
+        ],
+        str(report),
     )
     action = next(e for e in crate["@graph"] if e["@type"] == "CreateAction")
-    refs = {o["@id"] for o in action["object"]}
-    assert any(r.startswith("file://") for r in refs)
-    # non-local files are never claimed as part of the crate
+    refs = {o["@id"] for o in action["object"] if not o["@id"].startswith("#")}
+    assert refs == {"../counts.csv", "../../elsewhere/sample_info.csv"}
+    assert not any("file://" in e["@id"] for e in crate["@graph"])
     g = graph_of(crate)
-    assert g["./"]["hasPart"] == []
+    assert {p["@id"] for p in g["./"]["hasPart"]} == refs
+
+
+def test_absolute_workdir_of_an_older_document_resolves(tmp_path):
+    # schema 1.0 and 1.1 documents hold workdir absolute: it still resolves
+    report = tmp_path / "detk_report"
+    report.mkdir()
+    crate = build_crate(
+        [doc("basestats", "s1", in_file_path="counts.csv", workdir=str(tmp_path))],
+        str(report),
+    )
+    action = next(e for e in crate["@graph"] if e["@type"] == "CreateAction")
+    assert action["object"] == [{"@id": "../counts.csv"}]
 
 
 def test_write_crate_empty_docs_writes_nothing(tmp_path):
@@ -158,12 +185,15 @@ def test_every_registered_module_has_a_subtool_mapping():
 
 
 def test_crate_validates_against_profile(tmp_path):
-    """Full conformance check with rocrate-validator, when available."""
+    """Full conformance check with rocrate-validator, when available: the
+    crate rooted in the report directory, its files ../ references."""
     pytest.importorskip("rocrate_validator")
     from rocrate_validator import services, models
 
     (tmp_path / "raw.csv").write_text("x\n")
     (tmp_path / "norm.csv").write_text("x\n")
+    report = tmp_path / "detk_report"
+    report.mkdir()
     write_crate(
         [
             doc(
@@ -171,14 +201,16 @@ def test_crate_validates_against_profile(tmp_path):
                 "n1",
                 in_file_path="raw.csv",
                 out_file_path="norm.csv",
-                workdir=str(tmp_path),
+                workdir="..",
                 params={"foo": 1},
             )
         ],
-        str(tmp_path),
+        str(report),
     )
+    crate = graph_of(json.loads((report / CRATE_FILENAME).read_text()))
+    assert {p["@id"] for p in crate["./"]["hasPart"]} == {"../raw.csv", "../norm.csv"}
     settings = services.ValidationSettings(
-        rocrate_uri=str(tmp_path),
+        rocrate_uri=str(report),
         profile_identifier="process-run-crate",
         requirement_severity=models.Severity.REQUIRED,
     )

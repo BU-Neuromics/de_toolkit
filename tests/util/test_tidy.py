@@ -41,8 +41,9 @@ def module_docs(cwd, report_dir="detk_report"):
     return [json.loads(p.read_text()) for p in sorted(json_dir.glob("*.json"))]
 
 
-def crate_graph(cwd):
-    crate = json.loads((cwd / "ro-crate-metadata.json").read_text())
+def crate_graph(cwd, report_dir="detk_report"):
+    "the crate's graph; it is in the report directory, rooted there (DETK-0280)"
+    crate = json.loads((cwd / report_dir / "ro-crate-metadata.json").read_text())
     return {e["@id"]: e for e in crate["@graph"]}
 
 
@@ -305,13 +306,13 @@ def test_tidy_p_records_in_the_report_and_the_crate(work):
     assert p["column_data_samples_dropped"] == ["X9"]
     assert (work / "rep" / "detk_report.html").exists()
 
-    g = crate_graph(work)
+    g = crate_graph(work, "rep")
     (action,) = [e for e in g.values() if e["@type"] == "CreateAction"]
     assert action["name"] == "detk-util tidy run"
     assert g[action["instrument"]["@id"]]["name"] == "detk-util tidy"
     files = [o["@id"] for o in action["object"] if g[o["@id"]]["@type"] == "File"]
-    assert files == ["counts.csv", "samples.csv"]
-    assert [r["@id"] for r in action["result"]] == ["c.csv", "s.csv"]
+    assert files == ["../counts.csv", "../samples.csv"]
+    assert [r["@id"] for r in action["result"]] == ["../c.csv", "../s.csv"]
 
 
 @pytest.mark.parametrize(
@@ -330,7 +331,7 @@ def test_tidy_counts_and_covs_record(work, command, name, out):
     g = crate_graph(work)
     (action,) = [e for e in g.values() if e["@type"] == "CreateAction"]
     assert action["name"] == f"detk-util {command} run"
-    assert [r["@id"] for r in action["result"]] == [out]
+    assert [r["@id"] for r in action["result"]] == [f"../{out}"]
 
 
 @pytest.mark.parametrize("command", ["tidy", "tidy-counts", "tidy-covs"])

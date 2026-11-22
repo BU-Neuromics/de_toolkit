@@ -52,7 +52,7 @@ _shtab_detk_util_tidy_counts_option_strings=(-h --help -o --output -d --out-deli
 _shtab_detk_util_tidy_covs_option_strings=(-h --help -o --output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_util_annotate_option_strings=(-h --help -i --idcol --map-from --map-to --strip-versions --drop-unmapped -o --output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_util_gather_option_strings=(-h --help --format --column --name-from --on-mismatch -o --output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
-_shtab_detk_util_record_option_strings=(-h --help -i --input -o --output --tool --tool-version -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
+_shtab_detk_util_record_option_strings=(-h --help -i --input -o --output --tool --tool-version --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_util_option_strings=(-h --help --version)
 _shtab_detk_completion_option_strings=(-h --help)
 _shtab_detk_help_option_strings=()
@@ -2653,7 +2653,7 @@ _shtab_detk_cmd_util_tidy_counts_option_strings=(-h --help -o --output -d --out-
 _shtab_detk_cmd_util_tidy_covs_option_strings=(-h --help -o --output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_cmd_util_annotate_option_strings=(-h --help -i --idcol --map-from --map-to --strip-versions --drop-unmapped -o --output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_cmd_util_gather_option_strings=(-h --help --format --column --name-from --on-mismatch -o --output -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
-_shtab_detk_cmd_util_record_option_strings=(-h --help -i --input -o --output --tool --tool-version -d --out-delim --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
+_shtab_detk_cmd_util_record_option_strings=(-h --help -i --input -o --output --tool --tool-version --report-dir --no-report --version -v --verbose -q --quiet --shut-up)
 _shtab_detk_cmd_util_option_strings=(-h --help --version)
 
 _shtab_detk_cmd_util_tidy_pos_0_COMPGEN=_shtab_compgen_files

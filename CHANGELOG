@@ -167,6 +167,12 @@ predates everything below.
   C`, where 0.x read it as `A and (B or C)`. Parenthesized expressions, and
   ones using only `and` or only `or`, keep the same rows. To keep the 0.x
   result, add the parentheses: `A and (B or C)`
+- `detk-util record` no longer takes `-d`/`--out-delim` (#135): it writes no
+  table, so the option did nothing there; it is now refused as an unknown
+  option, and every other command keeps it. record's help says plainly that
+  without `--tool-version` it runs `<command> --version` once to read the
+  version, so a script that ignores `--version` would run its whole step a
+  second time
 
 ### Added
 - Shell completion for bash, zsh and tcsh, for `detk` and every

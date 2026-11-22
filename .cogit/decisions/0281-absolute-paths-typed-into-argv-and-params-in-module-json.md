@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-22
 from: {node: release/report-paths, step: s2}
 applies: [release/report-paths]
 issue: 137
+revisions:
+  - {date: 2026-11-22, by: adamlabadorf, change: Accepted, why: "from the terminal: Option B, from the terminal: Adam's delegation via the driver session, 2026-11-20 (DETK-0063): every typed absolute path is written relative to workdir in argv and in detk-util record's params and properties; carries out Adam's instruction that published reports and crates hold no absolute machine paths"}
 ---
 
 # Absolute paths typed into argv and params in module JSON and the crate

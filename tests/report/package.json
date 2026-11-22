@@ -1,0 +1,8 @@
+{
+  "name": "detk-report-render-tests",
+  "private": true,
+  "description": "jsdom for the report's render tests (test_report_view_text.py); install outside the tree and point NODE_PATH at its node_modules",
+  "dependencies": {
+    "jsdom": "25.0.1"
+  }
+}

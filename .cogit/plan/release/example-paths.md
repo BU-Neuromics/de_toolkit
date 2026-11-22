@@ -6,7 +6,7 @@ acceptance:
   - 'a test reads every file under docs/example/ (the report''s embedded module JSON, the crate and the raw text) and fails on any absolute path: a value of workdir, argv or a file path field (in_file_path(s), out_file_path(s), column_data_path, a crate File @id) that is absolute or a file:// URI, and any raw occurrence of /home/, /Users/, /tmp/, /private/, /root/, a Windows drive path or file:// in the text; it passes on the regenerated files and fails on the files as published at 61bf890 (checked in the PR)'
   - 'the comment at tests/formula/test_formula_pins.py (about line 206) no longer names examples/airway/prepare_data.R or run.sh once release/tutorial-airway has retired them: it names where the airway sample sheet now comes from (the tutorial''s data step); CHANGELOG under Fixed (the published example''s machine paths)'
 from: [DETK-0280]
-scope: [docs/example/, +docs/example.md, new:tests/report/test_example_paths.py, +tests/formula/test_formula_pins.py, +CHANGELOG]
+scope: [docs/example/, +docs/example.md, new:tests/report/test_example_paths.py, +tests/formula/test_formula_pins.py, +CHANGELOG, new:.github/workflows/example.yml]
 prev: [release/report-paths, release/tutorial-airway, release/outlier-entropy, release/cli-messages]
 issue: 141
 visited: d201819
@@ -49,3 +49,10 @@ release/tutorial-airway). That file is also in release/cli-messages'
 scope (`tests/formula/`, in progress), so this node comes after both.
 Before release/cli-docs (which owns docs/example.md's prose beside this
 node's `+` entry) and release/cut.
+
+Scope extended 2026-11-22 with `new:.github/workflows/example.yml`: Adam
+decided (via the driver session, 2026-11-22) that docs/example/ is
+regenerated through CI, not locally (no R with DESeq2, airway or
+org.Hs.eg.db on the planning machine): a manually triggered workflow sets
+up the test-r job's bioconda environment, runs examples/airway/run.sh and
+uploads docs/example/ as an artifact, which this node commits.

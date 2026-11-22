@@ -16,7 +16,7 @@ visited: d201819
 
 ## Implementation plan
 
-- [ ] @developer Regenerate docs/example/ from the airway tutorial's run on main, add the test that no absolute path appears in it (shown failing on the old files), fix the stale prepare_data.R comment in test_formula_pins.py; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Regenerate docs/example/ from the airway tutorial's run on main, add the test that no absolute path appears in it (shown failing on the old files), fix the stale prepare_data.R comment in test_formula_pins.py; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: open docs/example/detk_report.html and the crate, grep them for absolute paths, run the new test against the old files from 61bf890, and confirm the R job ran the tutorial <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

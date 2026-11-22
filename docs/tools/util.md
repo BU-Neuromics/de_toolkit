@@ -294,11 +294,14 @@ version is `unknown` and `record` warns; that is not an error, since some
 tools have no `--version`.
 
 !!! tip "Give `--tool-version` for your own scripts"
-    When the command is your own script (`./derive.py ...`), asking it for
-    its version runs `./derive.py --version`, and a script that does not
-    handle `--version` then runs a second time, with whatever it does. Give
-    the version yourself, such as a git commit of the script:
+    Without `--tool-version`, `record` runs `<command> --version` once to
+    read the version, so a script that ignores `--version` would run its
+    whole step a second time. Give `--tool-version` for your own scripts
+    (`./derive.py ...`), such as a git commit of the script:
     `--tool-version=$(git rev-parse --short HEAD)`.
+
+`record` takes the common options except `-d`/`--out-delim`: it writes no
+table, so it has no delimiter to set.
 
 **What is recorded.** The module JSON document (name `record`) holds, in its
 parameters, the command (as one shell-quoted string, and as the list of its

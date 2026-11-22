@@ -13,7 +13,7 @@ import pytest
 
 import cli_adapter
 from cli_cases import options, prefix, subcommand_params
-from cli_tables import COMMANDS, COMMON_HELP_ONLY
+from cli_tables import COMMANDS, COMMON, COMMON_HELP_ONLY
 
 
 def flag_re(flag):
@@ -104,3 +104,30 @@ def test_subcommand_help_states_options(command, sub):
             )
         for choice in opt.choices:
             assert flag_re(choice).search(e), f"choice {choice!r} not stated for {opt.long}:\n{e}"
+
+
+@pytest.mark.parametrize(
+    "command,sub", [p for p in subcommand_params() if p.values[1].without_common]
+)
+def test_subcommand_help_leaves_out_the_common_options_it_does_not_take(command, sub):
+    text = help_text(prefix(command, sub) + ("--help",))
+    for opt in COMMON:
+        listed = any(
+            line.lstrip().startswith("-") and flag_re(opt.long).search(line)
+            for line in text.splitlines()
+        )
+        assert listed == (opt.long not in sub.without_common), (
+            f"{opt.long} {'listed' if listed else 'not listed'} in help:\n{text}"
+        )
+        if opt.long in sub.without_common and opt.short:
+            assert not re.search(rf"^\s*{re.escape(opt.short)}\b", text, re.M), text
+
+
+def test_record_help_says_the_version_probe_runs_the_command_once_more():
+    # release/record-help: say plainly that the probe runs the command, and why it matters
+    text = " ".join(help_text(("detk-util", "record", "--help")).split())
+    assert (
+        "Without --tool-version, record runs '<command> --version' once to read the "
+        "version, so a script that ignores --version would run its whole step a second "
+        "time: give --tool-version for your own scripts" in text
+    )

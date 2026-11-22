@@ -146,10 +146,11 @@ The tool is the base name of the command's first word unless --tool names it
 (needed for sh -c '...' or Rscript script.R). Its version is the first line
 of '<command> --version', run with a 10 s timeout, unless --tool-version gives
 it; when that fails, or --tool names a tool other than the command's first
-word, the version is recorded as 'unknown' with a warning. When the command is
-your own script (./derive.py), give --tool-version: asking for the version
-runs '<script> --version', which runs a script that does not handle --version
-a second time.""",
+word, the version is recorded as 'unknown' with a warning.
+
+Without --tool-version, record runs '<command> --version' once to read the
+version, so a script that ignores --version would run its whole step a second
+time: give --tool-version for your own scripts (./derive.py).""",
         examples=[
             (
                 "Record a Miller step that adds an age_group column to the sample information",
@@ -343,7 +344,8 @@ def build_parser():
             _output(sub, "the counts matrix")
         elif name == "record":
             _record_arguments(sub)
-        add_common_options(sub)
+        # record writes no table, so -d/--out-delim has nothing to act on
+        add_common_options(sub, out_delim=name != "record")
     return parser
 
 

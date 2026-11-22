@@ -15,7 +15,8 @@ def prefix(command, sub):
 
 
 def options(sub):
-    return sub.options + COMMON
+    "The subcommand's own options and the common options it takes"
+    return sub.options + tuple(o for o in COMMON if o.long not in sub.without_common)
 
 
 def defaults(sub):

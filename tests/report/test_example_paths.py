@@ -64,14 +64,23 @@ def json_blocks(html):
 
 
 def _blank_code(html):
-    """*html* with the body of each code <script> blanked, its newlines kept:
-    the vendored Vega libraries and the report's own script come from the
-    package, not the run, and Vega's minified code holds "file://" and "o:/["
-    of its own, so the raw-text check skips them"""
-    for a, body in scripts(html):
-        if a.get("type") != "application/json" and body:
-            html = html.replace(body, "\n" * body.count("\n"))
-    return html
+    """*html* with the body of each bare <script> (no attributes) blanked, its
+    newlines kept: the vendored Vega libraries and the report's own script
+    come from the package, not the run, and Vega's minified code holds
+    "file://" and "o:/[" of its own, so the raw-text check skips them. It
+    fails closed: only a body found right after a literal <script> tag, in
+    document order, is blanked; anything else is still scanned."""
+    out, at = [], 0
+    for attrs, body in scripts(html):
+        if attrs or not body:
+            continue
+        tag = html.find("<script>", at)
+        if tag < 0 or not html.startswith(body, tag + len("<script>")):
+            continue
+        start = tag + len("<script>")
+        out += [html[at:start], "\n" * body.count("\n")]
+        at = start + len(body)
+    return "".join(out) + html[at:]
 
 
 def is_absolute(value):
@@ -235,6 +244,19 @@ def test_check_skips_library_code_but_not_data(tmp_path):
     (tmp_path / "detk_report.html").write_text(lib + "<p>/home/someone</p>" + _report({}))
     (found,) = absolute_paths(tmp_path)
     assert found.startswith("detk_report.html:1: text: /home/someone")
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        '<script type="text/javascript">var p="/home/someone";</script>',
+        '<SCRIPT>var p="/home/someone";</SCRIPT>',
+    ],
+)
+def test_check_skips_only_bare_script_tags(tmp_path, code):
+    "the skip fails closed: a script with attributes, or in capitals, is scanned"
+    (tmp_path / "detk_report.html").write_text(code + _report({}))
+    assert absolute_paths(tmp_path)
 
 
 def test_check_passes_relative_paths(tmp_path):

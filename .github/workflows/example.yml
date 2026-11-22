@@ -12,6 +12,9 @@ name: Regenerate example
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   example:
     name: regenerate docs/example (airway, bioconda R)

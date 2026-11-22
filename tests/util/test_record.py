@@ -77,6 +77,12 @@ def crate_graph(cwd):
     return crate, {e["@id"]: e for e in crate["@graph"]}
 
 
+def _recorded(path, work):
+    "an absolute *path* as module JSON records it: relative to workdir (DETK-0281)"
+    real = os.path.join(os.path.realpath(os.path.dirname(path)), os.path.basename(path))
+    return os.path.relpath(real, os.path.realpath(work)).replace(os.sep, "/")
+
+
 def sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -111,7 +117,9 @@ def test_records_the_step_in_the_module_json(work):
     assert doc["out_file_paths"] == ["covs.csv"]
 
     params = doc["params"]
-    assert params["argv"] == [PY, "-c", DERIVE]
+    # the interpreter, typed absolute, is recorded relative to workdir (DETK-0281)
+    py = _recorded(PY, work)
+    assert params["argv"] == [py, "-c", DERIVE]
     assert shlex.split(params["command"]) == params["argv"]
     assert params["tool"] == TOOL
     # the first line of 'python --version'
@@ -441,7 +449,8 @@ def test_crate_instrument_object_and_result(work):
     assert objects[:2] == ["../sample_info.csv", "../counts.csv"]
     values = {g[o]["name"]: g[o]["value"] for o in objects[2:]}
     assert all(g[o]["@type"] == "PropertyValue" for o in objects[2:])
-    assert shlex.split(values["detk-util record command"]) == [PY, "-c", DERIVE]
+    py = _recorded(PY, work)
+    assert shlex.split(values["detk-util record command"]) == [py, "-c", DERIVE]
     assert values["detk-util record tool"] == TOOL
 
     assert [r["@id"] for r in action["result"]] == ["../covs.csv"]

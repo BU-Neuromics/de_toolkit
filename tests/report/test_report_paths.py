@@ -4,6 +4,8 @@ there, and no recorded path names a directory of the machine."""
 
 import json
 import os
+import shlex
+import shutil
 import subprocess
 import sys
 
@@ -105,27 +107,6 @@ def test_default_report_dir_records_workdir_dotdot(work):
         assert doc["column_data_path"] == "samples.csv"
 
 
-def test_absolute_typed_paths_are_written_relative(work):
-    (work / "out").mkdir()
-    run(
-        [
-            "detk-filter",
-            f"--report-dir={work / 'rep'}",
-            "-o",
-            str(work / "out" / "f.csv"),
-            "mean(all) > 20",
-            str(work / "counts.csv"),
-        ],
-        work,
-    )
-    (doc,) = docs(work / "rep")
-    assert doc["workdir"] == ".."
-    assert doc["in_file_path"] == "counts.csv"
-    assert doc["out_file_path"] == "out/f.csv"
-    (action,) = actions(crate(work / "rep"))
-    assert [r["@id"] for r in action["result"]] == ["../out/f.csv"]
-
-
 def _machine_paths(work):
     "The absolute directories of this machine that no report may hold"
     paths = {str(work), os.path.realpath(work), PY, os.path.dirname(PY), sys.prefix}
@@ -198,3 +179,131 @@ def test_no_machine_path_in_module_json_report_or_crate(work, tmp_path, inside):
         assert not os.path.isabs(ref)
         if os.path.basename(ref) != "stdout":
             assert (report / ref).exists(), ref
+
+
+# ------------------------------------------- absolute paths typed (DETK-0281)
+
+
+def _report_text(report):
+    "every module JSON, the report's embedded payload and the crate, as text"
+    texts = {p.name: p.read_text() for p in sorted((report / "json").glob("*.json"))}
+    html = (report / "detk_report.html").read_text()
+    start = html.index('id="detk-raw">') + len('id="detk-raw">')
+    texts["the report's embedded payload"] = html[start : html.index("</script>", start)]
+    texts["the crate"] = (report / CRATE_FILENAME).read_text()
+    return texts
+
+
+def _no_absolute_arg(argv):
+    for arg in argv:
+        value = arg.split("=", 1)[1] if arg.startswith("--") and "=" in arg else arg
+        assert not os.path.isabs(value), arg
+
+
+def test_absolute_typed_paths_are_written_relative(work):
+    (work / "out").mkdir()
+    run(
+        [
+            "detk-filter",
+            f"--report-dir={work / 'rep'}",
+            "-o",
+            str(work / "out" / "f.csv"),
+            "mean(all) > 20",
+            str(work / "counts.csv"),
+        ],
+        work,
+    )
+    run(
+        ["detk-stats", "summary", "--report-dir", str(work / "rep"), str(work / "counts.csv")],
+        work,
+    )
+    for where, text in _report_text(work / "rep").items():
+        _assert_no_machine_paths(text, where, work)
+    for doc in docs(work / "rep"):
+        assert doc["workdir"] == ".."
+        assert doc["in_file_path"] == "counts.csv"
+        _no_absolute_arg(doc["argv"])
+        if doc["name"] == "filtercounts":
+            assert doc["out_file_path"] == "out/f.csv"
+            assert doc["argv"][1:] == [
+                "--report-dir=rep",
+                "-o",
+                "out/f.csv",
+                "mean(all) > 20",
+                "counts.csv",
+            ]
+        else:
+            assert doc["argv"][1:] == ["summary", "--report-dir", "rep", "counts.csv"]
+    filters = [a for a in actions(crate(work / "rep")) if a["name"] == "detk-filter run"]
+    assert [r["@id"] for r in filters[0]["result"]] == ["../out/f.csv"]
+
+
+def test_record_with_absolute_paths_records_them_relative(work):
+    # the command typed by its absolute path too; a system one, since a
+    # command in another tree is written as a ../ chain naming that tree's
+    # directories (the residual DETK-0281 notes)
+    cp = shutil.which("cp")
+    if cp is None:
+        pytest.skip("cp is not on PATH")
+    run(
+        [
+            "detk-util",
+            "record",
+            f"--report-dir={work / 'rep'}",
+            "-i",
+            str(work / "samples.csv"),
+            f"-o{work / 'copy.csv'}",
+            "--tool",
+            "cp",
+            "--tool-version",
+            "1",
+            "--",
+            cp,
+            str(work / "samples.csv"),
+            str(work / "copy.csv"),
+        ],
+        work,
+    )
+    assert (work / "copy.csv").read_text() == SAMPLES
+    for where, text in _report_text(work / "rep").items():
+        _assert_no_machine_paths(text, where, work)
+
+    (doc,) = docs(work / "rep")
+    _no_absolute_arg(doc["argv"])
+    assert "--report-dir=rep" in doc["argv"] and "-ocopy.csv" in doc["argv"]
+    params, props = doc["params"], doc["properties"]
+    assert params["inputs"] == ["samples.csv"] and params["outputs"] == ["copy.csv"]
+    assert params["argv"][1:] == ["samples.csv", "copy.csv"]
+    assert not os.path.isabs(params["argv"][0])
+    # the command, rebuilt from the recorded arguments, re-runs from workdir
+    assert shlex.split(params["command"]) == params["argv"]
+    assert [d["path"] for d in props["inputs"]] == ["samples.csv"]
+    assert [d["path"] for d in props["outputs"]] == ["copy.csv"]
+    # the checksums still reach the crate's File entities
+    graph = crate(work / "rep")
+    assert graph["../copy.csv"]["sha256"] == props["outputs"][0]["sha256"]
+    assert graph["../samples.csv"]["sha256"] == props["inputs"][0]["sha256"]
+
+
+@pytest.mark.parametrize(
+    "arg,expected",
+    [
+        ("{w}/counts.csv", "counts.csv"),
+        ("{w}/sub/c.csv", "sub/c.csv"),
+        ("--report-dir={w}/rep", "--report-dir=rep"),
+        ("-o{w}/out.csv", "-oout.csv"),
+        ("{w}/../other/c.csv", "../other/c.csv"),
+        ("counts.csv", "counts.csv"),
+        ("mean(all) > 20", "mean(all) > 20"),
+        ("counts ~ group", "counts ~ group"),
+        ("--log", "--log"),
+        ("-2.5", "-2.5"),
+        ("-", "-"),
+        ("--opt=value", "--opt=value"),
+    ],
+)
+def test_relative_arg(tmp_path, arg, expected):
+    from de_toolkit.report import relative_arg
+
+    w = os.path.realpath(tmp_path)
+    assert relative_arg(arg.format(w=w), w) == expected

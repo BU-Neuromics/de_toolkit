@@ -172,7 +172,10 @@ predates everything below.
   `./detk_report`), `argv[0]` is the command's name (`detk-stats`), and the
   file paths (`in_file_path`, `out_file_path`, `column_data_path`,
   `in_file_paths`, `out_file_paths`) are relative to `workdir`, a path typed
-  as absolute too. A consumer resolves a file as report directory, then
+  as absolute too. So is an absolute path among the other arguments of
+  `argv` (alone, `--opt=/abs` or `-o/abs`) and in `detk-util record`'s
+  parameters and checksums, its command string rebuilt from them; the
+  command runs as typed (DETK-0281). A consumer resolves a file as report directory, then
   `workdir`, then the path; an older document's absolute `workdir` resolves
   the same way
 - In a `detk-filter` expression, `and` binds tighter than `or` and both

@@ -202,11 +202,37 @@ def _file_relpath(path, workdir):
     return _relpath(os.path.normpath(os.path.join(workdir, path)), workdir)
 
 
-def _argv():
-    "The process argument vector as recorded: argv[0] the command's name only"
+def relative_arg(arg, workdir):
+    """A command line argument as recorded (DETK-0281): an absolute path is
+    written relative to *workdir* (an absolute directory), as the value of
+    ``--opt=/abs/path`` or of a short option given with it (``-o/abs/path``)
+    is; any other argument is kept as typed. The command line then re-runs
+    the same from *workdir*."""
+    if not isinstance(arg, str) or not arg:
+        return arg
+    if os.path.isabs(arg):
+        return _file_relpath(arg, workdir)
+    if arg.startswith("--") and "=" in arg:
+        opt, value = arg.split("=", 1)
+        if os.path.isabs(value):
+            return f"{opt}={_file_relpath(value, workdir)}"
+    elif arg.startswith("-") and not arg.startswith("--") and len(arg) > 2:
+        if os.path.isabs(arg[2:]):
+            return arg[:2] + _file_relpath(arg[2:], workdir)
+    return arg
+
+
+def relative_argv(argv, workdir):
+    "Every argument of *argv* as :func:`relative_arg` records it"
+    return [relative_arg(a, workdir) for a in argv]
+
+
+def _argv(workdir):
+    """The process argument vector as recorded: argv[0] the command's name
+    only, an absolute path among the arguments relative to *workdir*"""
     argv = list(sys.argv)
     if argv:
-        argv[0] = os.path.basename(argv[0])
+        argv = [os.path.basename(argv[0])] + relative_argv(argv[1:], workdir)
     return argv
 
 
@@ -268,7 +294,7 @@ class DetkModuleJSON:
                 # end_time is when the module was recorded
                 ("start_time", _PROCESS_START.isoformat()),
                 ("end_time", datetime.now(UTC).isoformat()),
-                ("argv", _argv()),
+                ("argv", _argv(workdir)),
                 ("in_file_path", rel(in_file_path)),
                 ("out_file_path", rel(out_file_path)),
                 ("column_data_path", rel(column_data_path)),
@@ -294,7 +320,8 @@ class DetkModuleJSON:
         - ``detk_version``: version of detk that generated this file
         - ``last_modified``: local system timestamp in milliseconds when this
           file was created/modified
-        - ``argv``: the command line, ``argv[0]`` the command's name only
+        - ``argv``: the command line, ``argv[0]`` the command's name only and
+          an absolute path among the arguments relative to ``workdir``
         - ``workdir``: the directory where detk was run, relative to the
           report directory (``..`` for the default ``./detk_report``)
         - ``in_file_path``: path to the file that was processed

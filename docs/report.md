@@ -106,15 +106,20 @@ Optional fields:
 | Field | Type | Meaning |
 |---|---|---|
 | `start_time` / `end_time` | string | ISO 8601 UTC |
-| `argv` | array | the command line; `argv[0]` is the command's name only (`detk-stats`), the other arguments as typed |
+| `argv` | array | the command line; `argv[0]` is the command's name only (`detk-stats`); the other arguments as typed, except that an absolute path, alone or as an option's value (`--report-dir=/abs/rep`, `-o/abs/out.csv`), is written **relative to `workdir`**, so the line re-runs the same from there |
 | `workdir` | string | the directory the command ran in, **relative to the report directory**: `..` for the default `./detk_report` |
 | `in_file_path`, `out_file_path`, `column_data_path` | string | the input, output and column data files, **relative to `workdir`** (a path typed as absolute is written relative too) |
 | `in_file_paths`, `out_file_paths` | array | since 1.1: every input and output file of a step with several, written by [`detk-util record`](tools/util.md#record), each relative to `workdir`; their first entries are also `in_file_path` and `out_file_path` |
 
 So a file's location is the report directory, then `workdir`, then the
-path: `detk_report/../counts.csv`. No recorded path names a directory of the
-machine the analysis ran on, so a report directory can be moved or published
-as it is. Since 1.2; documents of 1.0 and 1.1 hold `workdir` and `argv[0]`
+path: `detk_report/../counts.csv`. No recorded path is absolute, whether you
+typed paths relative or absolute: `argv` and the parameters and checksums of
+[`detk-util record`](tools/util.md#record) are written relative to `workdir`
+too (DETK-0281), so a report directory can be moved or published as it is. A
+relative path still names the directories it climbs through: with the report
+directory, or a file or command, in another tree from the working directory,
+its `../` chain spells that tree's directories (`../../home/me/proj`); keep
+the report directory and the data under the working directory to avoid it. Since 1.2; documents of 1.0 and 1.1 hold `workdir` and `argv[0]`
 absolute, and an absolute `workdir` joined to the report directory is itself,
 so the same rule reads them.
 

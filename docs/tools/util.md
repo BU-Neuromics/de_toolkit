@@ -302,9 +302,12 @@ tools have no `--version`.
 
 **What is recorded.** The module JSON document (name `record`) holds, in its
 parameters, the command (as one shell-quoted string, and as the list of its
-words), the tool, its version and the input and output files as given; in its
+words), the tool, its version and the input and output files; in its
 properties, the SHA-256 checksum and size of every input (read before the run)
-and every output (read after it), and the exit status. Its envelope lists
+and every output (read after it), and the exit status. The command runs as
+you typed it, but is recorded with every absolute path in it, and in the file
+lists, written relative to the working directory (DETK-0281), so the record
+names no directory of your machine and re-runs the same from there. Its envelope lists
 every file in `in_file_paths` and `out_file_paths` (schema 1.1), the first of
 each also being `in_file_path` and `out_file_path`. In the crate the step is a
 `CreateAction` whose instrument is the tool, with its version, and whose

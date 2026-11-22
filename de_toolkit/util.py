@@ -1226,6 +1226,27 @@ class Record(DetkModule):
             "exit_status": exit_status,
         }
 
+    def relative_to(self, workdir):
+        """Write every absolute path in the record relative to the absolute
+        directory *workdir* (DETK-0281): the command's arguments, the input
+        and output lists and the checksums' paths; the command string is
+        rebuilt from the arguments. Returns the record."""
+        import shlex
+
+        from .report import _file_relpath, relative_argv
+
+        params, props = self["params"], self["properties"]
+        params["argv"] = relative_argv(params["argv"], workdir)
+        params["command"] = shlex.join(params["argv"])
+        params["inputs"] = [_file_relpath(p, workdir) for p in params["inputs"]]
+        params["outputs"] = [_file_relpath(p, workdir) for p in params["outputs"]]
+        for key in ("inputs", "outputs"):
+            props[key] = [
+                d | {"path": _file_relpath(d["path"], workdir)} if isinstance(d, dict) else d
+                for d in props[key]
+            ]
+        return self
+
 
 def run_record(argv, inputs=(), outputs=(), tool=None, tool_version=None):
     """
@@ -1307,6 +1328,8 @@ def _record_main(args):
 
     if not args.no_report:
         logging.info("writing report to %s", args.report_dir)
+        # the command ran as typed; it is recorded with no absolute path
+        record.relative_to(os.getcwd())
         with DetkReport(args.report_dir) as r:
             r.add_module(
                 record,

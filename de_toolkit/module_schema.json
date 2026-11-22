@@ -48,7 +48,7 @@
     "argv": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "process argument vector at recording time; argv[0] is the command's name only (e.g. detk-stats, since 1.2), the other arguments as typed"
+      "description": "process argument vector at recording time; argv[0] is the command's name only (e.g. detk-stats, since 1.2), the other arguments as typed, except that an absolute path, alone or as an option's value (--opt=/abs, -o/abs), is written relative to workdir (since 1.2)"
     },
     "in_file_path": {
       "type": ["string", "null"],
@@ -78,11 +78,11 @@
     },
     "params": {
       "type": "object",
-      "description": "module invocation parameters; empty only for modules that genuinely take none. A number that is missing or not finite (NaN, inf) is null: the document is strictly valid JSON, with no bare NaN or Infinity"
+      "description": "module invocation parameters; empty only for modules that genuinely take none. A path among them is relative to workdir (since 1.2; detk-util record's command, argv, inputs and outputs). A number that is missing or not finite (NaN, inf) is null: the document is strictly valid JSON, with no bare NaN or Infinity"
     },
     "properties": {
       "type": "object",
-      "description": "module-specific results used by the report views. A number that is missing or not finite (NaN, inf) is null, at any nesting level: the document is strictly valid JSON, with no bare NaN or Infinity"
+      "description": "module-specific results used by the report views (a file path among them, as in detk-util record's checksums, relative to workdir since 1.2). A number that is missing or not finite (NaN, inf) is null, at any nesting level: the document is strictly valid JSON, with no bare NaN or Infinity"
     }
   }
 }

@@ -8,17 +8,9 @@ name: Regenerate example
 #
 #   gh workflow run example.yml --ref <branch>
 #   gh run download <run-id> -n docs-example -D docs/example
-#
-# A push that changes this workflow or examples/airway/run.sh also runs it,
-# so a branch can use it before it reaches main (workflow_dispatch needs the
-# file on the default branch).
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - .github/workflows/example.yml
-      - examples/airway/run.sh
 
 jobs:
   example:

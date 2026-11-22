@@ -8,6 +8,8 @@ acceptance:
 from: [DETK-0280]
 scope: [docs/example/, +docs/example.md, new:tests/report/test_example_paths.py, +tests/formula/test_formula_pins.py, +CHANGELOG]
 prev: [release/report-paths, release/tutorial-airway, release/outlier-entropy, release/cli-messages]
+issue: 141
+visited: d201819
 ---
 
 # The published example holds no machine paths

@@ -109,7 +109,7 @@ OUTLIER_FIXTURES = {
             "entropy_threshold": 0.42,
             "entropies": {"pct": list(range(100)), "pctVal": [i / 100 for i in range(100)]},
         },
-        params={"threshold": 5},
+        params={"threshold": 0.05},
     ),
     "shrinkcounts": mod(
         "shrinkcounts",
@@ -135,8 +135,22 @@ def test_view_for_outlier_family(name):
 def test_entropycounts_marks_module_threshold():
     _, _, _, view = view_for(OUTLIER_FIXTURES["entropycounts"])
     spec = json.dumps(view["spec"])
-    assert '"datum": 5' in spec or '"datum": 5.0' in spec  # rule at params threshold
-    assert "5 flagged" in spec
+    # -p is a fraction (DETK-0200): 0.05 is drawn at the 5th percentile of the
+    # 0-99 axis, not at 0.05
+    rules = [layer for layer in view["spec"]["layer"] if layer["mark"]["type"] in ("rule", "text")]
+    assert [layer["encoding"]["x"]["datum"] for layer in rules] == [5, 5]
+    assert '"datum": 0.05' not in spec
+    assert "5th percentile threshold (5 flagged)" in spec
+
+
+@pytest.mark.parametrize(
+    "x, text",
+    [(1, "1st"), (2, "2nd"), (3, "3rd"), (5, "5th"), (11, "11th"), (22, "22nd"), (2.5, "2.5th")],
+)
+def test_entropycounts_threshold_ordinal(x, text):
+    from de_toolkit.report_specs import _ordinal
+
+    assert _ordinal(x) == text
 
 
 def test_every_detk_module_has_a_registry_entry():

@@ -837,15 +837,29 @@ def build_flgcounts(mod):
 # ---------------------------------------------------------------------------
 
 
+def _ordinal(x):
+    "5 -> '5th', 1 -> '1st', 22 -> '22nd', 2.5 -> '2.5th'"
+    text = f"{x:g}"
+    if x != int(x):
+        return text + "th"
+    n = int(x)
+    suffix = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return text + suffix
+
+
 def build_entropycounts(mod):
     """Entropy percentile curve with the module's actual threshold marked
     (the stats-family entropy chart shows an example threshold instead)."""
     e = mod["properties"]["entropies"]
     rows = [{"pct": pct, "entropy": val} for pct, val in zip(e["pct"], e["pctVal"])]
+    # -p is a fraction (DETK-0200); the x axis is the feature percentile, 0-99
     thresh = mod.get("params", {}).get("threshold")
+    pct_at = None if thresh is None else round(thresh * 100, 6)
     flagged = mod["properties"].get("num_flagged")
     ymax = max((r["entropy"] for r in rows if r["entropy"] is not None), default=0)
-    label = f"p{thresh} threshold" + (f" ({flagged} flagged)" if flagged is not None else "")
+    label = (f"{_ordinal(pct_at)} percentile threshold" if pct_at is not None else "threshold") + (
+        f" ({flagged} flagged)" if flagged is not None else ""
+    )
     return _vl(
         {
             "data": {"values": rows},
@@ -874,7 +888,7 @@ def build_entropycounts(mod):
                 },
                 {
                     "mark": {"type": "rule", "color": _CAT[3], "strokeDash": [5, 4]},
-                    "encoding": {"x": {"datum": thresh}},
+                    "encoding": {"x": {"datum": pct_at}},
                 },
                 {
                     "mark": {
@@ -886,7 +900,7 @@ def build_entropycounts(mod):
                         "fontSize": 11,
                     },
                     "encoding": {
-                        "x": {"datum": thresh},
+                        "x": {"datum": pct_at},
                         "y": {"datum": ymax},
                         "text": {"datum": label},
                     },

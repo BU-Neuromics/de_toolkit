@@ -8,6 +8,8 @@ acceptance:
 scope: [.github/workflows/ci.yml, +tests/report/test_report_view_text.py, new:tests/report/package.json, new:tests/report/package-lock.json]
 issue: 130
 visited: 903ac76
+status: done
+done: 98c213d
 ---
 
 # CI runs the report's browser render tests
@@ -16,7 +18,7 @@ visited: 903ac76
 
 - [x] @developer Set up node and a pinned jsdom in one CI job with NODE_PATH, make the jsdom tests required there through an environment variable, test the marker, update the test module's docstring; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: read the job's log and count the needs_jsdom tests that ran and passed, and check the other jobs still skip them <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

@@ -276,6 +276,29 @@ predates everything below.
   `detk-util gather` (#115)
 
 ### Fixed
+- `detk-outlier entropy` names the flag column from all of the threshold's
+  decimal digits, at least two: `-p 0.05` gives `entropy_p0_05`, `-p 0.1`
+  (or `0.10`) `entropy_p0_10`, `-p 1e-05` `entropy_p0_00001`. A `-p` written
+  in exponent form failed naming the column (exit 1), and `-p 0.1` gave
+  `entropy_p0_1`. The report's outlier card draws the threshold at its
+  percentile (`-p 0.05` at the 5th) (#123, DETK-0200)
+- `detk-outlier entropy -p P` flags the features below the P-th fraction of
+  the entropies, as its help says: `-p 0.05` is the 5th percentile. It was
+  passed to numpy as a percent, so `-p 0.05` flagged the features below the
+  0.05th percentile (13 of the airway tutorial's 24,706 genes, where the 5th
+  percentile flags 925). A `-p` that is not strictly between 0 and 1 is a
+  usage error (exit 2); 0.x runs that passed `-p 5` for the 5th percentile
+  must now pass `-p 0.05` (#123, DETK-0200)
+- `detk-outlier entropy` runs on a counts matrix with features that are zero
+  in every sample: their entropy is missing (empty in the CSV) and they are
+  not flagged, the percentile is taken over the other features, and one
+  warning gives how many there are. It failed with "Series.replace cannot
+  specify both a dict-like 'to_replace' and a 'value'" (pandas 1.x and 2.x
+  raise the same error, so 0.x on those failed too). Each entropy and flag is
+  written on the row of the feature it was computed for, in the input's
+  order: past the failing line, the rows were relabelled by position, which
+  would have put another feature's result on every feature after an all-zero
+  one (#123)
 - A design that formula syntax reads but detk cannot build (a column the
   column data does not have, a level its column lacks, a number-like term
   under DETK-0190) is reported as `Invalid design: <reason>`, no longer as

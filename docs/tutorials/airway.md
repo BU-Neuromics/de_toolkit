@@ -188,7 +188,7 @@ grep -c ',True$' entropy_flags.csv
 gene,entropy,entropy_p0_05
 ENSG00000000003,2.0222...,False
 ENSG00000000419,2.0524...,False
-13
+925
 ```
 
 The flags are for looking at, in the report's entropy plot: nothing below

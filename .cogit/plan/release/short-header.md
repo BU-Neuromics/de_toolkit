@@ -7,6 +7,8 @@ acceptance:
   - detk-util tidy -p with the sheet '"condition"' / '"S1","a"' against counts 'gene,S1,S2' succeeds and writes the sheet with its condition column, and a detk command that reads column data (detk-de or detk-filter on a design over condition) reads it; tests in tests/common/ and tests/util/test_tidy.py; CHANGELOG under Fixed
 scope: [+de_toolkit/common.py, +de_toolkit/util.py, +tests/common/test_read_delimited.py, +tests/util/test_tidy.py, +CHANGELOG]
 prev: [release/cli-messages]
+issue: 136
+visited: 06c6a10
 ---
 
 # A one-field header over wider rows reads as R writes it

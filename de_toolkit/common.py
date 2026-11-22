@@ -301,19 +301,21 @@ class DetkParser(argparse.ArgumentParser):
         self.exit(2, f"{self.prog}: error: {message}\nRun '{self.prog} --help' for help.\n")
 
 
-def add_common_options(parser):
+def add_common_options(parser, out_delim=True):
     """
     Add the options every detk command shares to *parser*, in their own
-    help section, "common options".
+    help section, "common options". *out_delim* False leaves out
+    ``-d/--out-delim``, for a command that writes no table (detk-util record).
     """
     group = parser.add_argument_group("common options")
-    group.add_argument(
-        "-d",
-        "--out-delim",
-        metavar="CHAR",
-        default=",",
-        help="Delimiter to use for the output file",
-    )
+    if out_delim:
+        group.add_argument(
+            "-d",
+            "--out-delim",
+            metavar="CHAR",
+            default=",",
+            help="Delimiter to use for the output file",
+        )
     group.add_argument(
         "--report-dir",
         metavar="DIR",

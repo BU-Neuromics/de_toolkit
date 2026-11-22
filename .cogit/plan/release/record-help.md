@@ -14,7 +14,7 @@ visited: 06c6a10
 
 ## Implementation plan
 
-- [ ] @developer Reword record's --tool-version sentence, drop -d/--out-delim from detk-util record (kept on every other command), the same in docs/tools/util.md and the skill's commands page; help tests and cli-pin rows; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Reword record's --tool-version sentence, drop -d/--out-delim from detk-util record (kept on every other command), the same in docs/tools/util.md and the skill's commands page; help tests and cli-pin rows; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: read detk-util record --help as a new user, and check -d is gone there and still on detk-util tidy and another command <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

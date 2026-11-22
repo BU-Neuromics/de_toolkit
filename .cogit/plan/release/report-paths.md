@@ -11,6 +11,8 @@ scope: [+de_toolkit/crate.py, +de_toolkit/report.py, +de_toolkit/util.py, +de_to
 prev: [DETK-0280, DETK-0281]
 issue: 133
 visited: 73b7582
+status: done
+done: da36997
 ---
 
 # The crate goes with its report and recorded paths are relative
@@ -19,7 +21,7 @@ visited: 73b7582
 
 - [x] @developer As DETK-0280 is answered: write the crate into the report directory, rooted there; record workdir, argv[0] and the file paths relative as it says; the crate's references relative to its root; tests for two report directories, clean, the absence of machine paths and profile conformance; the docs, skill, tutorial and tests that name ./ro-crate-metadata.json; CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: in one directory run two detk commands with --report-dir a and --report-dir b, read both crates and grep both reports and crates for the directory's absolute path and $HOME; run the quantifiers tutorial; check the crate with rocrate-validator <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

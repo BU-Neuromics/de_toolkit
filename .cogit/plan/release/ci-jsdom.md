@@ -15,7 +15,7 @@ visited: 903ac76
 ## Implementation plan
 
 - [x] @developer Set up node and a pinned jsdom in one CI job with NODE_PATH, make the jsdom tests required there through an environment variable, test the marker, update the test module's docstring; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: read the job's log and count the needs_jsdom tests that ran and passed, and check the other jobs still skip them <!-- s2 -->
+- [x] @reviewer Review the PR: read the job's log and count the needs_jsdom tests that ran and passed, and check the other jobs still skip them <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes

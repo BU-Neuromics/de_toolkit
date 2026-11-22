@@ -10,6 +10,8 @@ acceptance:
 scope: [+de_toolkit/outlier.py, tests/outlier/, +CHANGELOG, +docs/tutorials/airway.md, +de_toolkit/report_specs.py, +tests/report/test_report_render.py]
 issue: 123
 visited: 8628a94
+status: done
+done: 7a61e4a
 ---
 
 # detk-outlier entropy handles all-zero features and keeps each result on its feature
@@ -18,7 +20,7 @@ visited: 8628a94
 
 - [x] @developer Replace the dropped_df.replace line and the positional relabel in EntropyCounts with a reindex by feature name; all-zero features get a missing entropy and a False flag with one warning; tests with all-zero features first, in the middle and last, each row checked against scipy.stats.entropy, through the API and the CLI; CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: run detk-outlier entropy on a counts file with an all-zero gene in the middle and check a few genes after it against their own entropies <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

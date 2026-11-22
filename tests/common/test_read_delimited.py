@@ -354,6 +354,8 @@ _SHORT_HEADER = {
     "unquoted": 'condition\n"S1","a"\n"S2","b"\n',
     "tab": "condition\nS1\ta\nS2\tb\n",
     "quoted tab": '"condition"\n"S1"\t"a"\n"S2"\t"b"\n',
+    # R's default write.table: quoted, space-separated (DETK-0320)
+    "quoted space": '"condition"\n"S1" "a"\n"S2" "b"\n',
 }
 
 
@@ -419,6 +421,64 @@ def test_a_real_one_column_table_stays_one_column(tmp_path, text, header, ids):
     df = read_delimited(str(fn))
     assert list(df.columns) == [header]
     assert list(df[header]) == ids
+
+
+# DETK-0320: space from a data line counts only when the line's first field
+# is quoted, and the first data lines must split alike into 2 or more fields
+
+_SPACED_LISTS = {
+    # one ID with a space, as Excel exports it (unquoted)
+    "first spaced": ("sample\nctrl 1\nS2\nS3\n", ["ctrl 1", "S2", "S3"]),
+    "every spaced": ("sample\nsample 1\nsample 2\n", ["sample 1", "sample 2"]),
+    "later spaced": ("sample\nS2\nctrl 1\nS3\n", ["S2", "ctrl 1", "S3"]),
+}
+
+
+@pytest.mark.parametrize("text, ids", _SPACED_LISTS.values(), ids=_SPACED_LISTS.keys())
+def test_an_unquoted_id_list_with_spaces_stays_one_column(tmp_path, text, ids):
+    fn = tmp_path / "ids.txt"
+    fn.write_text(text)
+    df = read_delimited(str(fn))
+    assert list(df.columns) == ["sample"]
+    assert list(df["sample"]) == ids
+    # read_id_table indexes by the one column
+    assert list(read_id_table(str(fn)).index) == ids
+
+
+def test_an_unquoted_space_separated_short_header_is_one_column(tmp_path):
+    # R's write.table(quote=FALSE, sep=" ") cannot be told from a list of
+    # IDs with spaces; it is read as one, as before #136 (DETK-0320)
+    fn = tmp_path / "samples.txt"
+    fn.write_text("condition\nS1 a\nS2 b\n")
+    df = read_delimited(str(fn))
+    assert list(df.columns) == ["condition"]
+    assert list(df["condition"]) == ["S1 a", "S2 b"]
+
+
+@pytest.mark.parametrize(
+    "text, values",
+    [
+        ("condition\nS1,a\nS2\nS3\n", ["S1,a", "S2", "S3"]),
+        ("condition\nS1,a\nS2,b,c\n", ["S1,a", "S2,b,c"]),
+    ],
+    ids=["then one field", "then three fields"],
+)
+def test_data_lines_that_split_unalike_mean_one_column(tmp_path, text, values):
+    fn = tmp_path / "samples.txt"
+    fn.write_text(text)
+    df = read_delimited(str(fn))
+    assert list(df.columns) == ["condition"]
+    assert list(df["condition"]) == values
+
+
+def test_data_lines_past_the_sniffed_ones_do_not_count(tmp_path):
+    # only the first lines are sniffed; a short header sheet of many rows
+    # still reads by its rows' delimiter
+    fn = tmp_path / "samples.csv"
+    fn.write_text('"condition"\n' + "".join(f'"S{i}","a"\n' for i in range(50)))
+    df = read_id_table(str(fn))
+    assert list(df.columns) == ["condition"]
+    assert len(df) == 50
 
 
 def test_filter_cli_reads_a_one_field_short_header_sheet(tmp_path, monkeypatch):

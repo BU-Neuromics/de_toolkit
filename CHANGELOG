@@ -255,11 +255,17 @@ predates everything below.
 - A sample sheet with one column in R's `write.table(sep=",")` layout, a
   header of one field over rows of two (`"condition"` over `"S1","a"`), is
   read with the rows' delimiter, where `detk-util tidy` and every command
-  that reads column data stopped with `'' expected after '"'`: when a
+  that reads column data stopped with `'' expected after '"'`. When a
   table's first line has no delimiter, the delimiter is sniffed from its
-  first data line, and the table is one column only when that line has
-  none either (outside quotes), so a bare list of IDs, quoted or not, is
-  still one column (#136)
+  first data line. It counts only when the first data lines (up to 10) all
+  split on it, outside quotes, into the same number of fields, at least 2,
+  and, for space, only when the line's first field is quoted, as R's
+  default `write.table` writes it (`"condition"` over `"S1" "a"`).
+  Otherwise the table is one column, as before: a bare list of IDs, quoted
+  or not, stays one column, an unquoted ID with a space in it
+  (`ctrl 1`, as Excel exports it) included. R's `write.table(quote=FALSE,
+  sep=" ")` one-column sheet (`condition` over `S1 a`) cannot be told from
+  such a list and is still read as one column (#136, DETK-0320)
 - A design that formula syntax reads but detk cannot build (a column the
   column data does not have, a level its column lacks, a number-like term
   under DETK-0190) is reported as `Invalid design: <reason>`, no longer as

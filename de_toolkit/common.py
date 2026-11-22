@@ -788,7 +788,7 @@ _COMPRESSION_EXTS = {
 
 # the delimiters a table's first line is sniffed for (comma, tab, semicolon,
 # pipe, space); a first line with none of them is sniffed again from the
-# first data line, and with none there either is a one-column table. (The
+# first data lines (see _sniff), and otherwise is a one-column table. (The
 # csv sniffer, left to any character, splits a bare list of IDs on a letter
 # of its header: ``gene_id`` became ``g``, ``n``, ``_id``.)
 SNIFF_DELIMITERS = ",\t;| "
@@ -876,6 +876,11 @@ def _first_lines(f, compression, skiprows=None, n=1):
     return found + [""] * (n - len(found))
 
 
+# how many data lines the delimiter sniffed from a data line must split
+# alike (DETK-0320)
+_SNIFF_DATA_LINES = 10
+
+
 def _sniff(f, compression, skiprows=None):
     """
     The delimiter of *f*, as :func:`_rewindable` returned it, or None for a
@@ -883,17 +888,28 @@ def _sniff(f, compression, skiprows=None):
     none of ``SNIFF_DELIMITERS``, from its first data line. R's
     ``write.table`` leaves out the header cell over the row names, so a
     one-column sheet is ``"condition"`` over ``"S1","a"``: the header has no
-    delimiter, its rows do. The data line's delimiter counts only when it
-    splits the line outside quotes, so a quoted ID with a space in it
-    (``"sample 1"``) keeps a list of IDs one column.
+    delimiter, its rows do.
+
+    The data line's delimiter counts only when (DETK-0320) it is not space,
+    or the line's first field is quoted, as R's default ``write.table``
+    writes it (``"S1" "a"``); and the first data lines (up to
+    ``_SNIFF_DATA_LINES``) all split on it, outside quotes, into the same
+    number of fields, at least 2. Otherwise the table is one column, so a
+    list of IDs with spaces in them, quoted (``"sample 1"``) or not
+    (``ctrl 1``), stays a list of IDs.
     """
-    header, data = _first_lines(f, compression, skiprows, n=2)
+    header, *data = _first_lines(f, compression, skiprows, n=1 + _SNIFF_DATA_LINES)
     sep = sniff_delimiter(header)
-    if sep is None:
-        sep = sniff_delimiter(data)
-        if sep is not None and len(next(csv.reader([data], delimiter=sep))) < 2:
-            sep = None
-    return sep
+    if sep is not None:
+        return sep
+    data = [line for line in data if line]
+    if not data:
+        return None
+    sep = sniff_delimiter(data[0])
+    if sep is None or (sep == " " and not data[0].startswith('"')):
+        return None
+    widths = {len(fields) for fields in csv.reader(data, delimiter=sep)}
+    return sep if len(widths) == 1 and widths.pop() >= 2 else None
 
 
 def read_delimited(f, **kwargs):
@@ -902,9 +918,10 @@ def read_delimited(f, **kwargs):
     its delimiter sniffed from its first line among ``SNIFF_DELIMITERS``
     (comma, tab, semicolon, pipe, then space). A first line with none of them
     is sniffed again from the first data line, for R's layout of a
-    one-column sheet (``"condition"`` over ``"S1","a"``); when that line has
-    none either, the table is read as one column, so a bare list of IDs is
-    not split on a letter of its header. *f* is a path or URL (compression
+    one-column sheet (``"condition"`` over ``"S1","a"``; see :func:`_sniff`
+    for when that line's delimiter counts); otherwise the table is read as
+    one column, so a bare list of IDs is not split on a letter of its
+    header. *f* is a path or URL (compression
     is inferred from the name) or a file-like object; a URL, or a path that
     can be read only once, is read once into memory.
     """

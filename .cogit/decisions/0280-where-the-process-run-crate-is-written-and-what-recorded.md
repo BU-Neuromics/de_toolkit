@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-21
 from: {node: release}
 applies: [release, release/report-paths]
 issue: 128
+revisions:
+  - {date: 2026-11-21, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's delegation via the driver session, 2026-11-20 (DETK-0063): Option A, the crate goes into the report directory, rooted there, and recorded paths are relative to it; carries out Adam's 2026-11-20 instruction to make the paths relative and stays within the 1.0 scope"}
 ---
 
 # Where the Process Run Crate is written and what recorded paths are relative to

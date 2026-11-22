@@ -281,7 +281,9 @@ def test_count_matrix_wraps_parse_errors():
     "CountMatrix reports a formula detk cannot build as an invalid design."
     cd = column_data("de_fake")
     counts = pandas.DataFrame(1.0, index=["g1"], columns=cd.index)
-    with pytest.raises(InvalidDesignException, match=r"could not parse.*\bnope\b"):
+    with pytest.raises(
+        InvalidDesignException, match=r"^Invalid design: nope in the design is not a column"
+    ):
         CountMatrix(counts, cd, "counts ~ nope")
 
 
@@ -313,7 +315,7 @@ def de_cli_files(tmp_path):
         ("deseq2", "category ~ cont_cov", r'"counts" must exist'),
         ("firth", "category ~ cont_cov", r'"counts" must exist'),
         # a formula detk cannot build
-        ("deseq2", "counts ~ nope", r"could not parse.*\bnope\b"),
+        ("deseq2", "counts ~ nope", r"error: Invalid design: nope in the design is not a column"),
         ("firth", "category + counts", r"~ must be specified"),
     ],
 )

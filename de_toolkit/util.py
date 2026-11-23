@@ -140,7 +140,10 @@ a file that was there before the run passes it, including the empty file a
 shell redirect (> out.csv) creates before record starts. The module JSON holds
 the command, the tool and its version, and the SHA-256 checksum and size of
 every input (read before the run) and output (read after it), so the
-checksums say what the files held when recorded.
+checksums say what the files held when recorded. An absolute path in the
+command is recorded relative to the working directory, except its program:
+typed absolute (/usr/bin/cp), that is recorded as its name (cp) when PATH
+finds that same file by that name, so the line re-runs where PATH does.
 
 The tool is the base name of the command's first word unless --tool names it
 (needed for sh -c '...' or Rscript script.R). Its version is the first line
@@ -1214,6 +1217,8 @@ class Record(DetkModule):
     ):
         import shlex
 
+        # the command as typed, which ends detk-util's own argv (report._argv)
+        self.command_argv = list(argv)
         self["params"] = {
             "command": shlex.join(argv),
             "argv": list(argv),
@@ -1232,13 +1237,18 @@ class Record(DetkModule):
         """Write every absolute path in the record relative to the absolute
         directory *workdir* (DETK-0281): the command's arguments, the input
         and output lists and the checksums' paths; the command string is
-        rebuilt from the arguments. Returns the record."""
+        rebuilt from the arguments. The program, typed absolute, is written
+        as its bare name when PATH finds that same file by that name
+        (DETK-0390), otherwise relative too. Returns the record."""
         import shlex
 
-        from .report import _file_relpath, relative_argv
+        from .report import _file_relpath, program_arg, relative_argv
 
         params, props = self["params"], self["properties"]
-        params["argv"] = relative_argv(params["argv"], workdir)
+        argv = params["argv"]
+        if argv:
+            argv = [program_arg(argv[0], workdir)] + relative_argv(argv[1:], workdir)
+        params["argv"] = argv
         params["command"] = shlex.join(params["argv"])
         params["inputs"] = [_file_relpath(p, workdir) for p in params["inputs"]]
         params["outputs"] = [_file_relpath(p, workdir) for p in params["outputs"]]

@@ -231,12 +231,39 @@ def relative_argv(argv, workdir):
     return [relative_arg(a, workdir) for a in argv]
 
 
-def _argv(workdir):
+def _resolved(path):
+    "*path* absolute, its directories resolved and the file keeping its name"
+    head, tail = os.path.split(os.path.abspath(path))
+    return os.path.join(os.path.realpath(head), tail)
+
+
+def program_arg(program, workdir):
+    """The program of a command line as recorded (DETK-0390 Option B): typed
+    as an absolute path, it is written as its bare name when PATH finds that
+    same file by that name (``/usr/bin/cp`` is ``cp``), as a detk command's
+    ``argv[0]`` is its name; otherwise as :func:`relative_arg` writes it, so
+    the command line re-runs the same from *workdir* either way."""
+    if isinstance(program, str) and os.path.isabs(program):
+        name = os.path.basename(program)
+        found = shutil.which(name) if name else None
+        if found is not None and _resolved(found) == _resolved(program):
+            return name
+    return relative_arg(program, workdir)
+
+
+def _argv(workdir, command=None):
     """The process argument vector as recorded: argv[0] the command's name
-    only, an absolute path among the arguments relative to *workdir*"""
+    only, an absolute path among the arguments relative to *workdir*. When
+    the process ran *command* (detk-util record, the words after ``--``,
+    which end the vector), its program is written by :func:`program_arg`."""
     argv = list(sys.argv)
     if argv:
-        argv = [os.path.basename(argv[0])] + relative_argv(argv[1:], workdir)
+        rest = argv[1:]
+        n = len(command) if command else 0
+        at = len(rest) - n if n and rest[len(rest) - n :] == list(command) else None
+        argv = [os.path.basename(argv[0])] + relative_argv(rest, workdir)
+        if at is not None:
+            argv[1 + at] = program_arg(rest[at], workdir)
     return argv
 
 
@@ -298,7 +325,7 @@ class DetkModuleJSON:
                 # end_time is when the module was recorded
                 ("start_time", _PROCESS_START.isoformat()),
                 ("end_time", datetime.now(UTC).isoformat()),
-                ("argv", _argv(workdir)),
+                ("argv", _argv(workdir, getattr(module, "command_argv", None))),
                 ("in_file_path", rel(in_file_path)),
                 ("out_file_path", rel(out_file_path)),
                 ("column_data_path", rel(column_data_path)),

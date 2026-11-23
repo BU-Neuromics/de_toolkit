@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 from importlib.resources import files as pkg_files
@@ -117,9 +118,9 @@ def test_records_the_step_in_the_module_json(work):
     assert doc["out_file_paths"] == ["covs.csv"]
 
     params = doc["params"]
-    # the interpreter, typed absolute, is recorded relative to workdir (DETK-0281)
-    py = _recorded(PY, work)
-    assert params["argv"] == [py, "-c", DERIVE]
+    # the interpreter, typed absolute, is found on PATH (run() puts its
+    # directory first) by its name, so it is recorded by name (DETK-0390)
+    assert params["argv"] == [TOOL, "-c", DERIVE]
     assert shlex.split(params["command"]) == params["argv"]
     assert params["tool"] == TOOL
     # the first line of 'python --version'
@@ -498,8 +499,7 @@ def test_crate_instrument_object_and_result(work):
     assert objects[:2] == ["../sample_info.csv", "../counts.csv"]
     values = {g[o]["name"]: g[o]["value"] for o in objects[2:]}
     assert all(g[o]["@type"] == "PropertyValue" for o in objects[2:])
-    py = _recorded(PY, work)
-    assert shlex.split(values["detk-util record command"]) == [py, "-c", DERIVE]
+    assert shlex.split(values["detk-util record command"]) == [TOOL, "-c", DERIVE]
     assert values["detk-util record tool"] == TOOL
 
     assert [r["@id"] for r in action["result"]] == ["../covs.csv"]
@@ -507,6 +507,149 @@ def test_crate_instrument_object_and_result(work):
     assert g["../covs.csv"]["contentSize"] == str((work / "covs.csv").stat().st_size)
     assert g["../sample_info.csv"]["sha256"] == sha256(work / "sample_info.csv")
     assert crate["@context"][1] == WFRUN_CONTEXT
+
+
+# ------------------------------------------------- the program (DETK-0390)
+
+# print the arguments and a file of the working directory, so a re-run of
+# the recorded line can be compared with the recorded run
+SHOW = '#!/bin/sh\necho "args: $*"\nhead -n 1 sample_info.csv\n'
+
+
+def _program(path, body=SHOW):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(body)
+    path.chmod(0o755)
+    return path
+
+
+@pytest.fixture
+def deep(tmp_path):
+    "a working directory deep in its tree, with sample_info.csv in it"
+    work = tmp_path / "a" / "b" / "c" / "d" / "proj"
+    work.mkdir(parents=True)
+    (work / "sample_info.csv").write_text(SAMPLE_INFO)
+    return work
+
+
+def _report_payload(work):
+    "the module JSON documents embedded in the HTML report"
+    html = (work / "detk_report" / "detk_report.html").read_text()
+    start = html.index('id="detk-raw">') + len('id="detk-raw">')
+    return html[start : html.index("</script>", start)]
+
+
+def _record_program(work, program, *args, path=None):
+    """detk-util record -o out.txt -- PROGRAM ARGS > out.txt in *work*, with
+    *path* (a list of directories) first on PATH; the CompletedProcess"""
+    env = dict(os.environ)
+    env["PATH"] = os.pathsep.join(
+        [*(str(d) for d in path or ()), os.path.dirname(PY), env.get("PATH", "")]
+    )
+    with open(work / "out.txt", "w") as out:
+        return subprocess.run(
+            ["detk-util", "record", "--tool-version=1", "-o", "out.txt", "--", program, *args],
+            cwd=work,
+            env=env,
+            stdout=out,
+            stderr=subprocess.PIPE,
+            text=True,
+        ), env
+
+
+def _rerun(work, argv, env):
+    "the recorded *argv* run again from workdir: its stdout"
+    p = subprocess.run(argv, cwd=work, env=env, capture_output=True, text=True)
+    assert p.returncode == 0, p.stderr
+    return p.stdout
+
+
+def test_program_on_path_typed_absolute_is_recorded_by_name(deep):
+    cp = shutil.which("cp")
+    if cp is None:
+        pytest.skip("cp is not on PATH")
+    p, _ = _record_program(deep, cp, "sample_info.csv", "copy.csv")
+    assert p.returncode == 0, p.stderr
+    assert (deep / "copy.csv").read_text() == SAMPLE_INFO
+
+    (doc,) = module_docs(deep)
+    params = doc["params"]
+    # the program by name; the rest of argv, params and properties as before
+    assert params["argv"] == ["cp", "sample_info.csv", "copy.csv"]
+    assert params["command"] == "cp sample_info.csv copy.csv"
+    assert params["tool"] == "cp" and params["tool_version"] == "1"
+    assert params["outputs"] == ["out.txt"] and params["inputs"] == []
+    assert [d["path"] for d in doc["properties"]["outputs"]] == ["out.txt"]
+    # detk-util's own argv names it so too, after --
+    assert doc["argv"][-4:] == ["--", "cp", "sample_info.csv", "copy.csv"]
+    # and no ../ chain anywhere: the embedded payload, the crate
+    assert "../../" not in _report_payload(deep)
+    assert json.loads(_report_payload(deep))
+    _, g = crate_graph(deep)
+    (action,) = [e for e in g.values() if e["@type"] == "CreateAction"]
+    values = {g[o["@id"]]["name"]: g[o["@id"]]["value"] for o in action["object"]}
+    assert values["detk-util record command"] == "cp sample_info.csv copy.csv"
+    crate_text = (deep / "detk_report" / "ro-crate-metadata.json").read_text()
+    assert "../../" not in crate_text and cp not in crate_text
+
+
+def test_program_found_by_name_re_runs_the_same(deep):
+    bin_dir = deep.parent / "bin"
+    show = _program(bin_dir / "show")
+    p, env = _record_program(deep, str(show), "x", "y", path=[bin_dir])
+    assert p.returncode == 0, p.stderr
+    (doc,) = module_docs(deep)
+    assert doc["params"]["argv"] == ["show", "x", "y"]
+    recorded = (deep / "out.txt").read_text()
+    assert _rerun(deep, doc["params"]["argv"], env) == recorded
+    assert _rerun(deep, shlex.split(doc["params"]["command"]), env) == recorded
+
+
+def test_program_off_path_is_recorded_relative(deep):
+    show = _program(deep.parent.parent / "tools" / "show")
+    p, env = _record_program(deep, str(show), "x")
+    assert p.returncode == 0, p.stderr
+    (doc,) = module_docs(deep)
+    assert doc["params"]["argv"] == ["../../tools/show", "x"]
+    assert doc["argv"][-2:] == ["../../tools/show", "x"]
+    # it re-runs from workdir as recorded
+    assert _rerun(deep, doc["params"]["argv"], env) == (deep / "out.txt").read_text()
+
+
+def test_program_path_finds_as_another_file_is_recorded_relative(deep):
+    # PATH finds a 'show' by that name, but not the one typed
+    _program(deep.parent / "bin" / "show", "#!/bin/sh\necho other\n")
+    show = _program(deep.parent / "mine" / "show")
+    p, env = _record_program(deep, str(show), "x", path=[deep.parent / "bin"])
+    assert p.returncode == 0, p.stderr
+    (doc,) = module_docs(deep)
+    assert doc["params"]["argv"] == ["../mine/show", "x"]
+    assert _rerun(deep, doc["params"]["argv"], env) == (deep / "out.txt").read_text()
+
+
+def test_program_typed_by_name_is_kept(deep):
+    show = _program(deep.parent / "bin" / "show")
+    p, env = _record_program(deep, "show", "x", str(deep / "sample_info.csv"), path=[show.parent])
+    assert p.returncode == 0, p.stderr
+    (doc,) = module_docs(deep)
+    # the name as typed; an absolute argument after it relative as before
+    assert doc["params"]["argv"] == ["show", "x", "sample_info.csv"]
+    assert doc["argv"][-3:] == ["show", "x", "sample_info.csv"]
+    assert _rerun(deep, doc["params"]["argv"], env).startswith("args: x sample_info.csv\n")
+
+
+def test_only_the_program_is_recorded_by_name(deep):
+    # an absolute path among the arguments is relative even when it is a
+    # program PATH finds: only the first word is the program
+    cp = shutil.which("cp")
+    if cp is None:
+        pytest.skip("cp is not on PATH")
+    p, _ = _record_program(deep, cp, cp, "cp.copy")
+    assert p.returncode == 0, p.stderr
+    (doc,) = module_docs(deep)
+    assert doc["params"]["argv"][0] == "cp"
+    assert doc["params"]["argv"][1] == _recorded(cp, deep)
+    assert doc["params"]["argv"][1].startswith("../")
 
 
 def test_crate_without_a_record_keeps_its_context(tmp_path):

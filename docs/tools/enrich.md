@@ -18,10 +18,11 @@ ENSGIDs, ...) in both files. You will likely need to provide:
 
 - `-i <col>` — column in the results file containing feature IDs
 - `-c <col>` — column containing the ranking statistic, e.g.
-  `cond__log2FoldChange`
+  `cond__treated__log2FoldChange`, the log fold change of the `treated`
+  level of `cond`, as `detk-de deseq2` names it
 
 ```bash
-detk-enrich fgsea -o gsea_results.csv -i gene -c cond__log2FoldChange msigdb_c2cp.gmt deseq2_results.csv
+detk-enrich fgsea -o gsea_results.csv -i gene -c cond__treated__log2FoldChange msigdb_c2cp.gmt deseq2_results.csv
 ```
 
 ```text

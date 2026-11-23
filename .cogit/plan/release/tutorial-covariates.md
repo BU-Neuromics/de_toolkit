@@ -9,6 +9,8 @@ acceptance:
 from: [DETK-0050, DETK-0051, DETK-0064]
 scope: [new:docs/tutorials/, new:tests/tutorials/, +mkdocs.yml, +CHANGELOG]
 prev: [DETK-0064, release/tutorial-airway, release/miller-recipes, release/record, release/recipe-notes]
+issue: 153
+visited: 413b2d0
 ---
 
 # Tutorial: derived covariates and recorded steps

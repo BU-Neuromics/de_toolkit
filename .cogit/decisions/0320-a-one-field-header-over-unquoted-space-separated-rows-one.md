@@ -100,3 +100,7 @@ row from setting the delimiter for the whole file.
   `detk-util tidy -p` (keeping `ctrl 1`); the same with every ID spaced;
   R's quoted space layout `"condition"` / `"S1" "a"` reads as two columns.
 - Revisit if users report `quote=FALSE, sep=" "` sheets from R.
+
+## Replies
+
+- 2026-11-23, adamlabadorf: Option B (ii) narrowed by DETK-0450 (Accepted 2026-11-23): data lines that split unalike on a delimiter that counts under (i) are an error, not one column; (i) is unchanged. Implemented in release/ragged-sheet (PR #149).

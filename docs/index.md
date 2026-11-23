@@ -82,6 +82,29 @@ Process Run Crate provenance follow semantic versioning from 1.0 onward. The
 Python API (`de_toolkit.*` modules) is usable but not yet a compatibility
 promise — expect it to evolve.
 
+That promise covers what `--help` prints, by its structure and its facts,
+not its wording. Every command's and subcommand's help (that of
+`detk-norm` and of `detk-norm deseq2`, say) has the same sections in the
+same order:
+
+1. a description
+2. `usage:`, one line per way of calling the command
+3. `positional arguments:`
+4. `options:`, the command's own
+5. `common options:`, those every command shares
+6. `examples:`, at least one command line for every subcommand
+7. `exit codes:`
+
+Every positional argument and option is listed with a one-line description
+and its metavar (`FILE` for a file, `DIR` a directory, `N` a number, and so
+on), and an option with its default and its choices where it has them
+(`(default: stdout)`, `(choices: csv, table)`). The structure, these facts
+and the examples are the promise, and detk's tests check them: every
+example parses, and runs where test data allows. The wording of the
+descriptions may improve in any release, so a script or an agent reading
+help should go by its sections and facts, not its sentences. The
+[exit codes](concepts.md#exit-codes) are part of the promise too.
+
 ## Development
 
 ```bash

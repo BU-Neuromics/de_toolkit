@@ -7,6 +7,8 @@ acceptance:
 scope: [.github/workflows/ci.yml, +tests/report/test_report_view_text.py]
 issue: 146
 visited: 501927d
+status: done
+done: 7e5d34f
 ---
 
 # The render-test CI step reads only pytest's summary line
@@ -15,7 +17,7 @@ visited: 501927d
 
 - [x] @developer Make the render-test step check only pytest's final summary line, show the check on the four sample outputs in the PR, put the functools import in order; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: run the check on the sample outputs, read the 3.13 job's log for the summary line and the count of needs_jsdom tests <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

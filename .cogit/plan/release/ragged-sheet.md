@@ -17,7 +17,7 @@ prev: [DETK-0450]
 ## Implementation plan
 
 - [x] @developer When a one-field header sits over data lines that split unalike on a delimiter that counts under DETK-0320, raise an error naming the file, the delimiter and the lines; tests for the ragged forms and for what stays one column, through read_delimited, read_id_table and detk-util tidy; docstrings; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: run detk-util tidy -p on the ragged sheet and on a bare ID list, a quoted ID list with a comma and an unquoted list with spaces, and read the outputs and messages <!-- s2 -->
+- [x] @reviewer Review the PR: run detk-util tidy -p on the ragged sheet and on a bare ID list, a quoted ID list with a comma and an unquoted list with spaces, and read the outputs and messages <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes

@@ -6,7 +6,7 @@ acceptance:
   - the GitHub Release v1.0.0 carries the sdist and wheel, and Zenodo minted a DOI
   - the README shows the concept-DOI badge and the PyPI badge reads 1.0.0
 scope: [de_toolkit/version.py, pyproject.toml, CHANGELOG, README.md]
-prev: [DETK-0001, release/tpm-cpm, release/annotate, release/gather, release/agent-skills, release/fpkm, release/escape-json, release/padded-ids, release/single-column, release/deps, release/view-text, release/skill-update, release/quickstart-figure, release/r-ids, release/ci-lock, release/cli-pin, release/formula-pin, release/cli-migrate, release/formula-migrate, release/cli-docs, release/statsmodels-test, release/formula-rename, release/cli-gaps, release/size-factors, release/record, release/r-design-names, release/dep-guards, release/help-options, release/tidy-output, release/parse-errors, release/strict-json, release/outlier-entropy, release/cli-messages, release/record-help, release/report-paths, release/example-paths, release/short-header, release/recipe-notes, release/ci-jsdom, release/ragged-sheet, release/jsdom-summary, release/crate-stdout, release/record-program]
+prev: [DETK-0001, release/tpm-cpm, release/annotate, release/gather, release/agent-skills, release/fpkm, release/escape-json, release/padded-ids, release/single-column, release/deps, release/view-text, release/skill-update, release/quickstart-figure, release/r-ids, release/ci-lock, release/cli-pin, release/formula-pin, release/cli-migrate, release/formula-migrate, release/cli-docs, release/statsmodels-test, release/formula-rename, release/cli-gaps, release/size-factors, release/record, release/r-design-names, release/dep-guards, release/help-options, release/tidy-output, release/parse-errors, release/strict-json, release/outlier-entropy, release/cli-messages, release/record-help, release/report-paths, release/example-paths, release/short-header, release/recipe-notes, release/ci-jsdom, release/ragged-sheet, release/jsdom-summary, release/crate-stdout, release/record-program, release/workflow-permissions, release/tidy-sheet-name]
 ---
 
 # Cut 1.0.0
@@ -31,3 +31,9 @@ to tag (DETK-0063 item 6), so the work before the cut is not held by it. A
 rewrite (DETK-0002 Option B) changes every later commit hash and must come
 before the tag. Every `@human` step here is Adam's own: the release is not
 ticked under the delegation of DETK-0063.
+
+Dependency note, 2026-11-23: roc-validator 0.14.0 wants the RO-Crate 1.3
+context, and tests/util/test_record.py::test_crate_validates_with_a_recorded_step
+fails under it; uv.lock pins 0.11.3 (dev group, unpinned in pyproject.toml),
+which passes. Do not take 0.14 in a relock before the cut without moving the
+crate to the 1.3 context; after 1.0, that move is its own node.

@@ -1,9 +1,11 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-22
 applies: [release/record-program, release/cli-docs]
+revisions:
+  - {date: 2026-11-23, by: adamlabadorf, change: Accepted, why: "from the terminal: Option B. Accepted under Adam's delegation via the driver session, 2026-11-20 (DETK-0063): within the 1.0 scope and does not change the 1.0 promise."}
 ---
 
 # Paths outside the working directory's tree in the report: docs only, or record's program by name

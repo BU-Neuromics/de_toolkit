@@ -203,9 +203,10 @@ CASES = [
      ["Intercept", "category__case"]),
     ("de_r_check_names", "R_check_names_meta", "counts ~ RIN + Status[CNT]", ["counts"],
      ["Intercept", "RIN", "Status__CTES"]),
-    # -- the airway example (examples/airway/run.sh): detk-de deseq2's design on
-    # the eight samples' column data as examples/airway/prepare_data.R writes
-    # sample_info.csv; the cell levels sort as strings, N052611 the reference
+    # -- the airway tutorial (docs/tutorials/airway.md): detk-de deseq2's design
+    # on the eight samples' column data as the tutorial's data step (its
+    # prepare_data.R, under "The data") writes sample_info.csv; the cell levels
+    # sort as strings, N052611 the reference
     ("airway", "airway", "counts ~ cell + dex[untrt]", ["counts"],
      ["Intercept", "cell__N061011", "cell__N080611", "cell__N61311", "dex__trt"]),
 ]  # fmt: skip

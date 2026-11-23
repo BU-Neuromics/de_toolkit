@@ -482,6 +482,14 @@ predates everything below.
   space used only when no other splits it (a pipe table with a space in a
   header, such as a BioMart export, is no longer split on the spaces). A
   URL input is fetched once (#47)
+- The published example report and its crate (`docs/example/`) no longer
+  hold paths of the machine that built them: the report embedded the run's
+  absolute working directory and the absolute path of each installed
+  `detk-*` command. They are regenerated from the airway tutorial with the
+  relative paths of DETK-0280 (and the outlier card of DETK-0200), by a
+  manually run CI workflow (`.github/workflows/example.yml`), and a test
+  fails on any absolute path, `file://` URI or home, temp or drive path in
+  them (#141)
 
 ## [ 0.9.12 ]
 ### Added

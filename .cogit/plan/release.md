@@ -69,6 +69,7 @@ visited: f6503ed
 - [ ] [CI and release workflows run with least-privilege token permissions](release/workflow-permissions.md) <!-- s54 -->
 - [ ] [detk-util tidy names a ragged sheet by the path it was given](release/tidy-sheet-name.md) <!-- s55 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
+- [ ] [detk-util record writes an existing path with spaces relative](release/record-space-paths.md) <!-- s56 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
 
 ## Notes

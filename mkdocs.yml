@@ -59,6 +59,7 @@ nav:
     - tutorials/index.md
     - Differential expression on airway: tutorials/airway.md
     - From quantifier outputs to a normalized matrix: tutorials/quantifiers.md
+    - Derived covariates and recorded steps: tutorials/covariates.md
   - Concepts & file formats: concepts.md
   - Tools:
     - Overview & common options: tools/index.md

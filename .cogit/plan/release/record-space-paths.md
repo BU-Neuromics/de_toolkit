@@ -15,7 +15,7 @@ visited: 21b692c
 
 ## Implementation plan
 
-- [ ] @developer As DETK-0590 is answered (Option A): `_is_path` takes an existing path for a path, whitespace or not, and otherwise keeps DETK-0580's rule; the `My Data` test and the DETK-0580 cases kept; docs/report.md's rule; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer As DETK-0590 is answered (Option A): `_is_path` takes an existing path for a path, whitespace or not, and otherwise keeps DETK-0580's rule; the `My Data` test and the DETK-0580 cases kept; docs/report.md's rule; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: in a working directory with a `My Data` folder run `detk-util record -i "$PWD/My Data/c.csv" -o g.csv -- cp "$PWD/My Data/c.csv" g.csv` and the awk, regex and `sh -c` cases of DETK-0580, read argv in the module JSON and the crate, and re-run the recorded lines from the working directory <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

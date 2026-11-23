@@ -14,7 +14,7 @@ visited: 203b21f
 ## Implementation plan
 
 - [x] @developer Add a top-level `permissions: contents: read` to ci.yml and release.yml, keep publish's `id-token: write` and attach-to-release's `contents: write`, add the workflow-permissions test (pyyaml into the dev group if the test reads YAML; it is already locked through mkdocs); open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: every CI job green on the reduced token, CodeQL's PR analysis clean of actions/missing-workflow-permissions, release.yml read against PyPI's Trusted Publishing requirements; after the merge, check alerts 1 3 4 5 6 7 10 read fixed <!-- s2 -->
+- [x] @reviewer Review the PR: every CI job green on the reduced token, CodeQL's PR analysis clean of actions/missing-workflow-permissions, release.yml read against PyPI's Trusted Publishing requirements; after the merge, check alerts 1 3 4 5 6 7 10 read fixed <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes

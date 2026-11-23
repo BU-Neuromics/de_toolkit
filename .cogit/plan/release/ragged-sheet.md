@@ -9,6 +9,7 @@ from: [DETK-0320]
 scope: [+de_toolkit/common.py, +tests/common/test_read_delimited.py, +tests/util/test_tidy.py, +CHANGELOG]
 issue: 145
 visited: 501927d
+prev: [DETK-0450]
 ---
 
 # A sample sheet with ragged rows is an error, not one column

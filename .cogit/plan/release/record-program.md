@@ -15,7 +15,7 @@ visited: 203b21f
 
 ## Implementation plan
 
-- [ ] @developer As DETK-0390 is answered: write record's absolute program as its name when PATH finds the same file, otherwise relative as today; tests, schema description, CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer As DETK-0390 is answered: write record's absolute program as its name when PATH finds the same file, otherwise relative as today; tests, schema description, CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR: from a working directory deep in another tree run detk-util record -- /usr/bin/cp a b and one with a program off PATH, read argv in the module JSON and the crate, and re-run the recorded line <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

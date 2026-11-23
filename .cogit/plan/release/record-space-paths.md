@@ -13,10 +13,21 @@ scope: [+de_toolkit/report.py, +tests/report/test_report_paths.py, +tests/docs/t
 
 ## Implementation plan
 
-- [ ] @developer Pass the sheet's name to _sniff in read_column_data; a FIFO test through detk-util tidy; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: run detk-util tidy -p with the ragged sheet through <(cat sheet.csv) and as a file, and read both messages <!-- s2 -->
+- [ ] @developer As DETK-0590 is answered (Option A): `_is_path` takes an existing path for a path, whitespace or not, and otherwise keeps DETK-0580's rule; the `My Data` test and the DETK-0580 cases kept; docs/report.md's rule; CHANGELOG; open the PR <!-- s1 -->
+- [ ] @reviewer Review the PR: in a working directory with a `My Data` folder run `detk-util record -i "$PWD/My Data/c.csv" -o g.csv -- cp "$PWD/My Data/c.csv" g.csv` and the awk, regex and `sh -c` cases of DETK-0580, read argv in the module JSON and the crate, and re-run the recorded lines from the working directory <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes
 
-Implementation plan copied from `release/tidy-sheet-name` by `cogit node new`.
+Planned 2026-11-23 from DETK-0590 (the s2 re-review of release/cli-docs,
+#163), accepted with Option A under Adam's delegation (DETK-0063).
+DETK-0580 (in #163) made `_is_path` require no whitespace, so a real
+absolute path with a space (`My Data/c.csv`) is recorded absolute, against
+DETK-0281. `relative_arg` runs after the command ran, so an existence check
+is exact for files read and written; DETK-0580's rule stays for a path that
+does not exist. `-i`/`-o` lists go through `_file_relpath` and are
+unaffected. The one cost: a script that is exactly the name of an existing
+file is taken for a path, as before DETK-0580.
+
+Scope is `+` only: no other open node touches report.py or these tests.
+Ready now; before release/cut.

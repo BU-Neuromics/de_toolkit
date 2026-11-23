@@ -16,4 +16,7 @@ scope: [de_toolkit/wrapr.py, +tests/, +docs/, +CHANGELOG]
 
 ## Notes
 
-Implementation plan copied from `features/crate-inputs` by `cogit node new`.
+Planned 2026-11-23 from the release/cli-docs review (#163, nits): `check`
+shares `run`'s parser options, so its help lists options that do nothing for
+it. The usage block is correct; the parser is at fault. After 1.0, not a
+blocker (the reviewer's call, kept by the plan session).

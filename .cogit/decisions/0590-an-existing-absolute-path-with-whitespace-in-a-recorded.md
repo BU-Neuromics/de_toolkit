@@ -3,6 +3,7 @@ template: adr
 state: Accepted
 authority: [human]
 date: 2026-11-23
+applies: [release/record-space-paths]
 revisions:
   - {date: 2026-11-23, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A. Accepted under Adam's delegation via the driver session, 2026-11-20 (DETK-0063): within the 1.0 scope and does not change the 1.0 promise. Implemented in release/record-space-paths before release/cut."}
 ---

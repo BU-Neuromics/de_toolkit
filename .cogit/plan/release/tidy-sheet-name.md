@@ -5,15 +5,19 @@ acceptance:
   - read_column_data in util.py takes the source's name before _rewindable and passes it to _sniff (name=), as read_delimited and read_id_table do; detk-util tidy -p out.csv with counts.csv and the ragged sheet condition / S1,a / S2 / S3 written to a FIFO (os.mkfifo in tmp_path) exits 1 with a message naming the FIFO's path and not <stream>; a test in tests/util/test_tidy.py
   - a ragged sheet given as a regular file is still named by its path, and every existing case in tests/util/test_tidy.py passes unchanged; CHANGELOG under Fixed
 scope: [+de_toolkit/util.py, +tests/util/test_tidy.py, +CHANGELOG]
+issue: 158
+visited: 203b21f
+status: done
+done: 02da492
 ---
 
 # detk-util tidy names a ragged sheet by the path it was given
 
 ## Implementation plan
 
-- [ ] @developer Pass the sheet's name to _sniff in read_column_data; a FIFO test through detk-util tidy; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: run detk-util tidy -p with the ragged sheet through <(cat sheet.csv) and as a file, and read both messages <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Pass the sheet's name to _sniff in read_column_data; a FIFO test through detk-util tidy; CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: run detk-util tidy -p with the ragged sheet through <(cat sheet.csv) and as a file, and read both messages <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

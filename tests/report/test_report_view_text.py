@@ -26,11 +26,11 @@ tooltip (through the view's own tooltip handler), clicks every action in their
 menus, waits for every export and fails on any page error.
 """
 
+import functools
 import json
 import os
 import re
 import shutil
-import functools
 import subprocess
 
 import pytest

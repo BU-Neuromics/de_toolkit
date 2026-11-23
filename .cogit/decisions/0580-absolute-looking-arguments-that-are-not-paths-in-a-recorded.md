@@ -87,3 +87,11 @@ second.
   and the CHANGELOG say so.
 - The heuristic can still misread a bare `/regex/`-like argument whose
   parent happens to exist (`/tmp/`); revisit if a reported case shows it.
+
+## Implementation
+
+Implemented in release/cli-docs (#162, PR #163), not in a separate node,
+under Adam's delegation via the driver session, 2026-11-20 (DETK-0063), so
+the docs and the code land together: `_is_path` and `relative_arg` in
+`de_toolkit/report.py`, tests in `tests/report/test_report_paths.py`,
+docs/report.md's quoted-argument bullet, and a CHANGELOG line under Fixed.

@@ -223,6 +223,7 @@ predates everything below.
   `references/covariates.md`, and a test fails when a skill file is not
   listed. `docs/dev/cli.md` says how to add a command, subcommand or option
   with argparse
+
 ### Added
 - Shell completion for bash, zsh and tcsh, for `detk` and every
   `detk-<command>` with their subcommands, options, choices and file
@@ -316,6 +317,17 @@ predates everything below.
   `detk-util gather` (#115)
 
 ### Fixed
+- A recorded command line no longer rewrites an argument that only starts
+  with `/` as if it were a path (DETK-0580, #162): an awk program
+  (`'/^gene/ {print}'`), a regular expression (`'/^g1,/'`) or a shell script
+  (`sh -c "/usr/bin/env echo hi"`) was recorded as a `../` chain
+  (`'../../../^gene/ {print}'`), a different program from the one that ran.
+  An argument is now taken for an absolute path, and written relative to
+  `workdir`, only when it has no whitespace and its parent directory exists
+  (an output not yet written, in a directory that exists, still is); any
+  other is recorded as typed
+- `detk completion bash | head` no longer prints `Broken pipe` and exits 1:
+  a reader that stops early is not a failure, so it exits 0 quietly
 - The quickstart's commands run as written (#162): its filter kept the rows
   with fewer than half their counts nonzero (`nonzero(all) < 0.5`), the
   opposite of what the page said, and is now `nonzero(all) > 0.5`, as is

@@ -1204,7 +1204,13 @@ def main(argv=sys.argv):
     if args.command == "help":
         parser.print_help()
     elif args.command == "completion":
-        sys.stdout.write(completion_script(args.shell))
+        try:
+            sys.stdout.write(completion_script(args.shell))
+            sys.stdout.flush()
+        except BrokenPipeError:
+            # the reader stopped early (detk completion bash | head): not a
+            # failure; stdout goes to devnull so the exit flush is quiet
+            os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
 
 
 if __name__ == "__main__":

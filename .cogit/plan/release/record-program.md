@@ -7,6 +7,8 @@ acceptance:
 from: [DETK-0390]
 scope: [+de_toolkit/util.py, +de_toolkit/report.py, +de_toolkit/module_schema.json, +tests/util/test_record.py, +CHANGELOG]
 prev: [DETK-0390, release/recipe-notes]
+issue: 156
+visited: 203b21f
 ---
 
 # detk-util record writes a program PATH finds by its name

@@ -324,8 +324,9 @@ predates everything below.
   (`'../../../^gene/ {print}'`), a different program from the one that ran.
   An argument is now taken for an absolute path, and written relative to
   `workdir`, only when it has no whitespace and its parent directory exists
-  (an output not yet written, in a directory that exists, still is); any
-  other is recorded as typed
+  (an output not yet written, in a directory that exists, still is), or
+  when it exists, whitespace or not, so `/home/me/proj/My Data/c.csv` is
+  recorded `My Data/c.csv` (DETK-0590, #166); any other is recorded as typed
 - `detk completion bash | head` no longer prints `Broken pipe` and exits 1:
   a reader that stops early is not a failure, so it exits 0 quietly
 - The quickstart's commands run as written (#162): its filter kept the rows

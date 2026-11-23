@@ -207,17 +207,19 @@ def _file_relpath(path, workdir):
 
 
 def _is_path(text):
-    """Whether *text*, typed as an argument, is taken for an absolute path
-    (DETK-0580): it starts with ``/`` (or a drive), has no whitespace, and
-    its parent directory exists. So a shell script, an awk program or a
+    """Whether *text*, typed as an argument, is taken for an absolute path.
+    An absolute path that exists (``os.path.lexists``) is one, whitespace or
+    not (DETK-0590), so ``/home/me/proj/My Data/c.csv`` is. Otherwise, as
+    DETK-0580 says, it starts with ``/`` (or a drive), has no whitespace,
+    and its parent directory exists. So a shell script, an awk program or a
     regular expression that starts with ``/`` (``/usr/bin/env echo hi``,
     ``/^gene/ {print}``, ``/^g1,/``) is not, while an output not yet written
     (``/home/me/proj/out.csv``, its directory there) is."""
-    return (
-        os.path.isabs(text)
-        and not any(c.isspace() for c in text)
-        and os.path.isdir(os.path.dirname(text))
-    )
+    if not os.path.isabs(text):
+        return False
+    if os.path.lexists(text):
+        return True
+    return not any(c.isspace() for c in text) and os.path.isdir(os.path.dirname(text))
 
 
 def relative_arg(arg, workdir):
@@ -225,8 +227,8 @@ def relative_arg(arg, workdir):
     written relative to *workdir* (an absolute directory), as the value of
     ``--opt=/abs/path`` or of a short option given with it (``-o/abs/path``)
     is; any other argument is kept as typed. An argument is taken for an
-    absolute path only as :func:`_is_path` says (DETK-0580), so one that
-    merely starts with ``/`` is kept. The command line then re-runs the same
+    absolute path only as :func:`_is_path` says (DETK-0580, DETK-0590), so
+    one that merely starts with ``/`` is kept. The command line then re-runs the same
     from *workdir*."""
     if not isinstance(arg, str) or not arg:
         return arg

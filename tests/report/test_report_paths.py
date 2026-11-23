@@ -309,6 +309,13 @@ def test_record_with_absolute_paths_records_them_relative(work):
         # a path not yet written, in a directory that exists, is still a path
         ("{w}/not_yet.csv", "not_yet.csv"),
         ("{w}/no_such_dir/c.csv", "{w}/no_such_dir/c.csv"),
+        # DETK-0590: an existing path is a path, whitespace or not
+        ("{w}/My Data/c.csv", "My Data/c.csv"),
+        ("{w}/My Data", "My Data"),
+        ("--in={w}/My Data/c.csv", "--in=My Data/c.csv"),
+        ("-i{w}/My Data/c.csv", "-iMy Data/c.csv"),
+        # one that does not exist keeps DETK-0580's rule
+        ("{w}/My Data/not_yet.csv", "{w}/My Data/not_yet.csv"),
     ],
 )
 def test_relative_arg(tmp_path, arg, expected):
@@ -317,6 +324,8 @@ def test_relative_arg(tmp_path, arg, expected):
     # the directories the paths name exist, as they would for a real command
     w = os.path.realpath(tmp_path / "w")
     os.makedirs(os.path.join(w, "sub"))
+    os.makedirs(os.path.join(w, "My Data"))
+    open(os.path.join(w, "My Data", "c.csv"), "w").close()
     os.makedirs(os.path.join(tmp_path, "other"))
     assert relative_arg(arg.replace("{w}", w), w) == expected.replace("{w}", w)
 
@@ -367,3 +376,29 @@ def test_record_keeps_arguments_that_only_start_with_a_slash(work, command):
     kept = [a for a in argv if a.startswith("/") and a != str(work / "counts.csv")]
     assert kept and all(a in doc["params"]["argv"] for a in kept)
     assert all(a in doc["argv"] for a in kept)
+
+
+def test_record_writes_an_existing_path_with_spaces_relative(work):
+    # DETK-0590: an existing absolute path with whitespace is a path, so
+    # the recorded command line names it relative to workdir and re-runs
+    cp = shutil.which("cp")
+    if cp is None:
+        pytest.skip("cp is not on PATH")
+    (work / "My Data").mkdir()
+    (work / "My Data" / "c.csv").write_text(SAMPLES)
+    src = str(work / "My Data" / "c.csv")
+    run(["detk-util", "record", "-i", src, "-o", "g.csv", "--", "cp", src, "g.csv"], work)
+    assert (work / "g.csv").read_text() == SAMPLES
+
+    (doc,) = docs(work / "detk_report")
+    params = doc["params"]
+    assert params["argv"] == ["cp", "My Data/c.csv", "g.csv"]
+    assert params["inputs"] == ["My Data/c.csv"]
+    assert "My Data/c.csv" in doc["argv"] and src not in doc["argv"]
+    _no_absolute_arg(doc["argv"])
+    for where, text in _report_text(work / "detk_report").items():
+        _assert_no_machine_paths(text, where, work)
+    # the recorded command re-runs from workdir
+    (work / "g.csv").unlink()
+    subprocess.run(shlex.split(params["command"]), cwd=work, check=True)
+    assert (work / "g.csv").read_text() == SAMPLES

@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-23
 from: {node: release/cli-docs, step: s2}
 applies: [release/cli-docs]
+revisions:
+  - {date: 2026-11-23, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A, under Adam's delegation via the driver session, 2026-11-20 (DETK-0063): within the 1.0 scope and does not change the 1.0 promise. Implemented in release/cli-docs (not a separate node), so the docs and the code land together."}
 ---
 
 # Absolute-looking arguments that are not paths in a recorded command line

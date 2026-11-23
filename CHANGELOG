@@ -284,6 +284,21 @@ predates everything below.
   and `argv`, so it is not read as the marker, and is listed in the crate;
   `detk-util record`'s outputs, checksummed files, are always listed
   (#147, DETK-0420)
+- `detk-util record` shows a failed command on one line in its messages
+  (exit status, killed by signal, output file not written): an argument
+  that spans several lines, such as a Miller program, is shown as its first
+  line and `...` in its quotes, or as `'...'`, where the message ended in a
+  lone `'` (#140)
+- The z-score and min-max recipes for derived covariates stop on a sheet
+  with a header and no samples with a message of their own (`age_zscore:
+  age has no values: the sheet has no samples`), not Miller's `conditional
+  expression did not evaluate to boolean`; they still exit 1 and write
+  nothing. The recipes page and the skill's covariates reference say that
+  Miller reads a zero-padded number (`010`, `05`) as text, so a recipe
+  names it as missing or not a number, and to write it without its leading
+  zeros; that the constant-column recipe's column name and value are
+  changed too; and that Miller's `stddev` gives about 1e-7, not 1.2e-7,
+  for six 7.2s (#140)
 - A sample sheet with one column in R's `write.table(sep=",")` layout, a
   header of one field over rows of two (`"condition"` over `"S1","a"`), is
   read with the rows' delimiter, where `detk-util tidy` and every command

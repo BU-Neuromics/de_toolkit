@@ -276,6 +276,14 @@ predates everything below.
   `detk-util gather` (#115)
 
 ### Fixed
+- The Process Run Crate lists no File for standard output: a command that
+  wrote its result to stdout (module JSON's `out_file_path` is `stdout`, the
+  marker) has no `result` for it, where the crate named a file `../stdout`
+  that did not exist. A file really named `stdout` in the working directory
+  (`-o ./stdout`, or the absolute path) is recorded `./stdout` in module JSON
+  and `argv`, so it is not read as the marker, and is listed in the crate;
+  `detk-util record`'s outputs, checksummed files, are always listed
+  (#147, DETK-0420)
 - `detk-util record` shows a failed command on one line in its messages
   (exit status, killed by signal, output file not written): an argument
   that spans several lines, such as a Miller program, is shown as its first

@@ -15,6 +15,7 @@ prev: [release]
 - [ ] [DE methods](features/de-methods.md) <!-- s6 -->
 - [ ] ~~@human --size-factors writes or goes moved to `release/size-factors`~~ not done <!-- s8 -->
 - [ ] [Annotate's mapping file in the provenance](features/crate-inputs.md) <!-- s9 -->
+- [ ] [detk-wrapr check lists only its own options](features/wrapr-check-options.md) <!-- s10 -->
 - [ ] @human Accept <!-- s7 -->
 
 ## Notes

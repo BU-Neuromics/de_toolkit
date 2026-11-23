@@ -25,34 +25,33 @@ detk-enrich fgsea -o gsea_results.csv -i gene -c cond__log2FoldChange msigdb_c2c
 ```
 
 ```text
-Usage:
-    detk-enrich fgsea [options] <gmt_fn> <result_fn>
+usage: detk-enrich fgsea [options] <gmt_fn> <result_fn>
 
-Options:
-    -o FILE --output=FILE     Destination of fgsea output [default: stdout]
-    -p PROCS --cores=PROCS    Ask BiocParallel to use PROCS processes when
-                              executing fgsea in parallel, requires the
-                              BiocParallel package to be installed
-    -i FIELD --idcol=FIELD    Column name or 0-based integer index to use as
-                              the gene identifier [default: 0]
-    -c FIELD --statcol=FIELD  Column name or 0-based integer index to use as
-                              the statistic for ranking, defaults to the last
-                              numeric column in the file
-    -a --ascending            Sort column ascending, default is to sort
-                              descending, use this if you are sorting by p-value
-                              or want to reverse the directionality of the NES
-                              scores
-    --abs                     Take the absolute value of the column before
-                              passing to fgsea
-    --filter-unannotated      Remove any genes from the result matrix that have
-                              identifiers that don't exist in any gene set of
-                              the GMT
-    --minSize=INT             minSize argument to fgsea [default: 15]
-    --maxSize=INT             maxSize argument to fgsea [default: 500]
-    --nperm=INT               nperm argument to fgsea [default: 10000]
-    --multilevel              Use the fgseaMultilevel function, instead of fgsea
-    --rda=FILE                write out the fgsea result to the provide file
-                              using saveRDS() in R
+positional arguments:
+  <gmt_fn>     Gene sets in GMT format: name, description, IDs
+  <result_fn>  Delimited result file with column names, such as a detk-de result
+
+options:
+  -h, --help            Print this help and exit
+  -o, --output FILE     Destination of fgsea output (default: stdout)
+  -p, --cores N         Number of processes fgsea uses (needs the BiocParallel
+                        package)
+  -i, --idcol COL       Column (name or 0-based index) holding the feature IDs
+                        (default: 0)
+  -c, --statcol COL     Column (name or 0-based index) of the ranking statistic;
+                        the last numeric column if not given
+  -a, --ascending       Rank ascending (for p-values, or to reverse the sign of
+                        NES)
+  --abs                 Rank by the absolute value of the statistic
+  --filter-unannotated  Drop the features whose IDs are in no gene set of the
+                        GMT
+  --minSize N           minSize argument to fgsea (default: 15)
+  --maxSize N           maxSize argument to fgsea (default: 500)
+  --nperm N             nperm argument to fgsea (default: 10000)
+  --multilevel          Use the fgseaMultilevel function, not fgsea
+  --routput-dir DIR     Directory to keep the R script, its inputs and outputs
+                        in, for debugging
+  --rda FILE            File to saveRDS() the fgsea result to
 ```
 
 [fgsea]: https://bioconductor.org/packages/release/bioc/html/fgsea.html

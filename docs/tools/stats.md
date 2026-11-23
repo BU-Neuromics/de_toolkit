@@ -42,18 +42,21 @@ Run the whole stats battery at once — equivalent to running `basestats`,
 `coldist`, `colzero`, `rowzero`, `entropy`, and `pca` separately.
 
 ```text
-Usage:
-    detk-stats summary [options] <counts_fn> [<cov_fn>]
+usage: detk-stats summary [options] <counts_fn> [<cov_fn>]
 
-Options:
-    --color-col=COLNAME    Use column data column COLNAME for coloring output plots
-    --bins=BINS            Number of bins to use for the calculated
-                           distributions [default: 20]
-    --log                  log transform count statistics
-    --density              Produce density distribution by dividing each distribution
-                           by the appropriate sum
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    -f FMT --format=FMT    Format of output, either csv or table [default: csv]
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <cov_fn>     Column data file: samples in rows, covariates in columns
+
+options:
+  -h, --help         Print this help and exit
+  --color-col COL    Column of the column data to color the output plots by
+  --bins N           Number of bins of the calculated distributions
+                     (default: 20)
+  --log              log10 transform the counts first (zeros are left out)
+  --density          Report each distribution as a density, divided by its sum
+  -o, --output FILE  Destination of primary output (default: stdout)
+  -f, --format FMT   Format of output (choices: csv, table) (default: csv)
 ```
 
 ## `basestats`
@@ -61,8 +64,15 @@ Options:
 Basic statistics of the counts file: number of samples and number of rows.
 
 ```text
-Usage:
-    detk-stats basestats [options] <counts_fn>
+usage: detk-stats basestats [options] <counts_fn>
+
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of primary output (default: stdout)
+  -f, --format FMT   Format of output (choices: csv, table) (default: csv)
 ```
 
 ## `coldist`
@@ -73,18 +83,19 @@ the bin boundaries, the (raw or density) mass in each bin, and extrema beyond
 1.5× the inner quartile range.
 
 ```text
-Usage:
-    detk-stats coldist [options] <counts_fn>
+usage: detk-stats coldist [options] <counts_fn>
 
-Options:
-    --bins=N               The number of bins to use when computing the counts
-                           distribution [default: 20]
-    --log                  Perform a log10 transform on the counts before
-                           calculating the distribution. Zeros are omitted
-                           prior to histogram calculation.
-    --density              Return a density distribution instead of counts,
-                           such that the sum of values in *dist* for each
-                           column approximately sum to 1.
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  --bins N           Number of bins of the calculated distributions
+                     (default: 20)
+  --log              log10 transform the counts first (zeros are left out)
+  --density          Report each distribution as a density, divided by its sum
+  -o, --output FILE  Destination of primary output (default: stdout)
+  -f, --format FMT   Format of output (choices: csv, table) (default: csv)
 ```
 
 ## `rowdist`
@@ -93,15 +104,19 @@ Row-wise analog of [`coldist`](#coldist): the distribution of counts within
 each feature across samples.
 
 ```text
-Usage:
-    detk-stats rowdist [options] <counts_fn>
+usage: detk-stats rowdist [options] <counts_fn>
 
-Options:
-    --bins=N               The number of bins to use when computing the counts
-                           distribution [default: 20]
-    --log                  Perform a log10 transform on the counts before
-                           calculating the distribution
-    --density              Return a density distribution instead of counts
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  --bins N           Number of bins of the calculated distributions
+                     (default: 20)
+  --log              log10 transform the counts first (zeros are left out)
+  --density          Report each distribution as a density, divided by its sum
+  -o, --output FILE  Destination of primary output (default: stdout)
+  -f, --format FMT   Format of output (choices: csv, table) (default: csv)
 ```
 
 ## `colzero`
@@ -110,8 +125,15 @@ Number and fraction of exact-zero counts for each column (sample), along with
 the column mean and the mean of only the non-zero counts.
 
 ```text
-Usage:
-    detk-stats colzero [options] <counts_fn>
+usage: detk-stats colzero [options] <counts_fn>
+
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of primary output (default: stdout)
+  -f, --format FMT   Format of output (choices: csv, table) (default: csv)
 ```
 
 ## `rowzero`
@@ -120,8 +142,15 @@ Number and fraction of exact-zero counts for each row (feature) — the key
 statistic for deciding [filtering](filter.md) thresholds.
 
 ```text
-Usage:
-    detk-stats rowzero [options] <counts_fn>
+usage: detk-stats rowzero [options] <counts_fn>
+
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of primary output (default: stdout)
+  -f, --format FMT   Format of output (choices: csv, table) (default: csv)
 ```
 
 ## `entropy`
@@ -134,8 +163,15 @@ the rows likely to drive spurious results in downstream analysis, e.g.
 differential expression.
 
 ```text
-Usage:
-    detk-stats [options] entropy <counts_fn>
+usage: detk-stats entropy [options] <counts_fn>
+
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of primary output (default: stdout)
+  -f, --format FMT   Format of output (choices: csv, table) (default: csv)
 ```
 
 ## `pca`
@@ -146,6 +182,14 @@ sample's projection with covariate values so that sample groups can be
 distinguished in the report's PCA plot.
 
 ```text
-Usage:
-    detk-stats pca [options] <counts_fn> [<cov_fn>]
+usage: detk-stats pca [options] <counts_fn> [<cov_fn>]
+
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <cov_fn>     Column data file: samples in rows, covariates in columns
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of primary output (default: stdout)
+  -f, --format FMT   Format of output (choices: csv, table) (default: csv)
 ```

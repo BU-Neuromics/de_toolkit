@@ -9,6 +9,8 @@ scope: [+de_toolkit/util.py, +de_toolkit/report.py, +de_toolkit/module_schema.js
 prev: [DETK-0390, release/recipe-notes]
 issue: 156
 visited: 203b21f
+status: done
+done: c60bb80
 ---
 
 # detk-util record writes a program PATH finds by its name
@@ -17,7 +19,7 @@ visited: 203b21f
 
 - [x] @developer As DETK-0390 is answered: write record's absolute program as its name when PATH finds the same file, otherwise relative as today; tests, schema description, CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: from a working directory deep in another tree run detk-util record -- /usr/bin/cp a b and one with a program off PATH, read argv in the module JSON and the crate, and re-run the recorded line <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

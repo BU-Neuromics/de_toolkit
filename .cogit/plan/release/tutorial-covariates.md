@@ -17,7 +17,7 @@ visited: 413b2d0
 
 ## Implementation plan
 
-- [ ] @developer Write the page with its checked outputs and crate check, index and nav; CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Write the page with its checked outputs and crate check, index and nav; CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Follow the page as a new user would and check the crate entries <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

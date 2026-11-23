@@ -298,6 +298,55 @@ def test_failed_command_that_wrote_its_output_records_nothing(work):
     assert (work / "covs.csv").read_text() == "x"
 
 
+# a program on several lines, as the Miller recipes pass theirs
+MULTILINE = "\nimport sys\nsys.exit(3)\n"
+
+
+def test_failed_multiline_command_is_shown_on_one_line(work):
+    p = record(work, "-o", "covs.csv", command=[PY, "-c", MULTILINE, "it's"])
+    _refused(p, work)
+    last = p.stderr.strip().splitlines()[-1]
+    assert last == (
+        "detk-util: error: command failed with exit status 3: "
+        f"{shlex.quote(PY)} -c '...' 'it'\"'\"'s' (--verbose for the traceback)"
+    )
+
+
+def test_multiline_argument_shows_its_first_line(work):
+    code = "import sys  # first\nsys.exit(4)"
+    p = record(work, "-o", "covs.csv", command=[PY, "-c", code])
+    last = p.stderr.strip().splitlines()[-1]
+    assert last.endswith(" -c 'import sys  # first...' (--verbose for the traceback)"), last
+
+
+def test_killed_multiline_command_is_shown_on_one_line(work):
+    code = "\nimport os, signal\nos.kill(os.getpid(), signal.SIGTERM)\n"
+    p = record(work, "-o", "covs.csv", command=[PY, "-c", code])
+    _refused(p, work, f"killed by signal {int(__import__('signal').SIGTERM)}")
+    assert p.stderr.strip().splitlines()[-1].endswith(" -c '...' (--verbose for the traceback)")
+
+
+def test_output_not_written_by_multiline_command_is_shown_on_one_line(work):
+    p = record(work, "-o", "covs.csv", command=[PY, "-c", "\npass\n"])
+    _refused(p, work, "covs.csv", "was not written")
+    assert p.stderr.strip().splitlines()[-1].endswith(" -c '...' (--verbose for the traceback)")
+
+
+@pytest.mark.parametrize(
+    "argv, line",
+    [
+        (["mlr", "put", "$x = 1"], "mlr put '$x = 1'"),
+        (["mlr", "put", "\n  @a = 1;\n  end {}\n"], "mlr put '...'"),
+        (["awk", "BEGIN {\n print 1\n}"], "awk 'BEGIN {...'"),
+        (["sh", "-c", "echo a\necho b"], "sh -c 'echo a...'"),
+        (["sh", "-c", "it's\nx"], "sh -c 'it'\"'\"'s...'"),
+    ],
+)
+def test_command_line(argv, line):
+    assert util._command_line(argv) == line
+    assert "\n" not in util._command_line(argv)
+
+
 def test_command_not_found_exits_1(work):
     p = record(work, "-o", "covs.csv", command=["detk-no-such-command", "x"])
     _refused(p, work, "command not found", "detk-no-such-command")

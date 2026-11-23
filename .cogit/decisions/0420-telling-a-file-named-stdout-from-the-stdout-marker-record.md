@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-22
 from: {node: release/crate-stdout, step: s1}
 applies: [release/crate-stdout]
 issue: 150
+revisions:
+  - {date: 2026-11-23, by: adamlabadorf, change: Accepted, why: "from the terminal: Option 1 accepted under Adam's delegation via the driver session, 2026-11-20 (DETK-0063)"}
 ---
 
 # Telling a file named stdout from the stdout marker: record it ./stdout in module JSON

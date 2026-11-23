@@ -7,6 +7,8 @@ acceptance:
 scope: [+de_toolkit/util.py, +tests/util/test_tidy.py, +CHANGELOG]
 issue: 158
 visited: 203b21f
+status: done
+done: 02da492
 ---
 
 # detk-util tidy names a ragged sheet by the path it was given
@@ -15,7 +17,7 @@ visited: 203b21f
 
 - [x] @developer Pass the sheet's name to _sniff in read_column_data; a FIFO test through detk-util tidy; CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: run detk-util tidy -p with the ragged sheet through <(cat sheet.csv) and as a file, and read both messages <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

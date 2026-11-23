@@ -18,6 +18,8 @@ scope: [+de_toolkit/crate.py, +tests/report/test_crate.py, +de_toolkit/report.py
 prev: [release/cli-migrate, release/cli-gaps, release/size-factors, release/formula-rename, release/record, release/miller-recipes, release/tutorial-quant, release/tutorial-airway, release/tutorial-covariates, release/help-options, release/tidy-output, release/record-help, release/report-paths, release/example-paths, release/recipe-notes, release/ragged-sheet, release/crate-stdout, release/record-program, DETK-0390, DETK-0580]
 issue: 162
 visited: cedd7c3
+status: done
+done: 291c932
 ---
 
 # Update the docs for the 1.0 CLI
@@ -26,7 +28,7 @@ visited: cedd7c3
 
 - [x] @developer Regenerate the usage blocks from `--help`, add the docs usage test, state the help promise, document exit codes and completion, rewrite what describes the docstring-as-interface pattern, add the how-to-add-a-command note, CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR and build the docs <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

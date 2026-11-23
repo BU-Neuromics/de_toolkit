@@ -23,7 +23,7 @@ visited: cedd7c3
 
 ## Implementation plan
 
-- [ ] @developer Regenerate the usage blocks from `--help`, add the docs usage test, state the help promise, document exit codes and completion, rewrite what describes the docstring-as-interface pattern, add the how-to-add-a-command note, CHANGELOG; open the PR <!-- s1 -->
+- [x] @developer Regenerate the usage blocks from `--help`, add the docs usage test, state the help promise, document exit codes and completion, rewrite what describes the docstring-as-interface pattern, add the how-to-add-a-command note, CHANGELOG; open the PR <!-- s1 -->
 - [ ] @reviewer Review the PR and build the docs <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 

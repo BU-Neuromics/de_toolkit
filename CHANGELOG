@@ -191,6 +191,14 @@ predates everything below.
   without `--tool-version` it runs `<command> --version` once to read the
   version, so a script that ignores `--version` would run its whole step a
   second time
+- `detk-util record` writes the program of the command it records, typed as
+  an absolute path, as its bare name when PATH finds that same file by that
+  name (DETK-0390, #156): `detk-util record -- /usr/bin/cp a b` is recorded
+  `cp a b`, in `params.argv` and `params.command`, in `argv` and in the
+  crate, where it was a `../` chain as deep as the working directory. A
+  program PATH does not find by its name, or finds as another file, is
+  written relative to `workdir` as before; either way the recorded line
+  re-runs from `workdir`
 
 ### Added
 - Shell completion for bash, zsh and tcsh, for `detk` and every

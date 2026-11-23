@@ -13,6 +13,13 @@ on:
     tags:
       - "v*"
 
+# least privilege (CodeQL actions/missing-workflow-permissions): jobs read the
+# repository only; publish adds id-token: write for Trusted Publishing and
+# attach-to-release adds contents: write to upload to the GitHub Release, each
+# in its own job-level block
+permissions:
+  contents: read
+
 jobs:
   build:
     name: build and sanity-check

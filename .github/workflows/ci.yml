@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+# least privilege (CodeQL actions/missing-workflow-permissions): every job only
+# checks out and reads the repository; artifacts and the uv cache use the
+# runtime token, not GITHUB_TOKEN
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: ruff

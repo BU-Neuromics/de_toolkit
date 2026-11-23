@@ -58,6 +58,7 @@ dev = [
     "statsmodels>=0.14",
     "vl-convert-python",
     "shtab>=1.13.0",
+    "pyyaml>=6.0.3",
 ]
 docs = [
     # mkdocs 2.0 is a backward-incompatible rewrite that Material does not

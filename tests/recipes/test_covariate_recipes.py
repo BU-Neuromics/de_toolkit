@@ -211,6 +211,34 @@ def test_recipe_fails_on_a_bad_value(tmp_path, name, column, values, named):
     assert not list((tmp_path / "detk_report").glob("json/*.json"))
 
 
+@pytest.mark.parametrize("name", sorted(EXPECTED))
+def test_recipe_fails_on_a_header_only_sheet(tmp_path, name):
+    """A sheet with no samples: exit 1, no output file, no module JSON. The
+    z-score and min-max stop with their own message; the others write
+    nothing, and detk-util record stops on the missing output."""
+    require("mlr")
+    (tmp_path / "sample_info.csv").write_text(GOOD.splitlines()[0] + "\n")
+    p = subprocess.run(
+        ["bash", "-euo", "pipefail", "-c", recipes()[name]],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+    )
+    assert p.returncode == 1, p.stdout + p.stderr
+    assert not (tmp_path / f"sample_info.{name}.csv").exists()
+    assert not list((tmp_path / "detk_report").glob("json/*.json"))
+    assert "did not evaluate to boolean" not in p.stderr
+    last = p.stderr.strip().splitlines()[-1]
+    assert last.startswith("detk-util: error: "), p.stderr
+    if name in ("age_zscore", "age_minmax"):
+        source = EXPECTED[name][0]
+        lines = [x for x in p.stderr.splitlines() if x.startswith(f"{name}: ")]
+        assert lines == [f"{name}: {source} has no values: the sheet has no samples"], p.stderr
+        assert "command failed with exit status 1" in last
+    else:
+        assert f"output file sample_info.{name}.csv was not written" in last
+
+
 def test_centring_a_column_that_does_not_vary_is_not_an_error(tmp_path):
     require("mlr")
     (tmp_path / "sample_info.csv").write_text(_replace("age", ALL_AGE_40))

@@ -14,7 +14,7 @@ acceptance:
   - 'uv run --group docs mkdocs build --strict passes'
 from: [DETK-0001, DETK-0025, DETK-0031, DETK-0032]
 scope: [+de_toolkit/crate.py, +tests/report/test_crate.py, docs/tools/, docs/report.md, docs/index.md, docs/quickstart.md, docs/concepts.md, docs/api.md, docs/agent-skills.md, docs/example.md, docs/dev/, README.md, new:tests/docs/, +CHANGELOG]
-prev: [release/cli-migrate, release/cli-gaps, release/size-factors, release/formula-rename, release/record, release/miller-recipes, release/tutorial-quant, release/tutorial-airway, release/tutorial-covariates, release/help-options, release/tidy-output, release/record-help, release/report-paths, release/example-paths, release/recipe-notes, release/ragged-sheet, release/crate-stdout, release/record-program, DETK-0390]
+prev: [release/cli-migrate, release/cli-gaps, release/size-factors, release/formula-rename, release/record, release/miller-recipes, release/tutorial-quant, release/tutorial-airway, release/tutorial-covariates, release/help-options, release/tidy-output, release/record-help, release/report-paths, release/example-paths, release/recipe-notes, release/ragged-sheet, release/crate-stdout, release/record-program, DETK-0390, DETK-0580]
 issue: 162
 visited: cedd7c3
 ---

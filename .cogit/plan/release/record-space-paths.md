@@ -7,6 +7,8 @@ acceptance:
   - docs/report.md's 'An argument that is not a path' bullet states the rule (an existing path, whitespace or not, or else DETK-0580's) and the CHANGELOG's DETK-0580 entry gets the sentence
 from: [DETK-0590]
 scope: [+de_toolkit/report.py, +tests/report/test_report_paths.py, +tests/docs/test_report_paths_doc.py, +docs/report.md, +CHANGELOG]
+issue: 166
+visited: 21b692c
 ---
 
 # detk-util record writes an existing path with spaces relative

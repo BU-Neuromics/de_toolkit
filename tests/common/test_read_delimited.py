@@ -10,7 +10,7 @@ import threading
 import pandas
 import pytest
 
-from de_toolkit.common import read_delimited, read_id_table, sniff_delimiter
+from de_toolkit.common import RaggedTableError, read_delimited, read_id_table, sniff_delimiter
 
 _IDS = ["ENSG01", "ENSG02", "ENSG03"]
 
@@ -455,20 +455,83 @@ def test_an_unquoted_space_separated_short_header_is_one_column(tmp_path):
     assert list(df["condition"]) == ["S1 a", "S2 b"]
 
 
-@pytest.mark.parametrize(
-    "text, values",
-    [
-        ("condition\nS1,a\nS2\nS3\n", ["S1,a", "S2", "S3"]),
-        ("condition\nS1,a\nS2,b,c\n", ["S1,a", "S2,b,c"]),
-    ],
-    ids=["then one field", "then three fields"],
-)
-def test_data_lines_that_split_unalike_mean_one_column(tmp_path, text, values):
-    fn = tmp_path / "samples.txt"
+# release/ragged-sheet: a one-field header over data lines that split unalike
+# on a delimiter that counts is malformed, an error naming the file, the
+# delimiter and the first two lines whose field counts differ (it read as one
+# column, and detk-util tidy silently dropped the samples whose lines split)
+
+_RAGGED = {
+    "comma": (
+        "condition\nS1,a\nS2\nS3\n",
+        "comma",
+        "line 2 'S1,a' has 2 fields, line 3 'S2' has 1 field",
+    ),
+    "later line": (
+        "condition\nS1\nS2,a\n",
+        "comma",
+        "line 2 'S1' has 1 field, line 3 'S2,a' has 2 fields",
+    ),
+    "tab": (
+        "condition\nS1\ta\nS2\n",
+        "tab",
+        "line 2 'S1\\ta' has 2 fields, line 3 'S2' has 1 field",
+    ),
+    "quoted space": (
+        '"condition"\n"S1" "a"\n"S2"\n',
+        "space",
+        """line 2 '"S1" "a"' has 2 fields, line 3 '"S2"' has 1 field""",
+    ),
+    "three fields": ("condition\nS1,a\nS2,b,c\n", "comma", "line 3 'S2,b,c' has 3 fields"),
+}
+
+
+@pytest.mark.parametrize("text, sep, where", _RAGGED.values(), ids=_RAGGED.keys())
+@pytest.mark.parametrize("read", [read_delimited, read_id_table])
+def test_a_one_field_header_over_ragged_lines_is_an_error(tmp_path, read, text, sep, where):
+    fn = tmp_path / "samples.csv"
     fn.write_text(text)
-    df = read_delimited(str(fn))
-    assert list(df.columns) == ["condition"]
-    assert list(df["condition"]) == values
+    with pytest.raises(RaggedTableError) as e:
+        read(str(fn))
+    message = str(e.value)
+    assert "\n" not in message
+    assert message.startswith(f"{fn}: the header ")
+    assert f"split unalike on {sep}" in message
+    assert where in message
+
+
+def test_a_ragged_stream_is_named(tmp_path):
+    with pytest.raises(RaggedTableError, match=r"^<stream>: .*line 3 'S2' has 1 field"):
+        read_delimited(io.StringIO("condition\nS1,a\nS2\n"))
+
+
+def test_ragged_line_numbers_count_the_skipped_rows(tmp_path):
+    fn = tmp_path / "samples.csv"
+    fn.write_text("# written by hand\ncondition\nS1,a\nS2\n")
+    with pytest.raises(RaggedTableError, match="line 3 'S1,a' has 2 fields, line 4 'S2'"):
+        read_delimited(str(fn), skiprows=1)
+
+
+@pytest.mark.parametrize(
+    "text, header, ids",
+    [
+        ("gene_id\nENSG1\nENSG2\n", "gene_id", ["ENSG1", "ENSG2"]),
+        ('"gene_id"\n"S1,a"\n"S2"\n', "gene_id", ["S1,a", "S2"]),
+        ("sample\nctrl 1\nS2\n", "sample", ["ctrl 1", "S2"]),
+        ("sample\nS2\nctrl 1\n", "sample", ["S2", "ctrl 1"]),
+        ("gene_id\n", "gene_id", []),
+    ],
+    ids=["bare", "quoted comma", "spaced first", "spaced later", "header only"],
+)
+def test_what_stays_one_column_has_no_error_or_warning(tmp_path, caplog, text, header, ids):
+    fn = tmp_path / "ids.txt"
+    fn.write_text(text)
+    with caplog.at_level(logging.DEBUG):
+        df = read_delimited(str(fn))
+        table = read_id_table(str(fn))
+    assert list(df.columns) == [header]
+    assert list(df[header]) == ids
+    assert list(table.index) == ids
+    assert not [r for r in caplog.records if r.levelno >= logging.WARNING]
 
 
 def test_data_lines_past_the_sniffed_ones_do_not_count(tmp_path):

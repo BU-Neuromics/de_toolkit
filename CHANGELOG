@@ -199,6 +199,30 @@ predates everything below.
   program PATH does not find by its name, or finds as another file, is
   written relative to `workdir` as before; either way the recorded line
   re-runs from `workdir`
+- The documentation describes the 1.0 command line (#162, DETK-0001,
+  DETK-0025). Every usage block in `docs/tools/` and `docs/report.md` is the
+  subcommand's own part of its `--help` (usage, positional arguments,
+  options), and a test (`tests/docs/test_docs_usage.py`) fails when one
+  differs from the installed help or a subcommand has none;
+  `tests/docs/docs_usage.py` regenerates them. The home page and the API
+  reference state what 1.0 promises about help: its sections in order, each
+  argument's metavar, default, choices and one-line description, and the
+  examples, not the wording. `docs/concepts.md` documents the exit codes
+  (0 success, 2 usage error, 1 anything else; DETK-0031), how to load the
+  bash, zsh and tcsh completion scripts (DETK-0032), and that a one-field
+  header over rows that split unalike is an error. `docs/report.md` says
+  what a recorded path leaves out: a path inside a quoted argument
+  (`sh -c "cp /abs/a /abs/b"`) is written as typed; a program typed as an
+  absolute path is written by its name only when PATH finds that same file,
+  so `/bin/cp` stays a relative path where `/bin` and `/usr/bin` are
+  separate directories and PATH finds `/usr/bin/cp` first (DETK-0390); and
+  a report directory in another tree records a `../` chain. Its crate
+  section says standard output is no File and that only the files
+  `detk-util record` checksummed carry `sha256` and `contentSize`, as
+  `crate.py`'s docstring now does too. `docs/agent-skills.md` lists
+  `references/covariates.md`, and a test fails when a skill file is not
+  listed. `docs/dev/cli.md` says how to add a command, subcommand or option
+  with argparse
 
 ### Added
 - Shell completion for bash, zsh and tcsh, for `detk` and every
@@ -293,6 +317,27 @@ predates everything below.
   `detk-util gather` (#115)
 
 ### Fixed
+- A recorded command line no longer rewrites an argument that only starts
+  with `/` as if it were a path (DETK-0580, #162): an awk program
+  (`'/^gene/ {print}'`), a regular expression (`'/^g1,/'`) or a shell script
+  (`sh -c "/usr/bin/env echo hi"`) was recorded as a `../` chain
+  (`'../../../^gene/ {print}'`), a different program from the one that ran.
+  An argument is now taken for an absolute path, and written relative to
+  `workdir`, only when it has no whitespace and its parent directory exists
+  (an output not yet written, in a directory that exists, still is); any
+  other is recorded as typed
+- `detk completion bash | head` no longer prints `Broken pipe` and exits 1:
+  a reader that stops early is not a failure, so it exits 0 quietly
+- The quickstart's commands run as written (#162): its filter kept the rows
+  with fewer than half their counts nonzero (`nonzero(all) < 0.5`), the
+  opposite of what the page said, and is now `nonzero(all) > 0.5`, as is
+  the example on the report page; its design names the reference level
+  (`counts ~ cond[control]`) and its GSEA ranks by the column DESeq2 writes,
+  `cond__treated__log2FoldChange`, where it named `cond__log2FoldChange`,
+  which no result has. A test runs the quickstart (its R steps where R is
+  installed). docs/tools/de.md names a result column with its level
+  (`Status__case__log2FoldChange`), and the `detk-wrapr run` example on
+  docs/tools/wrapr.md is one shell command (its comments after `\` broke it)
 - The Process Run Crate lists no File for standard output: a command that
   wrote its result to stdout (module JSON's `out_file_path` is `stdout`, the
   marker) has no `result` for it, where the crate named a file `../stdout`

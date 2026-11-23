@@ -119,3 +119,20 @@ def test_completion_needs_no_shtab(tmp_path):
     )
     assert p.returncode == 0, p.stderr
     assert p.stdout == completion_script("bash")
+
+
+def test_completion_into_a_closed_pipe_is_quiet():
+    # detk completion bash | head -2: the reader closes the pipe early, which
+    # is not a failure of detk, so nothing is printed on stderr and it exits 0
+    import os
+
+    detk = os.path.join(os.path.dirname(sys.executable), "detk")
+    p = subprocess.Popen(
+        [detk, "completion", "bash"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    p.stdout.read(10)
+    p.stdout.close()
+    err = p.stderr.read().decode()
+    p.stderr.close()
+    assert p.wait() == 0, err
+    assert err == ""

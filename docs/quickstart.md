@@ -13,7 +13,7 @@ This workflow performs the following, all without any custom code:
    single counts matrix with [`detk-util gather`](tools/util.md#gather)
 2. Calculates statistics on the zero-ness of genes to guide feature filtering
    with [`detk-stats rowzero`](tools/stats.md#rowzero)
-3. Filters out rows with half or more zero counts with
+3. Keeps the rows with more than half of their counts nonzero with
    [`detk-filter`](tools/filter.md)
 4. Normalizes the filtered matrix with the DESeq2 procedure via
    [`detk-norm deseq2`](tools/norm.md#deseq2)
@@ -25,15 +25,20 @@ This workflow performs the following, all without any custom code:
 8. Computes pre-ranked GSEA on the DE statistics with
    [`detk-enrich fgsea`](tools/enrich.md)
 
-On the command line, the core of that workflow is:
+On the command line, the core of that workflow is below, for a counts matrix
+`raw_counts.csv`, a column data file `sample_info.csv` whose `cond` column
+says which samples are `control` and which `treated`, and the gene sets of
+`msigdb_c2cp.gmt`. The DESeq2 result names each column by its model term, so
+the treated-versus-control log fold change, the statistic GSEA ranks by, is
+`cond__treated__log2FoldChange`:
 
 ```bash
 detk-stats rowzero -o raw_counts_rowzero_stats.csv raw_counts.csv
-detk-filter "nonzero(all) < 0.5" -o raw_counts_filtered.csv raw_counts.csv
+detk-filter "nonzero(all) > 0.5" -o raw_counts_filtered.csv raw_counts.csv
 detk-norm deseq2 -o norm_counts_filtered.csv raw_counts_filtered.csv
 detk-stats pca -o norm_counts_filtered_pca.csv norm_counts_filtered.csv
-detk-de deseq2 -o deseq2_results.csv "counts ~ cond" raw_counts_filtered.csv sample_info.csv
-detk-enrich fgsea -o gsea_results.csv -i gene -c cond__log2FoldChange msigdb_c2cp.gmt deseq2_results.csv
+detk-de deseq2 -o deseq2_results.csv "counts ~ cond[control]" raw_counts_filtered.csv sample_info.csv
+detk-enrich fgsea -o gsea_results.csv -i gene -c cond__treated__log2FoldChange msigdb_c2cp.gmt deseq2_results.csv
 detk-report generate
 ```
 
@@ -73,7 +78,7 @@ rule filter_raw:
     input: 'raw_counts.csv'
     output: 'raw_counts_filtered.csv'
     shell:
-        'detk-filter "nonzero(all) < 0.5" -o {output} {input}'
+        'detk-filter "nonzero(all) > 0.5" -o {output} {input}'
 
 rule deseq2_norm:
     input: 'raw_counts_filtered.csv'
@@ -93,7 +98,7 @@ rule de:
         covs='sample_info.csv'
     output: 'deseq2_results.csv'
     shell:
-        'detk-de deseq2 -o {output} "counts ~ cond" {input.counts} {input.covs}'
+        'detk-de deseq2 -o {output} "counts ~ cond[control]" {input.counts} {input.covs}'
 
 rule gsea:
     input:
@@ -101,7 +106,7 @@ rule gsea:
         gmt='msigdb_c2cp.gmt'
     output: 'msigdb_c2cp_gsea_results.csv'
     shell:
-        'detk-enrich fgsea -o {output} -i gene -c cond__log2FoldChange {input.gmt} {input.de}'
+        'detk-enrich fgsea -o {output} -i gene -c cond__treated__log2FoldChange {input.gmt} {input.de}'
 
 rule generate_detk_report:
     input:

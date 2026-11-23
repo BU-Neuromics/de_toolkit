@@ -4,11 +4,17 @@ Filter features (rows) out of a counts matrix using a compact filter
 mini-language.
 
 ```text
-Usage:
-    detk-filter [options] <command> <counts_fn> [<cov_fn>]
+usage: detk-filter [options] <command> <counts_fn> [<cov_fn>]
 
-Options:
-    -o <out_fn> --output=<out_fn>    Name of output file [default: stdout]
+positional arguments:
+  <command>    Filter expression: the rows to keep, quoted
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <cov_fn>     Column data file: samples in rows, covariates in columns, for
+               group filters
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Name of the output file (default: stdout)
 ```
 
 Quick start — keep only genes with a mean count greater than 10:

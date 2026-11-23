@@ -32,6 +32,28 @@ R path: /usr/bin/Rscript
 jsonlite found: True
 ```
 
+`detk wrapr check` reports whether `Rscript` (on the `PATH`, or the one
+`--rpath` names) and the jsonlite package are found:
+
+```text
+usage: detk-wrapr check [options]
+
+options:
+  -h, --help         Print this help and exit
+  --rpath FILE       Path to the Rscript executable; found on the PATH when not
+                     given
+  --routput-dir DIR  Keep the files handed to and written by R in DIR, for
+                     debugging (when not given, a temporary directory deleted
+                     after the run)
+  --meta-in FILE     Sample information file for the columns of the counts, as
+                     other detk commands take it
+  --meta-out FILE    Destination of the sample information as the R script
+                     leaves it
+  --params-in FILE   JSON file of parameters handed to the R script
+  --params-out FILE  Destination of the JSON output parameters of the R script
+  --strict           Require the counts columns and the --meta-in rows to match
+```
+
 [jsonlite]: https://cran.r-project.org/package=jsonlite
 
 ## The interface
@@ -41,13 +63,42 @@ bridge script. From the command line:
 
 ```bash
 detk-wrapr run \
-  --meta-in=/path/to/metadata \        # metadata filename corresponding to input counts
-  --meta-out=/path/to/metadata_out \   # where modified metadata should be written
-  --params-in=/path/to/params.json \   # JSON file with parameters needed by R
-  --params-out=/path/to/params_out.json \  # where R can pass parameters back out
-  /path/to/rscript \                   # R script written to use the interface
-  /path/to/input_counts \              # counts matrix
-  /path/to/output                      # where tabular output should be written
+  --meta-in=/path/to/metadata \
+  --meta-out=/path/to/metadata_out \
+  --params-in=/path/to/params.json \
+  --params-out=/path/to/params_out.json \
+  /path/to/rscript /path/to/input_counts /path/to/output
+```
+
+where `--meta-in` is the sample information for the input counts,
+`--meta-out` where the script may write it back modified, `--params-in` a
+JSON file of parameters for R and `--params-out` where R can pass parameters
+back out; then the R script written to use the interface, the counts matrix,
+and where its tabular output should be written.
+
+```text
+usage: detk-wrapr run [options] <rscript> [<counts_in>] [<out>]
+
+positional arguments:
+  <rscript>    The R script to run
+  <counts_in>  Counts file handed to the script: features in rows, samples in
+               columns
+  <out>        File the script writes its output to
+
+options:
+  -h, --help         Print this help and exit
+  --rpath FILE       Path to the Rscript executable; found on the PATH when not
+                     given
+  --routput-dir DIR  Keep the files handed to and written by R in DIR, for
+                     debugging (when not given, a temporary directory deleted
+                     after the run)
+  --meta-in FILE     Sample information file for the columns of the counts, as
+                     other detk commands take it
+  --meta-out FILE    Destination of the sample information as the R script
+                     leaves it
+  --params-in FILE   JSON file of parameters handed to the R script
+  --params-out FILE  Destination of the JSON output parameters of the R script
+  --strict           Require the counts columns and the --meta-in rows to match
 ```
 
 Arguments starting with `--` are optional. Input metadata and counts should be

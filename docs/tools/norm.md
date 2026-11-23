@@ -10,15 +10,19 @@ Normalize using the median-of-ratios method as implemented in the R package
 ratio of each gene count to the geometric mean count across all samples.
 
 ```text
-Usage:
-    detk-norm deseq2 [options] <counts_fn>
+usage: detk-norm deseq2 [options] <counts_fn>
 
-Options:
-    -o FILE --output=FILE        Destination of normalized output in CSV format [default: stdout]
-    --size-factors=FILE          Write out the size factors found by the DESeq2
-                                 method to two column tab separated file where
-                                 the first column is sample name and the second
-                                 column is the size factor
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help           Print this help and exit
+  -o, --output FILE    Destination of normalized output in CSV format
+                       (default: stdout)
+  --size-factors FILE  Write out the size factors found by the DESeq2 method to
+                       a two column tab separated file: a header line 'sample',
+                       'size_factor', then one line per sample of its name and
+                       size factor
 ```
 
 The implementation is roughly equivalent to the following R:
@@ -48,8 +52,15 @@ that column, so each column of the output sums to 1. Use [`cpm`](#cpm) for
 the same values scaled to counts per million.
 
 ```text
-Usage:
-    detk-norm library [options] <counts_fn>
+usage: detk-norm library [options] <counts_fn>
+
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of normalized output in CSV format
+                     (default: stdout)
 ```
 
 ## `cpm`
@@ -60,8 +71,15 @@ column and multiplied by one million, so each column of the output sums to
 produces `NaN` values and a warning.
 
 ```text
-Usage:
-    detk-norm cpm [options] <counts_fn>
+usage: detk-norm cpm [options] <counts_fn>
+
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of normalized output in CSV format
+                     (default: stdout)
 ```
 
 ## `fpkm`
@@ -107,8 +125,16 @@ and length in bases:
   is read as a feature
 
 ```text
-Usage:
-    detk-norm fpkm [options] <counts_fn> <lengths_fn>
+usage: detk-norm fpkm [options] <counts_fn> <lengths_fn>
+
+positional arguments:
+  <counts_fn>   Counts file: features in rows, samples in columns, delimited
+  <lengths_fn>  Feature lengths file: feature name and length in bases
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of normalized output in CSV format
+                     (default: stdout)
 ```
 
 ## `tpm`
@@ -134,6 +160,14 @@ whose counts are all zero has no TPM (or CPM) values: its column is empty
 (NaN) and a warning is logged.
 
 ```text
-Usage:
-    detk-norm tpm [options] <counts_fn> <lengths_fn>
+usage: detk-norm tpm [options] <counts_fn> <lengths_fn>
+
+positional arguments:
+  <counts_fn>   Counts file: features in rows, samples in columns, delimited
+  <lengths_fn>  Feature lengths file: feature name and length in bases
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of normalized output in CSV format
+                     (default: stdout)
 ```

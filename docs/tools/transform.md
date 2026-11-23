@@ -8,13 +8,18 @@ Python; `rlog` and `vst` wrap [DESeq2] in R.
 Pseudo-log transform: `log(counts + pseudocount)`.
 
 ```text
-Usage:
-    detk-transform plog [options] <counts_fn>
+usage: detk-transform plog [options] <counts_fn>
 
-Options:
-    -c N --pseudocount=N   The pseudocount to use when taking the log transform [default: 1]
-    -b B --base=B          The base of the log to use [default: 10]
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help           Print this help and exit
+  -c, --pseudocount N  The pseudocount added to each count before the log
+                       (default: 1)
+  -b, --base N         The base of the logarithm (default: 10)
+  -o, --output FILE    Destination of the transformed counts in CSV format
+                       (default: stdout)
 ```
 
 ## `rlog`
@@ -35,16 +40,23 @@ detk-transform rlog norm_counts.csv "counts ~ AgeOfDeath + Status" column_data.c
 ```
 
 ```text
-Usage:
-    detk-transform rlog [options] <counts_fn> [<design> <cov_fn>]
+usage: detk-transform rlog [options] <counts_fn> [<design>] [<cov_fn>]
 
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    --rda=RDA              Filename passed to saveRDS() R function of the result
-                           objects from the analysis
-    --strict               Require that the sample order indicated by the column names in the
-                           counts file are the same as, and in the same order as, the
-                           sample order in the row names of the covariates file
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <design>     Design formula, e.g. 'counts ~ group' (with <cov_fn>)
+  <cov_fn>     Sample information file: samples in rows (with <design>)
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of the transformed counts in CSV format
+                     (default: stdout)
+  --rda FILE         Write the R result objects of the analysis to FILE with
+                     saveRDS()
+  --strict           Require the counts columns and the sample information rows
+                     to name the same samples in the same order
+  --blind BOOL       Passed to DESeq2 rlog(blind=); when not given, blind is
+                     True
 ```
 
 ## `vst`
@@ -56,13 +68,17 @@ detk-transform vst norm_counts.csv > vst_norm_counts.csv
 ```
 
 ```text
-Usage:
-    detk-transform vst [options] <counts_fn>
+usage: detk-transform vst [options] <counts_fn>
 
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    --rda=RDA              Filename passed to saveRDS() R function of the result
-                           objects from the analysis
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of the transformed counts in CSV format
+                     (default: stdout)
+  --rda FILE         Write the R result objects of the analysis to FILE with
+                     saveRDS()
 ```
 
 [DESeq2]: https://bioconductor.org/packages/release/bioc/html/DESeq2.html

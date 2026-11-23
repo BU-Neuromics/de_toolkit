@@ -60,28 +60,34 @@ the following ways:
   default with `--last-term-only`)
 - no independent filtering is performed
 - every output column is prefixed with its model term, e.g.
-  `Status__log2FoldChange`
+  `Status__case__log2FoldChange` for the `case` level of `Status`
 
 ```text
-Usage:
-    detk-de deseq2 [options] <design> <counts_fn> <cov_fn>
+usage: detk-de deseq2 [options] <design> <counts_fn> <cov_fn>
 
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    --rda=RDA              Filename passed to saveRDS() R function of the result
-                           objects from the analysis
-    --strict               Require that the sample order indicated by the column names in the
-                           counts file are the same as, and in the same order as, the
-                           sample order in the row names of the covariates file
-    --norm-counts          Prevent DESeq2 from normalizing counts prior to
-                           running differential expression, default behavior
-                           assumes that provided counts are raw
-    --last-term-only       Use the default DESeq2 behavior of returning DE parameters
-                           for the last term in the model, default behavior is to
-                           report parameters for all variables in the model
-    --gene-wise-disp       Use estimateDispersionsGeneEst instead of estimateDispersions
-    --cores=N              Tell DESeq2 to use N cores when running, requires the
-                           BiocParallel Bioconductor package to be installed [default: none]
+positional arguments:
+  <design>     Model formula, quoted, such as "counts ~ group"
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <cov_fn>     Sample information file: samples in rows, the first column their
+               names
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of primary output (default: stdout)
+  --routput-dir DIR  Directory to keep the R script, its inputs and outputs in,
+                     for debugging
+  --rda FILE         File to saveRDS() the R result objects of the analysis to
+  --strict           Require the counts file's sample columns to be the same as,
+                     and in the same order as, the rows of the sample
+                     information file
+  --norm-counts      Do not let DESeq2 normalize the counts: they are already
+                     normalized
+  --last-term-only   Report the parameters of the model's last term only
+                     (DESeq2's default)
+  --gene-wise-disp   Use estimateDispersionsGeneEst instead of
+                     estimateDispersions
+  --cores N          Number of cores DESeq2 uses (needs the BiocParallel
+                     package) (default: none)
 ```
 
 ## `firth`
@@ -102,21 +108,27 @@ detk-de firth "Status ~ AgeOfDeath + counts" norm_counts.csv column_data.csv > f
 ```
 
 ```text
-Usage:
-    detk-de firth [options] <design> <counts_fn> <cov_fn>
+usage: detk-de firth [options] <design> <counts_fn> <cov_fn>
 
-Options:
-    -o FILE --output=FILE  Destination of primary output [default: stdout]
-    --rda=RDA              Filename passed to saveRDS() R function of the result
-                           objects from the analysis
-    --strict               Require that the sample order indicated by the column names in the
-                           counts file are the same as, and in the same order as, the
-                           sample order in the row names of the covariates file
-    --standardize          Standardize counts prior to running logistic regression
-                           as to obtain standardized (i.e. directly comparable)
-                           beta coefficients
-    --cores=N              Tell R to use N cores when running, requires the
-                           parallel R package to be installed [default: none]
+positional arguments:
+  <design>     Model formula, quoted, such as "counts ~ group"
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <cov_fn>     Sample information file: samples in rows, the first column their
+               names
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of primary output (default: stdout)
+  --routput-dir DIR  Directory to keep the R script, its inputs and outputs in,
+                     for debugging
+  --rda FILE         File to saveRDS() the R result objects of the analysis to
+  --strict           Require the counts file's sample columns to be the same as,
+                     and in the same order as, the rows of the sample
+                     information file
+  --standardize      Standardize the counts first, so the coefficients are
+                     directly comparable
+  --cores N          Number of cores R uses (needs the parallel R package)
+                     (default: none)
 ```
 
 [DESeq2]: https://bioconductor.org/packages/release/bioc/html/DESeq2.html

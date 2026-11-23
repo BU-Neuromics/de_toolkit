@@ -18,17 +18,24 @@ and as a standalone executable (`detk stats ...` ≡ `detk-stats ...`):
 
 ## Common options
 
-Every subcommand accepts these options in addition to its own:
+Every subcommand accepts these options in addition to its own (except
+`detk-util record`, which writes no table and so has no `-d`); its
+`--help` lists them under `common options:`. A tool's page shows each
+subcommand's own part of its help: the usage, the positional arguments
+and the options. See [Stability](../index.md#stability) for what help
+promises and [exit codes](../concepts.md#exit-codes) for how every command
+exits.
 
 ```text
-Common options:
-    -d CHAR --out-delim=CHAR  Delimiter to use for output file [default: ,]
-    --report-dir=DIR          Specify the report directory [default: ./detk_report]
-    --no-report               Do not generate the HTML report
-    --version                 Print out detk version and exit
-    -v --verbose              Make log output verbose
-    -q --quiet                Turn off all logging except warnings and errors
-    --shut-up                 Turn off ALL logging
+common options:
+  -d, --out-delim CHAR  Delimiter to use for the output file (default: ,)
+  --report-dir DIR      Directory to write the HTML report and module JSON into
+                        (default: ./detk_report)
+  --no-report           Do not write the HTML report
+  --version             Print the detk version and exit
+  -v, --verbose         Make log output verbose
+  -q, --quiet           Turn off all logging except warnings and errors
+  --shut-up             Turn off ALL logging
 ```
 
 Most tools write their primary output to stdout by default and accept

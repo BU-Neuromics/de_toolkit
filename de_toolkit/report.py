@@ -206,22 +206,38 @@ def _file_relpath(path, workdir):
     return "./" + rel if rel == STDOUT_MARKER else rel
 
 
+def _is_path(text):
+    """Whether *text*, typed as an argument, is taken for an absolute path
+    (DETK-0580): it starts with ``/`` (or a drive), has no whitespace, and
+    its parent directory exists. So a shell script, an awk program or a
+    regular expression that starts with ``/`` (``/usr/bin/env echo hi``,
+    ``/^gene/ {print}``, ``/^g1,/``) is not, while an output not yet written
+    (``/home/me/proj/out.csv``, its directory there) is."""
+    return (
+        os.path.isabs(text)
+        and not any(c.isspace() for c in text)
+        and os.path.isdir(os.path.dirname(text))
+    )
+
+
 def relative_arg(arg, workdir):
     """A command line argument as recorded (DETK-0281): an absolute path is
     written relative to *workdir* (an absolute directory), as the value of
     ``--opt=/abs/path`` or of a short option given with it (``-o/abs/path``)
-    is; any other argument is kept as typed. The command line then re-runs
-    the same from *workdir*."""
+    is; any other argument is kept as typed. An argument is taken for an
+    absolute path only as :func:`_is_path` says (DETK-0580), so one that
+    merely starts with ``/`` is kept. The command line then re-runs the same
+    from *workdir*."""
     if not isinstance(arg, str) or not arg:
         return arg
-    if os.path.isabs(arg):
+    if _is_path(arg):
         return _file_relpath(arg, workdir)
     if arg.startswith("--") and "=" in arg:
         opt, value = arg.split("=", 1)
-        if os.path.isabs(value):
+        if _is_path(value):
             return f"{opt}={_file_relpath(value, workdir)}"
     elif arg.startswith("-") and not arg.startswith("--") and len(arg) > 2:
-        if os.path.isabs(arg[2:]):
+        if _is_path(arg[2:]):
             return arg[:2] + _file_relpath(arg[2:], workdir)
     return arg
 

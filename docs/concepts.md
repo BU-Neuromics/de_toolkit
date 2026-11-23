@@ -5,6 +5,17 @@ matrix file** and the **column data file** (also called the metadata or
 covariates file). Both are plain character-delimited text; detk sniffs the
 delimiter on input, and always writes comma-separated output.
 
+The delimiter is sniffed from the first line (comma, tab, semicolon, pipe,
+then space). A first line with none of them is a one-field header, as R's
+`write.table` writes over row names (`"condition"` over `"S1","a"`); then
+the delimiter is sniffed from the first data lines, which must all split on
+it into the same number of fields. A one-field header over rows that split
+unalike (`condition` over `S1,a` and `S2`) is an error, naming the file,
+the delimiter and the first two lines whose field counts differ: quote a
+field that holds the delimiter, or give every line the same fields. When no
+data line has a delimiter either, the file is read as one column, such as a
+list of IDs.
+
 ## The counts matrix file
 
 Every tool accepts a counts matrix of the form:
@@ -57,3 +68,43 @@ describing its parameters and results into `detk_report/json/`. The
 single self-contained HTML report. The JSON documents are stable,
 machine-readable provenance — you can consume them directly in downstream
 tooling.
+
+## Exit codes
+
+Every detk command exits with one of three codes (DETK-0031), which its
+`--help` also states:
+
+| Code | Meaning |
+|-----:|---------|
+| 0 | success (and `--help`, `--version`) |
+| 2 | usage error: the command line is wrong, such as an unknown option, a missing argument, a bad option value or an invalid design formula; the usage is printed with the error |
+| 1 | any other failure: a bad input file, a missing R or R package, a step that fails |
+
+A failure prints one line on stderr, `<command>: error: <cause>`; with
+`--verbose` the traceback is printed before it. A script can tell a mistake
+in its own command line (2) from a problem with the data or the environment
+(1).
+
+## Shell completion
+
+detk ships completion scripts for bash, zsh and tcsh (DETK-0032), which
+complete every detk command (`detk` and each `detk-<command>`), its
+subcommands, options and choices, and file names where an argument takes a
+file. `detk completion <shell>` prints the script; load it from your shell's
+startup file:
+
+```console
+# bash, in ~/.bashrc
+eval "$(detk completion bash)"
+
+# zsh, in ~/.zshrc, after compinit
+eval "$(detk completion zsh)"
+
+# tcsh: write the script once, then source it in ~/.tcshrc
+detk completion tcsh > ~/.detk.tcsh
+source ~/.detk.tcsh
+```
+
+The scripts are part of the installed package, so printing one needs
+nothing else installed. Open a new shell (or source the startup file) for
+the completion to take effect.

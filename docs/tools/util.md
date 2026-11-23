@@ -19,19 +19,24 @@ with a row per feature and a column per sample, ready for every other detk
 tool.
 
 ```text
-Usage:
-    detk-util gather [options] <files>...
+usage: detk-util gather [options] <files>...
 
-Options:
-    --format=FMT           salmon, kallisto, htseq, featurecounts or auto
-                           [default: auto]
-    --column=COL           Column to extract from each file, by name or 0-based
-                           position (default: the format's count column)
-    --name-from=REGEX      Regular expression deriving each sample name from
-                           its file path (the first group, or the whole match)
-    --on-mismatch=WHAT     What to do when the samples list different features:
-                           error, fill (with 0) or drop [default: error]
-    -o FILE --output=FILE  Destination of the counts matrix [default: stdout]
+positional arguments:
+  <files>  Quantifier output files, one per sample (a quoted glob is expanded)
+
+options:
+  -h, --help          Print this help and exit
+  --format FMT        Format of the files; auto detects it from each file's
+                      header (choices: salmon, kallisto, htseq, featurecounts,
+                      auto) (default: auto)
+  --column COL        Column to extract from each file, by name or 0-based
+                      position (without it: the format's count column)
+  --name-from REGEX   Regular expression deriving each sample name from its file
+                      path (the first group, or the whole match)
+  --on-mismatch WHAT  What to do when the samples list different features: stop
+                      with an error, fill with 0 or drop them (choices: error,
+                      fill, drop) (default: error)
+  -o, --output FILE   Destination of the counts matrix (default: stdout)
 ```
 
 For a salmon run per sample in `sample_1__salmon/`, `sample_2__salmon/`, ...:
@@ -119,12 +124,19 @@ returning new outputs for both. The tidied column data is only written if you
 pass `-p`.
 
 ```text
-Usage:
-    detk-util tidy [options] <counts_fn> <cov_fn>
+usage: detk-util tidy [options] <counts_fn> <cov_fn>
 
-Options:
-    -o FILE --output=FILE  Destination of tidied counts data [default: stdout]
-    -p FILE --column-data-output=FILE  Destination of tidied column data
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <cov_fn>     Sample information file: samples in rows, delimited
+
+options:
+  -h, --help                  Print this help and exit
+  -o, --output FILE           Destination of tidied counts data
+                              (default: stdout)
+  -p, --column-data-output FILE
+                              Destination of tidied column data (not written
+                              without it)
 ```
 
 ## `tidy-counts`
@@ -134,11 +146,15 @@ data file. Fails if the column data contains samples missing from the counts
 file.
 
 ```text
-Usage:
-    detk-util tidy-counts [options] <counts_fn> <cov_fn>
+usage: detk-util tidy-counts [options] <counts_fn> <cov_fn>
 
-Options:
-    -o FILE --output=FILE  Destination of tidied counts data [default: stdout]
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <cov_fn>     Sample information file: samples in rows, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of tidied counts data (default: stdout)
 ```
 
 ## `tidy-covs`
@@ -147,11 +163,15 @@ Subset and order the column data rows according to the columns of the counts
 file. Fails if the counts file contains samples missing from the column data.
 
 ```text
-Usage:
-    detk-util tidy-covs [options] <counts_fn> <cov_fn>
+usage: detk-util tidy-covs [options] <counts_fn> <cov_fn>
 
-Options:
-    -o FILE --output=FILE  Destination of tidied column data [default: stdout]
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+  <cov_fn>     Sample information file: samples in rows, delimited
+
+options:
+  -h, --help         Print this help and exit
+  -o, --output FILE  Destination of tidied column data (default: stdout)
 ```
 
 ## `annotate`
@@ -163,21 +183,25 @@ depend on a network service or on when it was run: a BioMart export, a table
 derived from a GTF, or a dump of a Bioconductor `org.*.db` package all work.
 
 ```text
-Usage:
-    detk-util annotate [options] <result_fn> <mapping_fn>
+usage: detk-util annotate [options] <result_fn> <mapping_fn>
 
-Options:
-    -i FIELD --idcol=FIELD  Column in the result file holding the feature IDs to
-                            join on [default: 0]
-    --map-from=COL          Column in the mapping file matching the result IDs
-                            [default: 0]
-    --map-to=COLS           Comma-separated mapping columns to add, or 'all' for
-                            every column but --map-from [default: all]
-    --strip-versions        Strip trailing .N version suffixes from Ensembl-style
-                            IDs on both sides before joining
-    --drop-unmapped         Drop result rows with no mapping instead of leaving
-                            their added columns empty
-    -o FILE --output=FILE   Destination of the annotated table [default: stdout]
+positional arguments:
+  <result_fn>   Result table to annotate, e.g. the output of detk-de
+  <mapping_fn>  Mapping table: feature IDs and the metadata columns to add
+
+options:
+  -h, --help         Print this help and exit
+  -i, --idcol COL    Column in the result file holding the feature IDs to join
+                     on (default: 0)
+  --map-from COL     Column in the mapping file matching the result IDs
+                     (default: 0)
+  --map-to COLS      Comma-separated mapping columns to add, or 'all' for every
+                     column but --map-from (default: all)
+  --strip-versions   Strip trailing .N version suffixes from Ensembl-style IDs
+                     before joining
+  --drop-unmapped    Drop result rows with no mapping instead of leaving their
+                     added columns empty
+  -o, --output FILE  Destination of the annotated table (default: stdout)
 ```
 
 Columns are named by header or by 0-based position. The result table is read
@@ -228,18 +252,22 @@ producer of its outputs, and a later detk command that reads them traces
 back to it.
 
 ```text
-Usage:
-    detk-util record [options] [-i FILE]... -o FILE... -- <command> [<arg>...]
+usage: detk-util record [options] [-i FILE]... -o FILE... -- <command> [<arg>...]
 
-Options:
-    -i FILE --input=FILE   A file the command reads; give it once per file,
-                           or not at all
-    -o FILE --output=FILE  A file the command writes; give it once per file
-                           (at least one)
-    --tool=NAME            Name of the tool that runs (default: the base name
-                           of the command's first word)
-    --tool-version=TEXT    Version of the tool to record (default: the first
-                           line of '<command> --version')
+positional arguments:
+  <command>  The command to run and its arguments, after --; run as given,
+             without a shell
+
+options:
+  -h, --help           Print this help and exit
+  -i, --input FILE     A file the command reads; give it once per file, or not
+                       at all
+  -o, --output FILE    A file the command writes; give it once per file (at
+                       least one)
+  --tool NAME          Name of the tool that runs (without it: the base name of
+                       the command's first word)
+  --tool-version TEXT  Version of the tool to record (without it: the first line
+                       of '<command> --version')
 ```
 
 Derive an `age_group` column with [Miller] and use it in a design:

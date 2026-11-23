@@ -23,8 +23,14 @@ module JSON documents under ``<report_dir>/json/``:
   ``CreateAction`` whose ``instrument`` is the external tool with its version,
   since that is the software that made its files; its ``object`` and
   ``result`` list every input and output (the envelope's ``in_file_paths``
-  and ``out_file_paths``), each ``File`` with its ``sha256`` and
-  ``contentSize``
+  and ``out_file_paths``)
+- a ``File`` carries ``sha256`` and ``contentSize`` only when detk-util
+  record checksummed it (DETK-0061): a file named in the ``properties``
+  ``inputs`` or ``outputs`` of a step it recorded, with the checksum and
+  size it took there. A file of a recorded step whose checksum the envelope
+  does not hold has neither, nor has any file of a detk command unless a
+  recorded step checksummed the same file (it then carries that step's
+  checksum, the producer's when one step wrote it and another read it)
 - a command that wrote its result to standard output (``out_file_path``
   ``stdout``, the marker) has no ``result`` File for it
 

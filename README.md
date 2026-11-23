@@ -69,6 +69,10 @@ then `pytest`. Lint and format with `uv run ruff check .` and
 Tests that require R (DESeq2, fgsea, logistf) are skipped automatically when R
 is not available.
 
+To add a command, a subcommand or an option, see
+[docs/dev/cli.md](docs/dev/cli.md): the parsers are argparse, and their help
+is part of the 1.0 promise.
+
 # Agent skills
 
 detk ships an

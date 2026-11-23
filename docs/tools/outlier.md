@@ -8,13 +8,19 @@ Identify samples that dominate low-entropy features. See
 [`detk-stats entropy`](stats.md#entropy) for the underlying statistic.
 
 ```text
-Usage:
-    detk-outlier entropy <counts_fn> [options]
+usage: detk-outlier entropy [options] <counts_fn>
 
-Options:
-    -p P --percentile=P    Float value between 0 and 1
-    -o FILE --output=FILE  Name of the output csv
-    --plot-output=FILE     Name of the plot png
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help          Print this help and exit
+  -p, --percentile N  The entropy percentile below which a feature is flagged,
+                      between 0 and 1
+  -o, --output FILE   Destination of the entropy and flag of each feature in CSV
+                      format
+  --plot-output FILE  Destination of a PNG plot of the entropy distribution and
+                      threshold
 ```
 
 ## `shrink`
@@ -24,12 +30,17 @@ mass toward the feature's distribution, using a probability-mass-function
 transform.
 
 ```text
-Usage:
-    detk-outlier shrink [options] <counts_fn>
+usage: detk-outlier shrink [options] <counts_fn>
 
-Options:
-    -o FILE --output=FILE   Destination of primary output [default: stdout]
-    -f N --shrink-factor=N  Shrinkage factor number float between 0 and 1 [default: 0.25]
-    -p N --p-max=N          Percent counts of sample default is sqrt(1/num samples)
-    -i N --iters=N          Number of iterations [default: 1000]
+positional arguments:
+  <counts_fn>  Counts file: features in rows, samples in columns, delimited
+
+options:
+  -h, --help             Print this help and exit
+  -o, --output FILE      Destination of the shrunk counts in CSV format
+                         (default: stdout)
+  -f, --shrink-factor N  Shrinkage factor, between 0 and 1 (default: 0.25)
+  -p, --p-max N          Largest fraction of a feature's counts one sample may
+                         hold (when not given, sqrt(1 / number of samples))
+  -i, --iters N          Number of iterations (default: 1000)
 ```

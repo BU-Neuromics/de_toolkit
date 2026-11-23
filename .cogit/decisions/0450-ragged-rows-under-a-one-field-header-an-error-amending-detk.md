@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-23
 from: {node: release/ragged-sheet, step: s2}
 applies: [release/ragged-sheet]
 issue: 152
+revisions:
+  - {date: 2026-11-23, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A, under Adam's delegation via the driver session, 2026-11-20 (DETK-0063): the change is Adam's own request (2026-11-22), implemented and reviewed in PR #149; this record writes it down where the next reader of DETK-0320 will find it"}
 ---
 
 # Ragged rows under a one-field header: an error, amending DETK-0320's agreement rule

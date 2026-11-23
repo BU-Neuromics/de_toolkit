@@ -9,15 +9,19 @@ acceptance:
 from: [DETK-0050, DETK-0051, DETK-0064]
 scope: [new:docs/tutorials/, new:tests/tutorials/, +mkdocs.yml, +CHANGELOG]
 prev: [DETK-0064, release/tutorial-airway, release/miller-recipes, release/record, release/recipe-notes]
+issue: 153
+visited: 413b2d0
+status: done
+done: 9de7c35
 ---
 
 # Tutorial: derived covariates and recorded steps
 
 ## Implementation plan
 
-- [ ] @developer Write the page with its checked outputs and crate check, index and nav; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Follow the page as a new user would and check the crate entries <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Write the page with its checked outputs and crate check, index and nav; CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Follow the page as a new user would and check the crate entries <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

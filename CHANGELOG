@@ -260,6 +260,15 @@ predates everything below.
   from it), and `tests/example/` is gone. The agent skill's airway reference
   shows the same workflow, `--size-factors` restored, and a test keeps it in
   step with the page (#111)
+- Tutorial: derived covariates and recorded steps. From the airway data,
+  with the read length kept in the sample sheet, it adds a constant column,
+  the z-score and the log of the read length with the Miller recipes, each
+  through `detk-util record`; shows a recipe stopping on a missing value and
+  naming the sample; fits `detk-de deseq2` with the z-scored column in the
+  design; shows that a call in a formula is an error (DETK-0050); and follows
+  the sheet `detk-de` read back through the crate to the Miller steps, with
+  mlr's version and each file's checksum. It runs in the CI job with R and
+  Miller (#153)
 - Derived covariates with Miller (`docs/recipes/covariates.md`): tested
   Miller recipes for the derived columns a design formula no longer computes
   (DETK-0051, DETK-0062): a constant column, `<column>_log2`, `_log10`,

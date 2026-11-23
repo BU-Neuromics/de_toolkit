@@ -62,6 +62,10 @@ visited: f6503ed
 - [ ] [A one-field header over wider rows reads as R writes it](release/short-header.md) <!-- s47 -->
 - [ ] [Recipe page notes and record's failure line](release/recipe-notes.md) <!-- s48 -->
 - [ ] [CI runs the report's browser render tests](release/ci-jsdom.md) <!-- s49 -->
+- [ ] [A sample sheet with ragged rows is an error, not one column](release/ragged-sheet.md) <!-- s50 -->
+- [ ] [The render-test CI step reads only pytest's summary line](release/jsdom-summary.md) <!-- s51 -->
+- [ ] [The crate does not list stdout as a file](release/crate-stdout.md) <!-- s52 -->
+- [ ] [detk-util record writes a program PATH finds by its name](release/record-program.md) <!-- s53 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
 

@@ -14,7 +14,7 @@ visited: 501927d
 ## Implementation plan
 
 - [x] @developer Make the render-test step check only pytest's final summary line, show the check on the four sample outputs in the PR, put the functools import in order; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: run the check on the sample outputs, read the 3.13 job's log for the summary line and the count of needs_jsdom tests <!-- s2 -->
+- [x] @reviewer Review the PR: run the check on the sample outputs, read the 3.13 job's log for the summary line and the count of needs_jsdom tests <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes

@@ -15,6 +15,8 @@ acceptance:
 from: [DETK-0001, DETK-0025, DETK-0031, DETK-0032]
 scope: [+de_toolkit/crate.py, +tests/report/test_crate.py, docs/tools/, docs/report.md, docs/index.md, docs/quickstart.md, docs/concepts.md, docs/api.md, docs/agent-skills.md, docs/example.md, docs/dev/, README.md, new:tests/docs/, +CHANGELOG]
 prev: [release/cli-migrate, release/cli-gaps, release/size-factors, release/formula-rename, release/record, release/miller-recipes, release/tutorial-quant, release/tutorial-airway, release/tutorial-covariates, release/help-options, release/tidy-output, release/record-help, release/report-paths, release/example-paths, release/recipe-notes, release/ragged-sheet, release/crate-stdout, release/record-program, DETK-0390]
+issue: 162
+visited: cedd7c3
 ---
 
 # Update the docs for the 1.0 CLI

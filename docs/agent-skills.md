@@ -79,6 +79,11 @@ The skill lives in the repository under
   enrichment against WikiPathways needs.
 - `references/commands.md`: the usage of each command the skill uses, as the
   commands' `--help` prints it.
+- `references/covariates.md`: the Miller recipes for deriving a covariate
+  column (logs, a z-score, centring, min-max scaling, a constant column) in the sample
+  information file before naming it in a design formula, each run through
+  `detk-util record`; the [Derived covariates with Miller](recipes/covariates.md)
+  page in short.
 
 The skill describes the command line, detk's [stable interface](index.md#stability).
 detk's test suite (`tests/skills/test_skills.py`) checks the skill against

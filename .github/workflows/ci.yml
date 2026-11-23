@@ -121,7 +121,10 @@ jobs:
           uv run pytest tests -o addopts="" -p no:cacheprovider \
             --cov=de_toolkit --cov-report=term-missing
 
-      # list each render test by name, so the log shows every one ran and passed
+      # list each render test by name, so the log shows every one ran and passed;
+      # pass or fail is read from pytest's final summary line alone (the -v
+      # listing prints test names, which may hold 'error' or 'failed'): it must
+      # count passed tests and no failed, error, skipped, xfailed or xpassed ones
       - name: Report render tests ran in jsdom
         if: matrix.python-version == '3.13'
         env:
@@ -130,7 +133,7 @@ jobs:
           set -o pipefail
           uv run pytest tests/report/test_report_view_text.py -o addopts="" \
             -p no:cacheprovider -v -rs | tee "$RUNNER_TEMP/jsdom.txt"
-          if grep -Eq "skipped|SKIPPED|failed|error" "$RUNNER_TEMP/jsdom.txt"; then exit 1; fi
+          tail -n 1 "$RUNNER_TEMP/jsdom.txt" | awk '{ print "pytest summary: " $0 } /[0-9]+ passed/ && !/[0-9]+ (failed|errors?|skipped|xfailed|xpassed)/ { ok = 1 } END { exit !ok }'
 
       - name: Upload coverage data
         uses: actions/upload-artifact@v4

@@ -68,6 +68,7 @@ visited: f6503ed
 - [ ] [detk-util record writes a program PATH finds by its name](release/record-program.md) <!-- s53 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
 - [ ] [CI and release workflows run with least-privilege token permissions](release/workflow-permissions.md) <!-- s54 -->
+- [ ] [detk-util tidy names a ragged sheet by the path it was given](release/tidy-sheet-name.md) <!-- s55 -->
 - [ ] @human Accept: 1.0.0 is out <!-- s2 -->
 
 ## Notes

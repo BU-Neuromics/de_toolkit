@@ -57,11 +57,18 @@ drop samples. So each recipe checks every sample first and computes second:
   file from inside Miller (`emit > @out`), not through a shell redirect, so
   a recipe that stops leaves no output file behind.
 
+A sheet with a header and no samples has nothing to derive from. The
+z-score and min-max recipes stop on it with a message of their own
+(`age_zscore: age has no values: the sheet has no samples`); the others
+write no output file, so `detk-util record` stops on the missing output.
+Either way it exits 1 and records nothing.
+
 Each recipe is a Miller program kept in a shell variable, then one
 `detk-util record` command that runs it. `-s col=...` names the column to
 derive from and `-s out=...` the file to write, which is also the `-o` of
 `detk-util record`. The program does not change, so copy it as it is and
-change only those two and the file names.
+change only those two and the file names. The constant column's recipe has
+no `col=`: change its column name and value (`$study = "pilot"`) instead.
 
 ## The sample sheet
 
@@ -82,6 +89,15 @@ EOF
 
 Miller keeps every value it does not change as it was written, so `007`
 stays `007` and `52.0` stays `52.0` in every output below.
+
+The same rule makes Miller read a zero-padded whole number, such as `010`
+or `05`, as text, not as a number, so a recipe that derives from a column
+holding one stops and names the sample as "missing or not a number". (A
+decimal such as `05.5` is read as a number.) Write the value without its
+leading zeros (`10`, `5`) in the sheet and run the recipe again. Do not
+reach for Miller's `-O` flag, which reads `010` as the octal number 8.
+Zero-padded sample names, as here, are fine: the recipes do not compute
+with them.
 
 ## A constant column
 
@@ -262,11 +278,12 @@ detk-util record -q -i sample_info_bad.csv -o sample_info_bad.conc_log2.csv -- \
 ```text
 conc_log2: conc is missing, not a number or not above 0 in 009, 011
 mlr: is_null type-assertion failed at NR=6 FNR=6 FILENAME=sample_info_bad.csv
-detk-util: error: command failed with exit status 1: mlr --icsv --ocsv put -q -s col=conc -s out=sample_info_bad.conc_log2.csv ' (--verbose for the traceback)
+detk-util: error: command failed with exit status 1: mlr --icsv --ocsv put -q -s col=conc -s out=sample_info_bad.conc_log2.csv '...' sample_info_bad.csv (--verbose for the traceback)
 ```
 
 The second line is Miller's, from the assertion that stops it, and the last
-is `detk-util record`'s. There is no output file:
+is `detk-util record`'s, which shows the Miller program, several lines
+long, as `'...'`. There is no output file:
 
 ```bash
 ls sample_info_bad*
@@ -287,8 +304,8 @@ sample standard deviation, the one that divides by n - 1 (as R's `sd()` and
 `scale()` do, and numpy's `std(ddof=1)`). The program computes the mean and
 standard deviation itself, in two passes over the values, rather than with
 Miller's `stddev`, which is computed in one pass and can be off in the last
-digits; on six samples that all have the value 7.2 it gives about 1.2e-7,
-not 0. For the same reason a column that does not vary is found by its
+digits; on six samples that all have the value 7.2 it gives about 1e-7
+(1.07e-7 on Miller 6.22), not 0. For the same reason a column that does not vary is found by its
 smallest and largest values being equal:
 
 ```bash
@@ -297,6 +314,10 @@ zscore='
   if (!is_numeric($[@col])) { @bad[NR] = $[[[1]]] }
   else { @min = min(@min, $[@col]); @max = max(@max, $[@col]) }
   end {
+    if (length(@rec) == 0) {
+      eprint @col . "_zscore: " . @col . " has no values: the sheet has no samples";
+      asserting_null("stop");
+    }
     if (length(@bad) > 0) {
       eprint @col . "_zscore: " . @col . " is missing or not a number in " . joinv(@bad, ", ");
       asserting_null("stop");
@@ -372,6 +393,10 @@ minmax='
   if (!is_numeric($[@col])) { @bad[NR] = $[[[1]]] }
   else { @min = min(@min, $[@col]); @max = max(@max, $[@col]) }
   end {
+    if (length(@rec) == 0) {
+      eprint @col . "_minmax: " . @col . " has no values: the sheet has no samples";
+      asserting_null("stop");
+    }
     if (length(@bad) > 0) {
       eprint @col . "_minmax: " . @col . " is missing or not a number in " . joinv(@bad, ", ");
       asserting_null("stop");

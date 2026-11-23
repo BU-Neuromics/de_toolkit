@@ -1250,6 +1250,26 @@ class Record(DetkModule):
         return self
 
 
+def _command_line(argv):
+    """
+    *argv* as one line of shell, for a message: an argument that spans
+    several lines (a Miller or awk program) is shown as its first line and
+    ``...`` inside its quotes, or as ``'...'`` when its first line is blank,
+    so the message is not cut at the argument's first newline.
+    """
+    import shlex
+
+    words = []
+    for arg in argv:
+        if "\n" in arg:
+            word = shlex.quote(arg.split("\n", 1)[0].rstrip() + "...")
+            arg = word if word.startswith("'") else f"'{word}'"
+        else:
+            arg = shlex.quote(arg)
+        words.append(arg)
+    return " ".join(words)
+
+
 def run_record(argv, inputs=(), outputs=(), tool=None, tool_version=None):
     """
     Run the command *argv* (a list, run without a shell, with this process's
@@ -1275,8 +1295,8 @@ def run_record(argv, inputs=(), outputs=(), tool=None, tool_version=None):
             raise ValueError(f"input file {path} does not exist")
     input_digests = [file_digest(p) for p in inputs]
 
-    command = shlex.join(argv)
-    logger.info("running: %s", command)
+    logger.info("running: %s", shlex.join(argv))
+    command = _command_line(argv)
     sys.stdout.flush()
     sys.stderr.flush()
     try:

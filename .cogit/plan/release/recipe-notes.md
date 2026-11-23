@@ -7,15 +7,19 @@ acceptance:
   - on a header-only sheet the z-score and min-max recipes exit 1 with a message of their own saying the column has no values (not Miller's 'conditional expression did not evaluate to boolean'), and write no output and no module JSON; a tests/recipes case for every recipe on a header-only sheet asserts exit 1, no output file and, for z-score and min-max, the message; DETK-0070's skill test passes; CHANGELOG under Fixed
 scope: [+de_toolkit/util.py, +tests/util/test_record.py, docs/recipes/covariates.md, skills/detk/references/covariates.md, tests/recipes/, +CHANGELOG]
 prev: [release/record-help, release/report-paths]
+issue: 140
+visited: d201819
+status: done
+done: bc1c426
 ---
 
 # Recipe page notes and record's failure line
 
 ## Implementation plan
 
-- [ ] @developer Show a failed command on one line in detk-util record's messages (multi-line arguments elided), give the z-score and min-max recipes their own header-only message, and add the page and skill notes (zero-padded numbers, the constant recipe's rule, the stddev figure); tests in tests/util and tests/recipes; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: run the failing recipe on the page through detk-util record and read its last line, run each recipe on a header-only sheet, and read the skill's covariates reference as an agent would <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Show a failed command on one line in detk-util record's messages (multi-line arguments elided), give the z-score and min-max recipes their own header-only message, and add the page and skill notes (zero-padded numbers, the constant recipe's rule, the stddev figure); tests in tests/util and tests/recipes; CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: run the failing recipe on the page through detk-util record and read its last line, run each recipe on a header-only sheet, and read the skill's covariates reference as an agent would <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

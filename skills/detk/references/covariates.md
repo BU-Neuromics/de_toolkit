@@ -14,7 +14,9 @@ https://bu-neuromics.github.io/de_toolkit/recipes/covariates/
 ## Rules
 
 - Use these recipes as written. Change only the column (`col=`), the output
-  file (`out=`, and the same name after `-o`) and the input file. Do not
+  file (`out=`, and the same name after `-o`) and the input file; for the
+  constant-column recipe, which has no `col=`, also its column name and
+  value (`$study = "pilot"`). Do not
   write a bare `mlr put '$x_log2 = log($x) / log(2)'`: Miller writes -Inf
   for the log of 0, `NaN` for a negative and an empty value for a missing
   one, silently and with exit status 0.
@@ -25,6 +27,14 @@ https://bu-neuromics.github.io/de_toolkit/recipes/covariates/
   file; `detk-util record` then exits 1 and records nothing. Report the
   named samples to the user and ask how to handle them; do not drop them or
   substitute values on your own.
+- Miller reads a zero-padded whole number (`010`, `05`) as text, so a recipe
+  names that sample as "missing or not a number". Tell the user the values
+  need writing without leading zeros (`10`, `5`) in the sheet; do not use
+  Miller's octal flag (`mlr -O`), which reads `010` as 8. Zero-padded
+  sample names are fine.
+- On a sheet with a header and no samples, the z-score and min-max recipes
+  exit 1 with "has no values"; the others write no output file, so
+  `detk-util record` exits 1 naming it. Either way nothing is recorded.
 - Name the new column `<column>_log2`, `_log10`, `_ln`, `_log2_pc1`
   (log2 of x + 1), `_zscore` (sd over n - 1, as R's `scale()`), `_center`
   or `_minmax`; the recipes do so. One underscore, never two: `__` is how
@@ -135,6 +145,10 @@ zscore='
   if (!is_numeric($[@col])) { @bad[NR] = $[[[1]]] }
   else { @min = min(@min, $[@col]); @max = max(@max, $[@col]) }
   end {
+    if (length(@rec) == 0) {
+      eprint @col . "_zscore: " . @col . " has no values: the sheet has no samples";
+      asserting_null("stop");
+    }
     if (length(@bad) > 0) {
       eprint @col . "_zscore: " . @col . " is missing or not a number in " . joinv(@bad, ", ");
       asserting_null("stop");
@@ -184,6 +198,10 @@ minmax='
   if (!is_numeric($[@col])) { @bad[NR] = $[[[1]]] }
   else { @min = min(@min, $[@col]); @max = max(@max, $[@col]) }
   end {
+    if (length(@rec) == 0) {
+      eprint @col . "_minmax: " . @col . " has no values: the sheet has no samples";
+      asserting_null("stop");
+    }
     if (length(@bad) > 0) {
       eprint @col . "_minmax: " . @col . " is missing or not a number in " . joinv(@bad, ", ");
       asserting_null("stop");

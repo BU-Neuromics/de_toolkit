@@ -7,6 +7,8 @@ acceptance:
 scope: [+de_toolkit/crate.py, +de_toolkit/report.py, +tests/report/test_crate.py, +CHANGELOG]
 issue: 147
 visited: 501927d
+status: done
+done: c74a781
 ---
 
 # The crate does not list stdout as a file
@@ -15,7 +17,7 @@ visited: 501927d
 
 - [x] @developer Leave the stdout marker out of the crate's files, keep a file really named stdout, tests including profile validation; CHANGELOG; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: run a detk command to stdout and one to a file, read both crates, and check them with rocrate-validator <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

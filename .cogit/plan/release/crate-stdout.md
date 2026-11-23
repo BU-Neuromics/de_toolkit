@@ -4,7 +4,7 @@ objective: A command that writes its result to standard output records no File e
 acceptance:
   - 'crate.py treats the out_file_path (and out_file_paths entry) ''stdout'' as the standard-output marker it is: the CreateAction lists no File for it, and the crate holds no @id ending in stdout; a file the user actually named stdout (-o stdout is the marker, so -o ./stdout) is still listed as a File; tests in tests/report/test_crate.py for detk-norm cpm to stdout (no stdout entity, the input still listed) and to -o out.csv (out.csv listed)'
   - the crate still validates under the process-run-crate profile at REQUIRED level (test_crate_validates_against_profile passes, and a case with output to stdout is validated too); module JSON's out_file_path stays 'stdout' as module_schema.json documents it; CHANGELOG under Fixed
-scope: [+de_toolkit/crate.py, +tests/report/test_crate.py, +CHANGELOG]
+scope: [+de_toolkit/crate.py, +de_toolkit/report.py, +tests/report/test_crate.py, +CHANGELOG]
 issue: 147
 visited: 501927d
 ---
@@ -31,3 +31,8 @@ no stdout entry, so this does not touch release/example-paths. No
 unfinished node holds `crate.py` or `tests/report/test_crate.py`: ready
 now. Before release/cli-docs (whose docs/report.md crate section may name
 the rule) and release/cut.
+
+Scope extended 2026-11-23 by `+de_toolkit/report.py` (`_file_relpath`
+records a file named stdout as `./stdout`), following DETK-0420 option 1,
+accepted under Adam's delegation via the driver session, 2026-11-20
+(DETK-0063).

@@ -3,6 +3,8 @@ as it was read, and each subcommand records its step in the report and the
 Process Run Crate (#114)."""
 
 import json
+import os
+import threading
 from importlib.resources import files as pkg_files
 
 import jsonschema
@@ -266,6 +268,34 @@ def test_a_ragged_one_field_header_sheet_is_an_error(work, capsys):
         " field; quote a field that holds the delimiter, or give every line the same"
         " fields (--verbose for the traceback)"
     ]
+    assert not (work / "c.csv").exists()
+    assert not (work / "out.csv").exists()
+
+
+@pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="needs os.mkfifo")
+def test_a_ragged_sheet_through_a_fifo_is_named_by_its_path(work, capsys):
+    # release/tidy-sheet-name: a FIFO (or a process substitution) is read into
+    # a buffer to be rewound, and the error named the buffer, <stream>
+    (work / "counts.csv").write_text("gene,S1,S2,S3\ng1,1,2,3\n")
+    fifo = work / "sheet.csv"
+    os.mkfifo(fifo)
+
+    def write():
+        with open(fifo, "w") as f:
+            f.write("condition\nS1,a\nS2\nS3\n")
+
+    writer = threading.Thread(target=write, daemon=True)
+    writer.start()
+    with pytest.raises(SystemExit) as e:
+        main(
+            ["detk-util", "tidy", "--no-report", "-o", "c.csv", "-p", "out.csv"]
+            + ["counts.csv", str(fifo)]
+        )
+    writer.join(timeout=30)
+    assert e.value.code == 1
+    err = capsys.readouterr().err
+    assert f"detk-util: error: {fifo}: the header 'condition' has one field" in err
+    assert "<stream>" not in err
     assert not (work / "c.csv").exists()
     assert not (work / "out.csv").exists()
 

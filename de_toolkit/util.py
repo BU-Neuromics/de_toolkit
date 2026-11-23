@@ -493,13 +493,14 @@ def read_column_data(f):
     """
     from pandas.errors import EmptyDataError
 
-    from .common import _read_with, _rewindable, _sniff
+    from .common import _read_with, _rewindable, _sniff, _source_name
 
     # every line is read as fields of text, the header too, so pandas types
     # nothing: an index pandas infers from a short header would be typed
     # (001 read as 1), so the layout is told from the field counts instead
+    name = _source_name(f)
     f, compression = _rewindable(f)
-    sep = _sniff(f, compression)
+    sep = _sniff(f, compression, name=name)
 
     def read(**kwargs):
         return _read_with(

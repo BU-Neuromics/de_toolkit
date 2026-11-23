@@ -300,10 +300,70 @@ def test_record_with_absolute_paths_records_them_relative(work):
         ("-2.5", "-2.5"),
         ("-", "-"),
         ("--opt=value", "--opt=value"),
+        # DETK-0580: an argument that starts with / but is not a path is kept
+        ("/^gene/ {print}", "/^gene/ {print}"),
+        ("/^g1,/", "/^g1,/"),
+        ("/usr/bin/env echo hi", "/usr/bin/env echo hi"),
+        ("--expr=/^g1,/", "--expr=/^g1,/"),
+        ("-e/^g1,/", "-e/^g1,/"),
+        # a path not yet written, in a directory that exists, is still a path
+        ("{w}/not_yet.csv", "not_yet.csv"),
+        ("{w}/no_such_dir/c.csv", "{w}/no_such_dir/c.csv"),
     ],
 )
 def test_relative_arg(tmp_path, arg, expected):
     from de_toolkit.report import relative_arg
 
-    w = os.path.realpath(tmp_path)
-    assert relative_arg(arg.format(w=w), w) == expected
+    # the directories the paths name exist, as they would for a real command
+    w = os.path.realpath(tmp_path / "w")
+    os.makedirs(os.path.join(w, "sub"))
+    os.makedirs(os.path.join(tmp_path, "other"))
+    assert relative_arg(arg.replace("{w}", w), w) == expected.replace("{w}", w)
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        # an awk program and a regular expression that start with /, and a
+        # shell script whose first word is an absolute program (DETK-0580)
+        ["awk", "/^gene/ {print}", "{w}/counts.csv"],
+        ["grep", "-v", "/^g1,/", "{w}/counts.csv"],
+        ["sh", "-c", "/usr/bin/env echo hi"],
+    ],
+    ids=["awk", "grep", "sh-c"],
+)
+def test_record_keeps_arguments_that_only_start_with_a_slash(work, command):
+    # the step writes copy.csv; its own arguments are recorded as typed but
+    # for the absolute path of a real file, which is still made relative
+    tool = shutil.which(command[0])
+    if tool is None:
+        pytest.skip(f"{command[0]} is not on PATH")
+    argv = [a.replace("{w}", str(work)) for a in command]
+    script = shlex.join(argv) + " > copy.csv || true; test -e copy.csv || : > copy.csv"
+    run(
+        [
+            "detk-util", "record", "--tool", command[0], "--tool-version", "1",
+            "-o", "copy.csv", "--", "sh", "-c", script,
+        ],
+        work,
+    )  # fmt: skip
+    (doc,) = docs(work / "detk_report")
+    assert doc["params"]["argv"] == ["sh", "-c", script]
+
+    # and given to record directly, as separate words
+    (work / "detk_report").rename(work / "first_report")
+    run(
+        [
+            "detk-util", "record", "--tool", command[0], "--tool-version", "1",
+            "-i", "counts.csv", "-o", "counts.csv", "--", *argv,
+        ],
+        work,
+    )  # fmt: skip
+    (doc,) = docs(work / "detk_report")
+    expected = ["counts.csv" if a == str(work / "counts.csv") else a for a in argv]
+    assert doc["params"]["argv"] == expected
+    assert shlex.split(doc["params"]["command"]) == expected
+    # the argument starting with / is kept, word for word
+    kept = [a for a in argv if a.startswith("/") and a != str(work / "counts.csv")]
+    assert kept and all(a in doc["params"]["argv"] for a in kept)
+    assert all(a in doc["argv"] for a in kept)

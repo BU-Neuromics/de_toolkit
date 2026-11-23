@@ -127,10 +127,16 @@ typed paths relative or absolute: `argv` and the parameters and checksums of
 too (DETK-0281), so a report directory can be moved or published as it is.
 What that leaves out:
 
-- **A path inside a quoted argument.** detk rewrites an argument that is a
-  path (or an option's value that is one), not paths inside an argument.
-  The script of `sh -c` is one argument, so it is written as typed,
-  absolute paths and all. Run in `/home/me/proj`,
+- **An argument that is not a path.** detk rewrites an argument that is an
+  absolute path (or an option's value that is one), not paths inside an
+  argument. An argument counts as a path only when it starts with `/`, has
+  no whitespace and its parent directory exists (DETK-0580); any other
+  argument is written as typed, even one that starts with `/`: an awk
+  program (`'/^gene/ {print}'`), a regular expression (`'/^g1,/'`) or a
+  shell script (`sh -c "/usr/bin/env echo hi"`). An absolute path to a
+  file in a directory that does not exist is kept as typed too. The script
+  of `sh -c` is one argument, so it is written as typed, absolute paths and
+  all. Run in `/home/me/proj`,
 
     ```console
     $ detk-util record -i /home/me/proj/a.csv -o /home/me/proj/b.csv -- sh -c "cp /home/me/proj/a.csv /home/me/proj/b.csv"

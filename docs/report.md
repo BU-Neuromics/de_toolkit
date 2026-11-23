@@ -129,9 +129,12 @@ What that leaves out:
 
 - **An argument that is not a path.** detk rewrites an argument that is an
   absolute path (or an option's value that is one), not paths inside an
-  argument. An argument counts as a path only when it starts with `/`, has
-  no whitespace and its parent directory exists (DETK-0580); any other
-  argument is written as typed, even one that starts with `/`: an awk
+  argument. An argument counts as a path when it is an absolute path that
+  exists, whitespace or not (`/home/me/proj/My Data/c.csv` is written
+  `My Data/c.csv`, DETK-0590); one that does not exist counts only when it
+  starts with `/`, has no whitespace and its parent directory exists
+  (DETK-0580), as an output not yet written does. Any other argument is
+  written as typed, even one that starts with `/`: an awk
   program (`'/^gene/ {print}'`), a regular expression (`'/^g1,/'`) or a
   shell script (`sh -c "/usr/bin/env echo hi"`). An absolute path to a
   file in a directory that does not exist is kept as typed too. The script

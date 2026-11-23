@@ -48,7 +48,7 @@
     "argv": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "process argument vector at recording time; argv[0] is the command's name only (e.g. detk-stats, since 1.2), the other arguments as typed, except that an absolute path, alone or as an option's value (--opt=/abs, -o/abs), is written relative to workdir (since 1.2)"
+      "description": "process argument vector at recording time; argv[0] is the command's name only (e.g. detk-stats, since 1.2), the other arguments as typed, except that an absolute path, alone or as an option's value (--opt=/abs, -o/abs), is written relative to workdir (since 1.2); for detk-util record, the program of the recorded command (the first word after --), typed as an absolute path, is written as its bare name when PATH finds that same file by that name (/usr/bin/cp is cp), and relative to workdir otherwise"
     },
     "in_file_path": {
       "type": ["string", "null"],
@@ -78,7 +78,7 @@
     },
     "params": {
       "type": "object",
-      "description": "module invocation parameters; empty only for modules that genuinely take none. A path among them is relative to workdir (since 1.2; detk-util record's command, argv, inputs and outputs). A number that is missing or not finite (NaN, inf) is null: the document is strictly valid JSON, with no bare NaN or Infinity"
+      "description": "module invocation parameters; empty only for modules that genuinely take none. A path among them is relative to workdir (since 1.2; detk-util record's command, argv, inputs and outputs), except that record's program, typed as an absolute path, is its bare name when PATH finds that same file by that name. A number that is missing or not finite (NaN, inf) is null: the document is strictly valid JSON, with no bare NaN or Infinity"
     },
     "properties": {
       "type": "object",

@@ -248,6 +248,28 @@ def test_a_header_neither_as_long_nor_one_short_is_an_error(work):
         main(["detk-util", "tidy", "--no-report", "-o", "c.csv", "counts.csv", "samples.csv"])
 
 
+def test_a_ragged_one_field_header_sheet_is_an_error(work, capsys):
+    # release/ragged-sheet: the sheet read as one column, so S1 ('S1,a')
+    # matched no counts column and tidy exited 0 without it
+    (work / "counts.csv").write_text("gene,S1,S2,S3\ng1,1,2,3\n")
+    (work / "samples.csv").write_text("condition\nS1,a\nS2\nS3\n")
+    with pytest.raises(SystemExit) as e:
+        main(
+            ["detk-util", "tidy", "--no-report", "-o", "c.csv", "-p", "out.csv"]
+            + ["counts.csv", "samples.csv"]
+        )
+    assert e.value.code == 1
+    err = capsys.readouterr().err.splitlines()
+    assert err == [
+        "detk-util: error: samples.csv: the header 'condition' has one field and its data"
+        " lines split unalike on comma: line 2 'S1,a' has 2 fields, line 3 'S2' has 1"
+        " field; quote a field that holds the delimiter, or give every line the same"
+        " fields (--verbose for the traceback)"
+    ]
+    assert not (work / "c.csv").exists()
+    assert not (work / "out.csv").exists()
+
+
 def test_the_out_delimiter_applies_to_the_sheet(work):
     main(
         ["detk-util", "tidy", "--no-report", "-d", "\t", "-o", "c.tsv", "-p", "s.tsv"]

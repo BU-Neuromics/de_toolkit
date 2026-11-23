@@ -80,7 +80,7 @@ from .common import (
     parse_cli,
     set_logging,
 )
-from .crate import CRATE_FILENAME, finite_json, write_crate
+from .crate import CRATE_FILENAME, STDOUT_MARKER, finite_json, write_crate
 from .report_specs import clean, view_for
 from .version import __version__
 
@@ -191,15 +191,19 @@ def _relpath(path, start):
 def _file_relpath(path, workdir):
     """A file path as recorded in module JSON: relative to *workdir* (an
     absolute directory), whether it was typed relative or absolute (DETK-0280).
-    None, ``-`` (a standard stream) and anything not a string are kept."""
-    if not isinstance(path, str) or path in ("", "-"):
+    None, ``-`` (a standard stream) and anything not a string are kept, and
+    so is ``stdout``, the marker of a result written to standard output; a
+    file in *workdir* really named stdout (``./stdout``, or typed absolute)
+    is written ``./stdout``, so it is not read as the marker."""
+    if not isinstance(path, str) or path in ("", "-", STDOUT_MARKER):
         return path
     if os.path.isabs(path):
         # resolve the directories (/tmp and /private/tmp are one), not the
         # file itself: a symlinked file keeps the name it was given
         head, tail = os.path.split(path)
         path = os.path.join(os.path.realpath(head), tail)
-    return _relpath(os.path.normpath(os.path.join(workdir, path)), workdir)
+    rel = _relpath(os.path.normpath(os.path.join(workdir, path)), workdir)
+    return "./" + rel if rel == STDOUT_MARKER else rel
 
 
 def relative_arg(arg, workdir):

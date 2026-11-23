@@ -25,6 +25,8 @@ module JSON documents under ``<report_dir>/json/``:
   ``result`` list every input and output (the envelope's ``in_file_paths``
   and ``out_file_paths``), each ``File`` with its ``sha256`` and
   ``contentSize``
+- a command that wrote its result to standard output (``out_file_path``
+  ``stdout``, the marker) has no ``result`` File for it
 
 The crate is written into the report directory and rooted there
 (DETK-0280): each report has its own, and a file is named by its path
@@ -52,6 +54,10 @@ RO_CRATE_CONTEXT = "https://w3id.org/ro/crate/1.1/context"
 # the Workflow Run terms (sha256), added to the context when a file has one
 WFRUN_CONTEXT = "https://w3id.org/ro/terms/workflow-run/context"
 CRATE_FILENAME = "ro-crate-metadata.json"
+# the out_file_path a detk command records when it writes its result to
+# standard output (its -o default); not a file, so the crate lists none for it.
+# A file really named stdout is recorded ./stdout (see report._file_relpath)
+STDOUT_MARKER = "stdout"
 
 
 def finite_json(obj):
@@ -289,6 +295,10 @@ def build_crate(docs, crate_root, report_dir=None):
         results = []
         seen = set()
         for path in _paths(doc, "out_file_paths", "out_file_path"):
+            # standard output is no file; a step record recorded names only
+            # files it found and checksummed, so its stdout is one
+            if path == STDOUT_MARKER and not recorded:
+                continue
             ref = _link(files, ref_of(path), digests.get(ref_of(path)), produced=True)
             if ref["@id"] not in seen:
                 seen.add(ref["@id"])

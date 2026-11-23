@@ -7,15 +7,20 @@ acceptance:
   - detk-util tidy -p out.csv with counts 'gene,S1,S2,S3' and the sheet 'condition' / 'S1,a' / 'S2' / 'S3' exits 1 with that message on one line and writes neither the counts output nor out.csv (today it exits 0 and drops S1, logging only at INFO); a test in tests/util/test_tidy.py; read_delimited's and _sniff's docstrings say when the error is raised; CHANGELOG under Fixed
 from: [DETK-0320]
 scope: [+de_toolkit/common.py, +tests/common/test_read_delimited.py, +tests/util/test_tidy.py, +CHANGELOG]
+issue: 145
+visited: 501927d
+prev: [DETK-0450]
+status: done
+done: 2ad01be
 ---
 
 # A sample sheet with ragged rows is an error, not one column
 
 ## Implementation plan
 
-- [ ] @developer When a one-field header sits over data lines that split unalike on a delimiter that counts under DETK-0320, raise an error naming the file, the delimiter and the lines; tests for the ragged forms and for what stays one column, through read_delimited, read_id_table and detk-util tidy; docstrings; CHANGELOG; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: run detk-util tidy -p on the ragged sheet and on a bare ID list, a quoted ID list with a comma and an unquoted list with spaces, and read the outputs and messages <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer When a one-field header sits over data lines that split unalike on a delimiter that counts under DETK-0320, raise an error naming the file, the delimiter and the lines; tests for the ragged forms and for what stays one column, through read_delimited, read_id_table and detk-util tidy; docstrings; CHANGELOG; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: run detk-util tidy -p on the ragged sheet and on a bare ID list, a quoted ID list with a comma and an unquoted list with spaces, and read the outputs and messages <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

@@ -1,12 +1,16 @@
 """Tests for the Process Run Crate emitter (de_toolkit.crate)."""
 
 import json
+import os
+import subprocess
+import sys
 
 import pytest
 
 from de_toolkit.crate import (
     CRATE_FILENAME,
     PROFILE_URI,
+    STDOUT_MARKER,
     SUBTOOLS,
     build_crate,
     write_crate,
@@ -188,7 +192,6 @@ def test_crate_validates_against_profile(tmp_path):
     """Full conformance check with rocrate-validator, when available: the
     crate rooted in the report directory, its files ../ references."""
     pytest.importorskip("rocrate_validator")
-    from rocrate_validator import services, models
 
     (tmp_path / "raw.csv").write_text("x\n")
     (tmp_path / "norm.csv").write_text("x\n")
@@ -209,6 +212,13 @@ def test_crate_validates_against_profile(tmp_path):
     )
     crate = graph_of(json.loads((report / CRATE_FILENAME).read_text()))
     assert {p["@id"] for p in crate["./"]["hasPart"]} == {"../raw.csv", "../norm.csv"}
+    assert_valid_process_run_crate(report)
+
+
+def assert_valid_process_run_crate(report):
+    "The crate in *report* conforms to the Process Run Crate profile (REQUIRED)"
+    from rocrate_validator import services, models
+
     settings = services.ValidationSettings(
         rocrate_uri=str(report),
         profile_identifier="process-run-crate",
@@ -216,3 +226,152 @@ def test_crate_validates_against_profile(tmp_path):
     )
     result = services.validate(settings)
     assert not result.has_issues(), "\n".join(str(i) for i in result.get_issues())
+
+
+# ------------------------------------------- standard output is not a file
+
+COUNTS = "gene,s1,s2,s3,s4\n" + "".join(
+    f"g{g},{10 + g},{20 + 2 * g},{15 + g},{30 + 3 * g}\n" for g in range(30)
+)
+
+
+def run_detk(args, cwd):
+    "Run a detk console script in *cwd*, as a user would; its stdout"
+    env = dict(os.environ)
+    env["PATH"] = os.path.dirname(sys.executable) + os.pathsep + env.get("PATH", "")
+    p = subprocess.run(args, cwd=cwd, env=env, capture_output=True, text=True)
+    assert p.returncode == 0, f"{args} failed\n{p.stdout}\n{p.stderr}"
+    return p.stdout
+
+
+@pytest.fixture
+def work(tmp_path):
+    w = tmp_path / "work"
+    w.mkdir()
+    (w / "counts.csv").write_text(COUNTS)
+    return w
+
+
+def module_doc(report):
+    (path,) = (report / "json").glob("*.json")
+    return json.loads(path.read_text())
+
+
+def cpm_action(graph):
+    (action,) = [e for e in graph.values() if e["@type"] == "CreateAction"]
+    return action
+
+
+def test_cpm_to_stdout_lists_no_stdout_file(work):
+    out = run_detk(["detk-norm", "cpm", "counts.csv"], work)
+    assert out.startswith("gene")
+    report = work / "detk_report"
+    # module JSON keeps the documented marker
+    assert module_doc(report)["out_file_path"] == STDOUT_MARKER
+    graph = graph_of(json.loads((report / CRATE_FILENAME).read_text()))
+    assert not [i for i in graph if i.endswith("stdout")]
+    action = cpm_action(graph)
+    assert "result" not in action
+    # the input is still listed
+    assert {"@id": "../counts.csv"} in action["object"]
+    assert graph["../counts.csv"]["@type"] == "File"
+    assert {p["@id"] for p in graph["./"]["hasPart"]} == {"../counts.csv"}
+
+
+def test_cpm_to_a_file_lists_it(work):
+    run_detk(["detk-norm", "cpm", "-o", "out.csv", "counts.csv"], work)
+    report = work / "detk_report"
+    assert module_doc(report)["out_file_path"] == "out.csv"
+    graph = graph_of(json.loads((report / CRATE_FILENAME).read_text()))
+    assert cpm_action(graph)["result"] == [{"@id": "../out.csv"}]
+    assert graph["../out.csv"]["@type"] == "File"
+    assert {p["@id"] for p in graph["./"]["hasPart"]} == {"../counts.csv", "../out.csv"}
+
+
+@pytest.mark.parametrize("typed", ["./stdout", "--output=./stdout", "{w}/stdout"])
+def test_a_file_really_named_stdout_is_listed(work, typed):
+    # -o stdout is the marker; a file named stdout is typed another way
+    opt = typed.format(w=os.path.realpath(work))
+    args = [opt] if opt.startswith("--") else ["-o", opt]
+    out = run_detk(["detk-norm", "cpm", *args, "counts.csv"], work)
+    assert out == ""
+    assert (work / "stdout").read_text().startswith("gene")
+    report = work / "detk_report"
+    doc_ = module_doc(report)
+    assert doc_["out_file_path"] == "./stdout"
+    # an absolute path in argv is recorded relative, and still not the marker
+    assert STDOUT_MARKER not in doc_["argv"]
+    graph = graph_of(json.loads((report / CRATE_FILENAME).read_text()))
+    assert cpm_action(graph)["result"] == [{"@id": "../stdout"}]
+    assert graph["../stdout"]["@type"] == "File"
+    assert {"@id": "../stdout"} in graph["./"]["hasPart"]
+
+
+def test_stdout_marker_left_out_of_out_file_paths(tmp_path):
+    # detk-util tidy lists its outputs, the first standard output
+    (tmp_path / "cols.csv").write_text("x\n")
+    crate = build_crate(
+        [
+            doc(
+                "tidy",
+                "t1",
+                in_file_path="counts.csv",
+                out_file_path=STDOUT_MARKER,
+                out_file_paths=[STDOUT_MARKER, "cols.csv"],
+                workdir=str(tmp_path),
+            )
+        ],
+        str(tmp_path),
+    )
+    g = graph_of(crate)
+    assert not [i for i in g if i.endswith("stdout")]
+    action = next(e for e in crate["@graph"] if e["@type"] == "CreateAction")
+    assert action["result"] == [{"@id": "cols.csv"}]
+
+
+def test_recorded_output_named_stdout_is_a_file(tmp_path):
+    # detk-util record checksums every output it lists: each is a file,
+    # whatever its name
+    (tmp_path / "stdout").write_text("x\n")
+    crate = build_crate(
+        [
+            doc(
+                "record",
+                "r1",
+                out_file_path="stdout",
+                out_file_paths=["stdout"],
+                workdir=str(tmp_path),
+                params={"tool": "cp", "tool_version": "9"},
+            )
+        ],
+        str(tmp_path),
+    )
+    action = next(e for e in crate["@graph"] if e["@type"] == "CreateAction")
+    assert action["result"] == [{"@id": "stdout"}]
+
+
+@pytest.mark.parametrize(
+    "typed,recorded",
+    [
+        ("stdout", "stdout"),
+        ("./stdout", "./stdout"),
+        ("sub/../stdout", "./stdout"),
+        ("{w}/stdout", "./stdout"),
+        ("sub/stdout", "sub/stdout"),
+        ("-", "-"),
+    ],
+)
+def test_file_relpath_keeps_the_marker_apart(tmp_path, typed, recorded):
+    from de_toolkit.report import _file_relpath
+
+    w = os.path.realpath(tmp_path)
+    assert _file_relpath(typed.format(w=w), w) == recorded
+
+
+def test_crate_with_output_to_stdout_validates(work):
+    pytest.importorskip("rocrate_validator")
+    run_detk(["detk-norm", "cpm", "counts.csv"], work)
+    report = work / "detk_report"
+    graph = graph_of(json.loads((report / CRATE_FILENAME).read_text()))
+    assert "result" not in cpm_action(graph)
+    assert_valid_process_run_crate(report)

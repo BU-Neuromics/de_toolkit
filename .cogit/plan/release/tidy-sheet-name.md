@@ -11,4 +11,21 @@ scope: [+de_toolkit/util.py, +tests/util/test_tidy.py, +CHANGELOG]
 
 ## Implementation plan
 
+- [ ] @developer Pass the sheet's name to _sniff in read_column_data; a FIFO test through detk-util tidy; CHANGELOG; open the PR <!-- s1 -->
+- [ ] @reviewer Review the PR: run detk-util tidy -p with the ragged sheet through <(cat sheet.csv) and as a file, and read both messages <!-- s2 -->
+- [ ] @human Accept <!-- s3 -->
+
 ## Notes
+
+Planned 2026-11-23 from the release/ragged-sheet review (#149, not
+blocking, item 2): `read_column_data` (util.py, about line 502) calls
+`_sniff(f, compression)` after `_rewindable`, without `name=`, so for a
+FIFO or process substitution, which `_rewindable` reads into a BytesIO,
+the ragged-sheet error falls back to `_source_name` of the buffer and says
+`<stream>`. read_delimited and read_id_table (common.py) capture
+`_source_name(source)` before `_rewindable`; this does the same. A regular
+file is unaffected (`_rewindable` returns the path).
+
+Scope shares only `+` entries: release/record-program also edits util.py
+(`run_record`) and its own tests/util/test_record.py, a different function
+and file, so the two do not collide. Ready now; before release/cut.

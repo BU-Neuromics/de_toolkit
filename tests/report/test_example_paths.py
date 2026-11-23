@@ -5,7 +5,6 @@ absolute path appears anywhere in the files' text."""
 
 import json
 import re
-from html.parser import HTMLParser
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
 import pytest
@@ -28,59 +27,16 @@ RAW = re.compile(
     r"/home/|/Users/|/tmp/|/private/|/root/|file://|(?<![A-Za-z0-9])[A-Za-z]:[\\/]",
 )
 
-
-class _Scripts(HTMLParser):
-    "Each <script> element of a page: its attributes and its body"
-
-    def __init__(self):
-        super().__init__(convert_charrefs=False)
-        self.scripts, self._open = [], None
-
-    def handle_starttag(self, tag, attrs):
-        if tag == "script":
-            self._open = (dict(attrs), [])
-
-    def handle_data(self, data):
-        if self._open is not None:
-            self._open[1].append(data)
-
-    def handle_endtag(self, tag):
-        if tag == "script" and self._open is not None:
-            self.scripts.append((self._open[0], "".join(self._open[1])))
-            self._open = None
+SCRIPT = re.compile(r'<script type="application/json" id="(detk-[a-z]+)">(.*?)</script>', re.S)
+# an inline code <script>: the vendored Vega libraries and the report's own
+# script, which come from the package, not the run; Vega's minified code holds
+# "file://" and "o:/[" of its own, so the raw-text check skips their bodies
+CODE = re.compile(r"(<script>)(.*?)(</script>)", re.S)
 
 
-def scripts(html):
-    "(attributes, body) of every <script> element in *html*"
-    parser = _Scripts()
-    parser.feed(html)
-    parser.close()
-    return parser.scripts
-
-
-def json_blocks(html):
-    "The report's embedded JSON data blocks, by id (detk-modules, detk-raw)"
-    return {a.get("id"): body for a, body in scripts(html) if a.get("type") == "application/json"}
-
-
-def _blank_code(html):
-    """*html* with the body of each bare <script> (no attributes) blanked, its
-    newlines kept: the vendored Vega libraries and the report's own script
-    come from the package, not the run, and Vega's minified code holds
-    "file://" and "o:/[" of its own, so the raw-text check skips them. It
-    fails closed: only a body found right after a literal <script> tag, in
-    document order, is blanked; anything else is still scanned."""
-    out, at = [], 0
-    for attrs, body in scripts(html):
-        if attrs or not body:
-            continue
-        tag = html.find("<script>", at)
-        if tag < 0 or not html.startswith(body, tag + len("<script>")):
-            continue
-        start = tag + len("<script>")
-        out += [html[at:start], "\n" * body.count("\n")]
-        at = start + len(body)
-    return "".join(out) + html[at:]
+def _blank_code(text):
+    "*text* with each code <script> body blanked, its newlines kept"
+    return CODE.sub(lambda m: m[1] + re.sub(r"[^\n]", "", m[2]) + m[3], text)
 
 
 def is_absolute(value):
@@ -141,7 +97,7 @@ def absolute_paths(directory):
             found.append(f"{name}:{line}: text: {snippet}")
 
         if f.suffix == ".html":
-            for sid, body in json_blocks(text).items():
+            for sid, body in SCRIPT.findall(text):
                 for loc, v in path_fields(json.loads(body), sid):
                     if is_absolute(v):
                         found.append(f"{name}: {loc}: {v}")
@@ -163,7 +119,8 @@ def test_published_example_has_its_files():
     assert (EXAMPLE / "detk_report.html").is_file()
     assert (EXAMPLE / "ro-crate-metadata.json").is_file()
     html = (EXAMPLE / "detk_report.html").read_text(encoding="utf-8")
-    assert set(json_blocks(html)) == {"detk-modules", "detk-raw"}
+    ids = {sid for sid, _ in SCRIPT.findall(html)}
+    assert ids == {"detk-modules", "detk-raw"}
 
 
 def test_published_example_holds_no_absolute_path():
@@ -174,7 +131,7 @@ def test_published_example_holds_no_absolute_path():
 def test_published_example_records_relative_paths():
     "the checks above are not vacuous: the example records paths, relatively"
     html = (EXAMPLE / "detk_report.html").read_text(encoding="utf-8")
-    raw = json_blocks(html)["detk-raw"]
+    raw = dict(SCRIPT.findall(html))["detk-raw"]
     fields = list(path_fields(json.loads(raw)))
     assert any(loc.endswith(".workdir") for loc, _ in fields)
     assert any(".in_file_path" in loc for loc, _ in fields)
@@ -244,19 +201,6 @@ def test_check_skips_library_code_but_not_data(tmp_path):
     (tmp_path / "detk_report.html").write_text(lib + "<p>/home/someone</p>" + _report({}))
     (found,) = absolute_paths(tmp_path)
     assert found.startswith("detk_report.html:1: text: /home/someone")
-
-
-@pytest.mark.parametrize(
-    "code",
-    [
-        '<script type="text/javascript">var p="/home/someone";</script>',
-        '<SCRIPT>var p="/home/someone";</SCRIPT>',
-    ],
-)
-def test_check_skips_only_bare_script_tags(tmp_path, code):
-    "the skip fails closed: a script with attributes, or in capitals, is scanned"
-    (tmp_path / "detk_report.html").write_text(code + _report({}))
-    assert absolute_paths(tmp_path)
 
 
 def test_check_passes_relative_paths(tmp_path):

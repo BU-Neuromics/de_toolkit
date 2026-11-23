@@ -1,6 +1,7 @@
 """Tests for the Process Run Crate emitter (de_toolkit.crate)."""
 
 import json
+from pathlib import Path
 import os
 import subprocess
 import sys
@@ -375,3 +376,52 @@ def test_crate_with_output_to_stdout_validates(work):
     graph = graph_of(json.loads((report / CRATE_FILENAME).read_text()))
     assert "result" not in cpm_action(graph)
     assert_valid_process_run_crate(report)
+
+
+def test_only_files_record_checksummed_carry_sha256(work):
+    """A File carries sha256 and contentSize exactly when detk-util record
+    checksummed it (crate.py's docstring, DETK-0061): here norm.csv, which a
+    detk command wrote and a recorded step read, and copy.csv, which the
+    recorded step wrote; not counts.csv, which only a detk command read. And
+    docs/report.md's crate section says so."""
+    run_detk(["detk-norm", "cpm", "-o", "norm.csv", "counts.csv"], work)
+    run_detk(
+        [
+            "detk-util",
+            "record",
+            "-i",
+            "norm.csv",
+            "-o",
+            "copy.csv",
+            "--",
+            "cp",
+            "norm.csv",
+            "copy.csv",
+        ],
+        work,
+    )
+    report = work / "detk_report"
+    docs = [json.loads(p.read_text()) for p in (report / "json").glob("*.json")]
+    checksummed = {}
+    for d in docs:
+        if d["name"] == "record":
+            for digest in d["properties"]["inputs"] + d["properties"]["outputs"]:
+                checksummed["../" + digest["path"]] = digest
+    assert set(checksummed) == {"../norm.csv", "../copy.csv"}
+
+    graph = graph_of(json.loads((report / CRATE_FILENAME).read_text()))
+    files = {i: e for i, e in graph.items() if e.get("@type") == "File"}
+    assert set(files) == {"../counts.csv", "../norm.csv", "../copy.csv"}
+    with_sha = {i for i, e in files.items() if "sha256" in e}
+    with_size = {i for i, e in files.items() if "contentSize" in e}
+    assert with_sha == with_size == set(checksummed)
+    for ref in with_sha:
+        assert files[ref]["sha256"] == checksummed[ref]["sha256"]
+        assert files[ref]["contentSize"] == str(checksummed[ref]["size"])
+
+    page = (Path(__file__).resolve().parents[2] / "docs" / "report.md").read_text()
+    crate_section = page[page.index("## Standards-based provenance") :]
+    crate_section = crate_section[: crate_section.index("\n## ", 1)]
+    said = " ".join(crate_section.split())
+    assert "only the files `detk-util record` checksummed carry `sha256` and `contentSize`" in said
+    assert "The files of detk commands carry neither" in said

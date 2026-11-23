@@ -23,7 +23,7 @@ Run tools, then render:
 
 ```bash
 detk-stats summary raw_counts.csv sample_info.csv -o raw_stats.csv
-detk-filter "nonzero(all) < 0.5" -o filtered.csv raw_counts.csv
+detk-filter "nonzero(all) > 0.5" -o filtered.csv raw_counts.csv
 detk-norm deseq2 -o norm.csv filtered.csv
 
 detk-report generate
@@ -34,18 +34,27 @@ recorded module, organized by family (stats, filter, norm, ...) in a
 collapsible navigation tray.
 
 ```text
-Usage:
-    detk-report generate [options]
-    detk-report clean [options]
+usage: detk-report generate [options]
 
-Options:
-    --dev                Pretty-print the embedded JSON payload (larger file,
-                         easier to read)
-    --report-dir=DIR     Specify the report directory [default: ./detk_report]
+options:
+  -h, --help  Print this help and exit
+  --dev       Pretty-print the embedded JSON payload (larger file, easier to
+              read)
 ```
+
+`detk-report generate` reads the report directory given with
+`--report-dir` (default `./detk_report`), one of the
+[common options](tools/index.md#common-options).
 
 `detk-report clean` deletes the report directory, with its accumulated JSON,
 the HTML report and the provenance crate in it.
+
+```text
+usage: detk-report clean [options]
+
+options:
+  -h, --help  Print this help and exit
+```
 
 ## The report
 
@@ -115,11 +124,50 @@ So a file's location is the report directory, then `workdir`, then the
 path: `detk_report/../counts.csv`. No recorded path is absolute, whether you
 typed paths relative or absolute: `argv` and the parameters and checksums of
 [`detk-util record`](tools/util.md#record) are written relative to `workdir`
-too (DETK-0281), so a report directory can be moved or published as it is. A
-relative path still names the directories it climbs through: with the report
-directory, or a file or command, in another tree from the working directory,
-its `../` chain spells that tree's directories (`../../home/me/proj`); keep
-the report directory and the data under the working directory to avoid it. Since 1.2; documents of 1.0 and 1.1 hold `workdir` and `argv[0]`
+too (DETK-0281), so a report directory can be moved or published as it is.
+What that leaves out:
+
+- **A path inside a quoted argument.** detk rewrites an argument that is a
+  path (or an option's value that is one), not paths inside an argument.
+  The script of `sh -c` is one argument, so it is written as typed,
+  absolute paths and all. Run in `/home/me/proj`,
+
+    ```console
+    $ detk-util record -i /home/me/proj/a.csv -o /home/me/proj/b.csv -- sh -c "cp /home/me/proj/a.csv /home/me/proj/b.csv"
+    ```
+
+    records
+
+    ```json
+    {
+      "argv": ["detk-util", "record", "-i", "a.csv", "-o", "b.csv", "--",
+               "sh", "-c", "cp /home/me/proj/a.csv /home/me/proj/b.csv"],
+      "in_file_paths": ["a.csv"],
+      "out_file_paths": ["b.csv"]
+    }
+    ```
+
+    so write such steps with relative paths (`sh -c "cp a.csv b.csv"`).
+- **The program of a recorded step.** Typed as an absolute path, it is
+  written by its name when `PATH` finds that same file by that name
+  (DETK-0390): `detk-util record ... -- /usr/bin/cp a.csv b.csv` records
+  `cp a.csv b.csv`, as a detk command's `argv[0]` is its name. A program
+  `PATH` does not find, or finds as another file, is written relative like
+  any other path. So on a system where `/bin` and `/usr/bin` are separate
+  directories, `/bin/cp` is recorded as a relative path
+  (`../../../bin/cp` from `/home/me/proj`) when `PATH` finds `/usr/bin/cp`
+  first; where `/bin` is a link to `/usr/bin`, as on most current Linux
+  systems, it is the same file and is written `cp`. Type the program by its
+  name to record it by its name.
+- **The directories a relative path climbs through.** With the report
+  directory, or a file, in another tree from the working directory, the
+  `../` chain spells that tree's directories: `--report-dir /tmp/rep` run in
+  `/home/me/proj` records `workdir` as `../../home/me/proj`. That is the
+  only form of `workdir` that keeps the location rule above, so detk keeps
+  it; keep the report directory and the data under the working directory to
+  avoid it.
+
+Since 1.2; documents of 1.0 and 1.1 hold `workdir` and `argv[0]`
 absolute, and an absolute `workdir` joined to the report directory is itself,
 so the same rule reads them.
 
@@ -152,6 +200,16 @@ module JSON:
 - invocation parameters are `PropertyValue` entities
 - input and output files are shared `File` entities, so the chaining of tools
   through files — the *implicit workflow* — is visible in the metadata graph
+- standard output is not listed as a file: a command that wrote its result
+  to stdout (`out_file_path` `stdout`, the `-o` default) has no `File` for
+  it. A file really named `stdout` is recorded `./stdout` and listed
+- a step recorded by [`detk-util record`](tools/util.md#record) is a
+  `CreateAction` whose instrument is the external tool, with its version,
+  and lists every file it was given with `-i` and `-o`
+- only the files `detk-util record` checksummed carry `sha256` and
+  `contentSize`: the inputs and outputs of a step it recorded. The files of
+  detk commands carry neither, unless a recorded step also read or wrote
+  the same file
 
 The crate is rooted in the report directory, so each report directory has
 its own crate: two analyses run in one directory with different

@@ -6,6 +6,8 @@ date: 2026-11-09
 from: {node: release}
 applies: [release]
 issue: 22
+revisions:
+  - {date: 2026-11-24, by: adamlabadorf, change: "Decision: Option A, leave the PCA_tester data in history", why: "Adam's answer relayed by the driver session, 2026-11-23"}
 ---
 
 # Leave the PCA_tester data in git history or rewrite it out before 1.0
@@ -41,8 +43,12 @@ branches. Right if any data-use restriction applies.
 
 ## Decision
 
-Recommendation (#22): A if the data is unrestricted, B at once if not.
-The answer turns on the data's provenance, which is Adam's.
+Option A: leave history alone. Adam answered on 2026-11-23 (relayed by
+the driver session, 2026-11-23): leave the PCA_tester data in git
+history; no rewrite.
+
+The recommendation was (#22): A if the data is unrestricted, B at once
+if not. The answer turned on the data's provenance, which is Adam's.
 
 ## Consequences
 

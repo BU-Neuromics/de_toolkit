@@ -81,7 +81,7 @@ it in detk's test suite. For example (abbreviated):
 ```json
 {
   "name": "colzero",
-  "detk_version": "0.9.12",
+  "detk_version": "1.0.0",
   "params": {},
   "properties": {
     "zeros": [

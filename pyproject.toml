@@ -1,12 +1,14 @@
 [build-system]
-requires = ["hatchling"]
+# hatchling 1.27 is the first to support the PEP 639 license expression below
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
 name = "de_toolkit"
 description = "Suite of tools for working with count data"
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Adam Labadorf and the BU Bioinformatics Hub Team", email = "labadorf@bu.edu" },
 ]
@@ -15,8 +17,8 @@ dynamic = ["version"]
 dependencies = [
     "jinja2",
     "matplotlib",
-    "numpy",
-    "pandas",
+    "numpy>=2",
+    "pandas>=3",
     "ply",
     "scipy",
     "scikit-learn",
@@ -25,10 +27,9 @@ dependencies = [
 ]
 keywords = ["bioinformatics", "biology", "sequencing", "NGS"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "Environment :: Console",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -40,6 +41,8 @@ classifiers = [
 Homepage = "https://github.com/BU-Neuromics/de_toolkit"
 Repository = "https://github.com/BU-Neuromics/de_toolkit"
 Documentation = "https://bu-neuromics.github.io/de_toolkit/"
+Changelog = "https://github.com/BU-Neuromics/de_toolkit/blob/main/CHANGELOG"
+Issues = "https://github.com/BU-Neuromics/de_toolkit/issues"
 
 # kept for plain-pip users (`pip install -e '.[test]'`); uv users get the same
 # packages via the dev dependency group below. statsmodels is test-only

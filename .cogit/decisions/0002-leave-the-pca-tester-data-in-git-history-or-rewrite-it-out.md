@@ -1,6 +1,6 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-09
 from: {node: release}
@@ -8,6 +8,7 @@ applies: [release]
 issue: 22
 revisions:
   - {date: 2026-11-24, by: adamlabadorf, change: "Decision: Option A, leave the PCA_tester data in history", why: "Adam's answer relayed by the driver session, 2026-11-23"}
+  - {date: 2026-11-24, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A: leave the PCA_tester data in git history; no rewrite. Adam's answer relayed by the driver session, 2026-11-23."}
 ---
 
 # Leave the PCA_tester data in git history or rewrite it out before 1.0

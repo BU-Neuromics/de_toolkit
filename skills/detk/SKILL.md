@@ -27,11 +27,12 @@ detk needs Python 3.11 or newer.
 pip install 'de_toolkit>=1.0'        # or: uv tool install 'de_toolkit>=1.0'
 ```
 
-Keep the version bound: without it, pip on an older Python falls back to PyPI's old 0.9.12 release, which cannot run on
-Python 3.10 or newer. Its sign is that every command dies on start with
+Keep the version bound: without it, pip on an older Python falls back to
+PyPI's old 0.9.12 release, which cannot run on Python 3.10 or newer. Its sign
+is that every command dies on start with
 `ImportError: cannot import name 'Mapping' from 'collections'`, and
-`--version` reports 0.9.12. If you see that error, reinstall with the
-bound on Python 3.11 or newer; do not patch the installed package.
+`--version` reports 0.9.12. If you see that error, reinstall with the bound on
+Python 3.11 or newer; do not patch the installed package.
 
 `detk-de`, `detk-enrich`, and `detk-transform rlog`/`vst` call R. They need R
 (`Rscript` on `PATH`) with these packages:

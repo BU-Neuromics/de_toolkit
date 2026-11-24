@@ -57,6 +57,18 @@ Each is described in full in its entry below.
   crate record paths relative to the report directory, never absolute
   (DETK-0280, DETK-0281)
 - `detk-util record` no longer takes `-d`/`--out-delim` (#135)
+- Feature IDs and sample names are read as text exactly as written, in
+  Python and through R: a zero-padded ID such as `007` stays `007`, where it
+  was read as the number 7 (#48, DETK-0015)
+- Runs that exited 0 in 0.9 now fail: `detk-filter` with a group its column
+  does not have (`mean(cond[Z]) > 1`) is a usage error, exit 2 (#112); a
+  table with a one-field header over data lines that split unalike exits 1
+  (#145); `detk-stats summary --color-col` without column data, and a
+  `detk-transform rlog --blind` value other than `True` or `False`, are
+  usage errors, exit 2 (DETK-0081)
+- `detk-transform rlog --blind False` now runs DESeq2's non-blind rlog with
+  the design and column data given, where it ran a blind one, so its output
+  changes (DETK-0081)
 - FPKM values change: FPKM is now `count * 1e9 / (length * library size)` as
   documented (a correction of 0.9.x)
 

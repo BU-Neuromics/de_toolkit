@@ -1,7 +1,7 @@
 #
 # de_toolkit (detk) container image
 #
-# Ubuntu base with R + Bioconductor (DESeq2, fgsea, logistf) and detk installed
+# Ubuntu base with R + Bioconductor (DESeq2, fgsea, logistf, jsonlite) and detk installed
 # from the build context.
 #
 
@@ -30,7 +30,7 @@ RUN apt-get update && \
 # R / Bioconductor packages. biocLite was removed from Bioconductor in 2019;
 # BiocManager is the supported installer.
 RUN Rscript -e "install.packages('BiocManager', repos='https://cloud.r-project.org'); BiocManager::install(c('DESeq2','fgsea'), update=FALSE, ask=FALSE)" && \
-    Rscript -e "install.packages('logistf', repos='https://cloud.r-project.org')"
+    Rscript -e "install.packages(c('logistf', 'jsonlite'), repos='https://cloud.r-project.org')"
 
 ENV HOME=/root
 WORKDIR /opt/de_toolkit

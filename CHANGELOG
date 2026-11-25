@@ -1,10 +1,76 @@
 # Changelog
 
-## 1.0.0 (unreleased)
+## 1.0.0 (2026-11-25)
 
-DRAFT — finalize this heading (add the release date, drop "unreleased") when
-the 1.0.0 release is cut. Note: 0.9.12 on PyPI dates from 2020-01-18 and
-predates everything below.
+Note: 0.9.12 on PyPI dates from 2020-01-18 and predates everything below.
+
+### Breaking changes from 0.9
+
+Each is described in full in its entry below.
+
+- Python 3.10 is no longer supported; detk 1.0 needs Python 3.11 or later,
+  numpy 2 and pandas 3
+- statsmodels and patsy are no longer installed with detk: statsmodels is
+  test-only (the `test` extra), and design formulas are built with
+  formulaic (DETK-0024, DETK-0026)
+- `environment.yml` is removed; `pyproject.toml` is the one list of
+  dependencies (DETK-0048)
+- Design formulas, now built by formulaic:
+  - with an interaction, the interaction columns come after all the main
+    effects, so the last column (`detk-de deseq2 --last-term-only`) is the
+    interaction, and the DESeq2 and Firth result columns follow that order
+    (DETK-0049)
+  - the text of some design errors changes (formulaic's wording)
+  - a lone interaction of two categorical terms (`counts ~ a:b`) gives its
+    interaction columns, where it was fitted silently as `counts ~ 1`
+    (DETK-0040)
+  - formulas take column names only: a term that looks like a call, such as
+    `np.log(x)`, and is not a column is an error (DETK-0050)
+  - a number-like term other than the intercept's `0` and `1` is a usage
+    error (DETK-0190)
+  - the Python module `de_toolkit.patsy_lite` is now `de_toolkit.formula`,
+    `PatsyLiteParseError` is `FormulaParseError` and `patsy_lite_to_patsy`
+    is `to_formulaic`, with no aliases (DETK-0027)
+- Every command parses its command line with argparse (DETK-0023) and exits
+  0 on success, 2 on a usage error and 1 on any other failure (DETK-0031);
+  docopt exited 1 on a usage error, and some checks made after parsing now
+  exit 2
+- Option metavars are renamed to one convention (DETK-0025); only help
+  changes
+- Command lines that worked only by accident are usage errors (DETK-0033):
+  `detk-transform rlog` with one of `<design>` and `<cov_fn>`, a
+  `detk-stats -f` other than `csv` or `table`, a `detk-util gather
+  --format` or `--on-mismatch` outside its choices, and `--version` other
+  than as an argument of its own
+- `--column-data` is removed from `detk-filter`, `detk-stats summary` and
+  `detk-stats pca`; pass the column data as the positional `<cov_fn>`
+  (DETK-0030)
+- `detk-outlier entropy -p` is a fraction strictly between 0 and 1
+  (`-p 0.05` is the 5th percentile), where 0.x read it as a percent; `-p 5`
+  is now a usage error. The flag column is named from all of the
+  threshold's decimal digits, at least two: `-p 0.1` gives `entropy_p0_10`,
+  where it gave `entropy_p0_1` (DETK-0200)
+- In a `detk-filter` expression, `and` binds tighter than `or`: `A and B or
+  C` is `(A and B) or C`, where 0.x read `A and (B or C)` (DETK-0270)
+- The provenance crate is written into the report directory, beside
+  `detk_report.html`, not the working directory, and module JSON and the
+  crate record paths relative to the report directory, never absolute
+  (DETK-0280, DETK-0281)
+- `detk-util record` no longer takes `-d`/`--out-delim` (#135)
+- Feature IDs and sample names are read as text exactly as written, in
+  Python and through R: a zero-padded ID such as `007` stays `007`, where it
+  was read as the number 7 (#48, DETK-0015)
+- Runs that exited 0 in 0.9 now fail: `detk-filter` with a group its column
+  does not have (`mean(cond[Z]) > 1`) is a usage error, exit 2 (#112); a
+  table with a one-field header over data lines that split unalike exits 1
+  (#145); `detk-stats summary --color-col` without column data, and a
+  `detk-transform rlog --blind` value other than `True` or `False`, are
+  usage errors, exit 2 (DETK-0081)
+- `detk-transform rlog --blind False` now runs DESeq2's non-blind rlog with
+  the design and column data given, where it ran a blind one, so its output
+  changes (DETK-0081)
+- FPKM values change: FPKM is now `count * 1e9 / (length * library size)` as
+  documented (a correction of 0.9.x)
 
 ### Changed
 - Modernized to Python 3.11-3.13, numpy 2, and pandas 3
@@ -114,8 +180,7 @@ predates everything below.
 - Breaking: option metavars follow one convention (DETK-0025): FILE for a
   file, DIR for a directory, N for a number, and CHAR, COL, COLS, FMT,
   REGEX, WHAT, BOOL, NAME or TEXT for other values. Changed: `detk-filter -o/--output`
-  (was `<out_fn>`) and `--column-data` (was `<column_data_fn>`), `detk-stats
-  --column-data` (was FN) and `--color-col` (was COLNAME) and `summary
+  (was `<out_fn>`), `detk-stats --color-col` (was COLNAME) and `summary
   --bins` (was BINS), `--rda` of `detk-de` and `detk-transform` (was RDA),
   `detk-enrich -p/--cores` (was PROCS), `-i/--idcol` and `-c/--statcol` of
   `detk-enrich` and `detk-util annotate` (was FIELD), `detk-enrich

@@ -1,8 +1,7 @@
 [![CI](https://github.com/BU-Neuromics/de_toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/BU-Neuromics/de_toolkit/actions/workflows/ci.yml)
 [![docs](https://img.shields.io/badge/docs-latest-blue)](https://bu-neuromics.github.io/de_toolkit/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue)](https://github.com/BU-Neuromics/de_toolkit/blob/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/de_toolkit)](https://pypi.org/project/de_toolkit/)
-<!-- NOTE: the PyPI badge shows the stale 0.9.12 release until the 1.0.0 release is published -->
 
 # Introduction
 
@@ -37,13 +36,15 @@ submodule functions:
   - [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
   - [fgsea](https://bioconductor.org/packages/release/bioc/html/fgsea.html)
   - [logistf](https://cran.r-project.org/web/packages/logistf/index.html)
+  - [jsonlite](https://cran.r-project.org/web/packages/jsonlite/index.html),
+    which every R-backed command uses to exchange data with R
 
-The Bioconductor packages can be installed from within R with:
+The packages can be installed from within R with:
 
 ```r
 install.packages("BiocManager")
 BiocManager::install(c("DESeq2", "fgsea"))
-install.packages("logistf")
+install.packages(c("logistf", "jsonlite"))
 ```
 
 # Development
@@ -70,7 +71,7 @@ Tests that require R (DESeq2, fgsea, logistf) are skipped automatically when R
 is not available.
 
 To add a command, a subcommand or an option, see
-[docs/dev/cli.md](docs/dev/cli.md): the parsers are argparse, and their help
+[docs/dev/cli.md](https://github.com/BU-Neuromics/de_toolkit/blob/main/docs/dev/cli.md): the parsers are argparse, and their help
 is part of the 1.0 promise.
 
 # Agent skills

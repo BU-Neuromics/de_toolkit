@@ -27,19 +27,12 @@ detk needs Python 3.11 or newer.
 pip install 'de_toolkit>=1.0'        # or: uv tool install 'de_toolkit>=1.0'
 ```
 
-If pip finds no version 1.0 or newer, install from GitHub instead:
-
-```bash
-pip install git+https://github.com/BU-Neuromics/de_toolkit.git
-# or: uv tool install git+https://github.com/BU-Neuromics/de_toolkit.git
-```
-
-Never install a plain `de_toolkit` without the version bound: PyPI's old 0.9.12
-release cannot run on Python 3.10 or newer. Its sign is that every command dies
-on start with `ImportError: cannot import name 'Mapping' from 'collections'`.
-If you see that error, reinstall from GitHub as above; do not downgrade Python
-or patch the installed package. (`--version` cannot tell the two apart: until
-1.0 is released the GitHub build also reports 0.9.12.)
+Keep the version bound: without it, pip on an older Python falls back to
+PyPI's old 0.9.12 release, which cannot run on Python 3.10 or newer. Its sign
+is that every command dies on start with
+`ImportError: cannot import name 'Mapping' from 'collections'`, and
+`--version` reports 0.9.12. If you see that error, reinstall with the bound on
+Python 3.11 or newer; do not patch the installed package.
 
 `detk-de`, `detk-enrich`, and `detk-transform rlog`/`vst` call R. They need R
 (`Rscript` on `PATH`) with these packages:

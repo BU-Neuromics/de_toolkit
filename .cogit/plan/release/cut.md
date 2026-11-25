@@ -20,7 +20,7 @@ visited: 94f8bde
 - [x] @reviewer Review the version-bump PR against the definition of done (criteria 32 and 33 in `release.md`): `version.py` at 1.0.0, the Production/Stable classifier, the dated CHANGELOG heading and its "Breaking changes from 0.9" list, the regenerated `docs/example/`, packaging (`uv build`, `twine check`), and CI green including the R job <!-- s8 -->
 - [x] @human Answer DETK-0002 (deferred by Adam on 2026-11-20): leave the PCA_tester data in history, or rewrite it out before the tag <!-- s7 -->
 - [x] @human Accept the PR and say to cut the release <!-- s3 -->
-- [ ] @developer Push the `v1.0.0` tag, create the GitHub Release, check PyPI, the attached artifacts and the DOI <!-- s4 -->
+- [x] @developer Push the `v1.0.0` tag, create the GitHub Release, check PyPI, the attached artifacts and the DOI <!-- s4 -->
 - [ ] @developer Add the concept-DOI badge to the README <!-- s5 -->
 - [ ] @human Accept <!-- s6 -->
 

@@ -22,7 +22,7 @@ visited: 94f8bde
 - [x] @human Accept the PR and say to cut the release <!-- s3 -->
 - [x] @developer Push the `v1.0.0` tag, create the GitHub Release, check PyPI, the attached artifacts and the DOI <!-- s4 -->
 - [x] @developer Add the concept-DOI badge to the README <!-- s5 -->
-- [ ] @reviewer Review the s5 change: the README's DOI badge shows and links the concept DOI Zenodo minted for v1.0.0 (10.5281/zenodo.24539251, resolving to the latest version), the PyPI badge reads 1.0.0, and the node's acceptance holds (PyPI 1.0.0 by release.yml, the Release with sdist and wheel, the DOI) <!-- s9 -->
+- [x] @reviewer Review the s5 change: the README's DOI badge shows and links the concept DOI Zenodo minted for v1.0.0 (10.5281/zenodo.24539251, resolving to the latest version), the PyPI badge reads 1.0.0, and the node's acceptance holds (PyPI 1.0.0 by release.yml, the Release with sdist and wheel, the DOI) <!-- s9 -->
 - [ ] @human Accept <!-- s6 -->
 
 ## Notes

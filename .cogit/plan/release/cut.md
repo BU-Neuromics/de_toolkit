@@ -21,7 +21,7 @@ visited: 94f8bde
 - [x] @human Answer DETK-0002 (deferred by Adam on 2026-11-20): leave the PCA_tester data in history, or rewrite it out before the tag <!-- s7 -->
 - [x] @human Accept the PR and say to cut the release <!-- s3 -->
 - [x] @developer Push the `v1.0.0` tag, create the GitHub Release, check PyPI, the attached artifacts and the DOI <!-- s4 -->
-- [ ] @developer Add the concept-DOI badge to the README <!-- s5 -->
+- [x] @developer Add the concept-DOI badge to the README <!-- s5 -->
 - [ ] @reviewer Review the s5 change: the README's DOI badge shows and links the concept DOI Zenodo minted for v1.0.0 (10.5281/zenodo.24539251, resolving to the latest version), the PyPI badge reads 1.0.0, and the node's acceptance holds (PyPI 1.0.0 by release.yml, the Release with sdist and wheel, the DOI) <!-- s9 -->
 - [ ] @human Accept <!-- s6 -->
 

@@ -22,6 +22,7 @@ visited: 94f8bde
 - [x] @human Accept the PR and say to cut the release <!-- s3 -->
 - [x] @developer Push the `v1.0.0` tag, create the GitHub Release, check PyPI, the attached artifacts and the DOI <!-- s4 -->
 - [ ] @developer Add the concept-DOI badge to the README <!-- s5 -->
+- [ ] @reviewer Review the s5 change: the README's DOI badge shows and links the concept DOI Zenodo minted for v1.0.0 (10.5281/zenodo.24539251, resolving to the latest version), the PyPI badge reads 1.0.0, and the node's acceptance holds (PyPI 1.0.0 by release.yml, the Release with sdist and wheel, the DOI) <!-- s9 -->
 - [ ] @human Accept <!-- s6 -->
 
 ## Notes
@@ -38,6 +39,10 @@ ticked under the delegation of DETK-0063.
 Step s8, the review of s2's PR, was added on 2026-11-23 under Adam's
 delegation via the driver session, 2026-11-20 (DETK-0063), so the review of
 the version-bump PR is recorded in cogit before his s3.
+
+Step s9, the review of s5's README change, was added on 2026-11-25 under
+Adam's delegation via the driver session, 2026-11-20 (DETK-0063), as s8 was
+for s2, so the review is recorded before Adam's s6.
 
 Dependency note, 2026-11-23: roc-validator 0.14.0 wants the RO-Crate 1.3
 context, and tests/util/test_record.py::test_crate_validates_with_a_recorded_step

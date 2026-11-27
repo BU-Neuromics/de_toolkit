@@ -14,5 +14,6 @@ acceptance:
 
 - [ ] [fgsea takes --seed and records it](release-1-1/fgsea-seed.md) <!-- s1 -->
 - [ ] [The crate names R and the Bioconductor package versions](release-1-1/crate-versions.md) <!-- s2 -->
+- [ ] [Optional checksums of each step's files](release-1-1/crate-checksums.md) <!-- s3 -->
 
 ## Notes

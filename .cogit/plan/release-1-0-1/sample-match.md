@@ -8,6 +8,8 @@ acceptance:
   - docs/concepts.md says the sample sets must match and detk-util tidy is the explicit way to subset; CHANGELOG 1.0.1 notes the behaviour change (DETK-0600)
 from: [DETK-0600]
 scope: [de_toolkit/common.py, tests/, +docs/concepts.md, +CHANGELOG]
+issue: 178
+visited: 557da83
 ---
 
 # Counts and sample information with different samples are an error

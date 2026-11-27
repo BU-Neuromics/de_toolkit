@@ -5,6 +5,8 @@ acceptance:
   - 'reproduced first: with DESeq2 installed, pytest tests/de on v1.0.0 leaves ./tmp_output/ (counts.csv, script.R, params_*.json, stdout, stderr) in the directory it ran from, from deseq2(..., routput_dir="tmp_output") at tests/de/test_de.py:58; after, it writes under tmp_path and nothing is left'
   - 'a check keeps it so: a session-scoped conftest guard (or a CI step) fails when the suite leaves an untracked file in the repository root, and it is shown to fail on the v1.0.0 test; CHANGELOG 1.0.1 notes it under the tests'
 scope: [tests/, +.github/workflows/ci.yml, +CHANGELOG]
+issue: 210
+visited: 2bac95c
 ---
 
 # The test suite leaves the working tree clean

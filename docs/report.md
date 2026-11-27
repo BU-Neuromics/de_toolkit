@@ -15,9 +15,10 @@ from the public airway RNA-seq dataset by the [worked example](example.md).
 
 Unless `--no-report` is passed, each detk tool serializes a JSON document into
 `<report-dir>/json/` (default `./detk_report/json/`) as a side effect of the
-run. Documents are named by a content hash, so re-running the same command
-with the same parameters updates its document in place rather than
-accumulating duplicates, while runs with different parameters coexist.
+run. Documents are named by a content hash of what identifies a run (see
+[What identifies a record](#what-identifies-a-record)), so re-running the same
+command updates its document in place rather than accumulating duplicates,
+while runs with different parameters or different files coexist.
 
 Run tools, then render:
 
@@ -93,6 +94,27 @@ it in detk's test suite. For example (abbreviated):
 }
 ```
 
+### What identifies a record
+
+A document's `id`, and so its file name `json/<id>.json`, is a hash of:
+
+- the module `name` and its `params`
+- every input and output path, as recorded (relative to `workdir`):
+  `in_file_path`, `out_file_path`, `column_data_path` and, when present,
+  `in_file_paths` and `out_file_paths`
+- the recorded command line, `argv`
+- the detk version
+
+Two runs that differ in any of these keep two records: `detk-filter` run
+with `-o a.csv` and then `-o b.csv`, `detk-de deseq2` run on two sample
+information files, or `detk-enrich fgsea` run on two results files (fgsea
+records its GMT as `in_file_path`; the results file is in its `argv`). A run
+identical in all of them, the same command from the same directory, writes
+the same `id` and replaces its one record. Because paths and the command
+line are hashed as recorded, an absolute path and its relative spelling give
+the same `id`; a command spelled differently (`-o` for `--output`, or an
+extra `-v`) gives a new one. Ids change with each detk version.
+
 ### Document schema
 
 The envelope is versioned (`schema_version`, currently **1.2**) and specified
@@ -103,7 +125,7 @@ Required fields:
 | Field | Type | Meaning |
 |-------|------|---------|
 | `name` | string | module name (lowercased `DetkModule` subclass) |
-| `id` | string | content hash of (name, params, input file, detk version); stable across re-runs |
+| `id` | string | content hash of what identifies the run (name, params, every input and output path, command line, detk version); see [What identifies a record](#what-identifies-a-record) |
 | `schema_version` | string | version of this envelope format |
 | `detk_version` | string | de_toolkit version that wrote the document |
 | `last_modified` | integer | unix ms timestamp of the write |

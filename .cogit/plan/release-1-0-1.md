@@ -25,6 +25,9 @@ visited: 557da83
 - [ ] [The quickstart states how detk's DESeq2 differs from a default results() call](release-1-0-1/quickstart-deseq2.md) <!-- s9 -->
 - [ ] [R tests skip when an R package they need is missing](release-1-0-1/r-test-skips.md) <!-- s10 -->
 - [ ] [Annotate's mapping file in the provenance](release-1-0-1/crate-inputs.md) <!-- s11 -->
+- [ ] [detk-outlier entropy runs without -p](release-1-0-1/outlier-entropy-p.md) <!-- s14 -->
+- [ ] [detk-outlier shrink takes integer counts](release-1-0-1/outlier-shrink-int.md) <!-- s15 -->
+- [ ] [The test suite leaves the working tree clean](release-1-0-1/test-tmp-output.md) <!-- s16 -->
 - [ ] [Cut 1.0.1](release-1-0-1/cut.md) <!-- s12 -->
 - [ ] @human Accept: 1.0.1 is out <!-- s13 -->
 
@@ -55,3 +58,11 @@ input and side output" is that bug, widened. The method-aware `detk-wrapr
 check` (item 5) is folded into `features/wrapr-check-options` (#164), and
 the medium findings (fgsea seed, versions, checksums, preflight) are in
 `release-1-1`. Every `@human` step of this outcome and its cut is Adam's.
+
+Added 2026-11-27 by a plan session on Adam's direction: three bug fixes
+found while 1.0.1 was in progress, each reproduced on a v1.0.0 install
+before it was planned. `outlier-entropy-p` (entropy fails without `-p`;
+what it should do is DETK-0860, Proposed) and `outlier-shrink-int` (shrink
+fails on integer counts) were found by the count-checks-readers session;
+`test-tmp-output` (a test writes `./tmp_output/`) by Adam. Cut waits on
+each.

@@ -91,7 +91,15 @@ def test_CountMatrix(fake_counts_pandas_dataframe, fake_column_data_pandas_dataf
             fake_counts_pandas_dataframe, column_data=fake_column_data_pandas_dataframe, strict=True
         )
 
-    # with different sample names and not strict
+    # with different sample names and not strict: an error (DETK-0600) unless
+    # the subset is asked for
+    with pytest.raises(SampleMismatchException):
+        CountMatrix(
+            fake_counts_pandas_dataframe,
+            column_data=fake_column_data_pandas_dataframe,
+            strict=False,
+        )
+    fake_counts_pandas_dataframe = fake_counts_pandas_dataframe.drop(columns="d")
     mat = CountMatrix(
         fake_counts_pandas_dataframe, column_data=fake_column_data_pandas_dataframe, strict=False
     )

@@ -20,7 +20,7 @@
     },
     "id": {
       "type": "string",
-      "description": "content hash of (name, params, input file, detk version); stable across re-runs with identical inputs"
+      "description": "content hash of (name, params, every input and output path as recorded, argv, detk version); stable across re-runs of an identical command, different for runs that differ in any file"
     },
     "schema_version": {
       "type": "string",

@@ -298,7 +298,8 @@ options:
   -i, --idcol COL       Column (name or 0-based index) holding the feature IDs
                         (default: 0)
   -c, --statcol COL     Column (name or 0-based index) of the ranking statistic;
-                        the last numeric column if not given
+                        required when the results have more than one numeric
+                        column besides the ID column
   -a, --ascending       Rank ascending (for p-values, or to reverse the sign of
                         NES)
   --abs                 Rank by the absolute value of the statistic

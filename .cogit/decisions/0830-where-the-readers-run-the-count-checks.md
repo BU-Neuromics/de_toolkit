@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-27
 from: {node: release-1-0-1/count-checks-readers, step: s1}
 applies: [release-1-0-1/count-checks-readers]
 allowed_by: [reasonable]
+revisions:
+  - {date: 2026-11-27, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A. Adam's delegation via the driver session, 2026-11-20 (DETK-0063), extended to the post-1.0 plan 2026-11-27"}
 ---
 
 # Where the readers run the count checks

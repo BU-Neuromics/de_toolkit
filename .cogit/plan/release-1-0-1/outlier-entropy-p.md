@@ -23,8 +23,8 @@ Found by the count-checks-readers session (its reader test passes `-p 0.05`
 to get past it); reproduced by the plan session, 2026-11-27, on a v1.0.0
 install: no `-p` exits 2 with `invalid float value: None`, `-p 0.5` on the
 same file runs. No help text, doc, docopt-era usage or DETK record states a
-default, so what the no-`-p` case does is DETK-0860 (Proposed, recommending a
-default of 0.05, the value every documented run uses); this node waits on it.
+default, so what the no-`-p` case does is DETK-0860: accepted 2026-11-27, `-p`
+defaults to 0.05, the value every documented run uses.
 It also waits on count-checks-readers (PR #203), which edits the same lines of
 `main()` in de_toolkit/outlier.py; once both land, that test's `-p 0.05` can
 stay (it tests the reader, not the default).

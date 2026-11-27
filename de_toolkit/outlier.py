@@ -415,7 +415,9 @@ def main(argv=sys.argv):
     logger.info("cmd: %s", " ".join(argv[1:]))
 
     if cmd == "entropy":
-        count_obj = make_cli_count_obj(args)
+        # either subcommand may take a normalized or transformed matrix:
+        # repeated IDs only (DETK-0830)
+        count_obj = make_cli_count_obj(args, raw=False)
         pval = option_value(args, "percentile", float)
         if not 0 < pval < 1:
             raise UsageError(
@@ -431,7 +433,7 @@ def main(argv=sys.argv):
             plot_entropy(out.output, pval, name=args.plot_output)
 
     elif cmd == "shrink":
-        count_obj = CountMatrixFile(args.counts_fn)
+        count_obj = CountMatrixFile(args.counts_fn, check="ids")
         p_max = args.p_max
         if p_max is not None:
             p_max = option_value(args, "p_max", float)

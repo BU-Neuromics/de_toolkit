@@ -561,12 +561,26 @@ def set_logging(opts):
         logger.info("detk version: %s", __version__)
 
 
-def make_cli_count_obj(args):
+def make_cli_count_obj(args, raw=False):
+    """
+    The :class:`CountMatrix` of a command's ``counts_fn``, with its
+    ``cov_fn`` and ``design`` when the command takes them.
+
+    The counts are checked as read, before the column data selects or
+    reorders any sample (:func:`check_counts`, DETK-0830): a repeated sample
+    header or feature ID always raises :class:`CountsError`; with *raw*, for a
+    command that needs raw counts, so does a negative count or a zero-depth
+    sample.
+    """
     counts_fn, cov_fn, design = (getattr(args, n, None) for n in ("counts_fn", "cov_fn", "design"))
     logger.info("constructing counts matrix from %s and %s", counts_fn, cov_fn)
     logger.info("design is %s", design)
     count_obj = CountMatrixFile(
-        counts_fn, cov_fn, design=design, strict=getattr(args, "strict", False)
+        counts_fn,
+        cov_fn,
+        design=design,
+        strict=getattr(args, "strict", False),
+        check="raw" if raw else "ids",
     )
 
     logger.info("counts matrix created successfully")
@@ -1087,7 +1101,7 @@ def _more(offenders, what):
     return f" (and {n} more {what}{'s' if n > 1 else ''})" if n else ""
 
 
-def check_counts(counts, name="counts"):
+def check_counts(counts, name="counts", values=True):
     """
     Raise :class:`CountsError` if the counts matrix *counts* (a
     pandas.DataFrame, features in rows and samples in columns, as
@@ -1099,13 +1113,19 @@ def check_counts(counts, name="counts"):
       written by its name in the table), since pandas renames a repeated
       name ``A`` to ``A.1``; a column not in that mapping goes by its name
     - a feature ID listed more than once
-    - a negative count
-    - a sample whose counts sum to 0 (zero depth)
+    - with *values* (for a command that needs raw counts; a normalized or
+      transformed matrix may hold either):
+
+      - a negative count
+      - a sample with no numeric value (all missing or not numbers)
+      - a sample whose counts sum to 0 (zero depth)
 
     The checks run in that order, and the message names the first offender
     of the first that fails, and how many more of its kind there are.
     Positions are counted from 1 among the samples (columns after the
-    feature IDs) and the features (rows after the header).
+    feature IDs) and the features (rows after the header) of *counts*, so
+    they are the file's when *counts* is the table as read (the commands
+    check it before any sample is selected or reordered, DETK-0830).
     """
     as_written = counts.attrs.get(COLUMNS_AS_WRITTEN, {})
     columns = [as_written.get(str(c), str(c)) for c in counts.columns]
@@ -1130,6 +1150,9 @@ def check_counts(counts, name="counts"):
             + _more(counts.index[dup], "repeated feature ID")
         )
 
+    if not values:
+        return
+
     values = counts.apply(pandas.to_numeric, errors="coerce")
     negative = values.lt(0).to_numpy().nonzero()
     if len(negative[0]):
@@ -1142,6 +1165,13 @@ def check_counts(counts, name="counts"):
             f" has a negative count, {value}" + _more(negative[0], "negative count")
         )
 
+    blank = [str(columns[i]) for i, n in enumerate(values.notna().sum(axis=0)) if n == 0]
+    if blank:
+        raise CountsError(
+            f"{name}: sample {blank[0]!r} has no numeric counts: its values are"
+            " all missing or not numbers" + _more(blank, "sample")
+        )
+
     empty = [str(columns[i]) for i, total in enumerate(values.sum(axis=0)) if total == 0]
     if empty:
         raise CountsError(
@@ -1151,9 +1181,22 @@ def check_counts(counts, name="counts"):
 
 
 class CountMatrixFile(CountMatrix):
-    def __init__(self, count_f, column_data_f=None, design=None, **kwargs):
+    """
+    A :class:`CountMatrix` read from the counts file *count_f* (and the column
+    data file *column_data_f*). With *check* ``"ids"`` or ``"raw"``, the
+    counts are run through :func:`check_counts` as read, before the column
+    data selects or reorders any sample: ``"ids"`` for the repeated sample
+    header and feature ID checks only, ``"raw"`` for all of them. The
+    default, ``None``, checks nothing, as in 1.0.0.
+    """
+
+    def __init__(self, count_f, column_data_f=None, design=None, check=None, **kwargs):
 
         counts = read_id_table(count_f)
+        if check is not None:
+            if check not in ("ids", "raw"):
+                raise ValueError(f"check must be None, 'ids' or 'raw', not {check!r}")
+            check_counts(counts, _source_name(count_f), values=check == "raw")
 
         column_data = None
         if column_data_f is not None:

@@ -17,5 +17,6 @@ from: [DETK-0600]
 - [ ] [fgsea records the results file it ranked as an input](release-1-0-1/fgsea-input.md) <!-- s3 -->
 - [ ] [Runs that differ only in their files keep separate records](release-1-0-1/run-identity.md) <!-- s4 -->
 - [ ] [Test that an enrichment table traces back to its counts and sample information](release-1-0-1/lineage-test.md) <!-- s5 -->
+- [ ] [detk-norm cpm rejects malformed counts](release-1-0-1/count-checks.md) <!-- s6 -->
 
 ## Notes

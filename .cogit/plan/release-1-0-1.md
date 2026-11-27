@@ -18,5 +18,6 @@ from: [DETK-0600]
 - [ ] [Runs that differ only in their files keep separate records](release-1-0-1/run-identity.md) <!-- s4 -->
 - [ ] [Test that an enrichment table traces back to its counts and sample information](release-1-0-1/lineage-test.md) <!-- s5 -->
 - [ ] [detk-norm cpm rejects malformed counts](release-1-0-1/count-checks.md) <!-- s6 -->
+- [ ] [Every command that reads counts runs the count checks](release-1-0-1/count-checks-readers.md) <!-- s7 -->
 
 ## Notes

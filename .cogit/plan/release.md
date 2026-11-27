@@ -10,6 +10,8 @@ acceptance:
   - docopt-ng and patsy are replaced, the CLI unchanged for its users (DETK-0001 option B)
 issue: 23
 visited: f6503ed
+status: done
+done: 26d6647
 ---
 
 # Release 1.0.0
@@ -71,7 +73,7 @@ visited: f6503ed
 - [ ] [detk-util tidy names a ragged sheet by the path it was given](release/tidy-sheet-name.md) <!-- s55 -->
 - [ ] [detk-util record writes an existing path with spaces relative](release/record-space-paths.md) <!-- s56 -->
 - [ ] [Cut 1.0.0](release/cut.md) <!-- s1 -->
-- [ ] @human Accept: 1.0.0 is out <!-- s2 -->
+- [x] @human Accept: 1.0.0 is out <!-- s2 -->
 
 ## Definition of done
 

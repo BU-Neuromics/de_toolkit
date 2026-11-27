@@ -69,7 +69,10 @@ then `pytest`. Lint and format with `uv run ruff check .` and
 `uv run ruff format .`; docs preview with `uv run --group docs mkdocs serve`.
 
 Tests that require R (DESeq2, fgsea, logistf) are skipped automatically when R
-is not available.
+is not available, or when R lacks a package the test needs; the skip reason
+names it (`uv run pytest -rs` lists them). A new test that runs R skips with
+`tests/r_packages.py` (`skip_without_r("DESeq2")`, or the `needs_r("DESeq2")`
+marker) rather than its own check.
 
 To add a command, a subcommand or an option, see
 [docs/dev/cli.md](https://github.com/BU-Neuromics/de_toolkit/blob/main/docs/dev/cli.md): the parsers are argparse, and their help

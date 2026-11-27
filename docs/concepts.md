@@ -34,18 +34,20 @@ Every tool accepts a counts matrix of the form:
 - The name of the first column doesn't matter; every row must have the same
   number of fields.
 
-Every command that reads a counts matrix checks it as read, before the
-column data selects or reorders any sample, and exits 1 (a bad input file,
-see [Exit codes](#exit-codes)) naming the first offender and how many more
-there are (DETK-0601, DETK-0830):
+`detk-norm`, `detk-de`, `detk-transform`, `detk-stats`, `detk-filter` and
+`detk-outlier` check a counts matrix as read, before the column data selects
+or reorders any sample, and exit 1 (a bad input file, see
+[Exit codes](#exit-codes)) naming the first offender and how many more there
+are (DETK-0601, DETK-0830). `detk-util tidy`, `tidy-counts` and `tidy-covs`
+and `detk-wrapr run` do not check yet (DETK-0850).
 
-- **in every command**: a sample named more than once in the header, and a
-  feature ID listed more than once. Positions are counted in the file, from
-  1, among the samples and the features.
+- **in each of those commands**: a sample named more than once in the
+  header, and a feature ID listed more than once. Positions are counted in
+  the file, from 1, among the samples and the features.
 - **in the commands that need raw counts**: also a negative count, a sample
   with no numeric value, and a sample whose counts sum to 0 (zero depth).
 
-| Needs raw counts (all four checks) | May take a normalized or transformed matrix (repeated IDs only) |
+| Needs raw counts (all five checks) | May take a normalized or transformed matrix (repeated IDs only) |
 |---|---|
 | `detk-norm` `deseq2`, `library`, `cpm`, `fpkm`, `tpm` | `detk-de firth` |
 | `detk-de deseq2` | `detk-transform plog` |

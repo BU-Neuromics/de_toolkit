@@ -12,4 +12,17 @@ scope: [de_toolkit/common.py, de_toolkit/norm.py, tests/norm/, tests/common/, +d
 
 ## Implementation plan
 
+- [ ] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
+- [ ] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
+- [ ] @human Accept <!-- s3 -->
+
 ## Notes
+
+From the external AI-readiness audit of 1.0.0 (Codex), planned 2026-11-27 on Adam's direction via the driver session. The plan session reproduced the failure on main at 75aacb3 (= v1.0.0 plus release/cut's CITATION change) before planning it; each of the four reproduced with
+`detk-norm cpm`, exit 0: 'gene,A,A,B' gives columns A, A.1, B; two g1 rows
+both normalized; -1 gives a negative CPM; an all-zero sample gives an empty
+column. The duplicate-header check must read the header line itself, since
+pandas renames a repeated name to A.1 on read (de_toolkit/common.py, about
+line 995). The exit status waits on DETK-0601: Adam's direction said exit 2;
+DETK-0031 makes a bad input file 1. Collides with sample-match on
+de_toolkit/common.py; land one, then rebase the other.

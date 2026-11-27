@@ -11,4 +11,15 @@ scope: [tests/]
 
 ## Implementation plan
 
+- [ ] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
+- [ ] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
+- [ ] @human Accept <!-- s3 -->
+
 ## Notes
+
+From the external AI-readiness audit of 1.0.0 (Codex), planned 2026-11-27 on Adam's direction via the driver session. The plan session reproduced the failure on main at 75aacb3 (= v1.0.0 plus release/cut's CITATION change) before planning it; with an R (conda) holding fgsea and
+jsonlite but not DESeq2 or logistf, `pytest tests/cli tests/docs tests/util
+tests/tutorials tests/recipes tests/report` gave exactly these 6 failures
+(2085 passed, 84 skipped); tests/de, norm, transform, enrich and wrapr
+already skip per package (`DESeq2 package not installed, skipping test`).
+Reuse that check in a shared fixture or marker.

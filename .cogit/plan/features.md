@@ -2,7 +2,7 @@
 kind: outcome
 objective: 'detk covers more of a bulk RNA-seq DE analysis after 1.0: explicit contrasts, sample QC, and DE methods beyond DESeq2'
 acceptance:
-  - 'the feature candidates of the Phase 3 review not taken into 1.0 (#26, #27, #28), and the review follow-ups #44, #45 and #164, are each done or set aside with a reason'
+  - 'the feature candidates of the Phase 3 review not taken into 1.0 (#26, #27, #28), and the review follow-ups #44 and #164 (#45 moved to release-1-0-1), are each done or set aside with a reason'
 prev: [release]
 ---
 
@@ -22,3 +22,11 @@ prev: [release]
 
 From the Phase 3 feature review (#23): after 1.0. #24, #29 and #25 moved into `release`
 (Adam, 2026-11-09).
+
+2026-11-27: crate-inputs (#45) moved to `release-1-0-1` (the audit's
+provenance finding). A later, optional idea from the same audit, recorded
+here only (Adam: "post-1.x note"): benchmark agents running the same tasks
+with and without the detk skill (a happy path, a sample mismatch, a missing
+backend, an ambiguous rank column, an unspecified reference level), scoring
+the commands run, the questions escalated to the user and the correctness
+of the final artifacts.

@@ -8,10 +8,23 @@ acceptance:
   - the skill tests (DETK-0070) pass; docs/agent-skills.md follows; CHANGELOG 1.0.1
 from: [DETK-0600]
 scope: [skills/detk/, tests/skills/, +docs/agent-skills.md, +docs/tutorials/quantifiers.md, +CHANGELOG]
+prev: [release-1-0-1/sample-match, release-1-0-1/fgsea-statcol]
 ---
 
 # The agent skill uses tidy's outputs, always passes -c, and leads with gene-level counts
 
 ## Implementation plan
 
+- [ ] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
+- [ ] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
+- [ ] @human Accept <!-- s3 -->
+
 ## Notes
+
+From the external AI-readiness audit of 1.0.0 (Codex), planned 2026-11-27 on Adam's direction via the driver session. The plan session reproduced the failure on main at 75aacb3 (= v1.0.0 plus release/cut's CITATION change) before planning it; the
+text findings hold on main: SKILL.md runs `detk-util tidy` (line 139), then
+`detk-filter ... counts.csv` and `detk-de deseq2 ... sample_info.csv`
+(lines 164, 228); line 126 says salmon and kallisto estimates "can go to it
+as they are". The skill already tells the agent to always pass -c (line
+268); this node adds that detk now enforces it. After sample-match and
+fgsea-statcol so it describes their errors.

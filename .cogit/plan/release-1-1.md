@@ -18,5 +18,14 @@ acceptance:
 - [ ] [A JSON preflight before a fit](release-1-1/preflight.md) <!-- s4 -->
 - [ ] [Release CI tests the published wheel from counts to a validated crate](release-1-1/wheel-ci.md) <!-- s5 -->
 - [ ] [Cut 1.1.0](release-1-1/cut.md) <!-- s6 -->
+- [ ] @human Accept: 1.1.0 is out <!-- s7 -->
 
 ## Notes
+
+Planned 2026-11-27 by the plan session from the external AI-readiness audit
+of 1.0.0 (Codex), on Adam's direction via the driver session: the additive
+features. Nodes may start once the 1.0.1 nodes they follow are in; only the
+cut waits for 1.0.1 to be out. The method-aware `detk-wrapr check`
+(`features/wrapr-check-options`, #164) feeds `preflight`. Open questions:
+DETK-0602 (where the preflight lives), DETK-0603 (fgsea with no --seed),
+DETK-0604 (how checksums are asked for), each Proposed for the driver.

@@ -6,7 +6,7 @@ acceptance:
   - negative counts and zero-depth samples are rejected where the command needs raw counts (detk-norm deseq2, library, tpm, fpkm; detk-de deseq2; detk-transform vst and rlog), and accepted where a matrix may be transformed (detk-stats, detk-filter, detk-outlier); the split is listed in docs/concepts.md and CHANGELOG 1.0.1
 from: [DETK-0601, DETK-0830]
 scope: [de_toolkit/common.py, de_toolkit/norm.py, de_toolkit/de.py, de_toolkit/transform.py, de_toolkit/stats.py, de_toolkit/filter.py, de_toolkit/outlier.py, tests/, +docs/concepts.md, +CHANGELOG]
-prev: [release-1-0-1/count-checks]
+prev: [release-1-0-1/count-checks, DETK-0850]
 issue: 201
 visited: 29305c6
 ---

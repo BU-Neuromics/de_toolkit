@@ -67,8 +67,25 @@ options:
 
 Counts Per Million: counts in each column are divided by the sum of that
 column and multiplied by one million, so each column of the output sums to
-1,000,000. This is `library` scaled by 10^6. A sample with zero total counts
-produces `NaN` values and a warning.
+1,000,000. This is `library` scaled by 10^6.
+
+`cpm` rejects a counts file that cannot be counts. It exits 1 (a bad input
+file), writes no output and no report, and prints one line on stderr naming
+the first offender, when the file has:
+
+- a sample named more than once in the header (`gene,A,A,B`), read from the
+  header as written, before pandas would rename the second `A` to `A.1`
+- a feature ID listed more than once
+- a negative count, named by its feature, sample and value
+- a sample whose counts sum to 0 (zero depth), which has no counts per
+  million
+
+For example:
+
+```text
+$ detk-norm cpm counts.csv
+detk-norm: error: counts.csv: sample 'A' has no counts: its counts sum to 0 (--verbose for the traceback)
+```
 
 ```text
 usage: detk-norm cpm [options] <counts_fn>

@@ -82,6 +82,52 @@ suffix (`.2`) and all; gather does not round the counts or add transcripts up
 to genes. Every sample must list the same transcripts, or gather stops and
 names the differences (`--on-mismatch` fills or drops them instead).
 
+### Counts for differential expression
+
+This tutorial stops at normalized tables, for which salmon's transcript
+estimates are fine. Differential expression with `detk-de deseq2` wants raw
+gene-level read counts, the kind featureCounts and htseq-count write, which
+`detk-util gather` reads the same way. Gathered from salmon or kallisto and
+passed to DESeq2, the estimates above rest on two assumptions:
+
+- they are rounded to whole numbers, as if they were read counts;
+- there is no sample-specific effective-length offset, which the standard
+  tximport and DESeq2 route uses, so where fragment lengths or isoform usage
+  differ between samples, fold changes can reflect length rather than
+  expression.
+
+To start a DE analysis from salmon or kallisto, summarize the transcripts to
+genes with [tximport](https://bioconductor.org/packages/tximport/) instead,
+with `countsFromAbundance = "lengthScaledTPM"`: gene counts scaled to each
+gene's average transcript length, the form of its output that can be used as
+a plain counts matrix. A short R script does it, given a transcript-to-gene
+table (a CSV with a header line: transcript ID, gene ID):
+
+```r
+# Rscript tximport_counts.R salmon|kallisto TX2GENE OUT FILE...
+args <- commandArgs(trailingOnly = TRUE)
+files <- args[-(1:3)]
+names(files) <- basename(dirname(files))  # one directory per sample
+tx2gene <- read.csv(args[2])
+txi <- tximport::tximport(files, type = args[1], tx2gene = tx2gene,
+                          countsFromAbundance = "lengthScaledTPM",
+                          dropInfReps = TRUE)
+write.csv(txi$counts, args[3])
+```
+
+Run it through `detk-util record`, so the step, the script and the table are
+in the report and the provenance crate like detk's own steps:
+
+```console
+$ version=$(Rscript -e "cat(format(packageVersion('tximport')))")
+$ detk-util record --tool=tximport --tool-version="$version" \
+    -i tximport_counts.R -i tx2gene.csv -o gene_counts.csv -- \
+    Rscript tximport_counts.R salmon tx2gene.csv gene_counts.csv salmon/*/quant.sf
+```
+
+The [agent skill](../agent-skills.md) takes salmon and kallisto outputs the same
+route.
+
 ## Match the counts to the sample sheet
 
 The study's sample sheet has a row per sample and its condition. The pilot
@@ -119,7 +165,12 @@ sample,condition
 S1,ctrl
 ```
 
-The steps below use the two tidied files.
+tidy logs how many samples it dropped from each file (`counts columns lost:
+1`, `column data rows lost: 0`); check that they are the ones you meant to
+leave out. Since detk 1.0.1, a command given a counts file and a sample sheet
+whose samples differ exits 1 and names them rather than analysing the
+samples the two share, so a subset like this one is always a step you take
+with tidy. The steps below use the two tidied files.
 
 ## Counts per million
 

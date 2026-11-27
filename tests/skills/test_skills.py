@@ -332,7 +332,7 @@ def _args(argv):
 def _section(text, needle):
     "The text from the line holding *needle* to the next heading"
     start = text.index(needle)
-    end = re.compile(r"^#{1,6} ", re.M).search(text, start)
+    end = re.compile(r"^#{1,6} ", re.M).search(text, start + 1)
     return text[start : end.start() if end else len(text)]
 
 

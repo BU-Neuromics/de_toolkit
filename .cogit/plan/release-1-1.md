@@ -16,5 +16,6 @@ acceptance:
 - [ ] [The crate names R and the Bioconductor package versions](release-1-1/crate-versions.md) <!-- s2 -->
 - [ ] [Optional checksums of each step's files](release-1-1/crate-checksums.md) <!-- s3 -->
 - [ ] [A JSON preflight before a fit](release-1-1/preflight.md) <!-- s4 -->
+- [ ] [Release CI tests the published wheel from counts to a validated crate](release-1-1/wheel-ci.md) <!-- s5 -->
 
 ## Notes

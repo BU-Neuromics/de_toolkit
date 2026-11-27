@@ -26,6 +26,15 @@
   `results()` call, and links the `detk-de deseq2` page for the settings it
   matches; that page's R equivalent now passes `independentFiltering=FALSE`
   to `results()` as well as `cooksCutoff=Inf` (#184, DETK-0770)
+- `detk-norm cpm` rejects a malformed counts file, which it normalized
+  without a word in 1.0.0: a sample named twice in the header (the output
+  had columns `A`, `A.1`), a feature ID listed twice, a negative count (a
+  negative CPM) or a sample whose counts sum to 0 (a blank column). Each
+  exits 1 (DETK-0601), writes nothing and names the header, feature, sample
+  or value at fault on one line of stderr. The check is
+  `de_toolkit.common.check_counts`, for the other commands that read counts
+  to call
+  ([#195](https://github.com/BU-Neuromics/de_toolkit/issues/195))
 - Runs that differ only in their files keep separate report records. A
   module record's id hashed the module name, its parameters, the primary
   input and the detk version only, so two `detk-filter` runs differing only

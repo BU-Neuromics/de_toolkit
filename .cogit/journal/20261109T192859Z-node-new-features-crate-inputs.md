@@ -3,7 +3,7 @@ kind: action
 time: 2026-11-09T19:28:59Z
 by: adamlabadorf
 action: node-new
-node: features/crate-inputs
+node: release-1-0-1/crate-inputs
 ---
 
 # New node features/crate-inputs

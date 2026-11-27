@@ -47,11 +47,14 @@ coloring, group-wise filtering) take a column data file:
 | sample_m     | case      | F   | ... | c3          |
 
 The first column holds sample names matching the column names of the counts
-file; remaining columns hold any covariates needed for analysis. detk matches
-samples up by name, but it is good practice to keep the order consistent —
-tools accept a `--strict` flag to require it. The
-[`detk-util tidy`](tools/util.md) commands subset and reorder the two files
-against each other.
+file; remaining columns hold any covariates needed for analysis. The two
+files must name the same samples: a sample in only one of them is an error
+(exit 1) that names it, rather than a silent subset (DETK-0600). detk matches
+the samples up by name, so the column data rows may come in any order, but
+it is good practice to keep the order consistent — tools accept a `--strict`
+flag to require it. To analyse only some of the samples, subset the files
+explicitly with the [`detk-util tidy`](tools/util.md) commands, which keep
+the samples in both and reorder the column data to the counts.
 
 ## Design formulas
 

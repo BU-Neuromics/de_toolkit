@@ -4,6 +4,17 @@
 
 ### Behaviour changes
 
+- Counts and sample information whose sample sets differ are an error
+  (DETK-0600): every command that matches a counts file to a sample
+  information file (`detk-de`, `detk-transform rlog`, `detk-filter`,
+  `detk-stats`, `detk-wrapr run --meta-in`) exits 1 with one line naming
+  the samples found in only the counts and only the sample information.
+  1.0.0 fitted the samples the two shared and dropped the rest without a
+  warning. The same samples in another order are still matched by name;
+  `--strict` still requires the same order. To analyse a subset, run
+  `detk-util tidy` first. In the Python API, `CountMatrix` raises
+  `SampleMismatchException`; `CountMatrix(..., subset=True)` keeps the
+  samples in both, as `detk-util tidy` does.
 - `detk-enrich fgsea` without `-c/--statcol` is a usage error (exit 2) when
   the results have more than one numeric column besides the ID column
   (counted after `-i`), as every `detk-de` result does; the error names the

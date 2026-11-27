@@ -4,7 +4,7 @@ objective: 'The RO-Crate provenance records every file a command read or wrote: 
 acceptance:
   - 'reproduced first as a test per command: on v1.0.0 the crate action lacks the file named; after, every file the command read or wrote is in its object or result'
   - 'annotate''s mapping file (#45), gather''s per-sample files, the sample information file of detk-filter, detk-stats, detk-transform and detk-outlier, and detk-norm deseq2 --size-factors'' file are recorded; CHANGELOG 1.0.1'
-scope: [de_toolkit/util.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolkit/transform.py, de_toolkit/outlier.py, de_toolkit/norm.py, de_toolkit/crate.py, tests/report/, +CHANGELOG]
+scope: [de_toolkit/util.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolkit/transform.py, de_toolkit/outlier.py, de_toolkit/norm.py, de_toolkit/crate.py, de_toolkit/de.py, de_toolkit/enrich.py, docs/report.md, tests/util/test_gather.py, tests/report/, +CHANGELOG]
 prev: [release-1-0-1/fgsea-input, DETK-0890]
 issue: 209
 visited: c490c55

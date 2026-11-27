@@ -6,7 +6,7 @@ acceptance:
   - docs/report.md and CHANGELOG 1.1
 from: [DETK-0604]
 scope: [de_toolkit/report.py, de_toolkit/crate.py, tests/report/, +docs/report.md, +CHANGELOG]
-prev: [release-1-0-1/run-identity, release-1-0-1/crate-inputs]
+prev: [DETK-0604, release-1-0-1/run-identity, release-1-0-1/crate-inputs]
 ---
 
 # Optional checksums of each step's files

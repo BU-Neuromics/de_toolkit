@@ -6,7 +6,7 @@ acceptance:
   - it also reports the count checks (DETK-0601), sample-set agreement (DETK-0600) and the design's rank; the JSON is documented and versioned like the module JSON; the skill runs it before the analysis
 from: [DETK-0602]
 scope: [de_toolkit/, tests/, docs/, skills/detk/, +CHANGELOG]
-prev: [features/wrapr-check-options, release-1-0-1/sample-match, release-1-0-1/count-checks-readers]
+prev: [DETK-0602, features/wrapr-check-options, release-1-0-1/sample-match, release-1-0-1/count-checks-readers]
 ---
 
 # A JSON preflight before a fit

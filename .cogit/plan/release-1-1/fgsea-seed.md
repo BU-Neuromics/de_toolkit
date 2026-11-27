@@ -6,7 +6,7 @@ acceptance:
   - help, docs/tools/enrich.md, the skill's fgsea example and CHANGELOG 1.1
 from: [DETK-0603]
 scope: [de_toolkit/enrich.py, tests/enrich/, +docs/tools/enrich.md, skills/detk/, +CHANGELOG]
-prev: [release-1-0-1/fgsea-input]
+prev: [DETK-0603, release-1-0-1/fgsea-input]
 ---
 
 # fgsea takes --seed and records it

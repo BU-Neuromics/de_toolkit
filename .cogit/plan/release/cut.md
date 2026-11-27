@@ -9,6 +9,8 @@ scope: [de_toolkit/version.py, pyproject.toml, CHANGELOG, README.md]
 prev: [DETK-0001, release/tpm-cpm, release/annotate, release/gather, release/agent-skills, release/fpkm, release/escape-json, release/padded-ids, release/single-column, release/deps, release/view-text, release/skill-update, release/quickstart-figure, release/r-ids, release/ci-lock, release/cli-pin, release/formula-pin, release/cli-migrate, release/formula-migrate, release/cli-docs, release/statsmodels-test, release/formula-rename, release/cli-gaps, release/size-factors, release/record, release/r-design-names, release/dep-guards, release/help-options, release/tidy-output, release/parse-errors, release/strict-json, release/outlier-entropy, release/cli-messages, release/record-help, release/report-paths, release/example-paths, release/short-header, release/recipe-notes, release/ci-jsdom, release/ragged-sheet, release/jsdom-summary, release/crate-stdout, release/record-program, release/workflow-permissions, release/tidy-sheet-name, release/record-space-paths]
 issue: 168
 visited: 94f8bde
+status: done
+done: 1ca3a82
 ---
 
 # Cut 1.0.0
@@ -23,7 +25,7 @@ visited: 94f8bde
 - [x] @developer Push the `v1.0.0` tag, create the GitHub Release, check PyPI, the attached artifacts and the DOI <!-- s4 -->
 - [x] @developer Add the concept-DOI badge to the README <!-- s5 -->
 - [x] @reviewer Review the s5 change: the README's DOI badge shows and links the concept DOI Zenodo minted for v1.0.0 (10.5281/zenodo.24539251, resolving to the latest version), the PyPI badge reads 1.0.0, and the node's acceptance holds (PyPI 1.0.0 by release.yml, the Release with sdist and wheel, the DOI) <!-- s9 -->
-- [ ] @human Accept <!-- s6 -->
+- [x] @human Accept <!-- s6 -->
 
 ## Notes
 

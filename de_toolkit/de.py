@@ -634,7 +634,8 @@ def main(argv=sys.argv):
     logger.info("cmd: %s", " ".join(argv[1:]))
 
     cores = option_value(args, "cores") if args.cores != "none" else None
-    count_obj = make_cli_count_obj(args)
+    # DESeq2 needs raw counts; firth may model normalized ones (DETK-0830)
+    count_obj = make_cli_count_obj(args, raw=cmd == "deseq2")
 
     if cmd == "deseq2":
         logger.info("running DESeq2")

@@ -6,6 +6,8 @@ acceptance:
   - 'annotate''s mapping file (#45), gather''s per-sample files, the sample information file of detk-filter, detk-stats, detk-transform and detk-outlier, and detk-norm deseq2 --size-factors'' file are recorded; CHANGELOG 1.0.1'
 scope: [de_toolkit/util.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolkit/transform.py, de_toolkit/outlier.py, de_toolkit/norm.py, de_toolkit/crate.py, tests/report/, +CHANGELOG]
 prev: [release-1-0-1/fgsea-input]
+issue: 209
+visited: c490c55
 ---
 
 # Annotate's mapping file in the provenance

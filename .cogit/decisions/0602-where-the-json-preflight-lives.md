@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-27
 from: {node: release-1-1}
 applies: [release-1-1/preflight]
 issue: 173
+revisions:
+  - {date: 2026-11-27, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's decision via the driver session, 2026-11-27 (\"Yes, accept all recommendations\"): Option B, a detk-util preflight subcommand in de_toolkit/preflight.py"}
 ---
 
 # Where the JSON preflight lives

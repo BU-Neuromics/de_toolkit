@@ -4,7 +4,7 @@ state: Accepted
 authority: [human]
 date: 2026-11-27
 from: {node: release-1-0-1/run-identity, step: s1}
-applies: [release-1-0-1/run-identity]
+applies: [release-1-0-1/run-identity, release-1-0-1/fgsea-input]
 allowed_by: [reasonable]
 issue: 189
 revisions:
@@ -59,14 +59,16 @@ stays without the results file.
 
 ## Decision
 
-Recommended: **A**. #182's acceptance holds without it (the `argv` in the
-id), and the crate gap is a separate, small provenance fix that belongs in
-the module that knows its inputs.
+**A**, already planned: the node release-1-0-1/fgsea-input (after
+release-1-0-1/fgsea-statcol) makes enrich.py list the DE results file as an
+input beside the GMT. No new node. Accepted by the driver under Adam's
+delegation via the driver session, 2026-11-20 (DETK-0063), extended to the
+post-1.0 plan 2026-11-27. #182's acceptance holds without it (the `argv` in
+the id).
 
 ## Consequences
 
-- Under A, a new node scoped to de_toolkit/enrich.py and tests/enrich/;
-  #182 is unchanged.
-- Under any option, #182 keeps `argv` in the id: a command spelled
-  differently (`-o` for `--output`, an extra `-v`) is a new record, the
-  cost of never collapsing two different runs into one.
+- release-1-0-1/fgsea-input carries the fix; #182 is unchanged.
+- #182 keeps `argv` in the id: a command spelled differently (`-o` for
+  `--output`, an extra `-v`) is a new record, the cost of never collapsing
+  two different runs into one.

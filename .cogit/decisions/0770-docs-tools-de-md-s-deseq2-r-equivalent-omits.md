@@ -59,3 +59,7 @@ quickstart text sends readers to that block specifically for the settings.
 
 A follow-up node to plan (or a scope change on this one). Revisit if de.md's
 "roughly equivalent" block is rewritten wholesale.
+
+## Replies
+
+- 2026-11-27, adamlabadorf: The option accepted is option 1, not the Decision section's recommended option 2: release-1-0-1/quickstart-deseq2's scope was widened to docs/tools/de.md and the R block fixed in PR #188 (095e424, scope entry made bare in 5eafd7a), with no follow-up node, matching DETK-0760's handling.

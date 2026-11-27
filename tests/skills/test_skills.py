@@ -310,3 +310,90 @@ def test_checker_catches_drift(bad):
     check_markdown(GOOD, "good.md")
     with pytest.raises(AssertionError):
         check_markdown(bad, "bad.md")
+
+
+# The guidance the 1.0.1 audit found wrong (#214, DETK-0600): these test what
+# the skill tells the agent to do, not only that its commands parse.
+
+DETK_SKILL = SKILLS_DIR / "detk" / "SKILL.md"
+QUANTIFIERS_TUTORIAL = SKILLS_DIR.parent / "docs" / "tutorials" / "quantifiers.md"
+
+
+def _blocks(text):
+    "(line, argv) of each detk command line in the fenced blocks of *text*"
+    return [(lineno, _argv(item)) for kind, lineno, item in _walk(text) if kind == "block"]
+
+
+def _args(argv):
+    "The parsed arguments of a detk command line"
+    return _parser(argv[0]).parse_args(argv[1:])
+
+
+def _section(text, needle):
+    "The text from the line holding *needle* to the next heading"
+    start = text.index(needle)
+    end = re.compile(r"^#{1,6} ", re.M).search(text, start)
+    return text[start : end.start() if end else len(text)]
+
+
+def test_skill_analysis_reads_the_tidy_outputs():
+    """After the skill tidies the counts and the sample information, every
+    later detk command reads the tidied files, not the ones tidy read: in
+    1.0.0 the skill ran `detk-util tidy -o counts_tidy.csv -p
+    sample_info_tidy.csv` and then went on with counts.csv and
+    sample_info.csv, so the tidying did nothing."""
+    blocks = _blocks(DETK_SKILL.read_text())
+    tidy = [i for i, (_, argv) in enumerate(blocks) if argv[:2] == ["detk-util", "tidy"]]
+    assert tidy, "SKILL.md runs no detk-util tidy"
+    args = _args(blocks[tidy[0]][1])
+    read = {args.counts_fn, args.cov_fn}
+    written = {args.output, args.column_data_output}
+    assert None not in written, "the skill's tidy must write both files (-o and -p)"
+    later = blocks[tidy[0] + 1 :]
+    stale = [f"SKILL.md:{lineno}: {' '.join(argv)}" for lineno, argv in later if read & set(argv)]
+    assert not stale, (
+        f"commands after detk-util tidy that read {sorted(read)} rather than "
+        f"the tidied {sorted(written)}: {stale}"
+    )
+    used = set().union(*(set(argv) for _, argv in later))
+    assert written <= used, f"no command after detk-util tidy reads {sorted(written - used)}"
+
+
+def test_skill_reports_what_tidy_dropped_and_asks():
+    "Tidy may drop samples: the skill has the agent name them and ask the user"
+    text = DETK_SKILL.read_text()
+    section = " ".join(_section(text, "detk-util tidy -o").split())
+    assert re.search(r"report[^.]* samples[^.]* dropped", section, re.I), section
+    assert re.search(r"ask the user[^.]* before going on", section, re.I), section
+
+
+@pytest.mark.parametrize("path", SKILL_MARKDOWN, ids=lambda p: str(p.relative_to(SKILLS_DIR)))
+def test_skill_fgsea_names_its_ranking(path):
+    "Every fgsea command line in the skills passes -c (DETK-0600)"
+    for lineno, argv in _blocks(path.read_text()):
+        if argv[:2] == ["detk-enrich", "fgsea"]:
+            assert _args(argv).statcol is not None, f"{path.name}:{lineno} has no -c"
+
+
+def test_skill_states_the_1_0_1_errors():
+    "The skill says what detk now refuses, so the agent reads the exit status"
+    text = " ".join(DETK_SKILL.read_text().split())
+    assert re.search(r"without (it|`-c`)[^.]* exits 2", text), "fgsea without -c exits 2"
+    assert re.search(r"samples[^.]* exits 1", text), "a sample mismatch exits 1"
+
+
+@pytest.mark.parametrize("path", [DETK_SKILL, QUANTIFIERS_TUTORIAL], ids=lambda p: p.name)
+def test_quantifier_guidance_leads_with_gene_counts(path):
+    """Raw gene-level counts first; salmon and kallisto estimates go through
+    tximport for DE, and the gather-only route says what it assumes."""
+    text = " ".join(path.read_text().split())
+    assert "as they are" not in text
+    assert "tximport" in text
+    assert "detk-util record" in text
+    assert re.search(r"effective[- ]length", text, re.I)
+    if path == DETK_SKILL:
+        section = _section(DETK_SKILL.read_text(), "### Starting from quantifier outputs")
+        first = next(argv for _, argv in _blocks(section) if argv[:2] == ["detk-util", "gather"])
+        assert not any("quant" in a or "abundance" in a for a in first), (
+            f"the first gather example is a transcript quantifier's: {first}"
+        )

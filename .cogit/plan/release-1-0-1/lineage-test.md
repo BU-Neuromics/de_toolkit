@@ -6,6 +6,8 @@ acceptance:
   - it runs in the R CI job and skips, naming the package, where DESeq2 or fgsea is absent (as r-test-skips makes the others)
 scope: [tests/report/]
 prev: [release-1-0-1/fgsea-input, release-1-0-1/run-identity, release-1-0-1/r-test-skips]
+issue: 207
+visited: c490c55
 ---
 
 # Test that an enrichment table traces back to its counts and sample information

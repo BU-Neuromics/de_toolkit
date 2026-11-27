@@ -70,13 +70,17 @@ def test_numpyencoder():
 
 
 def test_detk_module_json(fake_module):
-    from de_toolkit.report import DetkModuleJSON, hash_str
+    from de_toolkit.report import DetkModuleJSON, record_id
 
     with TemporaryDirectory() as d:
-        DetkModuleJSON(fake_module, json_dir=d).write()
-        # hashed filename should be
-        fn = hash_str('fakemodule{"a": 1}-' + __version__) + ".json"
-        print(fn)
+        mj = DetkModuleJSON(fake_module, json_dir=d)
+        mj.write()
+        # the file is named by the record's id, which hashes the name, the
+        # params, every recorded path and the recorded argv (#182)
+        doc = mj.out_d
+        paths = {k: doc[k] for k in ("in_file_path", "out_file_path", "column_data_path")}
+        fn = record_id("fakemodule", {"a": 1}, paths, doc["argv"]) + ".json"
+        assert doc["id"] + ".json" == fn
         assert os.path.exists(os.path.join(d, fn))
 
         DetkModuleJSON(fake_module, json_path=os.path.join(d, "fn.json")).write(indent=2)

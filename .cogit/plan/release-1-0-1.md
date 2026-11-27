@@ -6,8 +6,8 @@ acceptance:
   - no command or option is added and the module JSON schema is unchanged (DETK-0001's promise); each behaviour change is a bug fix with a CHANGELOG note (DETK-0600)
   - pip install de_toolkit installs 1.0.1; the v1.0.1 tag, GitHub Release and Zenodo version DOI exist, and CITATION.cff names 1.0.1
 from: [DETK-0600]
-issue: 194
-visited: a8c3e91
+issue: 186
+visited: 557da83
 ---
 
 # Release 1.0.1: fixes from the AI-readiness audit

@@ -8,7 +8,9 @@ example run as written on the CLI:
 - the quickstart's commands run in order, on a small counts matrix, column
   data file and GMT file made here: the steps that run R (detk-de deseq2,
   detk-enrich fgsea) where R and its packages are installed, as in the CI
-  job with R, and are skipped elsewhere.
+  job with R. Elsewhere those steps, and the steps that read what they
+  write, are left out; the rest run and are checked, and then the test
+  skips naming what was missing (Rscript, or the R package).
 """
 
 import importlib.util
@@ -21,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from de_toolkit import wrapr
+from r_packages import missing_r
 
 ROOT = Path(__file__).resolve().parents[2]
 BIN_DIR = os.path.dirname(sys.executable)
@@ -82,20 +84,21 @@ def _quickstart_commands():
     return [line for line in block.splitlines() if line.strip()]
 
 
-def _r_has(packages):
-    return wrapr.check_r() and all(wrapr.check_r_package(p) for p in packages)
-
-
 def test_quickstart_runs_as_written(tmp_path):
     for name, text in QUICKSTART_DATA.items():
         (tmp_path / name).write_text(text)
     env = dict(os.environ, PATH=BIN_DIR + os.pathsep + os.environ.get("PATH", ""))
-    skipped = []
+    skipped = []  # (line, what was missing)
+    not_written = set()  # the files the left-out steps would have written
     for line in _quickstart_commands():
         argv = shlex.split(line)
-        packages = R_STEPS.get(argv[0])
-        if packages and not _r_has(packages):
-            skipped.append(line)
+        missing = missing_r(*R_STEPS[argv[0]]) if argv[0] in R_STEPS else None
+        if missing is None and not_written.intersection(argv):
+            missing = f"it reads {', '.join(sorted(not_written.intersection(argv)))}"
+        if missing:
+            skipped.append((line, missing))
+            if "-o" in argv:
+                not_written.add(argv[argv.index("-o") + 1])
             continue
         p = subprocess.run(argv, cwd=tmp_path, env=env, capture_output=True, text=True)
         assert p.returncode == 0, f"docs/quickstart.md: {line}\nexited {p.returncode}:\n{p.stderr}"
@@ -104,5 +107,8 @@ def test_quickstart_runs_as_written(tmp_path):
     assert not any(line.startswith("g3,") for line in filtered)
     assert 1 < len(filtered) < 201
     assert (tmp_path / "detk_report" / "detk_report.html").is_file()
-    if skipped and os.environ.get("DETK_TUTORIALS_REQUIRE_ALL"):
-        pytest.fail(f"R or an R package is missing for: {skipped}")
+    if skipped:
+        why = "; ".join(f"{line} ({missing})" for line, missing in skipped)
+        if os.environ.get("DETK_TUTORIALS_REQUIRE_ALL"):
+            pytest.fail(f"R or an R package is missing for: {why}")
+        pytest.skip(f"quickstart steps not run: {why}")

@@ -81,7 +81,7 @@ def test_gather_records_every_per_sample_file(work, monkeypatch):
     assert objects == {"../s1.counts.txt", "../s2.counts.txt"}
     assert results == {"../counts_gathered.csv"}
     (doc,) = [json.loads(p.read_text()) for p in (work / "detk_report" / "json").glob("*.json")]
-    assert doc["in_file_path"] is None
+    assert doc["in_file_path"] == "s1.counts.txt"
     assert doc["in_file_paths"] == ["s1.counts.txt", "s2.counts.txt"]
 
 
@@ -242,3 +242,75 @@ def test_outlier_entropy_plot_without_a_table(work, monkeypatch):
     (doc,) = [json.loads(p.read_text()) for p in (work / "detk_report" / "json").glob("*.json")]
     assert doc["out_file_path"] == "entropy.png"
     assert "out_file_paths" not in doc
+
+
+# ------------------------------------------------- --rda of detk-de and fgsea
+
+
+class DESeq2Counts(DetkModule):
+    "Stands in for de.DESeq2Counts (DESeq2, R) and writes its --rda file"
+
+    def __init__(self, count_obj, rda=None, **kwargs):
+        self.count_obj = count_obj
+        self["params"] = {"design": count_obj.design, "rda": rda}
+        if rda is not None:
+            with open(rda, "wb") as f:
+                f.write(b"RDS")
+
+    @property
+    def output(self):
+        return self.count_obj.counts
+
+    @property
+    def properties(self):
+        return {"num_length": len(self.count_obj.counts)}
+
+
+class FLGCounts(DESeq2Counts):
+    "Stands in for de.FLGCounts (logistf, R)"
+
+
+@pytest.mark.parametrize("cmd, cls", [("deseq2", DESeq2Counts), ("firth", FLGCounts)])
+def test_de_records_its_rda_file(work, monkeypatch, cmd, cls):
+    # in 1.0.0 the --rda file was a parameter only, not a result
+    import de_toolkit.de as de
+
+    monkeypatch.setattr(de, cls.__name__, cls)
+    argv = ["detk-de", cmd, "--rda=de.rds", "-o", "de.csv", "counts ~ group"]
+    run(de.main, argv + ["counts.csv", "sample_info.csv"], monkeypatch)
+
+    objects, results = action_files(work)
+    assert objects == {"../counts.csv", "../sample_info.csv"}
+    assert results == {"../de.csv", "../de.rds"}
+
+
+class FGSEARes(DetkModule):
+    "Stands in for enrich.FGSEARes (fgsea, R) and writes its --rda file"
+
+    def __init__(self, gmt, stat, *args, rda_fn=None, **kwargs):
+        self["params"] = {"rda_fn": rda_fn}
+        if rda_fn is not None:
+            with open(rda_fn, "wb") as f:
+                f.write(b"RDS")
+
+    @property
+    def output(self):
+        return pandas.DataFrame({"pval": [0.5]}, index=["set1"])
+
+    @property
+    def properties(self):
+        return {}
+
+
+def test_fgsea_records_its_rda_file(work, monkeypatch):
+    import de_toolkit.enrich as enrich
+
+    monkeypatch.setattr(enrich, "FGSEARes", FGSEARes)
+    (work / "sets.gmt").write_text("set1\tdesc\tENSG01\tENSG02\n")
+    (work / "de.csv").write_text(",stat\nENSG01,1.5\nENSG02,-2.0\n")
+    argv = ["detk-enrich", "fgsea", "--rda=gsea.rds", "-o", "gsea.csv", "sets.gmt", "de.csv"]
+    run(enrich.main, argv, monkeypatch)
+
+    objects, results = action_files(work)
+    assert objects == {"../sets.gmt", "../de.csv"}
+    assert results == {"../gsea.csv", "../gsea.rds"}

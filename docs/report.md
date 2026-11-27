@@ -141,7 +141,7 @@ Optional fields:
 | `argv` | array | the command line; `argv[0]` is the command's name only (`detk-stats`); the other arguments as typed, except that an absolute path, alone or as an option's value (`--report-dir=/abs/rep`, `-o/abs/out.csv`), is written **relative to `workdir`**, so the line re-runs the same from there |
 | `workdir` | string | the directory the command ran in, **relative to the report directory**: `..` for the default `./detk_report` |
 | `in_file_path`, `out_file_path`, `column_data_path` | string | the input, output and column data files, **relative to `workdir`** (a path typed as absolute is written relative too) |
-| `in_file_paths`, `out_file_paths` | array | since 1.1: every input and output file of a step with several, written by [`detk-util record`](tools/util.md#record), each relative to `workdir`; their first entries are also `in_file_path` and `out_file_path` |
+| `in_file_paths`, `out_file_paths` | array | since 1.1: every input and output file of a step with several, each relative to `workdir`; written by [`detk-util record`](tools/util.md#record) and by each command that reads or writes a file besides its primary input and output (annotate's mapping file, gather's per-sample files, fgsea's results file, the fpkm and tpm lengths file, a `--size-factors`, `--rda` or `--plot-output` file), and left out otherwise; their first entries are also `in_file_path` and `out_file_path` |
 
 So a file's location is the report directory, then `workdir`, then the
 path: `detk_report/../counts.csv`. No recorded path is absolute, whether you

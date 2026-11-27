@@ -1136,12 +1136,13 @@ def _gather_main(args):
 
     if not args.no_report:
         # every per-sample file is an input, so the crate lists them (#209);
-        # none is the primary one, so in_file_path stays empty, and
-        # params["files"] lists them as in 1.0.0
+        # in_file_path is the first, as for every step with several files
+        # (DETK-0890), and params["files"] lists them as in 1.0.0
         logging.info("writing report to %s", args.report_dir)
         with DetkReport(args.report_dir) as r:
             r.add_module(
                 gathered,
+                in_file_path=paths[0],
                 in_file_paths=paths,
                 out_file_path=args.output,
                 workdir=os.getcwd(),

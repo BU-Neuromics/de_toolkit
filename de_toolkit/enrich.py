@@ -544,6 +544,8 @@ def main(argv=sys.argv):
                 in_file_paths=[args.gmt_fn, args.result_fn],
                 out_file_path=args.output,
                 workdir=os.getcwd(),
+                # the --rda file is an output beside the results (#209)
+                out_file_paths=[args.output, args.rda] if args.rda else None,
             )
     else:
         logging.info("not generating report due to --no-report")

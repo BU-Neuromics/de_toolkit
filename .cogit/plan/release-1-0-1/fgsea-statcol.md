@@ -8,6 +8,8 @@ acceptance:
   - help's -c line, docs/tools/enrich.md and the skill's commands reference follow; CHANGELOG 1.0.1 notes the behaviour change (DETK-0600)
 from: [DETK-0600]
 scope: [de_toolkit/enrich.py, tests/enrich/, tests/cli/, +docs/tools/enrich.md, skills/detk/references/commands.md, +CHANGELOG]
+issue: 180
+visited: 557da83
 ---
 
 # fgsea needs -c when more than one column could rank

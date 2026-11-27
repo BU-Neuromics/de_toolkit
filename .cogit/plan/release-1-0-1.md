@@ -16,5 +16,6 @@ from: [DETK-0600]
 - [ ] [fgsea needs -c when more than one column could rank](release-1-0-1/fgsea-statcol.md) <!-- s2 -->
 - [ ] [fgsea records the results file it ranked as an input](release-1-0-1/fgsea-input.md) <!-- s3 -->
 - [ ] [Runs that differ only in their files keep separate records](release-1-0-1/run-identity.md) <!-- s4 -->
+- [ ] [Test that an enrichment table traces back to its counts and sample information](release-1-0-1/lineage-test.md) <!-- s5 -->
 
 ## Notes

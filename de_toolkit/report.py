@@ -292,9 +292,9 @@ def record_id(name, params, paths, argv):
     ``out_file_path``, ``column_data_path`` and, when given,
     ``in_file_paths`` and ``out_file_paths``, each relative to workdir), the
     recorded command line *argv* and the detk version. Runs that differ in
-    any file, including one a module does not record (fgsea's results file
-    is in its command line only), keep separate records; re-running an
-    identical command writes the same id and replaces its one record (#182).
+    any file, including one a module records only in its command line, keep
+    separate records; re-running an identical command writes the same id and
+    replaces its one record (#182).
     """
     identity = {
         "name": name,

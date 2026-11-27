@@ -55,6 +55,14 @@
   the R packages missing the quickstart test still runs its other steps,
   then skips naming what was missing; the CI job with R, which installs
   every package, runs them all as before (#187)
+- `detk-enrich fgsea` records the results file it ranked as an input. Its
+  module JSON listed the GMT as its only input, so the Process Run Crate's
+  fgsea action named `gene_sets.gmt` but not the DE results file, which
+  appeared only in the recorded command line, and the enrichment was not
+  linked to the step that wrote its ranking. The module JSON now lists both
+  files in `in_file_paths` (schema 1.1's field, as `detk-util record`
+  writes it) and the crate action's `object` holds both; `in_file_path`
+  stays the GMT (DETK-0720, #199)
 
 ## 1.0.0 (2026-11-25)
 

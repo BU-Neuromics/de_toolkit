@@ -137,9 +137,9 @@ def test_fgsea_runs_on_different_result_files_keep_two_records(work):
 
     docs = records(work)
     assert len(docs) == 2
-    # fgsea records the GMT as its input; the results file is in the
-    # recorded command line
+    # fgsea records the results file as an input beside the GMT (DETK-0720)
     assert sorted(d["argv"][-1] for d in docs) == ["result.csv", "result_other.csv"]
+    assert sorted(d["in_file_paths"][-1] for d in docs) == ["result.csv", "result_other.csv"]
 
     assert len(crate_actions(work)) == 2
 
@@ -200,7 +200,7 @@ def test_runs_differing_only_in_one_recorded_path_get_different_ids(tmp_path, a,
 
 
 def test_runs_differing_only_in_the_command_line_get_different_ids(tmp_path, monkeypatch):
-    "fgsea records the GMT only; its results file is in the command line"
+    "a file the module does not record is in the command line (fgsea's results file in 1.0.0)"
     calls = [{"in_file_path": "sets.gmt", "out_file_path": "gsea.csv"}]
     (one,) = _ids(tmp_path, calls, ["detk-enrich", "fgsea", "sets.gmt", "r1.csv"], monkeypatch)
     (two,) = _ids(tmp_path, calls, ["detk-enrich", "fgsea", "sets.gmt", "r2.csv"], monkeypatch)

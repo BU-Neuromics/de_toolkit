@@ -761,3 +761,48 @@ def test_read_result_stat_ambiguous(deseq2_result_csv):
         read_result_stat(deseq2_result_csv)
     stat = read_result_stat(deseq2_result_csv, statcol="condition__treated__stat")
     assert stat.name == "condition__treated__stat"
+
+
+def test_fgsea_crate_lists_results_file_as_input(
+    fake_fgsea, gset_dict, deseq2_result_csv, tmp_path, monkeypatch
+):
+    # DETK-0720: the results file fgsea ranked is an input of its crate action
+    # beside the GMT, so the enrichment links to the DE step that wrote it. In
+    # 1.0.0 the action's object held gene_sets.gmt and the params only, though
+    # argv names de.csv
+    import json
+    from de_toolkit.crate import CRATE_FILENAME
+    from de_toolkit.enrich import main
+
+    monkeypatch.chdir(tmp_path)
+    with open("gene_sets.gmt", "w") as f:
+        for name, ids in gset_dict.items():
+            f.write("\t".join([name, name] + list(ids)) + "\n")
+    argv = [
+        "detk-enrich",
+        "fgsea",
+        "-c",
+        "condition__treated__stat",
+        "-o",
+        "enrich.csv",
+        "gene_sets.gmt",
+        "de.csv",
+    ]
+    # the record's argv is the process's command line
+    monkeypatch.setattr("sys.argv", argv)
+    main(argv)
+    report = tmp_path / "detk_report"
+    (module,) = [json.loads(fn.read_text()) for fn in (report / "json").glob("*.json")]
+    assert "de.csv" in module["argv"]
+    # the primary input stays the GMT; every input is listed in in_file_paths
+    assert module["in_file_path"] == "gene_sets.gmt"
+    assert module["in_file_paths"] == ["gene_sets.gmt", "de.csv"]
+    assert module["out_file_path"] == "enrich.csv"
+
+    crate = json.loads((report / CRATE_FILENAME).read_text())
+    graph = {e["@id"]: e for e in crate["@graph"]}
+    (action,) = [e for e in graph.values() if e["@type"] == "CreateAction"]
+    files = {o["@id"] for o in action["object"] if not o["@id"].startswith("#")}
+    assert files == {"../gene_sets.gmt", "../de.csv"}
+    assert graph["../de.csv"]["@type"] == "File"
+    assert action["result"] == [{"@id": "../enrich.csv"}]

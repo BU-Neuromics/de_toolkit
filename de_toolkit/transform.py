@@ -431,7 +431,8 @@ def main(argv=sys.argv):
     set_logging(args)
     logger.info("cmd: %s", " ".join(argv[1:]))
 
-    count_obj = make_cli_count_obj(args)
+    # vst and rlog need raw counts; plog may log normalized ones (DETK-0830)
+    count_obj = make_cli_count_obj(args, raw=cmd in ("vst", "rlog"))
 
     if cmd == "vst":
         out = VstCounts(count_obj, rda=args.rda)

@@ -34,12 +34,12 @@ Every tool accepts a counts matrix of the form:
 - The name of the first column doesn't matter; every row must have the same
   number of fields.
 
-`detk-norm`, `detk-de`, `detk-transform`, `detk-stats`, `detk-filter` and
-`detk-outlier` check a counts matrix as read, before the column data selects
-or reorders any sample, and exit 1 (a bad input file, see
+`detk-norm`, `detk-de`, `detk-transform`, `detk-stats`, `detk-filter`,
+`detk-outlier`, `detk-util tidy`, `tidy-counts` and `tidy-covs` and
+`detk-wrapr run` check a counts matrix as read, before the column data
+selects or reorders any sample, and exit 1 (a bad input file, see
 [Exit codes](#exit-codes)) naming the first offender and how many more there
-are (DETK-0601, DETK-0830). `detk-util tidy`, `tidy-counts` and `tidy-covs`
-and `detk-wrapr run` do not check yet (DETK-0850).
+are (DETK-0601, DETK-0830, DETK-0850).
 
 - **in each of those commands**: a sample named more than once in the
   header, and a feature ID listed more than once. Positions are counted in
@@ -54,6 +54,8 @@ and `detk-wrapr run` do not check yet (DETK-0850).
 | `detk-transform` `vst`, `rlog` | `detk-stats` (every subcommand) |
 | | `detk-filter` |
 | | `detk-outlier` `entropy`, `shrink` |
+| | `detk-util` `tidy`, `tidy-counts`, `tidy-covs` |
+| | `detk-wrapr run` |
 
 A normalized or log-transformed matrix may hold negative values or a column
 of zeros, so the commands on the right accept them. The commands on the left

@@ -20,6 +20,12 @@
 
 ### Fixed
 
+- The quickstart says, by its `detk-de deseq2` example, that detk reports
+  the Wald test of every coefficient with no independent filtering and no
+  Cook's distance cutoff, so its `padj` differs from a default DESeq2
+  `results()` call, and links the `detk-de deseq2` page for the settings it
+  matches; that page's R equivalent now passes `independentFiltering=FALSE`
+  to `results()` as well as `cooksCutoff=Inf` (#184, DETK-0770)
 - `detk-norm cpm` rejects a malformed counts file, which it normalized
   without a word in 1.0.0: a sample named twice in the header (the output
   had columns `A`, `A.1`), a feature ID listed twice, a negative count (a

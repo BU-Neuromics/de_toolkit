@@ -42,6 +42,14 @@ detk-enrich fgsea -o gsea_results.csv -i gene -c cond__treated__log2FoldChange m
 detk-report generate
 ```
 
+`detk-de deseq2` does not give the same `padj` as a default DESeq2 vignette
+run (`DESeq(dds)` then `results(dds)`). It reports the Wald test of every
+coefficient in the model, and its `padj` is the Benjamini-Hochberg adjustment
+over all genes: no independent filtering is performed, and there is no
+Cook's distance cutoff, so no p-value is set to `NA` as an outlier. The
+[`detk-de deseq2` page](tools/de.md#deseq2) states the `results()` settings
+this matches and the other ways it differs from the default analysis.
+
 The final command renders every step's recorded JSON into a single
 self-contained HTML [report](report.md).
 

@@ -13,8 +13,8 @@ import re
 import pytest
 
 import cli_adapter
-from de_toolkit import wrapr
 from cli_tables import COMMANDS
+from r_packages import skip_without_r
 
 SECTIONS = (
     "usage:",
@@ -76,16 +76,16 @@ EXAMPLE_DATA = {
     "sample_info.csv": "sample,group,age\ns1,a,31\ns2,a,45\ns3,a,52\ns4,b,38\ns5,b,61\ns6,b,47\n",
 }
 
-# subcommands whose examples run R; they run where R is installed (the CI
-# test-r job)
+# subcommands whose examples run R, and the R packages each needs; they
+# run where R has those packages (the CI test-r job) and skip elsewhere
 NEEDS_R = {
-    ("detk-de", "deseq2"),
-    ("detk-de", "firth"),
-    ("detk-enrich", "fgsea"),
-    ("detk-transform", "vst"),
-    ("detk-transform", "rlog"),
-    ("detk-wrapr", "check"),
-    ("detk-wrapr", "run"),
+    ("detk-de", "deseq2"): ("DESeq2",),
+    ("detk-de", "firth"): ("logistf",),
+    ("detk-enrich", "fgsea"): ("fgsea",),
+    ("detk-transform", "vst"): ("DESeq2", "SummarizedExperiment"),
+    ("detk-transform", "rlog"): ("DESeq2", "SummarizedExperiment"),
+    ("detk-wrapr", "check"): (),
+    ("detk-wrapr", "run"): (),
 }
 
 
@@ -195,8 +195,8 @@ def _runnable(parsed):
 
 @pytest.mark.parametrize("prog,sub", _leaf_params())
 def test_examples_run_where_test_data_allows(prog, sub, tmp_path, monkeypatch):
-    if (prog, sub) in NEEDS_R and not wrapr.check_r():
-        pytest.skip("this subcommand runs R, which is not installed")
+    if (prog, sub) in NEEDS_R:
+        skip_without_r(*NEEDS_R[prog, sub])
     for name, text in EXAMPLE_DATA.items():
         (tmp_path / name).write_text(text)
     monkeypatch.chdir(tmp_path)

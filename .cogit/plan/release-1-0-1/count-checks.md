@@ -9,6 +9,8 @@ prev: [DETK-0601]
 scope: [de_toolkit/common.py, de_toolkit/norm.py, tests/norm/, tests/common/, +docs/tools/norm.md, +CHANGELOG]
 issue: 195
 visited: a8c3e91
+status: done
+done: 8e2dd37
 ---
 
 # detk-norm cpm rejects malformed counts
@@ -17,7 +19,7 @@ visited: a8c3e91
 
 - [x] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

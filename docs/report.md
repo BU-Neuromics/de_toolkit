@@ -108,7 +108,8 @@ A document's `id`, and so its file name `json/<id>.json`, is a hash of:
 Two runs that differ in any of these keep two records: `detk-filter` run
 with `-o a.csv` and then `-o b.csv`, `detk-de deseq2` run on two sample
 information files, or `detk-enrich fgsea` run on two results files (fgsea
-records its GMT as `in_file_path`; the results file is in its `argv`). A run
+records its GMT as `in_file_path` and both the GMT and the results file in
+`in_file_paths`). A run
 identical in all of them, the same command from the same directory, writes
 the same `id` and replaces its one record. Because paths and the command
 line are hashed as recorded, an absolute path and its relative spelling give

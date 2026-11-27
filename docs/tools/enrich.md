@@ -30,6 +30,12 @@ its params: `statcol`, `idcol` and `ascending`. (In 1.0.0, without `-c`,
 fgsea ranked silently by the last numeric column, which in a DESeq2 result
 is an adjusted p-value.)
 
+The module JSON records the GMT as `in_file_path` and both inputs, the GMT
+and the results file, in `in_file_paths`, so the report's Process Run Crate
+lists the results file as an input of the fgsea action and links the
+enrichment to the step that wrote its ranking. (In 1.0.0 the results file
+appeared only in the recorded command line.)
+
 ```bash
 detk-enrich fgsea -o gsea_results.csv -i gene -c cond__treated__log2FoldChange msigdb_c2cp.gmt deseq2_results.csv
 ```

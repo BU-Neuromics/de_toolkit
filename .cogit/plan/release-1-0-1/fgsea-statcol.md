@@ -7,16 +7,21 @@ acceptance:
   - the module JSON params record the resolved statistic column, ID column and direction (statcol, idcol, ascending; absent in 1.0.0); the schema is unchanged (params is an open object)
   - help's -c line, docs/tools/enrich.md and the skill's commands reference follow; CHANGELOG 1.0.1 notes the behaviour change (DETK-0600)
 from: [DETK-0600]
-scope: [de_toolkit/enrich.py, tests/enrich/, tests/cli/, +docs/tools/enrich.md, skills/detk/references/commands.md, +CHANGELOG]
+scope: [de_toolkit/enrich.py, tests/enrich/, tests/cli/, +docs/tools/enrich.md, skills/detk/references/commands.md, +CHANGELOG, docs/tutorials/airway.md]
+issue: 180
+visited: 557da83
+prev: [DETK-0760]
+status: done
+done: d060734
 ---
 
 # fgsea needs -c when more than one column could rank
 
 ## Implementation plan
 
-- [ ] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

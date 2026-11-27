@@ -80,7 +80,8 @@ def build_parser():
         "--statcol",
         metavar="COL",
         help="Column (name or 0-based index) of the ranking statistic; "
-        "the last numeric column if not given",
+        "required when the results have more than one numeric column besides "
+        "the ID column",
     )
     sub.add_argument(
         "-a",
@@ -133,6 +134,7 @@ from .common import (
     add_subcommands,
     parse_cli,
     read_delimited,
+    UsageError,
     set_logging,
     write_output,
 )
@@ -441,8 +443,13 @@ def read_result_stat(result_fn, idcol=0, statcol=None):
     Read the result table *result_fn* (any delimited file, see
     :func:`de_toolkit.common.read_delimited`) and return the ranking
     statistic for fgsea: a pandas.Series of column *statcol* (a column name
-    or 0-based index; by default the last numeric column) indexed by the IDs
-    in column *idcol* (a name or 0-based index, by default the first).
+    or 0-based index) indexed by the IDs in column *idcol* (a name or 0-based
+    index, by default the first). The Series and its index are named after
+    the columns they came from.
+
+    Without *statcol*, the one numeric column besides the ID column ranks;
+    where there is more than one, a :class:`de_toolkit.common.UsageError`
+    names them, since which one ranks is not detk's to guess (DETK-0600).
 
     The IDs are read as text, exactly as written, so ``007`` stays ``007``
     and matches ``007`` in the GMT file even when every ID in the column
@@ -460,13 +467,20 @@ def read_result_stat(result_fn, idcol=0, statcol=None):
     if statcol is not None:
         statcol = _resolve_result_column(res_df, statcol, "Stat")
     else:
-        # pick the last numeric column
+        # the one numeric column besides the ID column; with more than one,
+        # which ranks is the user's choice (DETK-0600)
         numeric = [
             c for c in res_df.columns if c != idcol and pandas.api.types.is_numeric_dtype(res_df[c])
         ]
         if not numeric:
             raise ValueError("no numeric column found in the results to use as the statistic")
-        statcol = numeric[-1]
+        if len(numeric) > 1:
+            raise UsageError(
+                f"the results have {len(numeric)} numeric columns that could be the "
+                f"ranking statistic ({', '.join(map(str, numeric))}); "
+                "name one with -c/--statcol"
+            )
+        statcol = numeric[0]
     logger.info("using %s as statistic column", statcol)
 
     stat = pandas.to_numeric(res_df[statcol])
@@ -510,6 +524,11 @@ def main(argv=sys.argv):
         filter_unannotated=args.filter_unannotated,
         rda_fn=args.rda,
         routput_dir=args.routput_dir,
+    )
+
+    # the ranking fgsea was given, as resolved from -c, -i and -a (DETK-0600)
+    out["params"].update(
+        {"statcol": str(stat.name), "idcol": str(stat.index.name), "ascending": args.ascending}
     )
 
     write_output(out.output, args)

@@ -2,6 +2,22 @@
 
 ## 1.0.1 (unreleased)
 
+### Behaviour changes
+
+- `detk-enrich fgsea` without `-c/--statcol` is a usage error (exit 2) when
+  the results have more than one numeric column besides the ID column
+  (counted after `-i`), as every `detk-de` result does; the error names the
+  candidate columns. In 1.0.0 it ranked silently by the last numeric
+  column, which in a DESeq2 result is the last term's `__padj`: an
+  unsigned, adjusted p-value, not the analysis asked for. Fix: name the
+  ranking statistic with `-c COL`, e.g. `-c condition__treated__stat`. A
+  table with one numeric column besides the ID column ranks by it as
+  before, and a command line that passes `-c` is unchanged. This changes a
+  documented default, a recorded exception to the 1.0 promise (DETK-0600)
+- The fgsea module JSON params record the ranking used: `statcol`, `idcol`
+  (the resolved column names) and `ascending`; the module JSON schema is
+  unchanged (DETK-0600)
+
 ### Fixed
 
 - `detk-norm cpm` rejects a malformed counts file, which it normalized
@@ -13,6 +29,17 @@
   `de_toolkit.common.check_counts`, for the other commands that read counts
   to call
   ([#195](https://github.com/BU-Neuromics/de_toolkit/issues/195))
+- Runs that differ only in their files keep separate report records. A
+  module record's id hashed the module name, its parameters, the primary
+  input and the detk version only, so two `detk-filter` runs differing only
+  in `-o`, two `detk-de deseq2` runs differing only in the sample
+  information file, or two `detk-enrich fgsea` runs differing only in the
+  results file wrote the same `json/<id>.json`, and the second silently
+  replaced the first in the report and the crate. The id now also hashes
+  every input and output path as recorded (relative to workdir) and the
+  recorded command line; re-running an identical command still replaces its
+  one record. Record ids change, as they already did with each detk version
+  (#182)
 - The test suite skips the tests that run R when an R package they need
   is missing, naming the package (`R package DESeq2 is not installed`),
   where six of them failed with Rscript on PATH but without DESeq2 or

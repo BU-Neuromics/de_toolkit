@@ -1057,7 +1057,97 @@ def read_id_table(f):
         table.index = pandas.Index(ids.to_numpy(), name=table.index.name)
     else:
         logger.warning("could not read the IDs of %s as text; pandas typed them", source)
+    # each column's name as the header line writes it, by its name in the
+    # table, since pandas renames a repeated name A to A.1 (for
+    # check_counts); a mapping, so it holds after the columns are selected
+    # or reordered
+    header = read(header=None, nrows=1, dtype=str, keep_default_na=False).iloc[0].tolist()
+    if len(header) == len(table.columns) + 1:
+        header = header[1:]
+    if len(header) == len(table.columns):
+        table.attrs[COLUMNS_AS_WRITTEN] = dict(zip(map(str, table.columns), header))
     return table
+
+
+# the key in a table's ``attrs`` under which read_id_table keeps a mapping
+# of its column names to the names as the header line writes them
+COLUMNS_AS_WRITTEN = "detk_columns_as_written"
+
+
+class CountsError(ValueError):
+    """
+    A counts matrix that cannot be counts (see :func:`check_counts`): a bad
+    input file, so a detk command exits 1 with its message (DETK-0601).
+    """
+
+
+def _more(offenders, what):
+    "' (and n more <what>s)' for the offenders after the first, or ''"
+    n = len(offenders) - 1
+    return f" (and {n} more {what}{'s' if n > 1 else ''})" if n else ""
+
+
+def check_counts(counts, name="counts"):
+    """
+    Raise :class:`CountsError` if the counts matrix *counts* (a
+    pandas.DataFrame, features in rows and samples in columns, as
+    :func:`read_id_table` reads it) is malformed, naming the file *name* and
+    the first offender:
+
+    - a sample named more than once in the header; read from the header as
+      written (``read_id_table`` keeps, in ``attrs``, each column's name as
+      written by its name in the table), since pandas renames a repeated
+      name ``A`` to ``A.1``; a column not in that mapping goes by its name
+    - a feature ID listed more than once
+    - a negative count
+    - a sample whose counts sum to 0 (zero depth)
+
+    The checks run in that order, and the message names the first offender
+    of the first that fails, and how many more of its kind there are.
+    Positions are counted from 1 among the samples (columns after the
+    feature IDs) and the features (rows after the header).
+    """
+    as_written = counts.attrs.get(COLUMNS_AS_WRITTEN, {})
+    columns = [as_written.get(str(c), str(c)) for c in counts.columns]
+    seen = {}
+    for i, sample in enumerate(columns):
+        if sample in seen:
+            repeats = pandas.Index(columns)[pandas.Index(columns).duplicated()]
+            raise CountsError(
+                f"{name}: sample {sample!r} is named more than once in the header"
+                f" (sample columns {seen[sample] + 1} and {i + 1})"
+                + _more(repeats, "repeated sample name")
+            )
+        seen[sample] = i
+
+    dup = counts.index.duplicated()
+    if dup.any():
+        feature = counts.index[dup][0]
+        rows = [i + 1 for i, f in enumerate(counts.index) if f == feature][:2]
+        raise CountsError(
+            f"{name}: feature {str(feature)!r} is listed more than once"
+            f" (feature rows {rows[0]} and {rows[1]})"
+            + _more(counts.index[dup], "repeated feature ID")
+        )
+
+    values = counts.apply(pandas.to_numeric, errors="coerce")
+    negative = values.lt(0).to_numpy().nonzero()
+    if len(negative[0]):
+        row, col = negative[0][0], negative[1][0]
+        value = values.iat[row, col]
+        if float(value).is_integer():
+            value = int(value)
+        raise CountsError(
+            f"{name}: feature {str(counts.index[row])!r} in sample {str(columns[col])!r}"
+            f" has a negative count, {value}" + _more(negative[0], "negative count")
+        )
+
+    empty = [str(columns[i]) for i, total in enumerate(values.sum(axis=0)) if total == 0]
+    if empty:
+        raise CountsError(
+            f"{name}: sample {empty[0]!r} has no counts: its counts sum to 0"
+            + _more(empty, "zero-depth sample")
+        )
 
 
 class CountMatrixFile(CountMatrix):

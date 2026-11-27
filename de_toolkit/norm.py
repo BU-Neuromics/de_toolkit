@@ -132,6 +132,7 @@ from pprint import pformat
 import sys
 import os
 from .common import (
+    check_counts,
     cli_main,
     DetkModule,
     DetkParser,
@@ -570,6 +571,10 @@ def main(argv=sys.argv):
     args = parse_cli(build_parser(), argv)
     cmd = args.subcommand
     count_obj = make_cli_count_obj(args)
+    if cmd == "cpm":
+        # a malformed counts file exits 1 before anything is written or
+        # logged (release-1-0-1/count-checks)
+        check_counts(count_obj.counts, args.counts_fn)
     set_logging(args)
     logger.info("cmd: %s", " ".join(argv[1:]))
 

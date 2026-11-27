@@ -23,11 +23,11 @@ HINT = " (--verbose for the traceback)"
 CASES = {
     "duplicate-header": (
         "gene,A,A,B\ng1,1,2,3\ng2,4,5,6\n",
-        "counts.csv: sample 'A' is named more than once in the header (fields 2 and 3)",
+        "counts.csv: sample 'A' is named more than once in the header (sample columns 1 and 2)",
     ),
     "duplicate-feature": (
         "gene,A,B\ng1,1,2\ng1,3,4\ng2,5,6\n",
-        "counts.csv: feature 'g1' is listed more than once (lines 2 and 3)",
+        "counts.csv: feature 'g1' is listed more than once (feature rows 1 and 2)",
     ),
     "negative-count": (
         "gene,A,B\ng1,-1,2\ng2,5,6\n",

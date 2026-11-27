@@ -21,6 +21,15 @@ ENSGIDs, ...) in both files. You will likely need to provide:
   `cond__treated__log2FoldChange`, the log fold change of the `treated`
   level of `cond`, as `detk-de deseq2` names it
 
+`-c` is required whenever the results have more than one numeric column
+besides the ID column (counted after `-i`), as every `detk-de` result does:
+without it, `detk-enrich fgsea` exits 2 with a line naming the candidate
+columns, before R runs. A table with one numeric column besides the ID
+column ranks by it without `-c`. The module JSON records the ranking used in
+its params: `statcol`, `idcol` and `ascending`. (In 1.0.0, without `-c`,
+fgsea ranked silently by the last numeric column, which in a DESeq2 result
+is an adjusted p-value.)
+
 ```bash
 detk-enrich fgsea -o gsea_results.csv -i gene -c cond__treated__log2FoldChange msigdb_c2cp.gmt deseq2_results.csv
 ```
@@ -40,7 +49,8 @@ options:
   -i, --idcol COL       Column (name or 0-based index) holding the feature IDs
                         (default: 0)
   -c, --statcol COL     Column (name or 0-based index) of the ranking statistic;
-                        the last numeric column if not given
+                        required when the results have more than one numeric
+                        column besides the ID column
   -a, --ascending       Rank ascending (for p-values, or to reverse the sign of
                         NES)
   --abs                 Rank by the absolute value of the statistic

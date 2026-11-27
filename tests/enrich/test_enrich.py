@@ -133,6 +133,7 @@ def test_fgsea_filter_unannot_cli(gmt_file, result_w_unannotated_csv):
                 "fgsea",
                 "--nperm=100",
                 "--filter-unannotated",
+                "--statcol=new_stat",
                 "--minSize=1",
                 gmt_file,
                 result_w_unannotated_csv,
@@ -201,8 +202,20 @@ def test_fgsea_cli(gmt_file, result_csv):
     from de_toolkit.enrich import main
 
     with tempfile.NamedTemporaryFile("wt") as f:
-        # normal operation, picks stat as last numerical column
-        main(["detk-enrich", "fgsea", "--minSize=1", gmt_file, result_csv, "-o", f.name])
+        # normal operation, ranking by stat
+        main(
+            [
+                "detk-enrich",
+                "fgsea",
+                "--minSize=1",
+                "-c",
+                "stat",
+                gmt_file,
+                result_csv,
+                "-o",
+                f.name,
+            ]
+        )
         res = pandas.read_csv(f.name, index_col=0)
         assert all(res.loc[["set1", "set2", "set3"], "NES"] < 0)
         assert all(res.loc[["set4", "set5"], "NES"] > 0)
@@ -216,7 +229,18 @@ def test_fgsea_cli_cores(gmt_file, result_csv):
     with tempfile.NamedTemporaryFile("wt") as f:
         # normal operation, with two cores
         main(
-            ["detk-enrich", "fgsea", "--cores=2", "--minSize=1", gmt_file, result_csv, "-o", f.name]
+            [
+                "detk-enrich",
+                "fgsea",
+                "--cores=2",
+                "--minSize=1",
+                "-c",
+                "stat",
+                gmt_file,
+                result_csv,
+                "-o",
+                f.name,
+            ]
         )
         res = pandas.read_csv(f.name, index_col=0)
         assert all(res.loc[["set1", "set2", "set3"], "NES"] < 0)
@@ -235,6 +259,7 @@ def test_fgsea_cli_routput(gmt_file, result_csv):
                     "detk-enrich",
                     "fgsea",
                     f"--routput-dir={d}",
+                    "--statcol=stat",
                     "--minSize=1",
                     gmt_file,
                     result_csv,
@@ -308,8 +333,21 @@ def test_fgsea_cli_ascending(gmt_file, result_csv):
     from de_toolkit.enrich import main
 
     with tempfile.NamedTemporaryFile("wt") as f:
-        # sort ascending operation on last numerical column
-        main(["detk-enrich", "fgsea", "--minSize=1", "-a", gmt_file, result_csv, "-o", f.name])
+        # sort ascending operation on stat
+        main(
+            [
+                "detk-enrich",
+                "fgsea",
+                "--minSize=1",
+                "-c",
+                "stat",
+                "-a",
+                gmt_file,
+                result_csv,
+                "-o",
+                f.name,
+            ]
+        )
         res = pandas.read_csv(f.name, index_col=0)
         assert all(res.loc[["set1", "set2", "set3"], "NES"] > 0)
         assert all(res.loc[["set4", "set5"], "NES"] < 0)
@@ -328,6 +366,7 @@ def test_fgsea_cli_idcol(gmt_file, result_csv):
                 "fgsea",
                 "--minSize=1",
                 "--idcol=gene",
+                "--statcol=stat",
                 gmt_file,
                 result_csv,
                 "-o",
@@ -357,6 +396,7 @@ def test_fgsea_cli_wrapr_cores(gmt_file, result_csv):
                     "--minSize=1",
                     "--cores=2",
                     f"--rda={r_f.name}",
+                    "--statcol=stat",
                     gmt_file,
                     result_csv,
                     "-o",
@@ -385,6 +425,7 @@ def test_fgsea_multilevel_cli(gmt_file, result_csv):
                 "--nperm=100",
                 "--multilevel",
                 "--minSize=1",
+                "--statcol=stat",
                 gmt_file,
                 result_csv,
                 "-o",
@@ -483,9 +524,9 @@ def padded_result_csv(tmp_path):
 def test_read_result_stat_keeps_ids_as_written(padded_result_csv):
     from de_toolkit.enrich import read_result_stat
 
-    stat = read_result_stat(padded_result_csv)
+    stat = read_result_stat(padded_result_csv, statcol="log2FoldChange")
     assert stat.index.tolist() == PADDED_IDS
-    # the last numeric column, as numbers
+    # as numbers
     assert stat.name == "log2FoldChange"
     assert stat.tolist() == [1.5, -2.0, 0.5, 3.0]
 
@@ -525,8 +566,9 @@ def test_fgsea_cli_passes_ids_as_written(monkeypatch, tmp_path, padded_result_cs
     gmt_fn.write_text("set1\tset1\t007\t1.10\nset2\tset2\t010\t1.1\n")
     seen = {}
 
-    class FakeFGSEARes:
+    class FakeFGSEARes(dict):
         def __init__(self, gmt, stat, **kwargs):
+            self["params"] = {}
             seen["stat"] = stat
             seen["gmt_ids"] = {i for s in gmt.values() for i in s.ids}
             self.output = pandas.DataFrame({"pval": [0.5]}, index=["set1"])
@@ -537,6 +579,8 @@ def test_fgsea_cli_passes_ids_as_written(monkeypatch, tmp_path, padded_result_cs
             "detk-enrich",
             "fgsea",
             "--no-report",
+            "-c",
+            "log2FoldChange",
             str(gmt_fn),
             padded_result_csv,
             "-o",
@@ -545,3 +589,175 @@ def test_fgsea_cli_passes_ids_as_written(monkeypatch, tmp_path, padded_result_cs
     )
     assert seen["stat"].index.tolist() == PADDED_IDS
     assert set(seen["stat"].index) == seen["gmt_ids"]
+
+
+# DETK-0600: without -c, fgsea ranked by the last numeric column, which in a
+# DESeq2 result is the last term's __padj (the audit's planted 'up' set came
+# out NES -2.76, padj 0.5 where condition__treated__stat gives +2.13, padj
+# 0.0003). Where more than one numeric column could rank, -c is required.
+DESEQ2_COLUMNS = ["baseMean"] + [
+    f"{term}__{s}"
+    for term in ("Intercept", "condition__treated")
+    for s in ("log2FoldChange", "lfcSE", "stat", "pvalue", "padj")
+]
+
+
+@pytest.fixture
+def deseq2_result_csv(tmp_path):
+    "A detk-de deseq2 result table: the ID column and 11 numeric columns"
+    rng = np.random.default_rng(0)
+    df = pandas.DataFrame(
+        rng.random((10, len(DESEQ2_COLUMNS))),
+        columns=DESEQ2_COLUMNS,
+        index=pandas.Index([f"gene{_ + 1}" for _ in range(10)], name="gene"),
+    )
+    fn = tmp_path / "de.csv"
+    df.to_csv(fn)
+    return str(fn)
+
+
+@pytest.fixture
+def fake_fgsea(monkeypatch):
+    """
+    FGSEARes replaced by a stand-in that needs no R: it records the stat it
+    was given in ``calls`` and returns a one-row result
+    """
+    from de_toolkit import enrich
+
+    calls = []
+
+    class fgseares(enrich.FGSEARes):
+        def __init__(self, gmt, stat, **kwargs):
+            calls.append(stat)
+            self["params"] = {"minSize": kwargs.get("minSize")}
+            self.gsea_res = pandas.DataFrame(
+                {"pval": [0.5], "padj": [0.5], "NES": [1.0], "size": [3]},
+                index=pandas.Index(["set1"], name="pathway"),
+            )
+
+    monkeypatch.setattr(enrich, "FGSEARes", fgseares)
+    return calls
+
+
+def test_fgsea_cli_ambiguous_statcol_is_usage_error(
+    fake_fgsea, gmt_file, deseq2_result_csv, tmp_path, capsys
+):
+    from de_toolkit.enrich import main
+
+    out = tmp_path / "out.csv"
+    with pytest.raises(SystemExit) as e:
+        main(["detk-enrich", "fgsea", "-o", str(out), gmt_file, deseq2_result_csv])
+    assert e.value.code == 2
+    # checked before fgsea (and R) runs
+    assert fake_fgsea == []
+    assert not out.exists()
+    err = capsys.readouterr().err
+    assert err.startswith("usage: detk-enrich fgsea")
+    msg = [line for line in err.splitlines() if "error:" in line]
+    assert len(msg) == 1
+    assert "-c/--statcol" in msg[0]
+    for col in DESEQ2_COLUMNS:
+        assert col in msg[0]
+
+
+def test_fgsea_cli_statcol_given_ranks_by_it(fake_fgsea, gmt_file, deseq2_result_csv, tmp_path):
+    from de_toolkit.enrich import main
+
+    main(
+        [
+            "detk-enrich",
+            "fgsea",
+            "--no-report",
+            "-c",
+            "condition__treated__stat",
+            "-o",
+            str(tmp_path / "out.csv"),
+            gmt_file,
+            deseq2_result_csv,
+        ]
+    )
+    (stat,) = fake_fgsea
+    assert stat.name == "condition__treated__stat"
+
+
+def test_fgsea_cli_one_numeric_column_ranks_by_it(fake_fgsea, gmt_file, tmp_path):
+    # the ID column, a text column and one numeric column: no -c needed
+    from de_toolkit.enrich import main
+
+    fn = tmp_path / "res.csv"
+    fn.write_text("gene,symbol,score\ngene1,A,1.5\ngene2,B,-2\ngene3,C,0.5\n")
+    main(
+        ["detk-enrich", "fgsea", "--no-report", "-o", str(tmp_path / "out.csv"), gmt_file, str(fn)]
+    )
+    (stat,) = fake_fgsea
+    assert stat.name == "score"
+    assert stat.tolist() == [1.5, -2.0, 0.5]
+
+
+def test_fgsea_cli_idcol_counts_as_not_a_ranking(fake_fgsea, gmt_file, tmp_path):
+    # numeric columns are counted after -i: a numeric ID column is not one
+    from de_toolkit.enrich import main
+
+    fn = tmp_path / "res.csv"
+    fn.write_text("score,entrez\n1.5,7\n-2,10\n")
+    main(
+        [
+            "detk-enrich",
+            "fgsea",
+            "--no-report",
+            "-i",
+            "entrez",
+            "-o",
+            str(tmp_path / "out.csv"),
+            gmt_file,
+            str(fn),
+        ]
+    )
+    (stat,) = fake_fgsea
+    assert stat.name == "score"
+    assert stat.index.tolist() == ["7", "10"]
+
+
+@pytest.mark.parametrize("ascending", [False, True])
+def test_fgsea_cli_params_record_ranking(
+    fake_fgsea, gmt_file, deseq2_result_csv, tmp_path, ascending
+):
+    # the module JSON params name the resolved statistic and ID columns and
+    # the direction (DETK-0600); -c and -i given as 0-based indexes
+    import json
+    from de_toolkit.enrich import main
+
+    report = tmp_path / "report"
+    main(
+        [
+            "detk-enrich",
+            "fgsea",
+            "-c",
+            "9",
+            "-i",
+            "0",
+            *(["-a"] if ascending else []),
+            "--report-dir",
+            str(report),
+            "-o",
+            str(tmp_path / "out.csv"),
+            gmt_file,
+            deseq2_result_csv,
+        ]
+    )
+    (module,) = [json.loads(fn.read_text()) for fn in (report / "json").glob("*.json")]
+    assert module["name"] == "fgseares"
+    params = module["params"]
+    assert params["statcol"] == "condition__treated__stat"
+    assert params["idcol"] == "gene"
+    assert params["ascending"] is ascending
+
+
+def test_read_result_stat_ambiguous(deseq2_result_csv):
+    from de_toolkit.common import UsageError
+    from de_toolkit.enrich import read_result_stat
+
+    with pytest.raises(UsageError, match="11 numeric columns"):
+        read_result_stat(deseq2_result_csv)
+    stat = read_result_stat(deseq2_result_csv, statcol="condition__treated__stat")
+    assert stat.name == "condition__treated__stat"

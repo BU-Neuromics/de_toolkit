@@ -2,6 +2,22 @@
 
 ## 1.0.1 (unreleased)
 
+### Behaviour changes
+
+- `detk-enrich fgsea` without `-c/--statcol` is a usage error (exit 2) when
+  the results have more than one numeric column besides the ID column
+  (counted after `-i`), as every `detk-de` result does; the error names the
+  candidate columns. In 1.0.0 it ranked silently by the last numeric
+  column, which in a DESeq2 result is the last term's `__padj`: an
+  unsigned, adjusted p-value, not the analysis asked for. Fix: name the
+  ranking statistic with `-c COL`, e.g. `-c condition__treated__stat`. A
+  table with one numeric column besides the ID column ranks by it as
+  before, and a command line that passes `-c` is unchanged. This changes a
+  documented default, a recorded exception to the 1.0 promise (DETK-0600)
+- The fgsea module JSON params record the ranking used: `statcol`, `idcol`
+  (the resolved column names) and `ascending`; the module JSON schema is
+  unchanged (DETK-0600)
+
 ### Fixed
 
 - Runs that differ only in their files keep separate report records. A

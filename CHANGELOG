@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.1 (unreleased)
+
+### Fixed
+
+- The quickstart says, by its `detk-de deseq2` example, that detk reports
+  the Wald test of every coefficient with no independent filtering and no
+  Cook's distance cutoff, so its `padj` differs from a default DESeq2
+  `results()` call, and links the `detk-de deseq2` page for the settings it
+  matches (#184)
+
 ## 1.0.0 (2026-11-25)
 
 Note: 0.9.12 on PyPI dates from 2020-01-18 and predates everything below.

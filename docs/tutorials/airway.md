@@ -349,8 +349,9 @@ $ detk-enrich fgsea --filter-unannotated -i entrez -c 'dex__trt__log2FoldChange'
     -o fgsea_results.csv wikipathways.gmt deseq2_results_entrez.csv
 ```
 
-`-c` names the ranking column; without it detk would rank by the last
-numeric column, the treatment's adjusted p-value, which ranks by the wrong
+`-c` names the ranking column. A detk-de result has many numeric columns
+that could rank, so without `-c` detk stops with exit 2 and names them
+rather than guessing; an adjusted p-value, for one, would rank by the wrong
 quantity and in the wrong direction. The Wald statistic `dex__trt__stat` is
 the other common choice. Run `detk-report generate` again to add the
 enrichment to the report.

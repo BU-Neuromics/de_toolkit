@@ -60,7 +60,6 @@ import jinja2
 import json
 import logging
 import math
-from pprint import pformat
 import numpy as np
 import os
 import pathlib
@@ -285,6 +284,28 @@ def _argv(workdir, command=None):
     return argv
 
 
+def record_id(name, params, paths, argv):
+    """The id of a module record, and so its file name ``json/<id>.json``.
+
+    It hashes what identifies a run: the module *name*, its *params*, every
+    input and output path as recorded (*paths*: ``in_file_path``,
+    ``out_file_path``, ``column_data_path`` and, when given,
+    ``in_file_paths`` and ``out_file_paths``, each relative to workdir), the
+    recorded command line *argv* and the detk version. Runs that differ in
+    any file, including one a module does not record (fgsea's results file
+    is in its command line only), keep separate records; re-running an
+    identical command writes the same id and replaces its one record (#182).
+    """
+    identity = {
+        "name": name,
+        "params": params,
+        "paths": paths,
+        "argv": argv,
+        "detk_version": __version__,
+    }
+    return hash_str(json.dumps(identity, sort_keys=True, cls=NumpyEncoder))
+
+
 class DetkModuleJSON:
     def __init__(
         self,
@@ -300,26 +321,6 @@ class DetkModuleJSON:
         report_dir=None,
     ):
 
-        # the json filename is calculated as the combination of
-        # the module name, the parameters passed, and the input filename
-        repl_file_path = "-" if in_file_path is None else in_file_path
-
-        # since the parameters is a dictionary, convert to a json string
-        # to calculate the hash
-        param_str = json.dumps(module.params, sort_keys=True, cls=NumpyEncoder)
-        logger.debug("report param string:\n%s", pformat(param_str))
-
-        module_id = hash_str(module.name + param_str + repl_file_path + __version__)
-        logger.debug("writing module for module_id: %s", module_id)
-
-        filename = f"{module_id}.json"
-
-        if json_path is not None:
-            self.filepath = json_path
-        else:
-            self.filepath = os.path.realpath(os.path.join(json_dir, filename))
-        logger.debug("writing module JSON to: %s", self.filepath)
-
         # recorded paths name no directory of this machine (DETK-0280):
         # workdir relative to the report directory, the file paths relative
         # to workdir
@@ -330,6 +331,30 @@ class DetkModuleJSON:
 
         def rel(path):
             return _file_relpath(path, workdir)
+
+        paths = OrderedDict(
+            [
+                ("in_file_path", rel(in_file_path)),
+                ("out_file_path", rel(out_file_path)),
+                ("column_data_path", rel(column_data_path)),
+            ]
+        )
+        if in_file_paths is not None:
+            paths["in_file_paths"] = [rel(p) for p in in_file_paths]
+        if out_file_paths is not None:
+            paths["out_file_paths"] = [rel(p) for p in out_file_paths]
+        argv = _argv(workdir, getattr(module, "command_argv", None))
+
+        module_id = record_id(module.name, module.params, paths, argv)
+        logger.debug("writing module for module_id: %s", module_id)
+
+        filename = f"{module_id}.json"
+
+        if json_path is not None:
+            self.filepath = json_path
+        else:
+            self.filepath = os.path.realpath(os.path.join(json_dir, filename))
+        logger.debug("writing module JSON to: %s", self.filepath)
 
         module_json = module.json
         self.out_d = OrderedDict(
@@ -343,10 +368,10 @@ class DetkModuleJSON:
                 # end_time is when the module was recorded
                 ("start_time", _PROCESS_START.isoformat()),
                 ("end_time", datetime.now(UTC).isoformat()),
-                ("argv", _argv(workdir, getattr(module, "command_argv", None))),
-                ("in_file_path", rel(in_file_path)),
-                ("out_file_path", rel(out_file_path)),
-                ("column_data_path", rel(column_data_path)),
+                ("argv", argv),
+                ("in_file_path", paths["in_file_path"]),
+                ("out_file_path", paths["out_file_path"]),
+                ("column_data_path", paths["column_data_path"]),
                 ("workdir", _relpath(workdir, report_dir)),
                 ("params", module_json["params"]),
                 ("properties", module_json["properties"]),
@@ -354,10 +379,9 @@ class DetkModuleJSON:
         )
         # every input and output file of a step with several (schema 1.1);
         # left out otherwise, so other modules' documents are as before
-        if in_file_paths is not None:
-            self.out_d["in_file_paths"] = [rel(p) for p in in_file_paths]
-        if out_file_paths is not None:
-            self.out_d["out_file_paths"] = [rel(p) for p in out_file_paths]
+        for key in ("in_file_paths", "out_file_paths"):
+            if key in paths:
+                self.out_d[key] = paths[key]
 
     def write(self, indent=None):
         """

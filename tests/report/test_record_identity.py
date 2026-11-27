@@ -80,10 +80,12 @@ def crate_actions(work):
 
 
 def inputs_and_outputs(action):
-    return (
-        sorted(o["@id"] for o in action.get("object", [])),
-        sorted(r["@id"] for r in action.get("result", [])),
-    )
+    "The files an action used and made, as named in the crate (rooted in detk_report/)"
+
+    def files(key):
+        return sorted(e["@id"] for e in action.get(key, []) if not e["@id"].startswith("#"))
+
+    return files("object"), files("result")
 
 
 # ------------------------------------------- the reproductions, end to end
@@ -101,8 +103,8 @@ def test_filter_runs_writing_different_outputs_keep_two_records(work):
 
     acts = crate_actions(work)
     assert sorted(inputs_and_outputs(a) for a in acts) == [
-        (["counts.csv"], ["a.csv"]),
-        (["counts.csv"], ["b.csv"]),
+        (["../counts.csv"], ["../a.csv"]),
+        (["../counts.csv"], ["../b.csv"]),
     ]
 
 
@@ -120,8 +122,8 @@ def test_deseq2_runs_on_different_sample_sheets_keep_two_records(work):
 
     acts = crate_actions(work)
     assert sorted(inputs_and_outputs(a) for a in acts) == [
-        (["counts.csv", "samples.csv"], ["de.csv"]),
-        (["counts.csv", "samples_other.csv"], ["de.csv"]),
+        (["../counts.csv", "../samples.csv"], ["../de.csv"]),
+        (["../counts.csv", "../samples_other.csv"], ["../de.csv"]),
     ]
 
 

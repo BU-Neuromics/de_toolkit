@@ -9,6 +9,8 @@ scope: [de_toolkit/version.py, pyproject.toml, CHANGELOG, README.md]
 prev: [DETK-0001, release/tpm-cpm, release/annotate, release/gather, release/agent-skills, release/fpkm, release/escape-json, release/padded-ids, release/single-column, release/deps, release/view-text, release/skill-update, release/quickstart-figure, release/r-ids, release/ci-lock, release/cli-pin, release/formula-pin, release/cli-migrate, release/formula-migrate, release/cli-docs, release/statsmodels-test, release/formula-rename, release/cli-gaps, release/size-factors, release/record, release/r-design-names, release/dep-guards, release/help-options, release/tidy-output, release/parse-errors, release/strict-json, release/outlier-entropy, release/cli-messages, release/record-help, release/report-paths, release/example-paths, release/short-header, release/recipe-notes, release/ci-jsdom, release/ragged-sheet, release/jsdom-summary, release/crate-stdout, release/record-program, release/workflow-permissions, release/tidy-sheet-name, release/record-space-paths]
 issue: 168
 visited: 94f8bde
+status: done
+done: 1ca3a82
 ---
 
 # Cut 1.0.0
@@ -20,9 +22,10 @@ visited: 94f8bde
 - [x] @reviewer Review the version-bump PR against the definition of done (criteria 32 and 33 in `release.md`): `version.py` at 1.0.0, the Production/Stable classifier, the dated CHANGELOG heading and its "Breaking changes from 0.9" list, the regenerated `docs/example/`, packaging (`uv build`, `twine check`), and CI green including the R job <!-- s8 -->
 - [x] @human Answer DETK-0002 (deferred by Adam on 2026-11-20): leave the PCA_tester data in history, or rewrite it out before the tag <!-- s7 -->
 - [x] @human Accept the PR and say to cut the release <!-- s3 -->
-- [ ] @developer Push the `v1.0.0` tag, create the GitHub Release, check PyPI, the attached artifacts and the DOI <!-- s4 -->
-- [ ] @developer Add the concept-DOI badge to the README <!-- s5 -->
-- [ ] @human Accept <!-- s6 -->
+- [x] @developer Push the `v1.0.0` tag, create the GitHub Release, check PyPI, the attached artifacts and the DOI <!-- s4 -->
+- [x] @developer Add the concept-DOI badge to the README <!-- s5 -->
+- [x] @reviewer Review the s5 change: the README's DOI badge shows and links the concept DOI Zenodo minted for v1.0.0 (10.5281/zenodo.24539251, resolving to the latest version), the PyPI badge reads 1.0.0, and the node's acceptance holds (PyPI 1.0.0 by release.yml, the Release with sdist and wheel, the DOI) <!-- s9 -->
+- [x] @human Accept <!-- s6 -->
 
 ## Notes
 
@@ -38,6 +41,10 @@ ticked under the delegation of DETK-0063.
 Step s8, the review of s2's PR, was added on 2026-11-23 under Adam's
 delegation via the driver session, 2026-11-20 (DETK-0063), so the review of
 the version-bump PR is recorded in cogit before his s3.
+
+Step s9, the review of s5's README change, was added on 2026-11-25 under
+Adam's delegation via the driver session, 2026-11-20 (DETK-0063), as s8 was
+for s2, so the review is recorded before Adam's s6.
 
 Dependency note, 2026-11-23: roc-validator 0.14.0 wants the RO-Crate 1.3
 context, and tests/util/test_record.py::test_crate_validates_with_a_recorded_step

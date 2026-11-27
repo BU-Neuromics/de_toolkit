@@ -10,6 +10,16 @@ authors:
     given-names: Adam
     email: labadorf@bu.edu
     affiliation: Boston University
+version: 1.0.0
+date-released: "2026-11-25"
+doi: 10.5281/zenodo.24539251
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.24539251
+    description: The concept DOI of de_toolkit on Zenodo, resolving to the latest version
+  - type: doi
+    value: 10.5281/zenodo.24539252
+    description: The DOI of version 1.0.0 on Zenodo
 repository-code: "https://github.com/BU-Neuromics/de_toolkit"
 url: "https://bu-neuromics.github.io/de_toolkit/"
 license: MIT

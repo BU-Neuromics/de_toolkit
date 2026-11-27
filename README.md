@@ -2,6 +2,7 @@
 [![docs](https://img.shields.io/badge/docs-latest-blue)](https://bu-neuromics.github.io/de_toolkit/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue)](https://github.com/BU-Neuromics/de_toolkit/blob/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/de_toolkit)](https://pypi.org/project/de_toolkit/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24539251.svg)](https://doi.org/10.5281/zenodo.24539251)
 
 # Introduction
 

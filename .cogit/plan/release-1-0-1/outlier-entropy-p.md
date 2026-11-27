@@ -7,6 +7,8 @@ acceptance:
 from: [DETK-0200, DETK-0860]
 prev: [DETK-0860, release-1-0-1/count-checks-readers]
 scope: [de_toolkit/outlier.py, tests/outlier/, tests/cli/, +docs/tools/outlier.md, +skills/detk/references/commands.md, +CHANGELOG]
+issue: 222
+visited: 5d8ae02
 ---
 
 # detk-outlier entropy runs without -p

@@ -7,6 +7,8 @@ acceptance:
 scope: [tests/]
 issue: 187
 visited: 557da83
+status: done
+done: 2ce402e
 ---
 
 # R tests skip when an R package they need is missing
@@ -15,7 +17,7 @@ visited: 557da83
 
 - [x] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

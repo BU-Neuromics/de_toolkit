@@ -8,7 +8,8 @@
   the Wald test of every coefficient with no independent filtering and no
   Cook's distance cutoff, so its `padj` differs from a default DESeq2
   `results()` call, and links the `detk-de deseq2` page for the settings it
-  matches (#184)
+  matches; that page's R equivalent now passes `independentFiltering=FALSE`
+  to `results()` as well as `cooksCutoff=Inf` (#184, DETK-0770)
 
 ## 1.0.0 (2026-11-25)
 

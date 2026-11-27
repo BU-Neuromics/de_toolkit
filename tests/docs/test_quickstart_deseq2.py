@@ -2,7 +2,8 @@
 docs/quickstart.md says, by its detk-de deseq2 example, how detk's DESeq2
 differs from a default results() call: it names independent filtering and
 Cook's distance and links docs/tools/de.md, whose deseq2 section states the
-results() settings detk matches.
+results() settings detk matches, and the R it shows passes both to
+results() (DETK-0770).
 """
 
 import re
@@ -52,3 +53,17 @@ def test_de_page_states_the_matched_settings():
     assert "no independent filtering" in section
     assert "Cook's distance" in section
     assert "results(" in section
+
+
+def test_de_page_r_block_turns_off_both():
+    "The R the page calls roughly equivalent passes both settings to results() (DETK-0770)"
+    section = _de_deseq2_section()
+    calls = re.findall(r"results\(dds[^)]*\)", section)
+    assert calls, "docs/tools/de.md's deseq2 section has no results(dds, ...) call"
+    for call in calls:
+        assert re.search(r"independentFiltering\s*=\s*FALSE", call), (
+            f"{call} in docs/tools/de.md applies independent filtering"
+        )
+        assert re.search(r"cooksCutoff\s*=\s*Inf", call), (
+            f"{call} in docs/tools/de.md applies a Cook's distance cutoff"
+        )

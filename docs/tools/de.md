@@ -45,7 +45,7 @@ dds <- DESeqDataSetFromMatrix(
 )
 
 dds <- DESeq(dds, minReplicatesForReplace=Inf)
-write.csv(results(dds, cooksCutoff=Inf), de.out.fn)
+write.csv(results(dds, independentFiltering=FALSE, cooksCutoff=Inf), de.out.fn)
 ```
 
 **The analysis implemented here differs from the default DESeq2 analysis** in

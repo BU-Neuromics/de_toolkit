@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-27
 from: {node: release-1-0-1/fgsea-input, step: s2}
 applies: [release-1-0-1/fgsea-input]
 issue: 202
+revisions:
+  - {date: 2026-11-27, by: adamlabadorf, change: Accepted, why: "from the terminal: Accepted as recommended (A) under Adam's delegation via the driver session, 2026-11-20 (DETK-0063), extended to the post-1.0 plan 2026-11-27."}
 ---
 
 # Where the stale fgsea line in report.py's record_id docstring is fixed

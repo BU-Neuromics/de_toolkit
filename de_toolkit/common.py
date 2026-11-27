@@ -1028,18 +1028,20 @@ def read_id_table(f):
         table.index = pandas.Index(ids.to_numpy(), name=table.index.name)
     else:
         logger.warning("could not read the IDs of %s as text; pandas typed them", source)
-    # the column names as the header line writes them, before pandas renames
-    # a repeated name A to A.1, for check_counts
+    # each column's name as the header line writes it, by its name in the
+    # table, since pandas renames a repeated name A to A.1 (for
+    # check_counts); a mapping, so it holds after the columns are selected
+    # or reordered
     header = read(header=None, nrows=1, dtype=str, keep_default_na=False).iloc[0].tolist()
     if len(header) == len(table.columns) + 1:
         header = header[1:]
     if len(header) == len(table.columns):
-        table.attrs[COLUMNS_AS_WRITTEN] = header
+        table.attrs[COLUMNS_AS_WRITTEN] = dict(zip(map(str, table.columns), header))
     return table
 
 
-# the key in a table's ``attrs`` under which read_id_table keeps its column
-# names as the header line writes them
+# the key in a table's ``attrs`` under which read_id_table keeps a mapping
+# of its column names to the names as the header line writes them
 COLUMNS_AS_WRITTEN = "detk_columns_as_written"
 
 
@@ -1064,8 +1066,9 @@ def check_counts(counts, name="counts"):
     the first offender:
 
     - a sample named more than once in the header; read from the header as
-      written (``read_id_table`` keeps it in ``attrs``), since pandas
-      renames a repeated name ``A`` to ``A.1``
+      written (``read_id_table`` keeps, in ``attrs``, each column's name as
+      written by its name in the table), since pandas renames a repeated
+      name ``A`` to ``A.1``; a column not in that mapping goes by its name
     - a feature ID listed more than once
     - a negative count
     - a sample whose counts sum to 0 (zero depth)
@@ -1075,7 +1078,8 @@ def check_counts(counts, name="counts"):
     Positions are counted from 1 among the samples (columns after the
     feature IDs) and the features (rows after the header).
     """
-    columns = counts.attrs.get(COLUMNS_AS_WRITTEN, [str(c) for c in counts.columns])
+    as_written = counts.attrs.get(COLUMNS_AS_WRITTEN, {})
+    columns = [as_written.get(str(c), str(c)) for c in counts.columns]
     seen = {}
     for i, sample in enumerate(columns):
         if sample in seen:

@@ -19,13 +19,13 @@ def test_well_formed_counts_pass():
 def test_read_id_table_keeps_the_header_as_written():
     table = read("gene,A,A,B\ng1,1,2,3\n")
     assert list(table.columns) == ["A", "A.1", "B"]
-    assert table.attrs[COLUMNS_AS_WRITTEN] == ["A", "A", "B"]
+    assert table.attrs[COLUMNS_AS_WRITTEN] == {"A": "A", "A.1": "A", "B": "B"}
 
 
 def test_read_id_table_header_without_the_id_field():
     # R's write.table leaves out the header cell over the row names
     table = read("A,A,B\ng1,1,2,3\n")
-    assert table.attrs[COLUMNS_AS_WRITTEN] == ["A", "A", "B"]
+    assert table.attrs[COLUMNS_AS_WRITTEN] == {"A": "A", "A.1": "A", "B": "B"}
     with pytest.raises(CountsError, match=r"sample 'A' is named more than once"):
         check_counts(table, "c.csv")
 
@@ -94,3 +94,51 @@ def test_checks_run_in_order():
 
 def test_counts_error_is_a_value_error():
     assert issubclass(CountsError, ValueError)
+
+
+# a subset or reordering of the columns, as CountMatrix makes with column
+# data (counts[common_names]), keeps each sample's name as written
+
+
+@pytest.mark.parametrize("cols", [["B", "C"], ["C", "B"]])
+def test_negative_count_after_selecting_columns(cols):
+    table = read("gene,A,B,C\ng1,1,-2,3\ng2,0,5,6\n")
+    with pytest.raises(CountsError, match=r"in sample 'B' has a negative count, -2$"):
+        check_counts(table[cols], "c.csv")
+
+
+@pytest.mark.parametrize("cols", [["B", "C"], ["C", "B"]])
+def test_zero_depth_after_selecting_columns(cols):
+    table = read("gene,A,B,C\ng1,1,2,0\ng2,1,5,0\n")
+    with pytest.raises(CountsError, match=r"^c.csv: sample 'C' has no counts"):
+        check_counts(table[cols], "c.csv")
+
+
+def test_selection_without_the_offending_samples_passes():
+    table = read("gene,A,B,C\ng1,-1,2,3\ng2,0,5,6\n")
+    check_counts(table[["C", "B"]], "c.csv")
+
+
+def test_a_repeated_name_that_survives_the_selection():
+    table = read("gene,A,A,B\ng1,1,2,3\n")
+    with pytest.raises(CountsError) as e:
+        check_counts(table[["B", "A.1", "A"]], "c.csv")
+    assert str(e.value) == (
+        "c.csv: sample 'A' is named more than once in the header (sample columns 2 and 3)"
+    )
+
+
+def test_a_repeated_name_that_does_not_survive_the_selection():
+    table = read("gene,A,A,B\ng1,1,2,3\n")
+    check_counts(table[["A", "B"]], "c.csv")
+    check_counts(table[["A.1", "B"]], "c.csv")
+
+
+def test_check_after_count_matrix_lines_up_column_data():
+    from de_toolkit.common import CountMatrix
+
+    counts = read("gene,A,B,C\ng1,1,-2,3\ng2,0,5,6\n")
+    column_data = read("sample,cond\nC,x\nB,y\n")
+    cm = CountMatrix(counts, column_data=column_data)
+    with pytest.raises(CountsError, match=r"in sample 'B' has a negative count, -2$"):
+        check_counts(cm.counts, "c.csv")

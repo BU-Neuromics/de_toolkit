@@ -6,6 +6,7 @@ acceptance:
 scope: [docs/quickstart.md, tests/docs/, +CHANGELOG]
 issue: 184
 visited: 557da83
+prev: [DETK-0770]
 ---
 
 # The quickstart states how detk's DESeq2 differs from a default results() call

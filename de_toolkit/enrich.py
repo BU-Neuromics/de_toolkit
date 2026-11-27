@@ -536,9 +536,12 @@ def main(argv=sys.argv):
     if not args.no_report:
         logging.info("writing report to %s", args.report_dir)
         with DetkReport(args.report_dir) as r:
+            # the results file it ranked is an input beside the GMT, so the
+            # crate links the enrichment to the step that wrote it (DETK-0720)
             r.add_module(
                 out,
                 in_file_path=args.gmt_fn,
+                in_file_paths=[args.gmt_fn, args.result_fn],
                 out_file_path=args.output,
                 workdir=os.getcwd(),
             )

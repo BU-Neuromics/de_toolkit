@@ -64,6 +64,20 @@
   writes it) and the crate action's `object` holds both; `in_file_path`
   stays the GMT (DETK-0720, #199)
 
+### Tests
+
+- The test suite leaves the working tree clean. With DESeq2 installed,
+  `tests/de/test_de.py::test_R_check_names_nonsense` ran DESeq2 with
+  `routput_dir="tmp_output"`, a relative path, and left `tmp_output/`
+  (counts.csv, script.R, params_*.json, stdout, stderr) in the directory
+  pytest ran from; it now writes R's files and its `-o` output under
+  `tmp_path`. A session-scoped guard in `tests/conftest.py`
+  (`repository_left_clean`) compares the repository's untracked files
+  (`git status --porcelain --untracked-files=all`, so ignored files are not
+  counted) before and after the run and fails the session, naming the
+  files, when a test leaves a new one; it is off outside a git work tree
+  (#210)
+
 ## 1.0.0 (2026-11-25)
 
 Note: 0.9.12 on PyPI dates from 2020-01-18 and predates everything below.

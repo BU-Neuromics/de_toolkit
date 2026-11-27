@@ -387,3 +387,46 @@ def fake_counts_gene_lengths(request, fake_counts_obj):
     return pandas.Series(
         range(2, len(fake_counts_obj.counts.index) + 2), index=fake_counts_obj.counts.index
     )
+
+
+################################################################################
+# the suite leaves the repository clean (#210)
+
+
+def untracked_files(root):
+    """The untracked, not-ignored files under the git work tree at root, as a
+    set of repository-relative paths; None when root is not in a git work tree
+    or git is missing (an sdist, a bare container), where the guard is off."""
+    import subprocess
+
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=all", "-z"],
+            capture_output=True,
+            check=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    entries = out.decode("utf-8", "surrogateescape").split("\0")
+    return {e[3:] for e in entries if e.startswith("?? ")}
+
+
+@pytest.fixture(scope="session", autouse=True)
+def repository_left_clean():
+    """Fail the session when a test leaves a new untracked file in the
+    repository: tests write under tmp_path or a temporary directory, never into
+    the tree or the directory pytest runs from. Files untracked before the run
+    (work in progress) are not counted; ignored files (.gitignore) are not
+    seen."""
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    before = untracked_files(root)
+    yield
+    if before is None:
+        return
+    left = sorted(untracked_files(root) - before)
+    if left:
+        pytest.fail(
+            "the test suite left untracked files in the repository "
+            f"({root}); write them under tmp_path instead:\n  " + "\n  ".join(left),
+            pytrace=False,
+        )

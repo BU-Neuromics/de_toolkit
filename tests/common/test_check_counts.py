@@ -138,7 +138,7 @@ def test_check_after_count_matrix_lines_up_column_data():
     from de_toolkit.common import CountMatrix
 
     counts = read("gene,A,B,C\ng1,1,-2,3\ng2,0,5,6\n")
-    column_data = read("sample,cond\nC,x\nB,y\n")
+    column_data = read("sample,cond\nC,x\nB,y\nA,z\n")
     cm = CountMatrix(counts, column_data=column_data)
     with pytest.raises(CountsError, match=r"in sample 'B' has a negative count, -2$"):
         check_counts(cm.counts, "c.csv")

@@ -452,7 +452,7 @@ class Tidy(DetkModule):
             )
 
         # CountMatrix adds a counts column to the frame it is given
-        matched = CountMatrix(counts, column_data.copy())
+        matched = CountMatrix(counts, column_data.copy(), subset=True)
         samples = matched.counts.columns
         self.counts = matched.counts
         tidied = column_data.loc[list(samples), list(column_data.columns)]

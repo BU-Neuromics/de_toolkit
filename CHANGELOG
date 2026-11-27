@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.1 (unreleased)
+
+### Fixed
+
+- The test suite skips the tests that run R when an R package they need
+  is missing, naming the package (`R package DESeq2 is not installed`),
+  where six of them failed with Rscript on PATH but without DESeq2 or
+  logistf: the CLI help examples of `detk-de deseq2`, `detk-de firth`,
+  `detk-transform vst` and `rlog`, the quickstart and the provenance test
+  into `detk-de`. The check is one helper, `tests/r_packages.py`. With
+  the R packages missing the quickstart test still runs its other steps,
+  then skips naming what was missing; the CI job with R, which installs
+  every package, runs them all as before (#187)
+
 ## 1.0.0 (2026-11-25)
 
 Note: 0.9.12 on PyPI dates from 2020-01-18 and predates everything below.

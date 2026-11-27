@@ -1,0 +1,15 @@
+---
+kind: outcome
+objective: 'detk 1.0.1 is released: the audit''s silent wrong answers, malformed-count acceptance and provenance gaps fixed and the skill and docs corrected, with no new interface'
+acceptance:
+  - every 1.0.1 finding of the external AI-readiness audit of 1.0.0 (Codex, 2026-11) is reproduced as a test that fails on 1.0.0 and passes on 1.0.1
+  - no command or option is added and the module JSON schema is unchanged (DETK-0001's promise); each behaviour change is a bug fix with a CHANGELOG note (DETK-0600)
+  - pip install de_toolkit installs 1.0.1; the v1.0.1 tag, GitHub Release and Zenodo version DOI exist, and CITATION.cff names 1.0.1
+from: [DETK-0600]
+---
+
+# Release 1.0.1: fixes from the AI-readiness audit
+
+## Implementation plan
+
+## Notes

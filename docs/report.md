@@ -254,7 +254,10 @@ too. Standard RO-Crate tooling
 (`rocrate-validator`, `runcrate report`, WorkflowHub, Zenodo RO-Crate
 deposits) can inspect it without detk installed, and the crate maps to W3C
 PROV-O via the profile's published mapping. detk validates its emitted crates
-against the Process Run Crate profile in its test suite.
+against the Process Run Crate profile in its test suite, and checks that the
+crate of a filter -> DESeq2 -> fgsea chain traces the enrichment table, from
+each file to the action whose result it is and on to that action's inputs,
+back to the counts and the sample information file.
 
 The crate is derived entirely from the module JSON under
 `<report-dir>/json/`, is rewritten on every report generation, and is removed

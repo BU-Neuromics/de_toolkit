@@ -6,6 +6,8 @@ acceptance:
   - pmf_transform and shrink called from Python with integer counts work too; the output is float (shrunk counts are fractional, as the float input's run already shows), and docs/tools/outlier.md and the shrink and pmf_transform docstrings say so; CHANGELOG 1.0.1 under Fixed
 prev: [release-1-0-1/count-checks-readers]
 scope: [de_toolkit/outlier.py, tests/outlier/, +docs/tools/outlier.md, +CHANGELOG]
+issue: 219
+visited: bfbc2c1
 ---
 
 # detk-outlier shrink takes integer counts

@@ -7,6 +7,8 @@ acceptance:
 from: [DETK-0601]
 scope: [de_toolkit/norm.py, de_toolkit/de.py, de_toolkit/transform.py, de_toolkit/stats.py, de_toolkit/filter.py, de_toolkit/outlier.py, tests/, +docs/concepts.md, +CHANGELOG]
 prev: [release-1-0-1/count-checks]
+issue: 201
+visited: 29305c6
 ---
 
 # Every command that reads counts runs the count checks

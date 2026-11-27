@@ -80,9 +80,12 @@ Feature IDs and sample names are read as text exactly as written, so a
 zero-padded ID such as `007` stays `007`, and a sample named `001` stays
 `001`, through every detk command, the R-backed ones (`detk-de`,
 `detk-transform vst` and `rlog`) and `detk-enrich fgsea` included. Two IDs
-that differ only as text (`1.10` and `1.1`) stay distinct. The R-backed
-commands stop on a counts file that lists the same ID twice; the Python
-commands do not check, so look for duplicate IDs before running them.
+that differ only as text (`1.10` and `1.1`) stay distinct. Since 1.0.1,
+`detk-norm`, `detk-de`, `detk-transform`, `detk-stats`, `detk-filter` and
+`detk-outlier` exit 1 on a counts file that names a sample twice in its
+header or lists a feature ID twice, naming it. `detk-util tidy` (and
+`tidy-counts`, `tidy-covs`) and `detk-wrapr run` do not check yet, so look
+for repeated sample names and feature IDs before running those.
 
 ### Starting from quantifier outputs
 

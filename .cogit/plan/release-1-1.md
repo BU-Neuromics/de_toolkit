@@ -12,4 +12,6 @@ acceptance:
 
 ## Implementation plan
 
+- [ ] [fgsea takes --seed and records it](release-1-1/fgsea-seed.md) <!-- s1 -->
+
 ## Notes

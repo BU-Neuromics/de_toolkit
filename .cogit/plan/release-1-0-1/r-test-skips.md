@@ -5,15 +5,19 @@ acceptance:
   - 'reproduced first: with an Rscript whose library lacks DESeq2 and logistf (has fgsea and jsonlite), v1.0.0''s suite fails six tests: test_cli_help_sections::test_examples_run_where_test_data_allows[detk-de-deseq2, detk-de-firth, detk-transform-vst, detk-transform-rlog], test_docs_commands::test_quickstart_runs_as_written and test_record::test_lineage_into_detk_de. After: they skip, each naming the missing package; a test pins the skip helper with a stub Rscript, so it needs no R'
   - with every package present they run as before (the R CI job)
 scope: [tests/]
+issue: 187
+visited: 557da83
+status: done
+done: 2ce402e
 ---
 
 # R tests skip when an R package they need is missing
 
 ## Implementation plan
 
-- [ ] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

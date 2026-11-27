@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-27
 from: {node: release-1-1}
 applies: [release-1-1/crate-checksums]
 issue: 175
+revisions:
+  - {date: 2026-11-27, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's decision via the driver session, 2026-11-27 (\"Yes, accept all recommendations\"): Option A, checksums on request with DETK_CHECKSUMS=1"}
 ---
 
 # How checksums are asked for

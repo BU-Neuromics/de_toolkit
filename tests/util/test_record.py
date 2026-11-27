@@ -19,9 +19,10 @@ from importlib.resources import files as pkg_files
 
 import pytest
 
-from de_toolkit import util, wrapr
+from de_toolkit import util
 from de_toolkit.crate import WFRUN_CONTEXT, build_crate
 from de_toolkit.report import MODULE_SCHEMA_VERSION, DetkReport
+from r_packages import needs_r
 
 PY = sys.executable
 TOOL = os.path.basename(PY)
@@ -716,7 +717,7 @@ def test_lineage_into_a_later_detk_step(work):
     assert "../sample_info.csv" in [o["@id"] for o in producer["object"]]
 
 
-@pytest.mark.skipif(not wrapr.check_r(), reason="R is not installed")
+@needs_r("DESeq2")
 def test_lineage_into_detk_de(work):
     p = record(work, "-i", "sample_info.csv", "-o", "covs.csv")
     assert p.returncode == 0, p.stderr

@@ -63,6 +63,22 @@
   files in `in_file_paths` (schema 1.1's field, as `detk-util record`
   writes it) and the crate action's `object` holds both; `in_file_path`
   stays the GMT (DETK-0720, #199)
+- The Process Run Crate records every file a command read or wrote. In
+  1.0.0 these were missing from the crate action, though the command
+  read or wrote them: `detk-util annotate`'s mapping file (a parameter
+  only, #45), `detk-util gather`'s per-sample files (listed in its
+  parameters only), `detk-transform rlog`'s sample information file,
+  `detk-norm fpkm` and `tpm`'s lengths file, and the side outputs
+  `detk-norm deseq2 --size-factors`, `detk-transform vst` and `rlog
+  --rda` and `detk-outlier entropy --plot-output`. Their module JSON now
+  lists each in `in_file_paths`, `out_file_paths` or `column_data_path`
+  (schema 1.1's fields, as `detk-util record` writes them), so the crate
+  action's `object` and `result` hold it; `in_file_path` and
+  `out_file_path` are unchanged, except that `detk-outlier entropy`
+  without `-o`, which writes no table, records its plot as
+  `out_file_path`. `detk-filter` and `detk-stats`
+  already recorded their sample information file, and `detk-outlier`
+  reads none; tests now hold all of them to it (#209)
 
 ## 1.0.0 (2026-11-25)
 

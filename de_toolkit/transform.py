@@ -454,12 +454,16 @@ def main(argv=sys.argv):
     if not args.no_report:
         logging.info("writing report to %s", args.report_dir)
         with DetkReport(args.report_dir) as r:
+            # the sample information file rlog read, and the --rda file vst
+            # or rlog wrote beside the counts, are in the provenance (#209)
+            rda = getattr(args, "rda", None)
             r.add_module(
                 out,
                 in_file_path=args.counts_fn,
                 out_file_path=args.output,
-                column_data_path=None,
+                column_data_path=getattr(args, "cov_fn", None),
                 workdir=os.getcwd(),
+                out_file_paths=[args.output, rda] if rda else None,
             )
 
     logging.info("done")

@@ -610,11 +610,17 @@ def main(argv=sys.argv):
     if not args.no_report:
         logging.info("writing report to %s", args.report_dir)
         with DetkReport(args.report_dir) as r:
+            # fpkm and tpm read a lengths file, and deseq2 --size-factors
+            # writes a file beside the counts: each is in the provenance (#209)
+            lengths = getattr(args, "lengths_fn", None)
+            size_factors = getattr(args, "size_factors", None)
             r.add_module(
                 out,
                 in_file_path=args.counts_fn,
                 out_file_path=args.output,
                 workdir=os.getcwd(),
+                in_file_paths=[args.counts_fn, lengths] if lengths else None,
+                out_file_paths=[args.output, size_factors] if size_factors else None,
             )
 
     else:

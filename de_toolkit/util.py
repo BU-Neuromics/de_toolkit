@@ -771,14 +771,15 @@ def _annotate_main(args):
     write_output(annotated.output, args)
 
     if not args.no_report:
-        # the module JSON has no slot for a second input file; keep the
-        # mapping file's path with the parameters so the provenance names it
+        # the mapping file is an input beside the results file, so the crate
+        # lists it (#45); its path stays in the parameters too, as in 1.0.0
         annotated["params"]["mapping_fn"] = args.mapping_fn
         logging.info("writing report to %s", args.report_dir)
         with DetkReport(args.report_dir) as r:
             r.add_module(
                 annotated,
                 in_file_path=args.result_fn,
+                in_file_paths=[args.result_fn, args.mapping_fn],
                 out_file_path=args.output,
                 workdir=os.getcwd(),
             )
@@ -1122,8 +1123,9 @@ def _gather_main(args):
 
     from .report import DetkReport
 
+    paths = _expand_paths(args.files)
     gathered = Gather(
-        _expand_paths(args.files),
+        paths,
         fmt=args.format,
         column=args.column,
         name_from=args.name_from,
@@ -1133,11 +1135,17 @@ def _gather_main(args):
     write_output(gathered.output, args)
 
     if not args.no_report:
-        # there are many inputs and the module JSON has one input slot; the
-        # files are listed in the parameters (params["files"]) instead
+        # every per-sample file is an input, so the crate lists them (#209);
+        # none is the primary one, so in_file_path stays empty, and
+        # params["files"] lists them as in 1.0.0
         logging.info("writing report to %s", args.report_dir)
         with DetkReport(args.report_dir) as r:
-            r.add_module(gathered, out_file_path=args.output, workdir=os.getcwd())
+            r.add_module(
+                gathered,
+                in_file_paths=paths,
+                out_file_path=args.output,
+                workdir=os.getcwd(),
+            )
 
     logging.info("done")
 

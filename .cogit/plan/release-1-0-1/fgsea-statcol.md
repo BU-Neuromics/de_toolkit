@@ -10,6 +10,7 @@ from: [DETK-0600]
 scope: [de_toolkit/enrich.py, tests/enrich/, tests/cli/, +docs/tools/enrich.md, skills/detk/references/commands.md, +CHANGELOG]
 issue: 180
 visited: 557da83
+prev: [DETK-0760]
 ---
 
 # fgsea needs -c when more than one column could rank

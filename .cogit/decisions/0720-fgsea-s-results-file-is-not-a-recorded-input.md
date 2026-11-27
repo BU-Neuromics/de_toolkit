@@ -1,12 +1,14 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-27
 from: {node: release-1-0-1/run-identity, step: s1}
 applies: [release-1-0-1/run-identity]
 allowed_by: [reasonable]
 issue: 189
+revisions:
+  - {date: 2026-11-27, by: adamlabadorf, change: Accepted, why: "from the terminal: Accepted under Adam's delegation via the driver session, 2026-11-20 (DETK-0063), extended to the post-1.0 plan 2026-11-27. Resolved as: handled by the planned node release-1-0-1/fgsea-input (enrich.py lists the DE results file as an input, after fgsea-statcol); no new node."}
 ---
 
 # fgsea's results file is not a recorded input

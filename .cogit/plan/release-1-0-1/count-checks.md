@@ -7,6 +7,8 @@ acceptance:
 from: [DETK-0601]
 prev: [DETK-0601]
 scope: [de_toolkit/common.py, de_toolkit/norm.py, tests/norm/, tests/common/, +docs/tools/norm.md, +CHANGELOG]
+issue: 195
+visited: a8c3e91
 ---
 
 # detk-norm cpm rejects malformed counts

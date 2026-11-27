@@ -6,6 +6,8 @@ acceptance:
   - negative counts and zero-depth samples are still accepted by these commands (values=False); docs/concepts.md's list of commands and checks and CHANGELOG 1.0.1 include them
 prev: [release-1-0-1/count-checks-readers]
 scope: [de_toolkit/util.py, de_toolkit/wrapr.py, tests/, +docs/concepts.md, +CHANGELOG]
+issue: 218
+visited: bfbc2c1
 ---
 
 # detk-util tidy and detk-wrapr run check sample headers and feature IDs

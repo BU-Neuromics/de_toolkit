@@ -28,6 +28,7 @@ visited: 557da83
 - [ ] [detk-outlier entropy runs without -p](release-1-0-1/outlier-entropy-p.md) <!-- s14 -->
 - [ ] [detk-outlier shrink takes integer counts](release-1-0-1/outlier-shrink-int.md) <!-- s15 -->
 - [ ] [The test suite leaves the working tree clean](release-1-0-1/test-tmp-output.md) <!-- s16 -->
+- [ ] [detk-util tidy and detk-wrapr run check sample headers and feature IDs](release-1-0-1/tidy-wrapr-checks.md) <!-- s17 -->
 - [ ] [Cut 1.0.1](release-1-0-1/cut.md) <!-- s12 -->
 - [ ] @human Accept: 1.0.1 is out <!-- s13 -->
 
@@ -65,4 +66,5 @@ before it was planned. `outlier-entropy-p` (entropy fails without `-p`;
 what it should do is DETK-0860, Proposed) and `outlier-shrink-int` (shrink
 fails on integer counts) were found by the count-checks-readers session;
 `test-tmp-output` (a test writes `./tmp_output/`) by Adam. Cut waits on
-each.
+each. `tidy-wrapr-checks` (tidy and wrapr run skip the duplicate checks)
+follows DETK-0850, on the driver's direction.

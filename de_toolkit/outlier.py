@@ -54,6 +54,7 @@ def build_parser():
                 "-p",
                 "--percentile",
                 metavar="N",
+                default="0.05",
                 help="The entropy percentile below which a feature is flagged, between 0 and 1",
             )
             sub.add_argument(

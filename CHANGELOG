@@ -91,6 +91,10 @@
   files in `in_file_paths` (schema 1.1's field, as `detk-util record`
   writes it) and the crate action's `object` holds both; `in_file_path`
   stays the GMT (DETK-0720, #199)
+- `detk-outlier entropy` without `-p` uses the 5th percentile (0.05)
+  instead of failing with `argument -p/--percentile: invalid float value:
+  None` (exit 2); `--help` states the default. `-p` given behaves as
+  before (#222, DETK-0860)
 
 ## 1.0.0 (2026-11-25)
 

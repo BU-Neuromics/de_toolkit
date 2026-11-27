@@ -597,42 +597,71 @@ class SampleMismatchException(Exception):
     pass
 
 
+def _sample_list(names, most=5):
+    "*names* for a one-line message: the first *most*, then how many more"
+    names = [str(n) for n in names]
+    shown = ", ".join(names[:most])
+    return shown + (f" and {len(names) - most} more" if len(names) > most else "")
+
+
 class CountMatrix:
-    def __init__(self, counts, column_data=None, design=None, strict=False):
+    """
+    A counts matrix (features in rows, samples in columns) and, optionally,
+    its sample information *column_data* (samples in rows) and a *design*.
+
+    The counts columns and the column data rows must name the same samples
+    (DETK-0600): a sample in only one of them raises
+    :class:`SampleMismatchException` naming it. The column data is matched
+    to the counts by name, so its rows may come in any order, unless
+    *strict*, which requires the same order too. *subset* keeps the samples
+    in both instead, in the counts' order; it is what ``detk-util tidy``
+    does, the explicit way to subset the two.
+    """
+
+    def __init__(self, counts, column_data=None, design=None, strict=False, subset=False):
 
         self.strict = strict
 
         if column_data is not None:
-            # line up the sample names from the column_data and counts matrices
-            if strict and (
-                len(column_data.index) != len(counts.columns)
-                or not all(column_data.index == counts.columns)
-            ):
-                raise SampleMismatchException(
-                    "When *strict* is supplied, the columns "
-                    "of the counts file must correspond exactly to the row names in the "
-                    "column_data matrix"
-                )
-            else:
-                common_names = counts.columns.intersection(column_data.index)
-
-                logger.debug(
-                    "common names between counts and column data:\n %s", pformat(common_names)
-                )
-
-                # fix to a "no memory available" issue (old Bitbucket tracker) when matrices are
-                # empty
-                if len(common_names) < 2:
-                    raise SampleMismatchException(
-                        "No sample names were found to be in "
-                        "common between the counts and column data or specified sample "
-                        "names. Check that the first column of the column_data matrix "
-                        "and the first row of the counts matrix contain at least 2 values "
-                        "in common"
+            in_counts, in_column_data = set(counts.columns), set(column_data.index)
+            counts_only = [s for s in counts.columns if s not in in_column_data]
+            column_data_only = [s for s in column_data.index if s not in in_counts]
+            if (counts_only or column_data_only) and not subset:
+                parts = []
+                if counts_only:
+                    parts.append(f"in the counts only: {_sample_list(counts_only)}")
+                if column_data_only:
+                    parts.append(
+                        f"in the sample information only: {_sample_list(column_data_only)}"
                     )
+                raise SampleMismatchException(
+                    "the counts columns and the sample information rows must name the "
+                    "same samples; " + "; ".join(parts) + " (to subset the two to the "
+                    "samples in both, run detk-util tidy first)"
+                )
+            if strict and list(column_data.index) != list(counts.columns):
+                raise SampleMismatchException(
+                    "--strict requires the counts columns and the sample information "
+                    "rows to name the same samples in the same order"
+                )
 
-                counts = counts[common_names]
-                column_data = column_data.loc[common_names]
+            common_names = counts.columns.intersection(column_data.index, sort=False)
+
+            logger.debug("common names between counts and column data:\n %s", pformat(common_names))
+
+            # fix to a "no memory available" issue (old Bitbucket tracker) when matrices are
+            # empty
+            if len(common_names) < 2:
+                raise SampleMismatchException(
+                    "No sample names were found to be in "
+                    "common between the counts and column data or specified sample "
+                    "names. Check that the first column of the column_data matrix "
+                    "and the first row of the counts matrix contain at least 2 values "
+                    "in common"
+                )
+
+            counts = counts[common_names]
+            column_data = column_data.loc[common_names]
 
         # if the design is provided, it must have a 'counts' term somewhere
         if design is not None and "counts" not in design:

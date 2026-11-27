@@ -12,4 +12,6 @@ from: [DETK-0600]
 
 ## Implementation plan
 
+- [ ] [Counts and sample information with different samples are an error](release-1-0-1/sample-match.md) <!-- s1 -->
+
 ## Notes

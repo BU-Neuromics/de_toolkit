@@ -9,6 +9,8 @@ acceptance:
 from: [DETK-0600]
 scope: [skills/detk/, tests/skills/, +docs/agent-skills.md, +docs/tutorials/quantifiers.md, +CHANGELOG]
 prev: [release-1-0-1/sample-match, release-1-0-1/fgsea-statcol]
+issue: 214
+visited: ac8575b
 ---
 
 # The agent skill uses tidy's outputs, always passes -c, and leads with gene-level counts

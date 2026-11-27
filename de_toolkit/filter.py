@@ -462,7 +462,8 @@ def main(argv=sys.argv):
     set_logging(args)
     logger.info("cmd: %s", " ".join(argv[1:]))
 
-    count_obj = make_cli_count_obj(args)
+    # the matrix may be normalized or transformed: repeated IDs only (DETK-0830)
+    count_obj = make_cli_count_obj(args, raw=False)
 
     try:
         filtered = FilterCounts(count_obj, args.command)

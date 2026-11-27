@@ -46,6 +46,23 @@
   `de_toolkit.common.check_counts`, for the other commands that read counts
   to call
   ([#195](https://github.com/BU-Neuromics/de_toolkit/issues/195))
+- `detk-norm` (every subcommand), `detk-de`, `detk-transform`, `detk-stats`,
+  `detk-filter` and `detk-outlier` run the same check on the counts as
+  read, before the column data selects or reorders a sample. In 1.0.0 each
+  accepted a sample named twice in the header (going on with `A.1` as a
+  sample of its own or, when the column data names `A`, dropping `A.1`
+  without a word) and a feature ID listed twice. A repeated sample header or
+  feature ID now exits 1 in each of these commands. A negative count or a
+  zero-depth sample also exits 1 where the command needs raw counts:
+  `detk-norm` `deseq2`, `library`, `cpm`, `fpkm`, `tpm`; `detk-de deseq2`;
+  `detk-transform` `vst`, `rlog`. They are accepted where the matrix may be
+  normalized or transformed: `detk-de firth`, `detk-transform plog`,
+  `detk-stats`, `detk-filter`, `detk-outlier`. A sample whose values are
+  all missing or not numbers is named as such ("has no numeric counts"),
+  not as having no counts. The split is listed in docs/concepts.md
+  (DETK-0601, DETK-0830). `detk-util tidy`, `tidy-counts` and `tidy-covs`
+  and `detk-wrapr run` do not run the check yet (DETK-0850)
+  ([#201](https://github.com/BU-Neuromics/de_toolkit/issues/201))
 - Runs that differ only in their files keep separate report records. A
   module record's id hashed the module name, its parameters, the primary
   input and the detk version only, so two `detk-filter` runs differing only

@@ -15,5 +15,6 @@ from: [DETK-0600]
 - [ ] [Counts and sample information with different samples are an error](release-1-0-1/sample-match.md) <!-- s1 -->
 - [ ] [fgsea needs -c when more than one column could rank](release-1-0-1/fgsea-statcol.md) <!-- s2 -->
 - [ ] [fgsea records the results file it ranked as an input](release-1-0-1/fgsea-input.md) <!-- s3 -->
+- [ ] [Runs that differ only in their files keep separate records](release-1-0-1/run-identity.md) <!-- s4 -->
 
 ## Notes

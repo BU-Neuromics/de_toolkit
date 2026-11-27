@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-27
 from: {node: release-1-0-1}
 applies: [release-1-0-1/count-checks, release-1-0-1/count-checks-readers]
 issue: 172
+revisions:
+  - {date: 2026-11-27, by: adamlabadorf, change: Accepted, why: "from the terminal: Adam's decision via the driver session, 2026-11-27 (\"Yes, accept all recommendations\"): Option A, exit 1 for a malformed counts file, as DETK-0031 says"}
 ---
 
 # The exit status of a malformed counts file

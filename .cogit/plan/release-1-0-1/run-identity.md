@@ -6,6 +6,8 @@ acceptance:
   - re-running an identical command (same parameters, inputs and outputs) still replaces its one record
   - docs/report.md says what identifies a record; CHANGELOG 1.0.1 entry
 scope: [de_toolkit/report.py, tests/report/, +docs/report.md, +CHANGELOG]
+issue: 182
+visited: 557da83
 ---
 
 # Runs that differ only in their files keep separate records

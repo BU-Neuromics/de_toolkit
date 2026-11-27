@@ -22,5 +22,6 @@ from: [DETK-0600]
 - [ ] [The agent skill uses tidy's outputs, always passes -c, and leads with gene-level counts](release-1-0-1/skill-guidance.md) <!-- s8 -->
 - [ ] [The quickstart states how detk's DESeq2 differs from a default results() call](release-1-0-1/quickstart-deseq2.md) <!-- s9 -->
 - [ ] [R tests skip when an R package they need is missing](release-1-0-1/r-test-skips.md) <!-- s10 -->
+- [ ] [Annotate's mapping file in the provenance](release-1-0-1/crate-inputs.md) <!-- s11 -->
 
 ## Notes

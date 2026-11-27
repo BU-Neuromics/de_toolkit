@@ -34,6 +34,30 @@ Every tool accepts a counts matrix of the form:
 - The name of the first column doesn't matter; every row must have the same
   number of fields.
 
+Every command that reads a counts matrix checks it as read, before the
+column data selects or reorders any sample, and exits 1 (a bad input file,
+see [Exit codes](#exit-codes)) naming the first offender and how many more
+there are (DETK-0601, DETK-0830):
+
+- **in every command**: a sample named more than once in the header, and a
+  feature ID listed more than once. Positions are counted in the file, from
+  1, among the samples and the features.
+- **in the commands that need raw counts**: also a negative count, a sample
+  with no numeric value, and a sample whose counts sum to 0 (zero depth).
+
+| Needs raw counts (all four checks) | May take a normalized or transformed matrix (repeated IDs only) |
+|---|---|
+| `detk-norm` `deseq2`, `library`, `cpm`, `fpkm`, `tpm` | `detk-de firth` |
+| `detk-de deseq2` | `detk-transform plog` |
+| `detk-transform` `vst`, `rlog` | `detk-stats` (every subcommand) |
+| | `detk-filter` |
+| | `detk-outlier` `entropy`, `shrink` |
+
+A normalized or log-transformed matrix may hold negative values or a column
+of zeros, so the commands on the right accept them. The commands on the left
+model or scale counts, which a negative value or an empty sample would make
+wrong without a word.
+
 ## The column data file
 
 Tools that need per-sample information (differential expression, PCA

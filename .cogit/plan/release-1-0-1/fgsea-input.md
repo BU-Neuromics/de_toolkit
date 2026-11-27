@@ -6,6 +6,8 @@ acceptance:
   - CHANGELOG 1.0.1 entry
 scope: [de_toolkit/enrich.py, tests/enrich/, tests/report/, +CHANGELOG]
 prev: [release-1-0-1/fgsea-statcol]
+issue: 199
+visited: ff47136
 ---
 
 # fgsea records the results file it ranked as an input

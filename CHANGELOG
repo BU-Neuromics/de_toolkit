@@ -1,8 +1,11 @@
 # Changelog
 
-## 1.0.1 (unreleased)
+## 1.0.1 (2026-11-27)
 
 ### Behaviour changes
+
+Each of these makes a 1.0.0 command line or result fail or differ; each says
+what a 1.0.0 user must change.
 
 - Counts and sample information whose sample sets differ are an error
   (DETK-0600): every command that matches a counts file to a sample
@@ -11,23 +14,63 @@
   the samples found in only the counts and only the sample information.
   1.0.0 fitted the samples the two shared and dropped the rest without a
   warning. The same samples in another order are still matched by name;
-  `--strict` still requires the same order. To analyse a subset, run
-  `detk-util tidy` first. In the Python API, `CountMatrix` raises
-  `SampleMismatchException`; `CountMatrix(..., subset=True)` keeps the
-  samples in both, as `detk-util tidy` does.
+  `--strict` still requires the same order. **To change:** to analyse a
+  subset, run `detk-util tidy -o counts_tidy.csv -p sample_info_tidy.csv`
+  first and pass the tidied files to the analysis. In the Python API,
+  `CountMatrix` raises `SampleMismatchException`; pass
+  `CountMatrix(..., subset=True)` to keep the samples in both, as
+  `detk-util tidy` does.
 - `detk-enrich fgsea` without `-c/--statcol` is a usage error (exit 2) when
   the results have more than one numeric column besides the ID column
   (counted after `-i`), as every `detk-de` result does; the error names the
   candidate columns. In 1.0.0 it ranked silently by the last numeric
   column, which in a DESeq2 result is the last term's `__padj`: an
-  unsigned, adjusted p-value, not the analysis asked for. Fix: name the
-  ranking statistic with `-c COL`, e.g. `-c condition__treated__stat`. A
-  table with one numeric column besides the ID column ranks by it as
-  before, and a command line that passes `-c` is unchanged. This changes a
-  documented default, a recorded exception to the 1.0 promise (DETK-0600)
-- The fgsea module JSON params record the ranking used: `statcol`, `idcol`
-  (the resolved column names) and `ascending`; the module JSON schema is
-  unchanged (DETK-0600)
+  unsigned, adjusted p-value, not the analysis asked for. A table with one
+  numeric column besides the ID column ranks by it as before, and a command
+  line that passes `-c` is unchanged. The fgsea module JSON params now
+  record the ranking used: `statcol`, `idcol` (the resolved column names)
+  and `ascending`; the module JSON schema is unchanged. This changes a
+  documented default, a recorded exception to the 1.0 promise (DETK-0600).
+  **To change:** name the ranking statistic with `-c COL`, e.g.
+  `-c condition__treated__stat`; an enrichment run by 1.0.0 without `-c`
+  on a `detk-de` result ranked by a p-value and should be re-run.
+- Malformed counts are an error (DETK-0601, DETK-0830, DETK-0850). In 1.0.0
+  these went through without a word; each now exits 1, writes nothing and
+  names the header, feature, sample or value at fault on one line of
+  stderr. The split between the commands is listed in docs/concepts.md.
+  **To change:** correct the counts file: give each sample one column and
+  each feature one row (sum or drop repeated feature IDs as the analysis
+  requires), and, for the commands that need raw counts, pass raw counts
+  without negative values and drop samples with no counts.
+  - `detk-norm cpm` rejects a sample named twice in the header (the 1.0.0
+    output had columns `A`, `A.1`), a feature ID listed twice, a negative
+    count (a negative CPM) and a sample whose counts sum to 0 (a blank
+    column). The check is `de_toolkit.common.check_counts`
+    ([#195](https://github.com/BU-Neuromics/de_toolkit/issues/195))
+  - `detk-norm` (every subcommand), `detk-de`, `detk-transform`,
+    `detk-stats`, `detk-filter` and `detk-outlier` run the same check on
+    the counts as read, before the column data selects or reorders a
+    sample. In 1.0.0 each accepted a sample named twice in the header
+    (going on with `A.1` as a sample of its own or, when the column data
+    names `A`, dropping `A.1` without a word) and a feature ID listed
+    twice; both now exit 1 in each of these commands. A negative count or a
+    zero-depth sample also exits 1 where the command needs raw counts:
+    `detk-norm` `deseq2`, `library`, `cpm`, `fpkm`, `tpm`; `detk-de
+    deseq2`; `detk-transform` `vst`, `rlog`. They are accepted where the
+    matrix may be normalized or transformed: `detk-de firth`,
+    `detk-transform plog`, `detk-stats`, `detk-filter`, `detk-outlier`. A
+    sample whose values are all missing or not numbers is named as such
+    ("has no numeric counts"), not as having no counts
+    ([#201](https://github.com/BU-Neuromics/de_toolkit/issues/201))
+  - `detk-util tidy`, `tidy-counts` and `tidy-covs` and `detk-wrapr run`
+    run the repeated sample header and feature ID checks on the counts as
+    read. In 1.0.0 `detk-util tidy-counts` given the header `gene,A,A,B,C`
+    and column data naming A, B and C exited 0 and wrote `gene,A,B,C`,
+    dropping the second `A` without a word, and a feature ID listed twice
+    went through as two rows; `tidy`, `tidy-covs` and `detk-wrapr run` did
+    the same. These commands may take a normalized or transformed matrix,
+    so a negative count or a zero-depth sample is still accepted
+    ([#218](https://github.com/BU-Neuromics/de_toolkit/issues/218))
 - `detk-outlier shrink` judges each feature across its samples, as its
   help, its docs and the method (Labadorf et al. 2015) describe: a sample is
   shrunk when it holds more than `p_max` of the feature's counts. 1.0.0
@@ -42,52 +85,29 @@
   (exit 2) naming the bound, where 1.0.0 failed with
   `max() iterable argument is empty`. The Python `shrink` and
   `pmf_transform` raise `ValueError` for such a `p_max`, and
-  `pmf_transform` no longer prints to stdout
+  `pmf_transform` no longer prints to stdout. **To change:** re-run
+  `detk-outlier shrink` on anything 1.0.0 shrank, and anything downstream
+  of it; pass `-p` between 1 / number of samples and 1.
 
 ### Fixed
 
+- `detk-outlier shrink` takes an integer counts matrix, the usual input. In
+  1.0.0 any integer matrix in which a count was shrunk exited 1 with
+  `Invalid value '[...]' for dtype 'int64'`, while the same counts written
+  with decimals ran. Counts are now converted to float before shrinking, and
+  the output is float, the same as for the decimal input; the Python
+  `shrink` and `pmf_transform` return float counts for integer input too
+  and leave their input unchanged (#219)
+- `detk-outlier entropy` without `-p` uses the 5th percentile (0.05)
+  instead of failing with `argument -p/--percentile: invalid float value:
+  None` (exit 2); `--help` states the default. `-p` given behaves as
+  before (#222, DETK-0860)
 - The quickstart says, by its `detk-de deseq2` example, that detk reports
   the Wald test of every coefficient with no independent filtering and no
   Cook's distance cutoff, so its `padj` differs from a default DESeq2
   `results()` call, and links the `detk-de deseq2` page for the settings it
   matches; that page's R equivalent now passes `independentFiltering=FALSE`
   to `results()` as well as `cooksCutoff=Inf` (#184, DETK-0770)
-- `detk-norm cpm` rejects a malformed counts file, which it normalized
-  without a word in 1.0.0: a sample named twice in the header (the output
-  had columns `A`, `A.1`), a feature ID listed twice, a negative count (a
-  negative CPM) or a sample whose counts sum to 0 (a blank column). Each
-  exits 1 (DETK-0601), writes nothing and names the header, feature, sample
-  or value at fault on one line of stderr. The check is
-  `de_toolkit.common.check_counts`, for the other commands that read counts
-  to call
-  ([#195](https://github.com/BU-Neuromics/de_toolkit/issues/195))
-- `detk-norm` (every subcommand), `detk-de`, `detk-transform`, `detk-stats`,
-  `detk-filter` and `detk-outlier` run the same check on the counts as
-  read, before the column data selects or reorders a sample. In 1.0.0 each
-  accepted a sample named twice in the header (going on with `A.1` as a
-  sample of its own or, when the column data names `A`, dropping `A.1`
-  without a word) and a feature ID listed twice. A repeated sample header or
-  feature ID now exits 1 in each of these commands. A negative count or a
-  zero-depth sample also exits 1 where the command needs raw counts:
-  `detk-norm` `deseq2`, `library`, `cpm`, `fpkm`, `tpm`; `detk-de deseq2`;
-  `detk-transform` `vst`, `rlog`. They are accepted where the matrix may be
-  normalized or transformed: `detk-de firth`, `detk-transform plog`,
-  `detk-stats`, `detk-filter`, `detk-outlier`. A sample whose values are
-  all missing or not numbers is named as such ("has no numeric counts"),
-  not as having no counts. The split is listed in docs/concepts.md
-  (DETK-0601, DETK-0830)
-  ([#201](https://github.com/BU-Neuromics/de_toolkit/issues/201))
-- `detk-util tidy`, `tidy-counts` and `tidy-covs` and `detk-wrapr run` run
-  the repeated sample header and feature ID checks on the counts as read.
-  In 1.0.0 `detk-util tidy-counts` given the header `gene,A,A,B,C` and
-  column data naming A, B and C exited 0 and wrote `gene,A,B,C`, dropping
-  the second `A` without a word, and a feature ID listed twice went
-  through as two rows; `tidy`, `tidy-covs` and `detk-wrapr run` did the
-  same. Each now exits 1 (DETK-0601) and names the repeated header or
-  feature on one line of stderr. These commands may take a normalized or
-  transformed matrix, so a negative count or a zero-depth sample is still
-  accepted (DETK-0830, DETK-0850)
-  ([#218](https://github.com/BU-Neuromics/de_toolkit/issues/218))
 - Runs that differ only in their files keep separate report records. A
   module record's id hashed the module name, its parameters, the primary
   input and the detk version only, so two `detk-filter` runs differing only
@@ -99,15 +119,6 @@
   recorded command line; re-running an identical command still replaces its
   one record. Record ids change, as they already did with each detk version
   (#182)
-- The test suite skips the tests that run R when an R package they need
-  is missing, naming the package (`R package DESeq2 is not installed`),
-  where six of them failed with Rscript on PATH but without DESeq2 or
-  logistf: the CLI help examples of `detk-de deseq2`, `detk-de firth`,
-  `detk-transform vst` and `rlog`, the quickstart and the provenance test
-  into `detk-de`. The check is one helper, `tests/r_packages.py`. With
-  the R packages missing the quickstart test still runs its other steps,
-  then skips naming what was missing; the CI job with R, which installs
-  every package, runs them all as before (#187)
 - `detk-enrich fgsea` records the results file it ranked as an input. Its
   module JSON listed the GMT as its only input, so the Process Run Crate's
   fgsea action named `gene_sets.gmt` but not the DE results file, which
@@ -134,14 +145,6 @@
   `detk-stats` already recorded their sample information file, and
   `detk-outlier` reads none; tests now hold all of them to it (#209,
   DETK-0890)
-- A regression test follows the Process Run Crate from an enrichment table
-  back to its inputs: `tests/report/test_lineage.py` runs `detk-filter`,
-  `detk-de deseq2` with a sample sheet and `detk-enrich fgsea -c` in one
-  report directory, validates the crate against the Process Run Crate
-  profile and walks its result -> action -> object edges from the fgsea
-  table to `counts.csv` and `sample_info.csv`. It fails on 1.0.0, whose
-  fgsea action had no edge to the DE results, and skips, naming the
-  package, without DESeq2 or fgsea (#207)
 - The agent skill (`skills/detk`) follows the 1.0.1 errors and corrects the
   guidance an external audit found wrong (DETK-0600, #214):
   - after `detk-util tidy -o counts_tidy.csv -p sample_info_tidy.csv` the
@@ -157,20 +160,26 @@
     as they are (rounded estimates, no sample-specific effective-length
     offset), where it said they "can go to it as they are". The quantifier
     tutorial says the same, and tests in `tests/skills` check each of these
-- `detk-outlier shrink` takes an integer counts matrix, the usual input. In
-  1.0.0 any integer matrix in which a count was shrunk exited 1 with
-  `Invalid value '[...]' for dtype 'int64'`, while the same counts written
-  with decimals ran. Counts are now converted to float before shrinking, and
-  the output is float, the same as for the decimal input; the Python
-  `shrink` and `pmf_transform` return float counts for integer input too
-  and leave their input unchanged (#219)
-- `detk-outlier entropy` without `-p` uses the 5th percentile (0.05)
-  instead of failing with `argument -p/--percentile: invalid float value:
-  None` (exit 2); `--help` states the default. `-p` given behaves as
-  before (#222, DETK-0860)
 
 ### Tests
 
+- A regression test follows the Process Run Crate from an enrichment table
+  back to its inputs: `tests/report/test_lineage.py` runs `detk-filter`,
+  `detk-de deseq2` with a sample sheet and `detk-enrich fgsea -c` in one
+  report directory, validates the crate against the Process Run Crate
+  profile and walks its result -> action -> object edges from the fgsea
+  table to `counts.csv` and `sample_info.csv`. It fails on 1.0.0, whose
+  fgsea action had no edge to the DE results, and skips, naming the
+  package, without DESeq2 or fgsea (#207)
+- The test suite skips the tests that run R when an R package they need
+  is missing, naming the package (`R package DESeq2 is not installed`),
+  where six of them failed with Rscript on PATH but without DESeq2 or
+  logistf: the CLI help examples of `detk-de deseq2`, `detk-de firth`,
+  `detk-transform vst` and `rlog`, the quickstart and the provenance test
+  into `detk-de`. The check is one helper, `tests/r_packages.py`. With
+  the R packages missing the quickstart test still runs its other steps,
+  then skips naming what was missing; the CI job with R, which installs
+  every package, runs them all as before (#187)
 - The test suite leaves the working tree clean. With DESeq2 installed,
   `tests/de/test_de.py::test_R_check_names_nonsense` ran DESeq2 with
   `routput_dir="tmp_output"`, a relative path, and left `tmp_output/`

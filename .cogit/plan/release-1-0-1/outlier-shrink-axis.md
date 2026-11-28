@@ -5,17 +5,21 @@ acceptance:
   - 'reproduced first: on v1.0.0, a decimal counts file (integer input fails until outlier-shrink-int) with g1 = 10.0 in all four samples A-D beside g2-g4 = 1.0 everywhere: ''detk-outlier shrink'' (p_max = sqrt(1/4) = 0.5) writes g1 = 1.5625 in every sample, because each sample''s g1 is 10/13 of that sample''s counts. A test shows it; after, g1 is unchanged (each sample holds 1/4 of g1), and a feature where one sample holds more than p_max of its counts, e.g. 1, 1, 1, 300, is shrunk in that sample alone, the others unchanged'
   - 'a feature counted in only one sample and a -p below 1 / number of samples behave as DETK-0861 decides, with a test each; shrink''s tests are checked against a per-feature hand calculation; CHANGELOG 1.0.1 under Behaviour changes: shrink''s results change for every input, a silent wrong answer fixed under DETK-0600''s reasoning'
 from: [DETK-0600, DETK-0861]
-prev: [DETK-0861, release-1-0-1/outlier-shrink-int]
+prev: [DETK-0861, release-1-0-1/outlier-shrink-int, DETK-1020]
 scope: [de_toolkit/outlier.py, tests/outlier/, +docs/tools/outlier.md, +CHANGELOG]
+issue: 226
+visited: 873d65c
+status: done
+done: 545386a
 ---
 
 # detk-outlier shrink judges each feature across its samples
 
 ## Implementation plan
 
-- [ ] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

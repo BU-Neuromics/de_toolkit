@@ -320,23 +320,27 @@ def test_entropy_help_states_percentile_default(capsys):
     assert "between 0 and 1 (default: 0.05)" in help_text
 
 
-# an integer matrix where a count is shrunk (g1's 300 in D), and the same
+# an integer matrix where a count is shrunk (g1's 301 in D), and the same
 # counts written with decimals: on 1.0.0 the first exited 1 with
-# "Invalid value '[...]' for dtype 'int64'" in PMFTransform (#219)
-SHRINK_INT = "gene,A,B,C,D\ng1,10,12,11,300\ng2,20,22,21,23\ng3,30,31,33,32\n"
+# "Invalid value '[...]' for dtype 'int64'" in PMFTransform (#219). By hand,
+# per feature (#226), p_max 0.5, toward B's 12: D = 12 + (D - 12) * 0.25
+#   301 / 334 > 0.5 -> 84.25; 84.25 / 117.25 > 0.5 -> 30.0625;
+#   30.0625 / 63.0625 <= 0.5, done. g2 and g3 are unchanged
+SHRUNK_301 = 30.0625
+SHRINK_INT = "gene,A,B,C,D\ng1,10,12,11,301\ng2,20,22,21,23\ng3,30,31,33,32\n"
 SHRINK_FLOAT = (
-    "gene,A,B,C,D\ng1,10.0,12.0,11.0,300.0\ng2,20.0,22.0,21.0,23.0\ng3,30.0,31.0,33.0,32.0\n"
+    "gene,A,B,C,D\ng1,10.0,12.0,11.0,301.0\ng2,20.0,22.0,21.0,23.0\ng3,30.0,31.0,33.0,32.0\n"
 )
 
 
-def _shrink_cli(counts, tmp_path, name):
+def _shrink_cli(counts, tmp_path, name, *extra):
     from de_toolkit.outlier import main
 
     counts_fn = tmp_path / f"{name}.csv"
     counts_fn.write_text(counts)
     out = tmp_path / f"{name}_shrunk.csv"
     try:
-        main(["detk-outlier", "shrink", str(counts_fn), "--no-report", "-o", str(out)])
+        main(["detk-outlier", "shrink", str(counts_fn), "--no-report", "-o", str(out), *extra])
     except SystemExit as e:
         return e.code, None
     return 0, pandas.read_csv(out, index_col=0)
@@ -347,8 +351,12 @@ def test_shrink_cli_integer_counts(tmp_path):
     float_code, float_out = _shrink_cli(SHRINK_FLOAT, tmp_path, "float")
     assert (int_code, float_code) == (0, 0)
     # a count was shrunk, to a fraction
-    assert int_out.loc["g1", "D"] < 300
-    assert int_out.loc["g1", "D"] != int(int_out.loc["g1", "D"])
+    assert int_out.loc["g1", "D"] == SHRUNK_301
+    assert (
+        int_out.drop(index="g1", columns="D")
+        .eq(pandas.read_csv(tmp_path / "int.csv", index_col=0).drop(index="g1", columns="D"))
+        .all(axis=None)
+    )
     assert all(t.kind == "f" for t in int_out.dtypes)
     pandas.testing.assert_frame_equal(int_out, float_out)
 
@@ -363,19 +371,140 @@ def test_shrink_integer_counts_python(counts, tmp_path):
     frame = pandas.read_csv(counts_fn, index_col=0)
     out = shrink(CountMatrix(frame))
     assert all(t.kind == "f" for t in out.dtypes)
-    assert out.loc["g1", "D"] < 300
+    assert out.loc["g1", "D"] == SHRUNK_301
     # the input is not changed
-    assert frame.loc["g1", "D"] == 300
+    assert frame.loc["g1", "D"] == 301
 
 
 def test_pmf_transform_integer_counts():
     from de_toolkit.outlier import pmf_transform
 
-    ints = pandas.Series([10, 12, 11, 300], index=list("ABCD"))
+    ints = pandas.Series([10, 12, 11, 301], index=list("ABCD"))
     out = pmf_transform(ints, p_max=0.5)
     assert out.dtype == float
-    assert out["D"] < 300
+    assert out.tolist() == [10.0, 12.0, 11.0, SHRUNK_301]
     pandas.testing.assert_series_equal(out, pmf_transform(ints.astype(float), p_max=0.5))
-    assert ints.dtype.kind == "i" and ints["D"] == 300
+    assert ints.dtype.kind == "i" and ints["D"] == 301
     # nothing to shrink: still float
     assert pmf_transform(pandas.Series([1, 1, 1, 1]), p_max=0.5).dtype == float
+
+
+# -------------------------------------------------- shrink judges per feature
+# shrink compares each sample's count with the feature's total across the
+# samples (Labadorf et al. 2015; --help, the shrink docstring). On 1.0.0 it
+# compared it with the sample's total across features: with g1 = 10 in every
+# sample beside g2-g4 = 1, each sample's g1 is 10/13 of that sample's counts,
+# over p_max = sqrt(1/4) = 0.5, and every g1 was written 1.5625 (#226)
+SHRINK_AXIS = "gene,A,B,C,D\ng1,10.0,10.0,10.0,10.0\ng2,1.0,1.0,1.0,1.0\ng3,1.0,1.0,1.0,1.0\ng4,1.0,1.0,1.0,1.0\n"
+
+# 1, 1, 1, 300 by hand, p_max 0.5, shrink factor 0.25; each step shrinks D
+# toward the largest sample under p_max (1): D = 1 + (D - 1) * 0.25
+#   D = 300:        300 / 303        > 0.5 -> 1 + 299 * 0.25     = 75.75
+#   D = 75.75:      75.75 / 78.75    > 0.5 -> 1 + 74.75 * 0.25   = 19.6875
+#   D = 19.6875:    19.6875 / 22.6875 > 0.5 -> 1 + 18.6875 * 0.25 = 5.671875
+#   D = 5.671875:   5.671875 / 8.671875 > 0.5 -> 1 + 4.671875 * 0.25 = 2.16796875
+#   D = 2.16796875: 2.16796875 / 5.16796875 = 0.42 <= 0.5, done
+SHRUNK_300 = 2.16796875
+
+
+def test_shrink_cli_judges_each_feature(tmp_path):
+    code, out = _shrink_cli(SHRINK_AXIS, tmp_path, "axis")
+    assert code == 0
+    # each sample holds 1/4 of each feature's counts: nothing is shrunk (on
+    # 1.0.0 every g1 was 1.5625)
+    expected = pandas.read_csv(tmp_path / "axis.csv", index_col=0)
+    pandas.testing.assert_frame_equal(out, expected)
+
+
+def test_shrink_cli_shrinks_the_dominant_sample_alone(tmp_path):
+    counts = SHRINK_AXIS + "g5,1.0,1.0,1.0,300.0\n"
+    code, out = _shrink_cli(counts, tmp_path, "dominant")
+    assert code == 0
+    expected = pandas.read_csv(tmp_path / "dominant.csv", index_col=0)
+    expected.loc["g5", "D"] = SHRUNK_300
+    pandas.testing.assert_frame_equal(out, expected)
+
+
+def test_pmf_transform_per_feature_by_hand():
+    from de_toolkit.outlier import pmf_transform
+
+    # equal counts: each sample holds 1/4, nothing is over 0.5
+    assert pmf_transform(pandas.Series([10.0] * 4), p_max=0.5).tolist() == [10.0] * 4
+    assert pmf_transform(pandas.Series([1, 1, 1, 300]), p_max=0.5).tolist() == [
+        1.0,
+        1.0,
+        1.0,
+        SHRUNK_300,
+    ]
+    # D is shrunk toward C's 5: D = 5 + (D - 5) * 0.25, from 40 to 13.75,
+    # 7.1875, 5.546875, ...: D / (D + 5) stays over 0.5 while D > 5, so D
+    # comes to 5 (once 0.25 ** k * 35 is lost to rounding), and 5 / 10 is not
+    # over 0.5
+    assert pmf_transform(pandas.Series([0, 0, 5, 40]), p_max=0.5).tolist() == [0, 0, 5, 5]
+
+
+# DETK-0861: a feature whose counts are all in samples over p_max has no
+# sample to shrink toward and is left as read, the log giving how many
+@pytest.mark.parametrize(
+    "counts, p_max",
+    [
+        # counted in one sample: D holds all of it
+        ([0, 0, 0, 40], 0.5),
+        # two samples with counts, each 1/2 > p_max 0.3
+        ([0, 0, 10, 10], 0.3),
+        # D is shrunk toward C until C is over p_max too: by hand, p_max 0.25,
+        # D = 1 + (D - 1) * 0.25: 10 / 11 > 0.25 -> 3.25; 3.25 / 4.25 > 0.25
+        # (C 1 / 4.25 = 0.24 is not) -> 1.5625; now C is 1 / 2.5625 = 0.39 >
+        # 0.25 too, and A and B, under it, have no counts
+        ([0, 0, 1, 10], 0.25),
+    ],
+)
+def test_pmf_transform_nothing_to_shrink_toward(counts, p_max):
+    from de_toolkit.outlier import PMFTransform, pmf_transform
+
+    feature = pandas.Series(counts, index=list("ABCD"))
+    out = pmf_transform(feature, p_max=p_max)
+    pandas.testing.assert_series_equal(out, feature.astype(float))
+    assert PMFTransform(feature, p_max=p_max).unchanged
+
+
+def test_shrink_cli_single_sample_feature_unchanged(tmp_path, caplog):
+    import logging
+
+    counts = SHRINK_AXIS + "g5,1.0,1.0,1.0,300.0\ng6,0.0,0.0,0.0,40.0\ng7,0.0,0.0,0.0,7.0\n"
+    with caplog.at_level(logging.WARNING, logger="de_toolkit.outlier"):
+        code, out = _shrink_cli(counts, tmp_path, "single")
+    assert code == 0
+    expected = pandas.read_csv(tmp_path / "single.csv", index_col=0)
+    expected.loc["g5", "D"] = SHRUNK_300
+    pandas.testing.assert_frame_equal(out, expected)
+    assert "2 feature(s) have all their counts in samples over p_max 0.5" in caplog.text
+
+
+@pytest.mark.parametrize("value", ["0.2", "0.249", "1.5", "0", "-0.5"])
+def test_shrink_cli_p_max_out_of_range(value, tmp_path, capsys):
+    code, out = _shrink_cli(SHRINK_AXIS, tmp_path, "bad_p", "-p", value)
+    assert code == 2
+    assert out is None
+    err = capsys.readouterr().err
+    assert "-p/--p-max" in err
+    assert "at least 1 / number of samples (0.25 with 4 samples)" in err
+
+
+@pytest.mark.parametrize("value", ["0.25", "1"])
+def test_shrink_cli_p_max_bounds_accepted(value, tmp_path):
+    # at 1/n a feature with equal counts is not over; at 1 nothing can be
+    code, out = _shrink_cli(SHRINK_AXIS, tmp_path, "edge_p", "-p", value)
+    assert code == 0
+    pandas.testing.assert_frame_equal(out, pandas.read_csv(tmp_path / "edge_p.csv", index_col=0))
+
+
+def test_shrink_python_p_max_below_one_over_n():
+    from de_toolkit.common import CountMatrix
+    from de_toolkit.outlier import pmf_transform, shrink
+
+    frame = pandas.DataFrame({s: [10.0, 1.0] for s in "ABCD"}, index=["g1", "g2"])
+    with pytest.raises(ValueError, match=r"at least 1 / number of samples \(0.25"):
+        shrink(CountMatrix(frame), p_max=0.2)
+    with pytest.raises(ValueError, match=r"at least 1 / number of samples \(0.25"):
+        pmf_transform(frame.loc["g1"], p_max=0.2)

@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-27
 from: {node: release-1-0-1/outlier-entropy-p, step: s1}
 applies: [release-1-0-1/outlier-entropy-p]
 issue: 225
+revisions:
+  - {date: 2026-11-28, by: adamlabadorf, change: Accepted, why: "from the terminal: Accepted under Adam's delegation via the driver session, 2026-11-20 (DETK-0063), extended to the post-1.0 plan 2026-11-27: add de_toolkit/completions/detk.zsh to the node's scope (generated from the help text)"}
 ---
 
 # outlier-entropy-p regenerates the zsh completion its help change makes stale

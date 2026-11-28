@@ -127,6 +127,21 @@
   table to `counts.csv` and `sample_info.csv`. It fails on 1.0.0, whose
   fgsea action had no edge to the DE results, and skips, naming the
   package, without DESeq2 or fgsea (#207)
+- The agent skill (`skills/detk`) follows the 1.0.1 errors and corrects the
+  guidance an external audit found wrong (DETK-0600, #214):
+  - after `detk-util tidy -o counts_tidy.csv -p sample_info_tidy.csv` the
+    analysis commands read the tidied files; in 1.0.0 they went on with
+    `counts.csv` and `sample_info.csv`, so the tidying did nothing. The
+    skill has the agent report the samples tidy dropped and ask the user
+    before going on, and says a sample mismatch now exits 1;
+  - it says `detk-enrich fgsea` exits 2 without `-c` on a DE table;
+  - its quantifier guidance leads with raw gene-level counts (featureCounts,
+    htseq-count), routes salmon and kallisto estimates to gene counts
+    through tximport (`countsFromAbundance = "lengthScaledTPM"`) recorded
+    with `detk-util record`, and states the assumptions of gathering them
+    as they are (rounded estimates, no sample-specific effective-length
+    offset), where it said they "can go to it as they are". The quantifier
+    tutorial says the same, and tests in `tests/skills` check each of these
 
 ## 1.0.0 (2026-11-25)
 

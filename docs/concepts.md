@@ -34,6 +34,34 @@ Every tool accepts a counts matrix of the form:
 - The name of the first column doesn't matter; every row must have the same
   number of fields.
 
+`detk-norm`, `detk-de`, `detk-transform`, `detk-stats`, `detk-filter`,
+`detk-outlier`, `detk-util tidy`, `tidy-counts` and `tidy-covs` and
+`detk-wrapr run` check a counts matrix as read, before the column data
+selects or reorders any sample, and exit 1 (a bad input file, see
+[Exit codes](#exit-codes)) naming the first offender and how many more there
+are (DETK-0601, DETK-0830, DETK-0850).
+
+- **in each of those commands**: a sample named more than once in the
+  header, and a feature ID listed more than once. Positions are counted in
+  the file, from 1, among the samples and the features.
+- **in the commands that need raw counts**: also a negative count, a sample
+  with no numeric value, and a sample whose counts sum to 0 (zero depth).
+
+| Needs raw counts (all five checks) | May take a normalized or transformed matrix (repeated IDs only) |
+|---|---|
+| `detk-norm` `deseq2`, `library`, `cpm`, `fpkm`, `tpm` | `detk-de firth` |
+| `detk-de deseq2` | `detk-transform plog` |
+| `detk-transform` `vst`, `rlog` | `detk-stats` (every subcommand) |
+| | `detk-filter` |
+| | `detk-outlier` `entropy`, `shrink` |
+| | `detk-util` `tidy`, `tidy-counts`, `tidy-covs` |
+| | `detk-wrapr run` |
+
+A normalized or log-transformed matrix may hold negative values or a column
+of zeros, so the commands on the right accept them. The commands on the left
+model or scale counts, which a negative value or an empty sample would make
+wrong without a word.
+
 ## The column data file
 
 Tools that need per-sample information (differential expression, PCA
@@ -47,11 +75,14 @@ coloring, group-wise filtering) take a column data file:
 | sample_m     | case      | F   | ... | c3          |
 
 The first column holds sample names matching the column names of the counts
-file; remaining columns hold any covariates needed for analysis. detk matches
-samples up by name, but it is good practice to keep the order consistent —
-tools accept a `--strict` flag to require it. The
-[`detk-util tidy`](tools/util.md) commands subset and reorder the two files
-against each other.
+file; remaining columns hold any covariates needed for analysis. The two
+files must name the same samples: a sample in only one of them is an error
+(exit 1) that names it, rather than a silent subset (DETK-0600). detk matches
+the samples up by name, so the column data rows may come in any order, but
+it is good practice to keep the order consistent — tools accept a `--strict`
+flag to require it. To analyse only some of the samples, subset the files
+explicitly with the [`detk-util tidy`](tools/util.md) commands, which keep
+the samples in both and reorder the column data to the counts.
 
 ## Design formulas
 

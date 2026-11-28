@@ -37,6 +37,31 @@ def fake_column_data(request):
     return covs
 
 
+def make_subset_obj(counts_csv, column_data_csv, design=None):
+    """
+    The counts object of *counts_csv* with the rows of *column_data_csv* for
+    its samples. The sheet above lists more samples than any one counts
+    table here, so it is subset explicitly, as detk-util tidy does
+    (CountMatrix subset=True): differing sample sets are otherwise an error
+    (DETK-0600).
+    """
+    return CountMatrix(
+        read_id_table(counts_csv), read_id_table(column_data_csv), design, subset=True
+    )
+
+
+@pytest.fixture
+def fake_counts_obj(fake_counts_csv, fake_column_data_csv, fake_logistic_design):
+    return make_subset_obj(fake_counts_csv, fake_column_data_csv, fake_logistic_design)
+
+
+@pytest.fixture
+def fake_counts_obj_with_zeros(
+    fake_counts_csv_with_zeros, fake_column_data_csv, fake_logistic_design
+):
+    return make_subset_obj(fake_counts_csv_with_zeros, fake_column_data_csv, fake_logistic_design)
+
+
 ################################################################################
 
 ################################################################################
@@ -121,7 +146,7 @@ def fake_design():
 @pytest.fixture
 def fake_count_coldist_obj(fake_count_coldist_csv, fake_column_data_csv, fake_design):
 
-    return pytest.make_counts_obj(fake_count_coldist_csv, fake_column_data_csv, fake_design)
+    return make_subset_obj(fake_count_coldist_csv, fake_column_data_csv, fake_design)
 
 
 # test that coldist function gets correct column names
@@ -594,7 +619,7 @@ def fake_counts_rowzero_csv(request, fake_counts_list_data_rowzero):
 @pytest.fixture
 def fake_counts_rowzero_obj(fake_counts_rowzero_csv, fake_column_data_csv, fake_design):
 
-    return pytest.make_counts_obj(fake_counts_rowzero_csv, fake_column_data_csv, fake_design)
+    return make_subset_obj(fake_counts_rowzero_csv, fake_column_data_csv, fake_design)
 
 
 # test that rowzero function gets correct row names

@@ -4,6 +4,17 @@
 
 ### Behaviour changes
 
+- Counts and sample information whose sample sets differ are an error
+  (DETK-0600): every command that matches a counts file to a sample
+  information file (`detk-de`, `detk-transform rlog`, `detk-filter`,
+  `detk-stats`, `detk-wrapr run --meta-in`) exits 1 with one line naming
+  the samples found in only the counts and only the sample information.
+  1.0.0 fitted the samples the two shared and dropped the rest without a
+  warning. The same samples in another order are still matched by name;
+  `--strict` still requires the same order. To analyse a subset, run
+  `detk-util tidy` first. In the Python API, `CountMatrix` raises
+  `SampleMismatchException`; `CountMatrix(..., subset=True)` keeps the
+  samples in both, as `detk-util tidy` does.
 - `detk-enrich fgsea` without `-c/--statcol` is a usage error (exit 2) when
   the results have more than one numeric column besides the ID column
   (counted after `-i`), as every `detk-de` result does; the error names the
@@ -35,6 +46,33 @@
   `de_toolkit.common.check_counts`, for the other commands that read counts
   to call
   ([#195](https://github.com/BU-Neuromics/de_toolkit/issues/195))
+- `detk-norm` (every subcommand), `detk-de`, `detk-transform`, `detk-stats`,
+  `detk-filter` and `detk-outlier` run the same check on the counts as
+  read, before the column data selects or reorders a sample. In 1.0.0 each
+  accepted a sample named twice in the header (going on with `A.1` as a
+  sample of its own or, when the column data names `A`, dropping `A.1`
+  without a word) and a feature ID listed twice. A repeated sample header or
+  feature ID now exits 1 in each of these commands. A negative count or a
+  zero-depth sample also exits 1 where the command needs raw counts:
+  `detk-norm` `deseq2`, `library`, `cpm`, `fpkm`, `tpm`; `detk-de deseq2`;
+  `detk-transform` `vst`, `rlog`. They are accepted where the matrix may be
+  normalized or transformed: `detk-de firth`, `detk-transform plog`,
+  `detk-stats`, `detk-filter`, `detk-outlier`. A sample whose values are
+  all missing or not numbers is named as such ("has no numeric counts"),
+  not as having no counts. The split is listed in docs/concepts.md
+  (DETK-0601, DETK-0830)
+  ([#201](https://github.com/BU-Neuromics/de_toolkit/issues/201))
+- `detk-util tidy`, `tidy-counts` and `tidy-covs` and `detk-wrapr run` run
+  the repeated sample header and feature ID checks on the counts as read.
+  In 1.0.0 `detk-util tidy-counts` given the header `gene,A,A,B,C` and
+  column data naming A, B and C exited 0 and wrote `gene,A,B,C`, dropping
+  the second `A` without a word, and a feature ID listed twice went
+  through as two rows; `tidy`, `tidy-covs` and `detk-wrapr run` did the
+  same. Each now exits 1 (DETK-0601) and names the repeated header or
+  feature on one line of stderr. These commands may take a normalized or
+  transformed matrix, so a negative count or a zero-depth sample is still
+  accepted (DETK-0830, DETK-0850)
+  ([#218](https://github.com/BU-Neuromics/de_toolkit/issues/218))
 - Runs that differ only in their files keep separate report records. A
   module record's id hashed the module name, its parameters, the primary
   input and the detk version only, so two `detk-filter` runs differing only
@@ -63,6 +101,14 @@
   files in `in_file_paths` (schema 1.1's field, as `detk-util record`
   writes it) and the crate action's `object` holds both; `in_file_path`
   stays the GMT (DETK-0720, #199)
+- A regression test follows the Process Run Crate from an enrichment table
+  back to its inputs: `tests/report/test_lineage.py` runs `detk-filter`,
+  `detk-de deseq2` with a sample sheet and `detk-enrich fgsea -c` in one
+  report directory, validates the crate against the Process Run Crate
+  profile and walks its result -> action -> object edges from the fgsea
+  table to `counts.csv` and `sample_info.csv`. It fails on 1.0.0, whose
+  fgsea action had no edge to the DE results, and skips, naming the
+  package, without DESeq2 or fgsea (#207)
 
 ### Tests
 

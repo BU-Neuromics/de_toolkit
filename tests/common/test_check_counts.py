@@ -1,4 +1,4 @@
-"The shared count-matrix check, de_toolkit.common.check_counts (release-1-0-1/count-checks)"
+"The shared count-matrix check, de_toolkit.common.check_counts (release-1-0-1/count-checks, count-checks-readers)"
 
 import io
 
@@ -138,7 +138,95 @@ def test_check_after_count_matrix_lines_up_column_data():
     from de_toolkit.common import CountMatrix
 
     counts = read("gene,A,B,C\ng1,1,-2,3\ng2,0,5,6\n")
-    column_data = read("sample,cond\nC,x\nB,y\n")
+    column_data = read("sample,cond\nC,x\nB,y\nA,z\n")
     cm = CountMatrix(counts, column_data=column_data)
     with pytest.raises(CountsError, match=r"in sample 'B' has a negative count, -2$"):
         check_counts(cm.counts, "c.csv")
+
+
+# values=False: only the repeated header and feature checks, for a command
+# that may take a normalized or transformed matrix (DETK-0830)
+
+
+def test_values_false_passes_negative_and_zero_depth():
+    check_counts(read("gene,A,B\ng1,-1.5,0\ng2,2.5,0\n"), "c.csv", values=False)
+    check_counts(read("gene,A,B\ng1,NA,x\ng2,NA,y\n"), "c.csv", values=False)
+
+
+@pytest.mark.parametrize(
+    "text,match",
+    [
+        ("gene,A,A\ng1,-1,0\ng2,1,0\n", "named more than once"),
+        ("gene,A,B\ng1,-1,0\ng1,1,0\n", "listed more than once"),
+    ],
+)
+def test_values_false_still_rejects_repeated_ids(text, match):
+    with pytest.raises(CountsError, match=match):
+        check_counts(read(text), "c.csv", values=False)
+
+
+# a sample with no numeric value is not reported as zero depth (#196 review)
+
+
+@pytest.mark.parametrize("column", ["NA,NA", "x,y", "NA,y"])
+def test_sample_with_no_numeric_value(column):
+    a, b = column.split(",")
+    with pytest.raises(CountsError) as e:
+        check_counts(read(f"gene,A,B\ng1,{a},1\ng2,{b},2\n"), "c.csv")
+    assert str(e.value) == (
+        "c.csv: sample 'A' has no numeric counts: its values are all missing or not numbers"
+    )
+
+
+def test_a_sample_with_some_numeric_values_is_checked_by_its_sum():
+    with pytest.raises(CountsError, match="'A' has no counts: its counts sum to 0"):
+        check_counts(read("gene,A,B\ng1,NA,1\ng2,0,2\n"), "c.csv")
+
+
+# CountMatrixFile(check=...) checks the counts as read, before the column data
+# selects or reorders a sample (DETK-0830)
+
+
+def write(tmp_path, counts, column_data="sample,cond\nC,x\nB,y\nA,y\n"):
+    (tmp_path / "c.csv").write_text(counts)
+    (tmp_path / "cd.csv").write_text(column_data)
+    return str(tmp_path / "c.csv"), str(tmp_path / "cd.csv")
+
+
+def test_count_matrix_file_finds_a_repeat_the_column_data_drops(tmp_path):
+    from de_toolkit.common import CountMatrixFile
+
+    counts, column_data = write(tmp_path, "gene,A,A,B,C\ng1,1,2,3,4\ng2,5,6,7,8\n")
+    # check=None, as in 1.0.0: the column data names A, so A.1 is dropped
+    # (subset=True, since a sample in the counts only is an error, DETK-0600)
+    assert list(CountMatrixFile(counts, column_data, subset=True).counts.columns) == [
+        "A",
+        "B",
+        "C",
+    ]
+    with pytest.raises(CountsError) as e:
+        CountMatrixFile(counts, column_data, check="ids")
+    # positions in the file, though the column data lists C, B, A
+    assert str(e.value) == (
+        f"{counts}: sample 'A' is named more than once in the header (sample columns 1 and 2)"
+    )
+
+
+@pytest.mark.parametrize("check,raises", [(None, False), ("ids", False), ("raw", True)])
+def test_count_matrix_file_check_values(tmp_path, check, raises):
+    from de_toolkit.common import CountMatrixFile
+
+    counts, column_data = write(tmp_path, "gene,A,B,C\ng1,1,-2,3\ng2,4,5,6\n")
+    if raises:
+        with pytest.raises(CountsError, match="in sample 'B' has a negative count, -2$"):
+            CountMatrixFile(counts, column_data, check=check)
+    else:
+        CountMatrixFile(counts, column_data, check=check)
+
+
+def test_count_matrix_file_check_must_be_known(tmp_path):
+    from de_toolkit.common import CountMatrixFile
+
+    counts, _ = write(tmp_path, "gene,A,B\ng1,1,2\n")
+    with pytest.raises(ValueError, match="check must be None, 'ids' or 'raw'"):
+        CountMatrixFile(counts, check="all")

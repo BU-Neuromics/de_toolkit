@@ -561,12 +561,26 @@ def set_logging(opts):
         logger.info("detk version: %s", __version__)
 
 
-def make_cli_count_obj(args):
+def make_cli_count_obj(args, raw=False):
+    """
+    The :class:`CountMatrix` of a command's ``counts_fn``, with its
+    ``cov_fn`` and ``design`` when the command takes them.
+
+    The counts are checked as read, before the column data selects or
+    reorders any sample (:func:`check_counts`, DETK-0830): a repeated sample
+    header or feature ID always raises :class:`CountsError`; with *raw*, for a
+    command that needs raw counts, so does a negative count or a zero-depth
+    sample.
+    """
     counts_fn, cov_fn, design = (getattr(args, n, None) for n in ("counts_fn", "cov_fn", "design"))
     logger.info("constructing counts matrix from %s and %s", counts_fn, cov_fn)
     logger.info("design is %s", design)
     count_obj = CountMatrixFile(
-        counts_fn, cov_fn, design=design, strict=getattr(args, "strict", False)
+        counts_fn,
+        cov_fn,
+        design=design,
+        strict=getattr(args, "strict", False),
+        check="raw" if raw else "ids",
     )
 
     logger.info("counts matrix created successfully")
@@ -597,42 +611,71 @@ class SampleMismatchException(Exception):
     pass
 
 
+def _sample_list(names, most=5):
+    "*names* for a one-line message: the first *most*, then how many more"
+    names = [str(n) for n in names]
+    shown = ", ".join(names[:most])
+    return shown + (f" and {len(names) - most} more" if len(names) > most else "")
+
+
 class CountMatrix:
-    def __init__(self, counts, column_data=None, design=None, strict=False):
+    """
+    A counts matrix (features in rows, samples in columns) and, optionally,
+    its sample information *column_data* (samples in rows) and a *design*.
+
+    The counts columns and the column data rows must name the same samples
+    (DETK-0600): a sample in only one of them raises
+    :class:`SampleMismatchException` naming it. The column data is matched
+    to the counts by name, so its rows may come in any order, unless
+    *strict*, which requires the same order too. *subset* keeps the samples
+    in both instead, in the counts' order; it is what ``detk-util tidy``
+    does, the explicit way to subset the two.
+    """
+
+    def __init__(self, counts, column_data=None, design=None, strict=False, subset=False):
 
         self.strict = strict
 
         if column_data is not None:
-            # line up the sample names from the column_data and counts matrices
-            if strict and (
-                len(column_data.index) != len(counts.columns)
-                or not all(column_data.index == counts.columns)
-            ):
-                raise SampleMismatchException(
-                    "When *strict* is supplied, the columns "
-                    "of the counts file must correspond exactly to the row names in the "
-                    "column_data matrix"
-                )
-            else:
-                common_names = counts.columns.intersection(column_data.index)
-
-                logger.debug(
-                    "common names between counts and column data:\n %s", pformat(common_names)
-                )
-
-                # fix to a "no memory available" issue (old Bitbucket tracker) when matrices are
-                # empty
-                if len(common_names) < 2:
-                    raise SampleMismatchException(
-                        "No sample names were found to be in "
-                        "common between the counts and column data or specified sample "
-                        "names. Check that the first column of the column_data matrix "
-                        "and the first row of the counts matrix contain at least 2 values "
-                        "in common"
+            in_counts, in_column_data = set(counts.columns), set(column_data.index)
+            counts_only = [s for s in counts.columns if s not in in_column_data]
+            column_data_only = [s for s in column_data.index if s not in in_counts]
+            if (counts_only or column_data_only) and not subset:
+                parts = []
+                if counts_only:
+                    parts.append(f"in the counts only: {_sample_list(counts_only)}")
+                if column_data_only:
+                    parts.append(
+                        f"in the sample information only: {_sample_list(column_data_only)}"
                     )
+                raise SampleMismatchException(
+                    "the counts columns and the sample information rows must name the "
+                    "same samples; " + "; ".join(parts) + " (to subset the two to the "
+                    "samples in both, run detk-util tidy first)"
+                )
+            if strict and list(column_data.index) != list(counts.columns):
+                raise SampleMismatchException(
+                    "--strict requires the counts columns and the sample information "
+                    "rows to name the same samples in the same order"
+                )
 
-                counts = counts[common_names]
-                column_data = column_data.loc[common_names]
+            common_names = counts.columns.intersection(column_data.index, sort=False)
+
+            logger.debug("common names between counts and column data:\n %s", pformat(common_names))
+
+            # fix to a "no memory available" issue (old Bitbucket tracker) when matrices are
+            # empty
+            if len(common_names) < 2:
+                raise SampleMismatchException(
+                    "No sample names were found to be in "
+                    "common between the counts and column data or specified sample "
+                    "names. Check that the first column of the column_data matrix "
+                    "and the first row of the counts matrix contain at least 2 values "
+                    "in common"
+                )
+
+            counts = counts[common_names]
+            column_data = column_data.loc[common_names]
 
         # if the design is provided, it must have a 'counts' term somewhere
         if design is not None and "counts" not in design:
@@ -1058,7 +1101,7 @@ def _more(offenders, what):
     return f" (and {n} more {what}{'s' if n > 1 else ''})" if n else ""
 
 
-def check_counts(counts, name="counts"):
+def check_counts(counts, name="counts", values=True):
     """
     Raise :class:`CountsError` if the counts matrix *counts* (a
     pandas.DataFrame, features in rows and samples in columns, as
@@ -1070,13 +1113,19 @@ def check_counts(counts, name="counts"):
       written by its name in the table), since pandas renames a repeated
       name ``A`` to ``A.1``; a column not in that mapping goes by its name
     - a feature ID listed more than once
-    - a negative count
-    - a sample whose counts sum to 0 (zero depth)
+    - with *values* (for a command that needs raw counts; a normalized or
+      transformed matrix may hold either):
+
+      - a negative count
+      - a sample with no numeric value (all missing or not numbers)
+      - a sample whose counts sum to 0 (zero depth)
 
     The checks run in that order, and the message names the first offender
     of the first that fails, and how many more of its kind there are.
     Positions are counted from 1 among the samples (columns after the
-    feature IDs) and the features (rows after the header).
+    feature IDs) and the features (rows after the header) of *counts*, so
+    they are the file's when *counts* is the table as read (the commands
+    check it before any sample is selected or reordered, DETK-0830).
     """
     as_written = counts.attrs.get(COLUMNS_AS_WRITTEN, {})
     columns = [as_written.get(str(c), str(c)) for c in counts.columns]
@@ -1101,6 +1150,9 @@ def check_counts(counts, name="counts"):
             + _more(counts.index[dup], "repeated feature ID")
         )
 
+    if not values:
+        return
+
     values = counts.apply(pandas.to_numeric, errors="coerce")
     negative = values.lt(0).to_numpy().nonzero()
     if len(negative[0]):
@@ -1113,6 +1165,13 @@ def check_counts(counts, name="counts"):
             f" has a negative count, {value}" + _more(negative[0], "negative count")
         )
 
+    blank = [str(columns[i]) for i, n in enumerate(values.notna().sum(axis=0)) if n == 0]
+    if blank:
+        raise CountsError(
+            f"{name}: sample {blank[0]!r} has no numeric counts: its values are"
+            " all missing or not numbers" + _more(blank, "sample")
+        )
+
     empty = [str(columns[i]) for i, total in enumerate(values.sum(axis=0)) if total == 0]
     if empty:
         raise CountsError(
@@ -1122,9 +1181,22 @@ def check_counts(counts, name="counts"):
 
 
 class CountMatrixFile(CountMatrix):
-    def __init__(self, count_f, column_data_f=None, design=None, **kwargs):
+    """
+    A :class:`CountMatrix` read from the counts file *count_f* (and the column
+    data file *column_data_f*). With *check* ``"ids"`` or ``"raw"``, the
+    counts are run through :func:`check_counts` as read, before the column
+    data selects or reorders any sample: ``"ids"`` for the repeated sample
+    header and feature ID checks only, ``"raw"`` for all of them. The
+    default, ``None``, checks nothing, as in 1.0.0.
+    """
+
+    def __init__(self, count_f, column_data_f=None, design=None, check=None, **kwargs):
 
         counts = read_id_table(count_f)
+        if check is not None:
+            if check not in ("ids", "raw"):
+                raise ValueError(f"check must be None, 'ids' or 'raw', not {check!r}")
+            check_counts(counts, _source_name(count_f), values=check == "raw")
 
         column_data = None
         if column_data_f is not None:

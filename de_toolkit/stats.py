@@ -1183,7 +1183,8 @@ def main(argv=sys.argv):
 
     args = parse_cli(build_parser(), argv)
     cmd = args.subcommand
-    counts_obj = make_cli_count_obj(args)
+    # the matrix may be normalized or transformed: repeated IDs only (DETK-0830)
+    counts_obj = make_cli_count_obj(args, raw=False)
     set_logging(args)
     logger.info("cmd: %s", " ".join(argv[1:]))
 

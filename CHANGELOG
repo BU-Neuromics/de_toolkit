@@ -116,6 +116,24 @@
   files in `in_file_paths` (schema 1.1's field, as `detk-util record`
   writes it) and the crate action's `object` holds both; `in_file_path`
   stays the GMT (DETK-0720, #199)
+- The Process Run Crate records every file a command read or wrote. In
+  1.0.0 these were missing from the crate action, though the command
+  read or wrote them: `detk-util annotate`'s mapping file (a parameter
+  only, #45), `detk-util gather`'s per-sample files (listed in its
+  parameters only), `detk-transform rlog`'s sample information file,
+  `detk-norm fpkm` and `tpm`'s lengths file, and the side outputs
+  `detk-norm deseq2 --size-factors`, the `--rda` file of `detk-transform
+  vst` and `rlog`, `detk-de deseq2` and `firth` and `detk-enrich fgsea`,
+  and `detk-outlier entropy --plot-output`. Their module JSON now lists
+  each in `in_file_paths`, `out_file_paths` or `column_data_path` (schema
+  1.1's fields, as `detk-util record` writes them), so the crate action's
+  `object` and `result` hold it. `in_file_path` and `out_file_path` are
+  unchanged, except that gather's `in_file_path` is its first file (it
+  was empty), and `detk-outlier entropy` without `-o`, which writes no
+  table, records its plot as `out_file_path`. `detk-filter` and
+  `detk-stats` already recorded their sample information file, and
+  `detk-outlier` reads none; tests now hold all of them to it (#209,
+  DETK-0890)
 - A regression test follows the Process Run Crate from an enrichment table
   back to its inputs: `tests/report/test_lineage.py` runs `detk-filter`,
   `detk-de deseq2` with a sample sheet and `detk-enrich fgsea -c` in one
@@ -146,6 +164,26 @@
   the output is float, the same as for the decimal input; the Python
   `shrink` and `pmf_transform` return float counts for integer input too
   and leave their input unchanged (#219)
+- `detk-outlier entropy` without `-p` uses the 5th percentile (0.05)
+  instead of failing with `argument -p/--percentile: invalid float value:
+  None` (exit 2); `--help` states the default. `-p` given behaves as
+  before (#222, DETK-0860)
+
+### Tests
+
+- The test suite leaves the working tree clean. With DESeq2 installed,
+  `tests/de/test_de.py::test_R_check_names_nonsense` ran DESeq2 with
+  `routput_dir="tmp_output"`, a relative path, and left `tmp_output/`
+  (counts.csv, script.R, params_*.json, stdout, stderr) in the directory
+  pytest ran from; it now writes R's files and its `-o` output under
+  `tmp_path`. A session-scoped guard in `tests/conftest.py`
+  (`repository_left_clean`) compares the repository's untracked files
+  (`git status --porcelain --untracked-files=all`, so ignored files are not
+  counted) before and after the run and fails the session, naming the
+  files, when a test leaves a new one. It is off unless the project root
+  is the top level of a git work tree (not in an sdist, nor a copy inside
+  another repository), and turns off with a warning if git fails at the end
+  of the run. The README's Development section says so (#210)
 
 ## 1.0.0 (2026-11-25)
 

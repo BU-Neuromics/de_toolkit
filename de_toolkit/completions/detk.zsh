@@ -344,7 +344,7 @@ _shtab_detk_outlier_defaults_added=0
 
 _shtab_detk_outlier_entropy_options=(
   "(- : *)"{-h,--help}"[Print this help and exit]"
-  {-p,--percentile}"[The entropy percentile below which a feature is flagged, between 0 and 1]:N:"
+  {-p,--percentile}"[The entropy percentile below which a feature is flagged, between 0 and 1 (default\: 0.05)]:N:"
   {-o,--output}"[Destination of the entropy and flag of each feature in CSV format]:FILE:_files"
   "--plot-output[Destination of a PNG plot of the entropy distribution and threshold]:FILE:_files"
   {-d,--out-delim}"[Delimiter to use for the output file (default\: ,)]:CHAR:"
@@ -1839,7 +1839,7 @@ _shtab_detk_cmd_outlier_defaults_added=0
 
 _shtab_detk_cmd_outlier_entropy_options=(
   "(- : *)"{-h,--help}"[Print this help and exit]"
-  {-p,--percentile}"[The entropy percentile below which a feature is flagged, between 0 and 1]:N:"
+  {-p,--percentile}"[The entropy percentile below which a feature is flagged, between 0 and 1 (default\: 0.05)]:N:"
   {-o,--output}"[Destination of the entropy and flag of each feature in CSV format]:FILE:_files"
   "--plot-output[Destination of a PNG plot of the entropy distribution and threshold]:FILE:_files"
   {-d,--out-delim}"[Delimiter to use for the output file (default\: ,)]:CHAR:"

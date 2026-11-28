@@ -429,7 +429,7 @@ OUTLIER = Command(
             "entropy",
             (COUNTS,),
             (
-                Opt("--percentile", "-p", "N"),
+                Opt("--percentile", "-p", "N", "0.05"),
                 # no [default: ...]: without -o the output is not written
                 Opt("--output", "-o", "FILE"),
                 Opt("--plot-output", None, "FILE"),

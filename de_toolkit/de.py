@@ -670,6 +670,8 @@ def main(argv=sys.argv):
                 # the crate links the column data as an input (DETK-0161)
                 column_data_path=args.cov_fn,
                 workdir=os.getcwd(),
+                # the --rda file is an output beside the results (#209)
+                out_file_paths=[args.output, args.rda] if args.rda else None,
             )
     else:
         logging.info("not generating report due to --no-report")

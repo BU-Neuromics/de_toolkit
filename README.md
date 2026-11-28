@@ -74,6 +74,9 @@ names it (`uv run pytest -rs` lists them). A new test that runs R skips with
 `tests/r_packages.py` (`skip_without_r("DESeq2")`, or the `needs_r("DESeq2")`
 marker) rather than its own check.
 
+A test run that leaves a new untracked file in the repository fails
+(tests/conftest.py); write test output under tmp_path.
+
 To add a command, a subcommand or an option, see
 [docs/dev/cli.md](https://github.com/BU-Neuromics/de_toolkit/blob/main/docs/dev/cli.md): the parsers are argparse, and their help
 is part of the 1.0 promise.

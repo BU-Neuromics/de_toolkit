@@ -49,14 +49,22 @@ name it (in Claude Code, `/detk`). The agent then:
 
 1. checks that detk and R are installed (`detk-wrapr check`), installing what
    is missing if you let it;
-2. builds the counts matrix with `detk-util gather` if you give it
-   quantifier outputs, looks at the counts and the sample table and, if
-   needed, tidies them with `detk-util tidy`;
-3. runs `detk-stats summary`, `detk-filter`, `detk-norm deseq2` (or `cpm`,
+2. builds the counts matrix if you give it quantifier outputs: gene-level
+   counts from featureCounts or htseq-count with `detk-util gather`, and
+   salmon or kallisto estimates summarized to genes with tximport, run
+   through `detk-util record` (or gathered as they are, with the
+   assumptions that brings stated, when tximport is not available);
+3. looks at the counts and the sample table, matches them with
+   `detk-util tidy` and runs the analysis on its outputs; if tidy dropped a
+   sample, it tells you which and asks before going on, since from 1.0.1
+   detk refuses files whose samples differ rather than analysing the
+   samples they share;
+4. runs `detk-stats summary`, `detk-filter`, `detk-norm deseq2` (or `cpm`,
    `tpm`, `fpkm` or `library` when you ask for those units),
    `detk-de deseq2`, `detk-util annotate` when you give it a gene symbol
-   mapping, and `detk-enrich fgsea` with your design formula;
-4. runs `detk-report generate`, and reports the result tables, the number of
+   mapping, and `detk-enrich fgsea` with your design formula and the
+   ranking column named with `-c` (which detk 1.0.1 requires on a DE table);
+5. runs `detk-report generate`, and reports the result tables, the number of
    significant genes, the top gene sets, and the paths to
    `detk_report/detk_report.html` and `detk_report/ro-crate-metadata.json`.
 
@@ -94,4 +102,9 @@ exist, and the usage copied into `references/commands.md` must match
 `--help`. A change to a subcommand or option that is not carried into the
 skill therefore fails CI. The test checks that the skill's commands are valid
 usage, not what they compute; that is checked by running the skill on the
-airway example.
+airway example. A few tests also check what the skill tells the agent to
+do where getting it wrong gives a wrong analysis: that the commands after
+`detk-util tidy` read its outputs, that it has the agent report the samples
+tidy dropped and ask, that every `detk-enrich fgsea` line passes `-c`, and
+that its quantifier guidance leads with gene-level counts and routes salmon
+and kallisto through tximport.

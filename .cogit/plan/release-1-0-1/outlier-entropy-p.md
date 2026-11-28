@@ -9,6 +9,8 @@ prev: [DETK-0860, release-1-0-1/count-checks-readers]
 scope: [de_toolkit/outlier.py, de_toolkit/completions/detk.zsh, tests/outlier/, tests/cli/, +docs/tools/outlier.md, +skills/detk/references/commands.md, +CHANGELOG]
 issue: 222
 visited: 5d8ae02
+status: done
+done: 3803ae4
 ---
 
 # detk-outlier entropy runs without -p
@@ -17,7 +19,7 @@ visited: 5d8ae02
 
 - [x] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

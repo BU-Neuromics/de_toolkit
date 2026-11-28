@@ -1,0 +1,1708 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Suite of command line tools for working with count matrices in differential expression workflows">
+      
+      
+      
+        <link rel="canonical" href="https://bu-neuromics.github.io/de_toolkit/tutorials/covariates/">
+      
+      
+        <link rel="prev" href="../quantifiers/">
+      
+      
+        <link rel="next" href="../../concepts/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../logo/detk_logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Derived covariates and recorded steps - de_toolkit</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#derived-covariates-and-recorded-steps" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="de_toolkit" class="md-header__button md-logo" aria-label="de_toolkit" data-md-component="logo">
+      
+  <img src="../../logo/detk_logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            de_toolkit
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Derived covariates and recorded steps
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/BU-Neuromics/de_toolkit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BU-Neuromics/de_toolkit
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="de_toolkit" class="md-nav__button md-logo" aria-label="de_toolkit" data-md-component="logo">
+      
+  <img src="../../logo/detk_logo.svg" alt="logo">
+
+    </a>
+    de_toolkit
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/BU-Neuromics/de_toolkit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BU-Neuromics/de_toolkit
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worked example (airway)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../airway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Differential expression on airway
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quantifiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    From quantifier outputs to a normalized matrix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Derived covariates and recorded steps
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Derived covariates and recorded steps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-formulas-take-column-names-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why formulas take column names only
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-constant-column" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A constant column
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-z-score" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The z-score
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The log
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-a-value-cannot-be-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a value cannot be used
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The design
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-steps-in-the-crate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The steps in the crate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts & file formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview & common options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/stats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    stats — count matrix statistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/filter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    filter — filtering count matrices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/norm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    norm — normalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/transform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    transform — count transformations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/de/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    de — differential expression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/enrich/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    enrich — set enrichment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/outlier/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    outlier — outlier identification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/util/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    util — file utilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/wrapr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    wrapr — R bridge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../formulas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design formulas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/covariates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Derived covariates with Miller
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../agent-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-formulas-take-column-names-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why formulas take column names only
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-constant-column" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A constant column
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-z-score" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The z-score
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The log
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-a-value-cannot-be-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When a value cannot be used
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The design
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-steps-in-the-crate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The steps in the crate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/BU-Neuromics/de_toolkit/edit/main/docs/tutorials/covariates.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="derived-covariates-and-recorded-steps">Derived covariates and recorded steps<a class="headerlink" href="#derived-covariates-and-recorded-steps" title="Permanent link">&para;</a></h1>
+<!-- tutorial: requires R DESeq2 airway -->
+<!-- tutorial: requires mlr -->
+
+<p>A design often needs a covariate that is not in the sample sheet as it
+stands: the log of a measurement, a measurement put on a standard scale, a
+label shared by every sample. This tutorial derives three such columns from
+the airway sample sheet with <a href="https://miller.readthedocs.io">Miller</a> (<code>mlr</code>), runs each step through
+<code>detk-util record</code> so it becomes part of the analysis's provenance, shows
+what happens when a value cannot be used, fits a DESeq2 design with one of
+the derived columns, and then follows the column data <code>detk-de</code> read back
+through the provenance crate to the Miller steps that made it.</p>
+<p>It needs detk, R with the Bioconductor packages DESeq2 and airway, and
+Miller 6. With conda, for example:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>mamba<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>detk-covariates<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>-c<span class="w"> </span>bioconda<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>r-base<span class="w"> </span>r-jsonlite<span class="w"> </span>r-data.table<span class="w"> </span>bioconductor-deseq2<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>bioconductor-airway<span class="w"> </span>miller
+</code></pre></div>
+<h2 id="why-formulas-take-column-names-only">Why formulas take column names only<a class="headerlink" href="#why-formulas-take-column-names-only" title="Permanent link">&para;</a></h2>
+<p>In detk a <a href="../../formulas/">design formula</a> names columns of the sample sheet
+and nothing else: <code>counts ~ cell + dex</code> is a model, and detk does not
+compute <code>log2(avgLength)</code> or a z-score inside one (DETK-0050). A formula
+that computed its covariates would mix two jobs, saying what the model is
+and making its data, and the second would be hidden inside the first: the
+derived values would appear in no file you could look at, check or hand to
+someone else, and a log of a zero or a missing value would surface, if at
+all, as an error from deep inside the model fit. So a derived covariate is a
+column of its own, in a sample sheet written by a step you can see, and the
+formula names that column. The
+<a href="../../recipes/covariates/">Miller recipes for derived covariates</a> are tested
+programs for the usual ones; this tutorial uses three of them.</p>
+<h2 id="the-data">The data<a class="headerlink" href="#the-data" title="Permanent link">&para;</a></h2>
+<p><strong>airway</strong> (GEO <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE52778">GSE52778</a>) is human airway smooth muscle cells from four
+donor cell lines, each treated with dexamethasone (<code>trt</code>) or left untreated
+(<code>untrt</code>): 8 samples, 63,677 Ensembl genes. The
+<a href="../airway/">airway tutorial</a> analyses it in full; here it is the counts and
+a sample sheet that keeps one more column of the package's sample
+information, <code>avgLength</code>, the mean length of each sample's sequenced reads.</p>
+<p>Save this R script as <code>prepare_data.R</code>:</p>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span>&gt;<span class="w"> </span>prepare_data.R<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">suppressMessages(library(airway))</span>
+<span class="s">data(airway)</span>
+
+<span class="s"># gene counts: Ensembl gene IDs x 8 samples</span>
+<span class="s">counts &lt;- as.data.frame(assay(airway))</span>
+<span class="s">counts &lt;- cbind(gene = rownames(counts), counts)</span>
+<span class="s">write.csv(counts, &quot;counts.csv&quot;, row.names = FALSE, quote = FALSE)</span>
+
+<span class="s"># sample information: cell line, treatment and mean read length</span>
+<span class="s">cd &lt;- as.data.frame(colData(airway)[, c(&quot;cell&quot;, &quot;dex&quot;, &quot;avgLength&quot;)])</span>
+<span class="s">cd &lt;- cbind(sample = rownames(cd), cd)</span>
+<span class="s">write.csv(cd, &quot;sample_info.csv&quot;, row.names = FALSE, quote = FALSE)</span>
+<span class="s">EOF</span>
+</code></pre></div>
+<p>and run it through <code>detk-util record</code>, which runs the command after <code>--</code>,
+checks that it wrote the files <code>-o</code> names, and writes a record of the step,
+with the tool's version and a checksum of every file, into the report
+directory (<code>detk_report/</code>). <code>-q</code> keeps <code>record</code>'s own messages to warnings
+and errors:</p>
+<div class="highlight"><pre><span></span><code>detk-util<span class="w"> </span>record<span class="w"> </span>-q<span class="w"> </span>-o<span class="w"> </span>counts.csv<span class="w"> </span>-o<span class="w"> </span>sample_info.csv<span class="w"> </span>--<span class="w"> </span>Rscript<span class="w"> </span>prepare_data.R
+cat<span class="w"> </span>sample_info.csv
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>sample,cell,dex,avgLength
+SRR1039508,N61311,untrt,126
+SRR1039509,N61311,trt,126
+SRR1039512,N052611,untrt,126
+SRR1039513,N052611,trt,87
+SRR1039516,N080611,untrt,120
+SRR1039517,N080611,trt,126
+SRR1039520,N061011,untrt,101
+SRR1039521,N061011,trt,98
+</code></pre></div>
+<p>The samples were sequenced to different read lengths, from 87 to 126 bases,
+and not in step with the cell lines or the treatment. A technical difference
+like that can shift counts, so the design below includes it as a covariate,
+on a standard scale.</p>
+<p>Most of the genes are not expressed in these cells; keep those with a
+nonzero count in at least half the samples, as the airway tutorial does:</p>
+<div class="highlight"><pre><span></span><code>detk-filter<span class="w"> </span><span class="s1">&#39;nonzero(all) &gt;= 0.5&#39;</span><span class="w"> </span>-o<span class="w"> </span>counts_filtered.csv<span class="w"> </span>counts.csv
+</code></pre></div>
+<h2 id="a-constant-column">A constant column<a class="headerlink" href="#a-constant-column" title="Permanent link">&para;</a></h2>
+<p>Each recipe is a Miller program and one <code>detk-util record</code> command that runs
+it. The program writes the output file itself (<code>emit &gt; @out</code>, or <code>tee</code> for
+the constant column), so the same file name goes in Miller's
+<code>-s out=...</code> and <code>record</code>'s <code>-o</code>. The first adds a column <code>study</code> that is
+<code>airway</code> in every sample, a label that tells these samples apart once their
+sheet is joined to another study's:</p>
+<div class="highlight"><pre><span></span><code>detk-util<span class="w"> </span>record<span class="w"> </span>-q<span class="w"> </span>-i<span class="w"> </span>sample_info.csv<span class="w"> </span>-o<span class="w"> </span>sample_info.study.csv<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>mlr<span class="w"> </span>--icsv<span class="w"> </span>--ocsv<span class="w"> </span>put<span class="w"> </span>-q<span class="w"> </span>-s<span class="w"> </span><span class="nv">out</span><span class="o">=</span>sample_info.study.csv<span class="w"> </span><span class="s1">&#39;$study = &quot;airway&quot;; tee &gt; @out, $*&#39;</span><span class="w"> </span>sample_info.csv
+</code></pre></div>
+<h2 id="the-z-score">The z-score<a class="headerlink" href="#the-z-score" title="Permanent link">&para;</a></h2>
+<p>The z-score of <code>avgLength</code>, as <code>avgLength_zscore</code>: the read length less the
+mean read length, over the sample standard deviation (n - 1). This is the
+<a href="../../recipes/covariates/#z-score-centring-and-min-max">z-score recipe</a> as
+it is, with <code>-s col=avgLength</code>; it reads the sheet the constant column's
+step wrote:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">zscore</span><span class="o">=</span><span class="s1">&#39;</span>
+<span class="s1">  @rec[NR] = $*; @ids[NR] = $[[[1]]];</span>
+<span class="s1">  if (!is_numeric($[@col])) { @bad[NR] = $[[[1]]] }</span>
+<span class="s1">  else { @min = min(@min, $[@col]); @max = max(@max, $[@col]) }</span>
+<span class="s1">  end {</span>
+<span class="s1">    if (length(@rec) == 0) {</span>
+<span class="s1">      eprint @col . &quot;_zscore: &quot; . @col . &quot; has no values: the sheet has no samples&quot;;</span>
+<span class="s1">      asserting_null(&quot;stop&quot;);</span>
+<span class="s1">    }</span>
+<span class="s1">    if (length(@bad) &gt; 0) {</span>
+<span class="s1">      eprint @col . &quot;_zscore: &quot; . @col . &quot; is missing or not a number in &quot; . joinv(@bad, &quot;, &quot;);</span>
+<span class="s1">      asserting_null(&quot;stop&quot;);</span>
+<span class="s1">    }</span>
+<span class="s1">    if (@min == @max) {</span>
+<span class="s1">      eprint @col . &quot;_zscore: &quot; . @col . &quot; has the same value in every sample, &quot; . joinv(@ids, &quot;, &quot;);</span>
+<span class="s1">      asserting_null(&quot;stop&quot;);</span>
+<span class="s1">    }</span>
+<span class="s1">    n = length(@rec); sum = 0; ss = 0;</span>
+<span class="s1">    for (i, r in @rec) { sum += r[@col] }</span>
+<span class="s1">    mean = sum / n;</span>
+<span class="s1">    for (i, r in @rec) { ss += (r[@col] - mean) ** 2 }</span>
+<span class="s1">    sd = sqrt(ss / (n - 1));</span>
+<span class="s1">    for (i, r in @rec) { @rec[i][@col . &quot;_zscore&quot;] = (r[@col] - mean) / sd }</span>
+<span class="s1">    emit &gt; @out, @rec</span>
+<span class="s1">  }&#39;</span>
+detk-util<span class="w"> </span>record<span class="w"> </span>-q<span class="w"> </span>-i<span class="w"> </span>sample_info.study.csv<span class="w"> </span>-o<span class="w"> </span>sample_info.zscore.csv<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>mlr<span class="w"> </span>--icsv<span class="w"> </span>--ocsv<span class="w"> </span>put<span class="w"> </span>-q<span class="w"> </span>-s<span class="w"> </span><span class="nv">col</span><span class="o">=</span>avgLength<span class="w"> </span>-s<span class="w"> </span><span class="nv">out</span><span class="o">=</span>sample_info.zscore.csv<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$zscore</span><span class="s2">&quot;</span><span class="w"> </span>sample_info.study.csv
+</code></pre></div>
+<p>A coefficient for <code>avgLength_zscore</code> is the change in log2 expression per
+standard deviation of read length, about 16 bases here, rather than per
+base, and the column is centred on zero, so the intercept stays the
+expression at the mean read length.</p>
+<h2 id="the-log">The log<a class="headerlink" href="#the-log" title="Permanent link">&para;</a></h2>
+<p>The <a href="../../recipes/covariates/#logarithms">log base 2 recipe</a>, as
+<code>avgLength_log2</code>, on the sheet the z-score step wrote:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">log2</span><span class="o">=</span><span class="s1">&#39;</span>
+<span class="s1">  @rec[NR] = $*;</span>
+<span class="s1">  if (!is_numeric($[@col]) || $[@col] &lt;= 0) { @bad[NR] = $[[[1]]] }</span>
+<span class="s1">  end {</span>
+<span class="s1">    if (length(@bad) &gt; 0) {</span>
+<span class="s1">      eprint @col . &quot;_log2: &quot; . @col . &quot; is missing, not a number or not above 0 in &quot; . joinv(@bad, &quot;, &quot;);</span>
+<span class="s1">      asserting_null(&quot;stop&quot;);</span>
+<span class="s1">    }</span>
+<span class="s1">    for (i, r in @rec) { @rec[i][@col . &quot;_log2&quot;] = log(r[@col]) / log(2) }</span>
+<span class="s1">    emit &gt; @out, @rec</span>
+<span class="s1">  }&#39;</span>
+detk-util<span class="w"> </span>record<span class="w"> </span>-q<span class="w"> </span>-i<span class="w"> </span>sample_info.zscore.csv<span class="w"> </span>-o<span class="w"> </span>sample_info.covariates.csv<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>mlr<span class="w"> </span>--icsv<span class="w"> </span>--ocsv<span class="w"> </span>put<span class="w"> </span>-q<span class="w"> </span>-s<span class="w"> </span><span class="nv">col</span><span class="o">=</span>avgLength<span class="w"> </span>-s<span class="w"> </span><span class="nv">out</span><span class="o">=</span>sample_info.covariates.csv<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$log2</span><span class="s2">&quot;</span><span class="w"> </span>sample_info.zscore.csv
+cat<span class="w"> </span>sample_info.covariates.csv
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>sample,cell,dex,avgLength,study,avgLength_zscore,avgLength_log2
+SRR1039508,N61311,untrt,126,airway,0.7713495806621354,6.977279923499917
+SRR1039509,N61311,trt,126,airway,0.7713495806621354,6.977279923499917
+SRR1039512,N052611,untrt,126,airway,0.7713495806621354,6.977279923499917
+SRR1039513,N052611,trt,87,airway,-1.6843756149152753,6.442943495848729
+SRR1039516,N080611,untrt,120,airway,0.39354570441945685,6.906890595608519
+SRR1039517,N080611,trt,126,airway,0.7713495806621354,6.977279923499917
+SRR1039520,N061011,untrt,101,airway,-0.802833237015692,6.6582114827517955
+SRR1039521,N061011,trt,98,airway,-0.9917351751370312,6.614709844115209
+</code></pre></div>
+<p><code>sample_info.covariates.csv</code> has the three new columns after the sheet's
+own, and every value Miller did not compute is as <code>prepare_data.R</code> wrote it.</p>
+<h2 id="when-a-value-cannot-be-used">When a value cannot be used<a class="headerlink" href="#when-a-value-cannot-be-used" title="Permanent link">&para;</a></h2>
+<p>A sample sheet is often put together by hand, and a value can go missing on
+the way. Here is a copy of the sheet in which <code>SRR1039516</code>'s read length was
+written as <code>NA</code>:</p>
+<div class="highlight"><pre><span></span><code>sed<span class="w"> </span><span class="s1">&#39;s/^SRR1039516,N080611,untrt,120$/SRR1039516,N080611,untrt,NA/&#39;</span><span class="w"> </span>sample_info.csv<span class="w"> </span>&gt;<span class="w"> </span>sample_info_bad.csv
+grep<span class="w"> </span>SRR1039516<span class="w"> </span>sample_info_bad.csv
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>SRR1039516,N080611,untrt,NA
+</code></pre></div>
+<p>The log recipe checks every sample before it computes anything, names the
+sample it cannot use and stops; <code>detk-util record</code> then stops too, with exit
+status 1, and records nothing:</p>
+<!-- tutorial: fails -->
+<div class="highlight"><pre><span></span><code>detk-util<span class="w"> </span>record<span class="w"> </span>-q<span class="w"> </span>-i<span class="w"> </span>sample_info_bad.csv<span class="w"> </span>-o<span class="w"> </span>sample_info_bad.log2.csv<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>mlr<span class="w"> </span>--icsv<span class="w"> </span>--ocsv<span class="w"> </span>put<span class="w"> </span>-q<span class="w"> </span>-s<span class="w"> </span><span class="nv">col</span><span class="o">=</span>avgLength<span class="w"> </span>-s<span class="w"> </span><span class="nv">out</span><span class="o">=</span>sample_info_bad.log2.csv<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$log2</span><span class="s2">&quot;</span><span class="w"> </span>sample_info_bad.csv
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>avgLength_log2: avgLength is missing, not a number or not above 0 in SRR1039516
+mlr: is_null type-assertion failed at NR=8 FNR=8 FILENAME=sample_info_bad.csv
+detk-util: error: command failed with exit status 1: mlr --icsv --ocsv put -q -s col=avgLength -s out=sample_info_bad.log2.csv &#39;...&#39; sample_info_bad.csv (--verbose for the traceback)
+</code></pre></div>
+<p>The first line is the recipe's, the second Miller's, from the assertion that
+stops it, and the last <code>detk-util record</code>'s. There is no output file, so no
+later step can read a half-made sheet:</p>
+<div class="highlight"><pre><span></span><code>ls<span class="w"> </span>sample_info_bad*
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>sample_info_bad.csv
+</code></pre></div>
+<p>Without the check, Miller would have written the text <code>(error)</code> as
+<code>SRR1039516</code>'s <code>avgLength_log2</code> and exited 0, and a model given that column
+would have read it as a category, or failed far from the cause.</p>
+<h2 id="the-design">The design<a class="headerlink" href="#the-design" title="Permanent link">&para;</a></h2>
+<p><code>detk-de deseq2</code> fits the cell line, the z-scored read length and the
+treatment, with <code>untrt</code> as the treatment's reference level, on the filtered
+counts and the derived sheet. The formula names <code>avgLength_zscore</code> as it
+would any column:</p>
+<div class="highlight"><pre><span></span><code>detk-de<span class="w"> </span>deseq2<span class="w"> </span>-o<span class="w"> </span>deseq2_results.csv<span class="w"> </span><span class="s2">&quot;counts ~ cell + avgLength_zscore + dex[untrt]&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>counts_filtered.csv<span class="w"> </span>sample_info.covariates.csv
+head<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>deseq2_results.csv<span class="w"> </span><span class="p">|</span><span class="w"> </span>tr<span class="w"> </span>,<span class="w"> </span><span class="s1">&#39;\n&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-e<span class="w"> </span>avgLength<span class="w"> </span>-e<span class="w"> </span>dex
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>avgLength_zscore__log2FoldChange
+avgLength_zscore__lfcSE
+avgLength_zscore__stat
+avgLength_zscore__pvalue
+avgLength_zscore__padj
+dex__trt__log2FoldChange
+dex__trt__lfcSE
+dex__trt__stat
+dex__trt__pvalue
+dex__trt__padj
+</code></pre></div>
+<p>A numeric covariate has one coefficient, named after its column; a factor
+has one per level but the reference, named <code>variable__level</code>. The read
+length's columns say, for each gene, how much its expression changes with
+read length once the cell line and the treatment are accounted for, and the
+treatment's are now adjusted for read length.</p>
+<p>A formula that tries to compute the covariate itself is an error, which
+says where the derived column should come from:</p>
+<!-- tutorial: fails -->
+<div class="highlight"><pre><span></span><code>detk-de<span class="w"> </span>deseq2<span class="w"> </span>-q<span class="w"> </span>-o<span class="w"> </span>deseq2_log2.csv<span class="w"> </span><span class="s2">&quot;counts ~ cell + log2(avgLength) + dex[untrt]&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>counts_filtered.csv<span class="w"> </span>sample_info.csv
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>usage: detk-de deseq2 [options] &lt;design&gt; &lt;counts_fn&gt; &lt;cov_fn&gt;
+detk-de deseq2: error: Invalid design: Formulas take column names only: log2(avgLength) is not a column of the column data file and looks like a call. Add the derived column to the column data file and name it in the formula; for recipes that derive a log, z-score or other column with Miller, see https://bu-neuromics.github.io/de_toolkit/recipes/covariates/
+Run &#39;detk-de deseq2 --help&#39; for help.
+</code></pre></div>
+<p>(<code>-q</code> keeps detk's progress messages off stderr, so only the error shows.)</p>
+<h2 id="the-steps-in-the-crate">The steps in the crate<a class="headerlink" href="#the-steps-in-the-crate" title="Permanent link">&para;</a></h2>
+<p>Every <code>detk-util record</code> that succeeded, and every detk command, wrote a
+record of itself into <code>detk_report/json/</code>. <code>detk-report generate</code> renders
+the report from them and writes the provenance crate,
+<code>detk_report/ro-crate-metadata.json</code>, a
+<a href="../../report/#standards-based-provenance-the-process-run-crate">Process Run Crate</a>:</p>
+<div class="highlight"><pre><span></span><code>detk-report<span class="w"> </span>generate
+ls<span class="w"> </span>detk_report
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>detk_report.html
+json
+ro-crate-metadata.json
+</code></pre></div>
+<p>In the crate each step is a <code>CreateAction</code> with the files it read
+(<code>object</code>), the files it wrote (<code>result</code>) and the software that ran it
+(<code>instrument</code>). For a recorded step the instrument is the external tool,
+with the version <code>record</code> read from it (the first line of <code>mlr --version</code>),
+since that is the software that made the files. Miller's entry:</p>
+<div class="highlight"><pre><span></span><code>grep<span class="w"> </span>-B<span class="w"> </span><span class="m">2</span><span class="w"> </span>-A<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="s1">&#39;&quot;name&quot;: &quot;mlr&quot;&#39;</span><span class="w"> </span>detk_report/ro-crate-metadata.json
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>      &quot;@id&quot;: &quot;#tool-mlr-mlr%206...&quot;,
+      &quot;@type&quot;: &quot;SoftwareApplication&quot;,
+      &quot;name&quot;: &quot;mlr&quot;,
+      &quot;softwareVersion&quot;: &quot;mlr 6...&quot;
+</code></pre></div>
+<p>A file one step writes and another reads is one entity in the crate, so the
+crate holds the chain from each file back to where it came from, and a file
+a recorded step read or wrote carries the SHA-256 checksum <code>record</code> took of
+it. This Python program, which needs nothing but Python, starts from the
+files the <code>detk-de deseq2</code> step read and follows each back, step by step,
+printing the tool and version that made it, and whether the file still
+matches its recorded checksum:</p>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span>&gt;<span class="w"> </span>trace.py<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">import hashlib</span>
+<span class="s">import json</span>
+
+<span class="s">CRATE = &quot;detk_report/ro-crate-metadata.json&quot;</span>
+<span class="s">graph = json.load(open(CRATE))[&quot;@graph&quot;]</span>
+<span class="s">ents = {e[&quot;@id&quot;]: e for e in graph}</span>
+<span class="s">actions = [e for e in graph if e[&quot;@type&quot;] == &quot;CreateAction&quot;]</span>
+
+
+<span class="s">def made_by(file_id):</span>
+<span class="s">    return next((a for a in actions if {&quot;@id&quot;: file_id} in a.get(&quot;result&quot;, [])), None)</span>
+
+
+<span class="s">def checksum(file_id):</span>
+<span class="s">    recorded = ents[file_id].get(&quot;sha256&quot;)</span>
+<span class="s">    if recorded is None:</span>
+<span class="s">        return &quot;&quot;</span>
+<span class="s">    # file IDs are relative to the report directory, detk_report/</span>
+<span class="s">    with open(&quot;detk_report/&quot; + file_id, &quot;rb&quot;) as f:</span>
+<span class="s">        now = hashlib.sha256(f.read()).hexdigest()</span>
+<span class="s">    return &quot;, sha256 matches&quot; if now == recorded else &quot;, sha256 DIFFERS&quot;</span>
+
+
+<span class="s">def trace(file_id, depth=0):</span>
+<span class="s">    step = made_by(file_id)</span>
+<span class="s">    name = ents[file_id][&quot;name&quot;]</span>
+<span class="s">    if step is None:</span>
+<span class="s">        print(f&quot;{&#39;  &#39; * depth}{name}: no recorded step made it&quot;)</span>
+<span class="s">        return</span>
+<span class="s">    tool = ents[step[&quot;instrument&quot;][&quot;@id&quot;]]</span>
+<span class="s">    print(f&quot;{&#39;  &#39; * depth}{name} &lt;- {tool[&#39;name&#39;]} ({tool[&#39;softwareVersion&#39;]}){checksum(file_id)}&quot;)</span>
+<span class="s">    for obj in step.get(&quot;object&quot;, []):</span>
+<span class="s">        if ents[obj[&quot;@id&quot;]][&quot;@type&quot;] == &quot;File&quot;:</span>
+<span class="s">            trace(obj[&quot;@id&quot;], depth + 1)</span>
+
+
+<span class="s">de = next(a for a in actions if a[&quot;name&quot;] == &quot;detk-de deseq2 run&quot;)</span>
+<span class="s">for obj in de[&quot;object&quot;]:</span>
+<span class="s">    if ents[obj[&quot;@id&quot;]][&quot;@type&quot;] == &quot;File&quot;:</span>
+<span class="s">        trace(obj[&quot;@id&quot;])</span>
+<span class="s">EOF</span>
+python3<span class="w"> </span>trace.py
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>counts_filtered.csv &lt;- detk-filter (...)
+  counts.csv &lt;- Rscript (Rscript (R) version ...), sha256 matches
+sample_info.covariates.csv &lt;- mlr (mlr 6...), sha256 matches
+  sample_info.zscore.csv &lt;- mlr (mlr 6...), sha256 matches
+    sample_info.study.csv &lt;- mlr (mlr 6...), sha256 matches
+      sample_info.csv &lt;- Rscript (Rscript (R) version ...), sha256 matches
+</code></pre></div>
+<p>The sheet <code>detk-de</code> read, <code>sample_info.covariates.csv</code>, was made by Miller,
+with its version, from the sheet the z-score step made, which Miller made
+from the constant column's sheet, which Miller made from the sheet R wrote;
+the counts go back through <code>detk-filter</code> to R as well. The failed step is
+not there: <code>record</code> writes nothing for a step that fails. (<code>detk-filter</code>
+reads and writes its files itself, so its output has no checksum of
+<code>record</code>'s.)</p>
+<p>The HTML report, <code>detk_report/detk_report.html</code>, lists each recorded step as
+"Recorded external step", with its command, tool, version and files.</p>
+<h2 id="where-next">Where next<a class="headerlink" href="#where-next" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../recipes/covariates/">Derived covariates with Miller</a> has the other
+  recipes (log base 10, natural log, a log with a pseudocount, centring and
+  min-max) and what each checks.</li>
+<li><a href="../../formulas/">Formulas</a> is detk's design mini-language, and
+  <a href="../../tools/util/#record"><code>detk-util record</code></a> what <code>record</code> checks and
+  records.</li>
+<li>The <a href="../airway/">airway tutorial</a> is the full analysis of the same data,
+  from summary statistics to gene symbols and the report.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.tracking", "search.suggest", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1698 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Suite of command line tools for working with count matrices in differential expression workflows">
+      
+      
+      
+        <link rel="canonical" href="https://bu-neuromics.github.io/de_toolkit/tutorials/airway/">
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../quantifiers/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../logo/detk_logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Differential expression on airway - de_toolkit</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#differential-expression-on-airway" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="de_toolkit" class="md-header__button md-logo" aria-label="de_toolkit" data-md-component="logo">
+      
+  <img src="../../logo/detk_logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            de_toolkit
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Differential expression on airway
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/BU-Neuromics/de_toolkit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BU-Neuromics/de_toolkit
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="de_toolkit" class="md-nav__button md-logo" aria-label="de_toolkit" data-md-component="logo">
+      
+  <img src="../../logo/detk_logo.svg" alt="logo">
+
+    </a>
+    de_toolkit
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/BU-Neuromics/de_toolkit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BU-Neuromics/de_toolkit
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worked example (airway)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Differential expression on airway
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Differential expression on airway
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#look-at-the-raw-counts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Look at the raw counts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Normalize
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variance-stabilize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variance-stabilize
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flag-outliers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flag outliers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#differential-expression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Differential expression
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gene-symbols" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gene symbols
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-report-and-the-crate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The report and the crate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-gene-set-enrichment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional: gene set enrichment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quantifiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    From quantifier outputs to a normalized matrix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../covariates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Derived covariates and recorded steps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts & file formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview & common options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/stats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    stats — count matrix statistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/filter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    filter — filtering count matrices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/norm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    norm — normalization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/transform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    transform — count transformations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/de/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    de — differential expression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/enrich/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    enrich — set enrichment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/outlier/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    outlier — outlier identification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/util/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    util — file utilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/wrapr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    wrapr — R bridge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../formulas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design formulas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/covariates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Derived covariates with Miller
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../agent-skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#look-at-the-raw-counts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Look at the raw counts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#normalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Normalize
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variance-stabilize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variance-stabilize
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flag-outliers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flag outliers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#differential-expression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Differential expression
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gene-symbols" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gene symbols
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-report-and-the-crate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The report and the crate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-gene-set-enrichment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional: gene set enrichment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/BU-Neuromics/de_toolkit/edit/main/docs/tutorials/airway.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="differential-expression-on-airway">Differential expression on airway<a class="headerlink" href="#differential-expression-on-airway" title="Permanent link">&para;</a></h1>
+<!-- tutorial: requires R DESeq2 airway org.Hs.eg.db -->
+
+<p>This tutorial runs a complete differential expression analysis on a real,
+public RNA-seq dataset: summary statistics, filtering, DESeq2 normalization,
+a variance-stabilizing transform, outlier flags, DESeq2's test for the
+treatment effect with the cell line as a covariate, gene symbols on the
+results, and the report and provenance crate at the end. The report it
+makes is detk's published example:</p>
+<p><a href="../../example/detk_report.html">open the finished example report</a> (one
+self-contained HTML file: everything runs in your browser, nothing is sent
+anywhere). The run's provenance is published next to it as
+<a href="../../example/ro-crate-metadata.json"><code>ro-crate-metadata.json</code></a>.</p>
+<p>It needs detk, and R with the Bioconductor packages DESeq2 (which detk runs
+for the transform and the test), airway (the data) and org.Hs.eg.db (gene
+symbols). With conda, for example:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>mamba<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>detk-r<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>-c<span class="w"> </span>bioconda<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>r-base<span class="w"> </span>r-jsonlite<span class="w"> </span>r-data.table<span class="w"> </span>bioconductor-deseq2<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>bioconductor-airway<span class="w"> </span>bioconductor-org.hs.eg.db
+</code></pre></div>
+<h2 id="the-data">The data<a class="headerlink" href="#the-data" title="Permanent link">&para;</a></h2>
+<p><strong>airway</strong> (GEO <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE52778">GSE52778</a>) is human airway smooth muscle cells from four
+donor cell lines, each treated with dexamethasone (<code>trt</code>) or left untreated
+(<code>untrt</code>): 8 samples, 63,677 Ensembl genes. It is Bioconductor's standard
+RNA-seq teaching dataset, so every result here can be checked against the
+DESeq2 vignette. The counts come from the <a href="https://bioconductor.org/packages/airway/">airway</a> Bioconductor data package,
+which redistributes the published gene counts (Himes et al. 2014, PMID
+24926665).</p>
+<p>detk reads plain delimited files, so the first step writes the package's
+data out as three: the counts, the sample information, and a map from each
+Ensembl gene ID to its Entrez ID and gene symbol (from org.Hs.eg.db). Save
+this R script as <code>prepare_data.R</code> and run it:</p>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span>&gt;<span class="w"> </span>prepare_data.R<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">suppressMessages({</span>
+<span class="s">    library(airway)</span>
+<span class="s">    library(org.Hs.eg.db)</span>
+<span class="s">})</span>
+<span class="s">data(airway)</span>
+
+<span class="s"># gene counts: Ensembl gene IDs x 8 samples</span>
+<span class="s">counts &lt;- as.data.frame(assay(airway))</span>
+<span class="s">counts &lt;- cbind(gene = rownames(counts), counts)</span>
+<span class="s">write.csv(counts, &quot;counts.csv&quot;, row.names = FALSE, quote = FALSE)</span>
+
+<span class="s"># sample information: cell line and treatment</span>
+<span class="s">cd &lt;- as.data.frame(colData(airway)[, c(&quot;cell&quot;, &quot;dex&quot;)])</span>
+<span class="s">cd &lt;- cbind(sample = rownames(cd), cd)</span>
+<span class="s">write.csv(cd, &quot;sample_info.csv&quot;, row.names = FALSE, quote = FALSE)</span>
+
+<span class="s"># Ensembl gene ID -&gt; Entrez ID and gene symbol (the first, where several)</span>
+<span class="s">ens &lt;- rownames(assay(airway))</span>
+<span class="s">entrez &lt;- mapIds(org.Hs.eg.db, keys = ens, column = &quot;ENTREZID&quot;,</span>
+<span class="s">                 keytype = &quot;ENSEMBL&quot;, multiVals = &quot;first&quot;)</span>
+<span class="s">symbol &lt;- mapIds(org.Hs.eg.db, keys = ens, column = &quot;SYMBOL&quot;,</span>
+<span class="s">                 keytype = &quot;ENSEMBL&quot;, multiVals = &quot;first&quot;)</span>
+<span class="s">map &lt;- data.frame(gene = ens, entrez = unname(entrez), symbol = unname(symbol))</span>
+<span class="s">write.csv(map, &quot;gene_map.csv&quot;, row.names = FALSE, quote = FALSE)</span>
+<span class="s">EOF</span>
+Rscript<span class="w"> </span>prepare_data.R<span class="w"> </span><span class="m">2</span>&gt;<span class="w"> </span>/dev/null
+cat<span class="w"> </span>sample_info.csv
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>sample,cell,dex
+SRR1039508,N61311,untrt
+SRR1039509,N61311,trt
+SRR1039512,N052611,untrt
+SRR1039513,N052611,trt
+SRR1039516,N080611,untrt
+SRR1039517,N080611,trt
+SRR1039520,N061011,untrt
+SRR1039521,N061011,trt
+</code></pre></div>
+<p>Each cell line has one treated and one untreated sample, so the samples are
+paired by cell line: the design below compares treated with untreated within
+each cell line.</p>
+<h2 id="look-at-the-raw-counts">Look at the raw counts<a class="headerlink" href="#look-at-the-raw-counts" title="Permanent link">&para;</a></h2>
+<p><code>detk-stats summary</code> computes the matrix's size, each sample's distribution
+of counts, the zeros in each sample and each gene, each sample's entropy and
+a principal component analysis. <code>--log</code> works on log counts, and
+<code>--color-col=dex</code> colors the report's plots by treatment:</p>
+<div class="highlight"><pre><span></span><code>detk-stats<span class="w"> </span>summary<span class="w"> </span>--log<span class="w"> </span>--color-col<span class="o">=</span>dex<span class="w"> </span>-o<span class="w"> </span>raw_summary_stats.csv<span class="w"> </span>counts.csv<span class="w"> </span>sample_info.csv
+head<span class="w"> </span>-n<span class="w"> </span><span class="m">4</span><span class="w"> </span>raw_summary_stats.csv
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>#basestats
+stat,val
+num_cols,8
+num_rows,63677
+</code></pre></div>
+<p>In the report's PCA the samples already separate by treatment along one
+component and by cell line along another.</p>
+<h2 id="filter">Filter<a class="headerlink" href="#filter" title="Permanent link">&para;</a></h2>
+<p>Most of the 63,677 genes are not expressed in these cells. Keep the genes
+with a nonzero count in at least half the samples; the report records what
+the rule removed:</p>
+<div class="highlight"><pre><span></span><code>detk-filter<span class="w"> </span><span class="s1">&#39;nonzero(all) &gt;= 0.5&#39;</span><span class="w"> </span>-o<span class="w"> </span>counts_filtered.csv<span class="w"> </span>counts.csv
+tail<span class="w"> </span>-n<span class="w"> </span>+2<span class="w"> </span>counts_filtered.csv<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>24706
+</code></pre></div>
+<h2 id="normalize">Normalize<a class="headerlink" href="#normalize" title="Permanent link">&para;</a></h2>
+<p><code>detk-norm deseq2</code> divides each sample by its DESeq2 size factor, the median
+ratio of its counts to each gene's geometric mean across the samples (in
+Python: this step needs no R). <code>--size-factors</code> writes the factors to a
+file, a header line and then a sample and its factor on each line:</p>
+<div class="highlight"><pre><span></span><code>detk-norm<span class="w"> </span>deseq2<span class="w"> </span>-o<span class="w"> </span>norm_counts.csv<span class="w"> </span>--size-factors<span class="o">=</span>size_factors.tsv<span class="w"> </span>counts_filtered.csv
+cat<span class="w"> </span>size_factors.tsv
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>sample  size_factor
+SRR1039508  1.02364...
+SRR1039509  0.89616...
+SRR1039512  1.17948...
+SRR1039513  0.67005...
+SRR1039516  1.17767...
+SRR1039517  1.39903...
+SRR1039520  0.92077...
+SRR1039521  0.94451...
+</code></pre></div>
+<p>These are the size factors DESeq2's own <code>estimateSizeFactors</code> finds for the
+same counts. The normalized counts are for looking at and for methods that
+take them; DESeq2's test below estimates the size factors itself, so it
+takes the raw filtered counts, not <code>norm_counts.csv</code>.</p>
+<h2 id="variance-stabilize">Variance-stabilize<a class="headerlink" href="#variance-stabilize" title="Permanent link">&para;</a></h2>
+<p>Count variance grows with the mean, which lets the most expressed genes
+dominate distances and plots. DESeq2's variance-stabilizing transform (VST)
+removes that dependence; the report shows the distributions before and after
+and the mean-variance trend:</p>
+<div class="highlight"><pre><span></span><code>detk-transform<span class="w"> </span>vst<span class="w"> </span>-o<span class="w"> </span>vst_counts.csv<span class="w"> </span>counts_filtered.csv
+</code></pre></div>
+<h2 id="flag-outliers">Flag outliers<a class="headerlink" href="#flag-outliers" title="Permanent link">&para;</a></h2>
+<p><code>detk-outlier entropy</code> computes each gene's entropy across the samples, which
+is low for a gene whose counts come mostly from one or a few samples, and
+flags the genes with an entropy below the percentile <code>-p</code> sets. Count the
+flagged genes:</p>
+<div class="highlight"><pre><span></span><code>detk-outlier<span class="w"> </span>entropy<span class="w"> </span>counts_filtered.csv<span class="w"> </span>-p<span class="w"> </span><span class="m">0</span>.05<span class="w"> </span>-o<span class="w"> </span>entropy_flags.csv
+head<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span><span class="w"> </span>entropy_flags.csv
+grep<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;,True$&#39;</span><span class="w"> </span>entropy_flags.csv
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>gene,entropy,entropy_p0_05
+ENSG00000000003,2.0222...,False
+ENSG00000000419,2.0524...,False
+925
+</code></pre></div>
+<p>The flags are for looking at, in the report's entropy plot: nothing below
+removes the flagged genes.</p>
+<h2 id="differential-expression">Differential expression<a class="headerlink" href="#differential-expression" title="Permanent link">&para;</a></h2>
+<p><code>detk-de deseq2</code> runs DESeq2 on the raw filtered counts with a design
+written in detk's <a href="../../formulas/">formula mini-language</a>: the cell line as a
+covariate, and the treatment with <code>untrt</code> as its reference level, so a
+positive fold change is higher with dexamethasone:</p>
+<div class="highlight"><pre><span></span><code>detk-de<span class="w"> </span>deseq2<span class="w"> </span>-o<span class="w"> </span>deseq2_results.csv<span class="w"> </span><span class="s2">&quot;counts ~ cell + dex[untrt]&quot;</span><span class="w"> </span>counts_filtered.csv<span class="w"> </span>sample_info.csv
+head<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>deseq2_results.csv<span class="w"> </span><span class="p">|</span><span class="w"> </span>tr<span class="w"> </span>,<span class="w"> </span><span class="s1">&#39;\n&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>dex
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>dex__trt__log2FoldChange
+dex__trt__lfcSE
+dex__trt__stat
+dex__trt__pvalue
+dex__trt__padj
+</code></pre></div>
+<p>The results have a row per gene and, after its mean normalized count
+(<code>baseMean</code>), five columns for each term of the design: the treatment's are
+named <code>dex__trt__*</code>, and the <code>cell__*</code> columns hold the cell line terms. The
+adjusted p-values (<code>padj</code>) are Benjamini-Hochberg over every gene in the
+file, without the independent filtering DESeq2's <code>results()</code> adds by
+default.</p>
+<h2 id="gene-symbols">Gene symbols<a class="headerlink" href="#gene-symbols" title="Permanent link">&para;</a></h2>
+<p>Ensembl IDs are hard to read. <code>detk-util annotate</code> adds the <code>symbol</code> column
+of the map from the first step to the results, joining on the gene ID; a gene
+with no symbol gets an empty one, and the command warns how many had none:</p>
+<div class="highlight"><pre><span></span><code>detk-util<span class="w"> </span>annotate<span class="w"> </span>--map-to<span class="o">=</span>symbol<span class="w"> </span>-o<span class="w"> </span>deseq2_results_symbols.csv<span class="w"> </span>deseq2_results.csv<span class="w"> </span>gene_map.csv
+</code></pre></div>
+<p>Now a short table of the treatment's results, gene, symbol, fold change and
+adjusted p-value, sorted by the adjusted p-value (the <code>awk</code> program finds the
+columns by name in the header), and its first ten genes:</p>
+<div class="highlight"><pre><span></span><code>awk<span class="w"> </span>-F,<span class="w"> </span>-v<span class="w"> </span><span class="nv">OFS</span><span class="o">=</span>,<span class="w"> </span><span class="s1">&#39;</span>
+<span class="s1">  NR == 1 { for (i = 1; i &lt;= NF; i++) col[$i] = i; next }</span>
+<span class="s1">  { printf &quot;%s,%s,%.3f,%.3g\n&quot;, $1, $col[&quot;symbol&quot;],</span>
+<span class="s1">      $col[&quot;dex__trt__log2FoldChange&quot;], $col[&quot;dex__trt__padj&quot;] }</span>
+<span class="s1">&#39;</span><span class="w"> </span>deseq2_results_symbols.csv<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-t,<span class="w"> </span>-k4,4g<span class="w"> </span>&gt;<span class="w"> </span>top_genes.csv
+head<span class="w"> </span>-n<span class="w"> </span><span class="m">10</span><span class="w"> </span>top_genes.csv
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>ENSG00000152583,SPARCL1,4.575,9.52e-133
+ENSG00000165995,CACNB2,3.291,2.84e-131
+ENSG00000101347,SAMHD1,3.767,8.28e-125
+ENSG00000120129,DUSP1,2.948,1.27e-124
+ENSG00000189221,MAOA,3.354,3.12e-119
+ENSG00000211445,GPX3,3.730,8.99e-108
+ENSG00000157214,STEAP2,1.977,3.34e-100
+ENSG00000162614,NEXN,2.036,4.05e-97
+ENSG00000125148,MT2A,2.211,7.55e-92
+ENSG00000154734,ADAMTS1,2.346,4.57e-86
+</code></pre></div>
+<p>All ten are higher with dexamethasone. They are the genes Bioconductor's
+RNA-seq workflow finds at the top for this dataset with the same design;
+DUSP1 and the metallothionein MT2A are well known glucocorticoid-induced
+genes.</p>
+<h2 id="the-report-and-the-crate">The report and the crate<a class="headerlink" href="#the-report-and-the-crate" title="Permanent link">&para;</a></h2>
+<p>Every detk command above that has a report wrote its results into
+<code>detk_report/</code> and rendered the report again, so the report is already up
+to date. <code>detk-report generate</code> renders it from what is in the directory:</p>
+<div class="highlight"><pre><span></span><code>detk-report<span class="w"> </span>generate
+ls<span class="w"> </span>detk_report
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>detk_report.html
+json
+ro-crate-metadata.json
+</code></pre></div>
+<p>Open <code>detk_report/detk_report.html</code> in a browser: it is one self-contained
+file, with a section for each step. The differential expression section is a
+volcano and an MA plot with a menu of the design's terms: switch between the
+treatment (<code>dex__trt</code>) and the cell lines. Next to the report, in the report
+directory, detk wrote <code>ro-crate-metadata.json</code>, a
+<a href="../../report/#standards-based-provenance-the-process-run-crate">Process Run Crate</a>
+that describes each step's command, its parameters and the files it read and
+wrote. The steps it lists (the summary is listed as the six statistics it is
+made of):</p>
+<div class="highlight"><pre><span></span><code>grep<span class="w"> </span>-o<span class="w"> </span><span class="s1">&#39;&quot;name&quot;: &quot;detk-[^&quot;]* run&quot;&#39;</span><span class="w"> </span>detk_report/ro-crate-metadata.json<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-u
+</code></pre></div>
+<!-- tutorial: expect -->
+<div class="highlight"><pre><span></span><code>&quot;name&quot;: &quot;detk-de deseq2 run&quot;
+&quot;name&quot;: &quot;detk-filter run&quot;
+&quot;name&quot;: &quot;detk-norm deseq2 run&quot;
+&quot;name&quot;: &quot;detk-outlier entropy run&quot;
+&quot;name&quot;: &quot;detk-stats basestats run&quot;
+&quot;name&quot;: &quot;detk-stats coldist run&quot;
+&quot;name&quot;: &quot;detk-stats colzero run&quot;
+&quot;name&quot;: &quot;detk-stats entropy run&quot;
+&quot;name&quot;: &quot;detk-stats pca run&quot;
+&quot;name&quot;: &quot;detk-stats rowzero run&quot;
+&quot;name&quot;: &quot;detk-transform vst run&quot;
+&quot;name&quot;: &quot;detk-util annotate run&quot;
+</code></pre></div>
+<h2 id="optional-gene-set-enrichment">Optional: gene set enrichment<a class="headerlink" href="#optional-gene-set-enrichment" title="Permanent link">&para;</a></h2>
+<p>This step downloads a gene set file, so the page shows it but its test does
+not run it, and the published report does not have it. It needs the R
+package fgsea as well (<code>bioconductor-fgsea</code>).</p>
+<p><a href="https://www.wikipathways.org/">WikiPathways</a> publishes its human pathways
+(CC0) as a GMT file keyed by Entrez gene ID; download the current one from
+<a href="https://data.wikipathways.org/current/gmt/">https://data.wikipathways.org/current/gmt/</a>, the file named
+<code>wikipathways-&lt;date&gt;-gmt-Homo_sapiens.gmt</code>, as <code>wikipathways.gmt</code>. The
+results are keyed by Ensembl ID, so join the map's <code>entrez</code> column on first.
+Several Ensembl genes can map to one Entrez ID and fgsea refuses an ID that
+appears twice, so the join also keeps one row per Entrez ID (the first). It
+needs pandas, which detk depends on, so run it with the Python detk is
+installed in (the <code>python3</code> on <code>PATH</code> may lack pandas when detk was
+installed with <code>uv tool install</code> or pipx):</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span><span class="nv">DETK_PY</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>dirname<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">command</span><span class="w"> </span>-v<span class="w"> </span>detk-de<span class="k">)</span><span class="s2">&quot;</span><span class="k">)</span><span class="s2">/python3&quot;</span>
+<span class="gp">$ </span><span class="o">[</span><span class="w"> </span>-x<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$DETK_PY</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nv">DETK_PY</span><span class="o">=</span>python3
+<span class="gp">$ </span><span class="s2">&quot;</span><span class="nv">$DETK_PY</span><span class="s2">&quot;</span><span class="w"> </span>-<span class="w"> </span>&lt;&lt;<span class="s1">&#39;PY&#39;</span>
+<span class="go">import pandas as pd</span>
+<span class="go">res = pd.read_csv(&quot;deseq2_results.csv&quot;)</span>
+<span class="go">gmap = pd.read_csv(&quot;gene_map.csv&quot;, dtype=str)</span>
+<span class="go">res = res.merge(gmap[[&quot;gene&quot;, &quot;entrez&quot;]], left_on=res.columns[0], right_on=&quot;gene&quot;, how=&quot;left&quot;)</span>
+<span class="go">res = res.dropna(subset=[&quot;entrez&quot;]).drop_duplicates(subset=[&quot;entrez&quot;])</span>
+<span class="go">res.to_csv(&quot;deseq2_results_entrez.csv&quot;, index=False)</span>
+<span class="go">PY</span>
+</code></pre></div>
+<p>Then rank the genes by the treatment's fold change and test each pathway:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">$ </span>detk-enrich<span class="w"> </span>fgsea<span class="w"> </span>--filter-unannotated<span class="w"> </span>-i<span class="w"> </span>entrez<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;dex__trt__log2FoldChange&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-o<span class="w"> </span>fgsea_results.csv<span class="w"> </span>wikipathways.gmt<span class="w"> </span>deseq2_results_entrez.csv
+</code></pre></div>
+<p><code>-c</code> names the ranking column. A detk-de result has many numeric columns
+that could rank, so without <code>-c</code> detk stops with exit 2 and names them
+rather than guessing; an adjusted p-value, for one, would rank by the wrong
+quantity and in the wrong direction. The Wald statistic <code>dex__trt__stat</code> is
+the other common choice. Run <code>detk-report generate</code> again to add the
+enrichment to the report.</p>
+<h2 id="where-next">Where next<a class="headerlink" href="#where-next" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../tools/de/">Differential expression</a> has the options of
+  <code>detk-de deseq2</code> and Firth's logistic regression, and
+  <a href="../../formulas/">formulas</a> the design mini-language.</li>
+<li><a href="../../report/">The report</a> says what each section shows and what the crate
+  holds.</li>
+<li>The same pipeline drops into a workflow manager step for step: see the
+  <a href="../../quickstart/#using-a-workflow-manager">quickstart</a>.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.tracking", "search.suggest", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -477,12 +477,17 @@ def main(argv=sys.argv):
     if not args.no_report:
         logging.info("writing report to %s", args.report_dir)
         with DetkReport(args.report_dir) as r:
+            # entropy's --plot-output PNG is an output beside the table (#209);
+            # without -o it writes no table, and the plot is its one output
+            plot = getattr(args, "plot_output", None)
+            outputs = [p for p in (args.output, plot) if p]
             r.add_module(
                 out,
                 in_file_path=args.counts_fn,
-                out_file_path=args.output,
+                out_file_path=outputs[0] if outputs else None,
                 column_data_path=None,
                 workdir=os.getcwd(),
+                out_file_paths=outputs if len(outputs) > 1 else None,
             )
     else:
         logging.info("not generating report due to --no-report")

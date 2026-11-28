@@ -199,7 +199,9 @@ def test_gather_cli(tmp_path):
     with open(report_dir / "json" / json_fn) as f:
         mod = json.load(f)
     assert mod["name"] == "gather"
-    assert mod["in_file_path"] is None
+    # every file is an input; the first is also in_file_path (#209, DETK-0890)
+    assert len(mod["in_file_paths"]) == 2
+    assert mod["in_file_path"] == mod["in_file_paths"][0]
     assert mod["params"]["files"] == [str(p) for p in SALMON]
     assert mod["params"]["format"] == "salmon"
     assert mod["properties"]["num_samples"] == 2

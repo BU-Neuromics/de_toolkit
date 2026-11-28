@@ -61,12 +61,12 @@
     "in_file_paths": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "every input file path, in order, for a step with several (since 1.1; optional, written by detk-util record), each relative to workdir (since 1.2); in_file_path is the first"
+      "description": "every input file path, in order, for a step with several (since 1.1; optional): written by detk-util record and by each command that reads or writes a file besides its primary input and output, left out otherwise; each relative to workdir (since 1.2); in_file_path is the first"
     },
     "out_file_paths": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "every output file path, in order, for a step with several (since 1.1; optional, written by detk-util record), each relative to workdir (since 1.2); out_file_path is the first"
+      "description": "every output file path, in order, for a step with several (since 1.1; optional): written by detk-util record and by each command that reads or writes a file besides its primary input and output, left out otherwise; each relative to workdir (since 1.2); out_file_path is the first"
     },
     "column_data_path": {
       "type": ["string", "null"],

@@ -127,6 +127,22 @@ logger.addHandler(logging.NullHandler())
 
 
 def pmf_transform(count_obj, shrink_factor=0.25, p_max=None, iters=1000):
+    """
+    Shrink the outlying counts of one feature, the step :func:`shrink` applies
+
+    Parameters
+    ----------
+    count_obj: pandas.Series
+        counts, integer or float; not changed
+    shrink_factor, p_max, iters:
+        as in :func:`shrink`; *p_max* defaults to ``sqrt(1/len(count_obj))``
+
+    Returns
+    -------
+    pandas.Series
+        the shrunk counts, always float: shrunk counts are fractional, so
+        integer counts are cast to float first
+    """
     obj = PMFTransform(count_obj, shrink_factor, p_max, iters)
     return obj.output
 
@@ -134,7 +150,9 @@ def pmf_transform(count_obj, shrink_factor=0.25, p_max=None, iters=1000):
 class PMFTransform(DetkModule):
     def __init__(self, count_obj, shrink_factor=0.25, p_max=None, iters=1000):
         self["params"] = {"shrink_factor": shrink_factor, "p_max": p_max, "iters": iters}
-        count_obj = count_obj.copy()
+        # shrunk counts are fractional: work in float, so integer counts
+        # (the usual input) can take them (#219)
+        count_obj = count_obj.astype(float)
         p_max = p_max or np.sqrt(1.0 / len(count_obj))
 
         for _ in range(iters):
@@ -211,6 +229,12 @@ def shrink(count_obj, shrink_factor=0.25, p_max=None, iters=1000):
         number between 0 and 1 that indicates the maximum proportion of counts
         a sample may have before being considered an outlier, default is
         ``sqrt(1/num_samples)``
+
+    Returns
+    -------
+    pandas.DataFrame
+        the shrunk counts, always float: shrunk counts are fractional, so
+        integer counts are cast to float first; *count_obj* is not changed
     """
     obj = ShrinkCounts(count_obj, shrink_factor, p_max, iters)
     return obj.output

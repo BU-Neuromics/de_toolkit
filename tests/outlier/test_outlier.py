@@ -266,6 +266,60 @@ def test_entropy_cli_flag_column_name(tmp_path, value, name):
     assert out.read_text().splitlines()[0].split(",")[1:] == ["entropy", name]
 
 
+# -p left out (#222, DETK-0860): v1.0.0 exited 2 with "argument
+# -p/--percentile: invalid float value: None"; -p defaults to 0.05
+
+
+def test_entropy_cli_without_percentile(tmp_path, capsys):
+    import json
+
+    from de_toolkit.outlier import main
+
+    counts_fn = tmp_path / "counts.csv"
+    _entropy_counts([5]).counts.to_csv(counts_fn)
+    out = tmp_path / "flags.csv"
+    rep = tmp_path / "rep"
+    main(["detk-outlier", "entropy", str(counts_fn), "-o", str(out), f"--report-dir={rep}"])
+    assert "invalid float value: None" not in capsys.readouterr().err
+
+    # the same flags, column and recorded parameter as an explicit -p 0.05
+    out_p = tmp_path / "flags_p.csv"
+    rep_p = tmp_path / "rep_p"
+    main(
+        [
+            "detk-outlier",
+            "entropy",
+            str(counts_fn),
+            "-p",
+            "0.05",
+            "-o",
+            str(out_p),
+            f"--report-dir={rep_p}",
+        ]
+    )
+    assert out.read_text().splitlines()[0].split(",")[1:] == ["entropy", "entropy_p0_05"]
+    assert out.read_text() == out_p.read_text()
+
+    # the module JSON records the threshold and results of -p 0.05
+    def module_json(rep_dir):
+        (path,) = (rep_dir / "json").glob("*.json")
+        return json.loads(path.read_text())
+
+    mod, mod_p = module_json(rep), module_json(rep_p)
+    assert mod["params"] == mod_p["params"] == {"threshold": 0.05}
+    assert mod["properties"] == mod_p["properties"]
+
+
+def test_entropy_help_states_percentile_default(capsys):
+    from de_toolkit.outlier import main
+
+    with pytest.raises(SystemExit) as exc:
+        main(["detk-outlier", "entropy", "--help"])
+    assert exc.value.code == 0
+    help_text = " ".join(capsys.readouterr().out.split())
+    assert "between 0 and 1 (default: 0.05)" in help_text
+
+
 # an integer matrix where a count is shrunk (g1's 300 in D), and the same
 # counts written with decimals: on 1.0.0 the first exited 1 with
 # "Invalid value '[...]' for dtype 'int64'" in PMFTransform (#219)

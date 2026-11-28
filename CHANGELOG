@@ -149,6 +149,10 @@
   the output is float, the same as for the decimal input; the Python
   `shrink` and `pmf_transform` return float counts for integer input too
   and leave their input unchanged (#219)
+- `detk-outlier entropy` without `-p` uses the 5th percentile (0.05)
+  instead of failing with `argument -p/--percentile: invalid float value:
+  None` (exit 2); `--help` states the default. `-p` given behaves as
+  before (#222, DETK-0860)
 
 ### Tests
 

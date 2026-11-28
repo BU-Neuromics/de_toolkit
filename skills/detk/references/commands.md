@@ -218,7 +218,7 @@ positional arguments:
 options:
   -h, --help          Print this help and exit
   -p, --percentile N  The entropy percentile below which a feature is flagged,
-                      between 0 and 1
+                      between 0 and 1 (default: 0.05)
   -o, --output FILE   Destination of the entropy and flag of each feature in CSV
                       format
   --plot-output FILE  Destination of a PNG plot of the entropy distribution and

@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-27
 from: {node: release-1-0-1/outlier-entropy-p}
 applies: [release-1-0-1/outlier-entropy-p]
 issue: 204
+revisions:
+  - {date: 2026-11-27, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A (-p defaults to 0.05, the value every documented run uses): the recommendation, accepted under Adam's delegation via the driver session, 2026-11-20 (DETK-0063), extended to the post-1.0 plan 2026-11-27"}
 ---
 
 # What detk-outlier entropy does without -p
@@ -65,13 +67,14 @@ and a run that leaves it out still fails.
 
 ## Decision
 
-Recommended: **Option A**, `-p` defaults to 0.05. The help, the docs and
+**Option A**, `-p` defaults to 0.05: accepted on the recommendation under
+Adam's delegation via the driver session, 2026-11-20 (DETK-0063), extended
+to the post-1.0 plan 2026-11-27. The help, the docs and
 the usage line already present `-p` as optional, and every documented run
 uses 0.05, so the default writes down what the documentation already
 implies rather than changing what the command means; Option B keeps a
 failure the docs do not lead anyone to expect. Proposed by the plan
-session, 2026-11-27, for Adam to accept or reject; release-1-0-1/outlier-entropy-p
-waits on it.
+session, 2026-11-27.
 
 ## Consequences
 

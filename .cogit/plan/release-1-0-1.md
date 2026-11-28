@@ -29,6 +29,7 @@ visited: 557da83
 - [ ] [detk-outlier shrink takes integer counts](release-1-0-1/outlier-shrink-int.md) <!-- s15 -->
 - [ ] [The test suite leaves the working tree clean](release-1-0-1/test-tmp-output.md) <!-- s16 -->
 - [ ] [detk-util tidy and detk-wrapr run check sample headers and feature IDs](release-1-0-1/tidy-wrapr-checks.md) <!-- s17 -->
+- [ ] [detk-outlier shrink judges each feature across its samples](release-1-0-1/outlier-shrink-axis.md) <!-- s18 -->
 - [ ] [Cut 1.0.1](release-1-0-1/cut.md) <!-- s12 -->
 - [ ] @human Accept: 1.0.1 is out <!-- s13 -->
 
@@ -63,8 +64,10 @@ the medium findings (fgsea seed, versions, checksums, preflight) are in
 Added 2026-11-27 by a plan session on Adam's direction: three bug fixes
 found while 1.0.1 was in progress, each reproduced on a v1.0.0 install
 before it was planned. `outlier-entropy-p` (entropy fails without `-p`;
-what it should do is DETK-0860, Proposed) and `outlier-shrink-int` (shrink
+what it should do is DETK-0860, since accepted: default 0.05) and `outlier-shrink-int` (shrink
 fails on integer counts) were found by the count-checks-readers session;
 `test-tmp-output` (a test writes `./tmp_output/`) by Adam. Cut waits on
 each. `tidy-wrapr-checks` (tidy and wrapr run skip the duplicate checks)
-follows DETK-0850, on the driver's direction.
+follows DETK-0850, on the driver's direction. `outlier-shrink-axis` (shrink
+judges each sample, not each feature) was seen reproducing shrink-int and
+added on the driver's direction; its edge cases are DETK-0861, since accepted.

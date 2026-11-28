@@ -60,9 +60,19 @@
   `detk-stats`, `detk-filter`, `detk-outlier`. A sample whose values are
   all missing or not numbers is named as such ("has no numeric counts"),
   not as having no counts. The split is listed in docs/concepts.md
-  (DETK-0601, DETK-0830). `detk-util tidy`, `tidy-counts` and `tidy-covs`
-  and `detk-wrapr run` do not run the check yet (DETK-0850)
+  (DETK-0601, DETK-0830)
   ([#201](https://github.com/BU-Neuromics/de_toolkit/issues/201))
+- `detk-util tidy`, `tidy-counts` and `tidy-covs` and `detk-wrapr run` run
+  the repeated sample header and feature ID checks on the counts as read.
+  In 1.0.0 `detk-util tidy-counts` given the header `gene,A,A,B,C` and
+  column data naming A, B and C exited 0 and wrote `gene,A,B,C`, dropping
+  the second `A` without a word, and a feature ID listed twice went
+  through as two rows; `tidy`, `tidy-covs` and `detk-wrapr run` did the
+  same. Each now exits 1 (DETK-0601) and names the repeated header or
+  feature on one line of stderr. These commands may take a normalized or
+  transformed matrix, so a negative count or a zero-depth sample is still
+  accepted (DETK-0830, DETK-0850)
+  ([#218](https://github.com/BU-Neuromics/de_toolkit/issues/218))
 - Runs that differ only in their files keep separate report records. A
   module record's id hashed the module name, its parameters, the primary
   input and the detk version only, so two `detk-filter` runs differing only
@@ -91,6 +101,14 @@
   files in `in_file_paths` (schema 1.1's field, as `detk-util record`
   writes it) and the crate action's `object` holds both; `in_file_path`
   stays the GMT (DETK-0720, #199)
+- A regression test follows the Process Run Crate from an enrichment table
+  back to its inputs: `tests/report/test_lineage.py` runs `detk-filter`,
+  `detk-de deseq2` with a sample sheet and `detk-enrich fgsea -c` in one
+  report directory, validates the crate against the Process Run Crate
+  profile and walks its result -> action -> object edges from the fgsea
+  table to `counts.csv` and `sample_info.csv`. It fails on 1.0.0, whose
+  fgsea action had no edge to the DE results, and skips, naming the
+  package, without DESeq2 or fgsea (#207)
 - `detk-outlier shrink` takes an integer counts matrix, the usual input. In
   1.0.0 any integer matrix in which a count was shrunk exited 1 with
   `Invalid value '[...]' for dtype 'int64'`, while the same counts written

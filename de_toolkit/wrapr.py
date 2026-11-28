@@ -670,7 +670,11 @@ def main(argv=sys.argv):
         column_data = None
 
         if args.counts_in is not None:
-            counts_obj = CountMatrixFile(args.counts_in, args.meta_in, strict=args.strict)
+            # a repeated sample header or feature ID is an error; the script
+            # may take any matrix, so its values are not checked (DETK-0850)
+            counts_obj = CountMatrixFile(
+                args.counts_in, args.meta_in, strict=args.strict, check="ids"
+            )
 
             logger.info("counts matrix created successfully")
 

@@ -1,10 +1,12 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-28
 from: {node: release-1-0-1/outlier-shrink-axis, step: s2}
 applies: [release-1-0-1/outlier-shrink-axis]
+revisions:
+  - {date: 2026-11-28, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A (accept 1 / number of samples to 1, inclusive, as PR #227 does), accepted under Adam's delegation via the driver session, 2026-11-20 (DETK-0063), extended to the post-1.0 plan 2026-11-27"}
 ---
 
 # detk-outlier shrink accepts -p 1: the range is 1 / number of samples to 1

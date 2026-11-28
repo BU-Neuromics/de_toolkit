@@ -86,8 +86,9 @@ def build_parser():
                 "-p",
                 "--p-max",
                 metavar="N",
-                help="Largest fraction of a feature's counts one sample may hold "
-                "(when not given, sqrt(1 / number of samples))",
+                help="Largest fraction of a feature's counts one sample may hold, "
+                "from 1 / number of samples to 1 (when not given, "
+                "sqrt(1 / number of samples))",
             )
             sub.add_argument(
                 "-i", "--iters", metavar="N", default="1000", help="Number of iterations"
@@ -133,7 +134,7 @@ def pmf_transform(count_obj, shrink_factor=0.25, p_max=None, iters=1000):
     Parameters
     ----------
     count_obj: pandas.Series
-        counts, integer or float; not changed
+        one feature's counts across the samples, integer or float; not changed
     shrink_factor, p_max, iters:
         as in :func:`shrink`; *p_max* defaults to ``sqrt(1/len(count_obj))``
 
@@ -141,10 +142,31 @@ def pmf_transform(count_obj, shrink_factor=0.25, p_max=None, iters=1000):
     -------
     pandas.Series
         the shrunk counts, always float: shrunk counts are fractional, so
-        integer counts are cast to float first
+        integer counts are cast to float first. A feature whose counts are all
+        in samples over *p_max* has nothing to shrink toward and is returned
+        as read (DETK-0861)
+
+    Raises
+    ------
+    ValueError
+        *p_max* is below ``1/len(count_obj)``, which no feature can satisfy,
+        or above 1
     """
     obj = PMFTransform(count_obj, shrink_factor, p_max, iters)
     return obj.output
+
+
+def check_p_max(p_max, num_samples):
+    """
+    Raise ValueError if *p_max* is not a fraction of a feature's counts that
+    *num_samples* samples can all be within: from ``1/num_samples`` to 1
+    (DETK-0861)
+    """
+    if not 1.0 / num_samples <= p_max <= 1:
+        raise ValueError(
+            f"p_max must be at least 1 / number of samples ({1.0 / num_samples:g} with "
+            f"{num_samples} samples) and at most 1, got {p_max:g}"
+        )
 
 
 class PMFTransform(DetkModule):
@@ -152,31 +174,37 @@ class PMFTransform(DetkModule):
         self["params"] = {"shrink_factor": shrink_factor, "p_max": p_max, "iters": iters}
         # shrunk counts are fractional: work in float, so integer counts
         # (the usual input) can take them (#219)
-        count_obj = count_obj.astype(float)
-        p_max = p_max or np.sqrt(1.0 / len(count_obj))
+        read = count_obj.astype(float)
+        p_max = p_max or np.sqrt(1.0 / len(read))
+        check_p_max(p_max, len(read))
+        # True when every sample with counts is over p_max: there is no sample
+        # to shrink toward, and the feature is left as read (DETK-0861)
+        self.unchanged = False
 
+        # one feature's counts across the samples, in numpy: shrink runs this
+        # once per feature
+        counts = read.to_numpy(copy=True)
         for _ in range(iters):
-            p_count = count_obj / count_obj.sum()
-
-            if count_obj.sum() == 0:
-                print("all samples set to zero, returning")
+            total = counts.sum()
+            if total == 0:
                 break
 
-            p_count_outliers = p_count > p_max
-
-            if not p_count_outliers.any():
+            outliers = counts / total > p_max
+            if not outliers.any():
                 break  # done
 
-            max_non_outliers = max(count_obj[~p_count_outliers])
+            non_outliers = counts[~outliers]
+            max_non_outliers = non_outliers.max() if len(non_outliers) else 0
+            if max_non_outliers == 0:
+                counts = read.to_numpy(copy=True)
+                self.unchanged = True
+                break
 
-            count_obj[p_count_outliers] = (
-                max_non_outliers + (count_obj[p_count_outliers] - max_non_outliers) * shrink_factor
+            counts[outliers] = (
+                max_non_outliers + (counts[outliers] - max_non_outliers) * shrink_factor
             )
-        #        if i == iters :
-        #            print('PMF transform did not converge')
-        #            print(p_x)
-        #            print(p_x_outliers)
 
+        count_obj = pd.Series(counts, index=read.index, name=read.name)
         self.count_obj = count_obj
 
     @property
@@ -196,8 +224,8 @@ def shrink(count_obj, shrink_factor=0.25, p_max=None, iters=1000):
     disproportionately large number of the overall counts for that feature
     across samples. For each feature the algorithm is as follows:
 
-    1. Divide each sample count by the sum of counts (i.e. sample count
-       proportions)
+    1. Divide each sample's count by the feature's total count across the
+       samples (i.e. sample count proportions)
 
     2. Identify samples that have >*p_max* sample count proportion
 
@@ -208,6 +236,9 @@ def shrink(count_obj, shrink_factor=0.25, p_max=None, iters=1000):
            which P(x)<*p_max* by multiplying the difference between the
            outlier sample and *s* by the shrinkage factor and replacing
            *o* with *s* the shrunken count value
+
+        c. If no sample under *p_max* has counts, there is no *s* to shrink
+           toward: the feature is left as read (DETK-0861)
 
     3. Go to 1, repeat until no samples exceed *p_max* count proportion
 
@@ -226,15 +257,24 @@ def shrink(count_obj, shrink_factor=0.25, p_max=None, iters=1000):
         number between 0 and 1 that determines how much the residual counts of
         outlier samples is shrunk in each iteration
     p_max: float
-        number between 0 and 1 that indicates the maximum proportion of counts
-        a sample may have before being considered an outlier, default is
+        the largest fraction of a feature's counts one sample may hold before
+        it is considered an outlier, from ``1/num_samples`` to 1; default
         ``sqrt(1/num_samples)``
 
     Returns
     -------
     pandas.DataFrame
         the shrunk counts, always float: shrunk counts are fractional, so
-        integer counts are cast to float first; *count_obj* is not changed
+        integer counts are cast to float first; *count_obj* is not changed. A
+        feature whose counts are all in samples over *p_max* (for one, a
+        feature counted in only one sample) has no sample to shrink toward
+        and is written as read; the log gives how many (DETK-0861)
+
+    Raises
+    ------
+    ValueError
+        *p_max* is below ``1/num_samples``, which a feature with equal counts
+        in every sample is over, or above 1
     """
     obj = ShrinkCounts(count_obj, shrink_factor, p_max, iters)
     return obj.output
@@ -244,18 +284,38 @@ class ShrinkCounts(DetkModule):
     def __init__(self, count_obj, shrink_factor=0.25, p_max=None, iters=1000):
         self["params"] = {"shrink_factor": shrink_factor, "p_max": p_max, "iters": iters}
         logger.info("PMF shrink params: %s", pformat(self["params"]))
-        shrunk_counts = count_obj.counts.apply(
-            pmf_transform, shrink_factor=shrink_factor, p_max=p_max, iters=iters
-        )
+        counts = count_obj.counts
+        num_samples = counts.shape[1]
+        p_max = p_max or np.sqrt(1.0 / num_samples)
+        check_p_max(p_max, num_samples)
+
+        # each feature is judged across its samples: a row at a time (on
+        # 1.0.0 a column, each sample against its total across features)
+        shrunk, num_unchanged = [], 0
+        for _, feature in counts.iterrows():
+            obj = PMFTransform(feature, shrink_factor=shrink_factor, p_max=p_max, iters=iters)
+            shrunk.append(obj.output)
+            num_unchanged += obj.unchanged
         shrunk_counts = pd.DataFrame(
-            shrunk_counts, index=count_obj.counts.index, columns=count_obj.counts.columns
+            [s.to_numpy() for s in shrunk],
+            index=counts.index,
+            columns=counts.columns,
+            dtype=float,
         )
 
+        if num_unchanged:
+            logger.warning(
+                "%d feature(s) have all their counts in samples over p_max %g, with no "
+                "other sample to shrink toward: left unchanged",
+                num_unchanged,
+                p_max,
+            )
         logger.info(
             "counts removed by shrinking: %.2f",
-            shrunk_counts.sum().sum() - count_obj.counts.sum().sum(),
+            counts.sum().sum() - shrunk_counts.sum().sum(),
         )
         self.shrunk_counts = shrunk_counts
+        self.num_unchanged = num_unchanged
 
         logger.info("PMF shrink done")
 
@@ -463,6 +523,12 @@ def main(argv=sys.argv):
             p_max = option_value(args, "p_max", float)
         else:
             p_max = np.sqrt(1.0 / count_obj.counts.shape[1])
+        # -p below 1 / number of samples cannot be met by a feature with equal
+        # counts in every sample: a usage error (DETK-0861)
+        try:
+            check_p_max(p_max, count_obj.counts.shape[1])
+        except ValueError as e:
+            raise UsageError(f"argument -p/--p-max: {e}") from None
 
         out = ShrinkCounts(
             count_obj,

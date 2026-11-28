@@ -28,6 +28,21 @@
 - The fgsea module JSON params record the ranking used: `statcol`, `idcol`
   (the resolved column names) and `ascending`; the module JSON schema is
   unchanged (DETK-0600)
+- `detk-outlier shrink` judges each feature across its samples, as its
+  help, its docs and the method (Labadorf et al. 2015) describe: a sample is
+  shrunk when it holds more than `p_max` of the feature's counts. 1.0.0
+  compared each count with its sample's total across features instead, a
+  silent wrong answer: g1 = 10 in all four samples beside features of 1 was
+  written 1.5625 in every sample, where nothing should change. Shrink's
+  results change for every input; this is a bug fixed under DETK-0600's
+  reasoning (#226). Applied per feature (DETK-0861): a feature whose counts
+  are all in samples over `p_max`, such as one counted in only one sample,
+  is written as read and the log gives how many (the literal method would
+  zero it); `-p` below 1 / number of samples, or above 1, is a usage error
+  (exit 2) naming the bound, where 1.0.0 failed with
+  `max() iterable argument is empty`. The Python `shrink` and
+  `pmf_transform` raise `ValueError` for such a `p_max`, and
+  `pmf_transform` no longer prints to stdout
 
 ### Fixed
 

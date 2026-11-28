@@ -60,9 +60,19 @@
   `detk-stats`, `detk-filter`, `detk-outlier`. A sample whose values are
   all missing or not numbers is named as such ("has no numeric counts"),
   not as having no counts. The split is listed in docs/concepts.md
-  (DETK-0601, DETK-0830). `detk-util tidy`, `tidy-counts` and `tidy-covs`
-  and `detk-wrapr run` do not run the check yet (DETK-0850)
+  (DETK-0601, DETK-0830)
   ([#201](https://github.com/BU-Neuromics/de_toolkit/issues/201))
+- `detk-util tidy`, `tidy-counts` and `tidy-covs` and `detk-wrapr run` run
+  the repeated sample header and feature ID checks on the counts as read.
+  In 1.0.0 `detk-util tidy-counts` given the header `gene,A,A,B,C` and
+  column data naming A, B and C exited 0 and wrote `gene,A,B,C`, dropping
+  the second `A` without a word, and a feature ID listed twice went
+  through as two rows; `tidy`, `tidy-covs` and `detk-wrapr run` did the
+  same. Each now exits 1 (DETK-0601) and names the repeated header or
+  feature on one line of stderr. These commands may take a normalized or
+  transformed matrix, so a negative count or a zero-depth sample is still
+  accepted (DETK-0830, DETK-0850)
+  ([#218](https://github.com/BU-Neuromics/de_toolkit/issues/218))
 - Runs that differ only in their files keep separate report records. A
   module record's id hashed the module name, its parameters, the primary
   input and the detk version only, so two `detk-filter` runs differing only

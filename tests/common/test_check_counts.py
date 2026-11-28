@@ -197,8 +197,13 @@ def test_count_matrix_file_finds_a_repeat_the_column_data_drops(tmp_path):
     from de_toolkit.common import CountMatrixFile
 
     counts, column_data = write(tmp_path, "gene,A,A,B,C\ng1,1,2,3,4\ng2,5,6,7,8\n")
-    # 1.0.0, and check=None: the column data names A, so A.1 is dropped
-    assert list(CountMatrixFile(counts, column_data).counts.columns) == ["A", "B", "C"]
+    # check=None, as in 1.0.0: the column data names A, so A.1 is dropped
+    # (subset=True, since a sample in the counts only is an error, DETK-0600)
+    assert list(CountMatrixFile(counts, column_data, subset=True).counts.columns) == [
+        "A",
+        "B",
+        "C",
+    ]
     with pytest.raises(CountsError) as e:
         CountMatrixFile(counts, column_data, check="ids")
     # positions in the file, though the column data lists C, B, A

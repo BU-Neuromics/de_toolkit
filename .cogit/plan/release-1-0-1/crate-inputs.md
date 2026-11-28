@@ -15,7 +15,7 @@ visited: c490c55
 ## Implementation plan
 
 - [x] @developer Write the reproduction tests of the first acceptance criterion and confirm they fail on v1.0.0; then fix, with a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR <!-- s2 -->
+- [x] @reviewer Review the PR <!-- s2 -->
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes

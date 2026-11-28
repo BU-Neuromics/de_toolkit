@@ -1,11 +1,13 @@
 ---
 template: adr
-state: Proposed
+state: Accepted
 authority: [human]
 date: 2026-11-27
 from: {node: release-1-0-1/outlier-shrink-axis}
 applies: [release-1-0-1/outlier-shrink-axis]
 issue: 211
+revisions:
+  - {date: 2026-11-27, by: adamlabadorf, change: Accepted, why: "from the terminal: Option A (leave a feature whose counts are all in samples over p_max unchanged and log how many; -p below 1 / number of samples is a usage error, exit 2): the recommendation, accepted under Adam's delegation via the driver session, 2026-11-20 (DETK-0063), extended to the post-1.0 plan 2026-11-27"}
 ---
 
 # What detk-outlier shrink does with a feature counted in one sample, and a p_max below 1/n
@@ -72,13 +74,14 @@ value the user did not give.
 
 ## Decision
 
-Recommended: **Option A**. A feature with no other sample holding counts
+**Option A**, accepted on the recommendation under Adam's delegation via
+the driver session, 2026-11-20 (DETK-0063), extended to the post-1.0 plan
+2026-11-27. A feature with no other sample holding counts
 has no target to shrink toward, so leaving it is the method's own limit, not
 a new rule; deleting its counts (B) would be a new silent wrong answer in
 the fix for one. A `p_max` no feature can satisfy is a mistake on the
 command line, which DETK-0031 makes exit 2. Proposed by the plan session,
-2026-11-27, for Adam to accept or reject; release-1-0-1/outlier-shrink-axis
-waits on it.
+2026-11-27.
 
 ## Consequences
 

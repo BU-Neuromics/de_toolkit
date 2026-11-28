@@ -70,4 +70,4 @@ fails on integer counts) were found by the count-checks-readers session;
 each. `tidy-wrapr-checks` (tidy and wrapr run skip the duplicate checks)
 follows DETK-0850, on the driver's direction. `outlier-shrink-axis` (shrink
 judges each sample, not each feature) was seen reproducing shrink-int and
-added on the driver's direction; its edge cases are DETK-0861, Proposed.
+added on the driver's direction; its edge cases are DETK-0861, since accepted.

@@ -4,7 +4,7 @@ objective: 'The RO-Crate provenance records every file a command read or wrote: 
 acceptance:
   - 'reproduced first as a test per command: on v1.0.0 the crate action lacks the file named; after, every file the command read or wrote is in its object or result'
   - 'annotate''s mapping file (#45), gather''s per-sample files, the sample information file of detk-filter, detk-stats, detk-transform and detk-outlier, and detk-norm deseq2 --size-factors'' file are recorded; CHANGELOG 1.0.1'
-scope: [de_toolkit/util.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolkit/transform.py, de_toolkit/outlier.py, de_toolkit/norm.py, de_toolkit/crate.py, de_toolkit/de.py, de_toolkit/enrich.py, docs/report.md, tests/util/test_gather.py, tests/report/, +CHANGELOG]
+scope: [de_toolkit/util.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolkit/transform.py, de_toolkit/outlier.py, de_toolkit/norm.py, de_toolkit/crate.py, de_toolkit/de.py, de_toolkit/enrich.py, docs/report.md, tests/util/test_gather.py, de_toolkit/module_schema.json, tests/report/, +CHANGELOG]
 prev: [release-1-0-1/fgsea-input, DETK-0890]
 issue: 209
 visited: c490c55
@@ -19,6 +19,8 @@ visited: c490c55
 - [ ] @human Accept <!-- s3 -->
 
 ## Notes
+
+Scope widened 2026-11-27 by the driver to de_toolkit/module_schema.json (the in_file_paths and out_file_paths descriptions only, no schema structure change), under Adam's delegation via the driver session, 2026-11-20 (DETK-0063), extended to the post-1.0 plan 2026-11-27.
 
 Planned 2026-11-09 on Adam's word, from the reviews of de_toolkit#40, #41 and #42.
 

@@ -4,17 +4,22 @@ objective: detk-util tidy, tidy-counts, tidy-covs and detk-wrapr run apply the d
 acceptance:
   - 'reproduced first: on main, ''detk-util tidy-counts'' given gene,A,A,B,C with column data naming A, B and C exits 0 and writes gene,A,B,C, silently dropping the second A; a test shows it. After: exit 1 (DETK-0601) and one stderr line naming the duplicate; the same for a duplicated feature ID, and for tidy, tidy-covs and detk-wrapr run'
   - negative counts and zero-depth samples are still accepted by these commands (values=False); docs/concepts.md's list of commands and checks and CHANGELOG 1.0.1 include them
+from: [DETK-0850]
 prev: [release-1-0-1/count-checks-readers]
 scope: [de_toolkit/util.py, de_toolkit/wrapr.py, tests/, +docs/concepts.md, +CHANGELOG]
+issue: 218
+visited: bfbc2c1
+status: done
+done: 003a25d
 ---
 
 # detk-util tidy and detk-wrapr run check sample headers and feature IDs
 
 ## Implementation plan
 
-- [ ] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

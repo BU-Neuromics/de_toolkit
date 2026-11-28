@@ -394,21 +394,46 @@ def fake_counts_gene_lengths(request, fake_counts_obj):
 
 
 def untracked_files(root):
-    """The untracked, not-ignored files under the git work tree at root, as a
-    set of repository-relative paths; None when root is not in a git work tree
-    or git is missing (an sdist, a bare container), where the guard is off."""
+    """The untracked, not-ignored files of the git work tree whose top level is
+    root, as a set of repository-relative paths; None, the guard off, when git
+    is missing or fails, or root is not a work tree's top level: not in a work
+    tree (an sdist, a bare container), or a directory inside another
+    repository, whose status is not this project's."""
     import subprocess
 
+    def git(*args):
+        return subprocess.run(
+            ["git", "-C", str(root), *args], capture_output=True, check=True
+        ).stdout.decode("utf-8", "surrogateescape")
+
     try:
-        out = subprocess.run(
-            ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=all", "-z"],
-            capture_output=True,
-            check=True,
-        ).stdout
+        toplevel = git("rev-parse", "--show-toplevel").strip()
+        if os.path.realpath(toplevel) != os.path.realpath(root):
+            return None
+        out = git("status", "--porcelain", "--untracked-files=all", "-z")
     except (OSError, subprocess.CalledProcessError):
         return None
-    entries = out.decode("utf-8", "surrogateescape").split("\0")
-    return {e[3:] for e in entries if e.startswith("?? ")}
+    return {e[3:] for e in out.split("\0") if e.startswith("?? ")}
+
+
+def files_left_behind(root, before):
+    """The untracked files of root's work tree that are not in before (the
+    set untracked_files gave at the start of the run), sorted; [] when the
+    guard is off. If git worked at the start but fails now, the guard turns
+    off with a warning instead of failing the run."""
+    if before is None:
+        return []
+    after = untracked_files(root)
+    if after is None:
+        import warnings
+
+        warnings.warn(
+            f"git status failed at the end of the test run in {root}; "
+            "the check for files left in the repository is off",
+            stacklevel=2,
+        )
+        return []
+    return sorted(after - before)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -417,16 +442,16 @@ def repository_left_clean():
     repository: tests write under tmp_path or a temporary directory, never into
     the tree or the directory pytest runs from. Files untracked before the run
     (work in progress) are not counted; ignored files (.gitignore) are not
-    seen."""
+    seen; off unless the project root is a git work tree's top level."""
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     before = untracked_files(root)
     yield
-    if before is None:
-        return
-    left = sorted(untracked_files(root) - before)
+    left = files_left_behind(root, before)
     if left:
         pytest.fail(
             "the test suite left untracked files in the repository "
-            f"({root}); write them under tmp_path instead:\n  " + "\n  ".join(left),
+            f"({root}); write them under tmp_path instead. This is reported "
+            "at the teardown of the last test run; any test may have written "
+            "them:\n  " + "\n  ".join(left),
             pytrace=False,
         )

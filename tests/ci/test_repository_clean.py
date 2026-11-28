@@ -6,7 +6,7 @@ import subprocess
 
 import pytest
 
-from conftest import untracked_files
+from conftest import files_left_behind, untracked_files
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
 
@@ -53,3 +53,30 @@ def test_ignored_and_modified_files_are_not_counted(repo):
 
 def test_outside_a_git_work_tree_the_guard_is_off(tmp_path):
     assert untracked_files(tmp_path) is None
+
+
+def test_inside_another_repository_the_guard_is_off(repo):
+    # an unpacked sdist or a copy inside another checkout: git would report on
+    # the enclosing repository, which is not this project's
+    sub = repo / "sub"
+    sub.mkdir()
+    (sub / "pyproject.toml").write_text("")
+    (repo / "someone_else.txt").write_text("")
+    assert untracked_files(sub) is None
+    assert files_left_behind(sub, untracked_files(sub)) == []
+
+
+def test_a_new_file_is_left_behind_and_one_there_before_is_not(repo):
+    (repo / "wip.txt").write_text("")
+    before = untracked_files(repo)
+    (repo / "tmp_output").mkdir()
+    (repo / "tmp_output" / "script.R").write_text("")
+    assert files_left_behind(repo, before) == ["tmp_output/script.R"]
+
+
+def test_git_failing_at_the_end_turns_the_guard_off_with_a_warning(repo, monkeypatch):
+    before = untracked_files(repo)
+    (repo / "left.txt").write_text("")
+    monkeypatch.setenv("PATH", "")  # git is gone
+    with pytest.warns(UserWarning, match="git status failed"):
+        assert files_left_behind(repo, before) == []

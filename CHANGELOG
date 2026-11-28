@@ -121,8 +121,10 @@
   (`repository_left_clean`) compares the repository's untracked files
   (`git status --porcelain --untracked-files=all`, so ignored files are not
   counted) before and after the run and fails the session, naming the
-  files, when a test leaves a new one; it is off outside a git work tree
-  (#210)
+  files, when a test leaves a new one. It is off unless the project root
+  is the top level of a git work tree (not in an sdist, nor a copy inside
+  another repository), and turns off with a warning if git fails at the end
+  of the run. The README's Development section says so (#210)
 
 ## 1.0.0 (2026-11-25)
 

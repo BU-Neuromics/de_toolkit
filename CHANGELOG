@@ -124,6 +124,13 @@
     as they are (rounded estimates, no sample-specific effective-length
     offset), where it said they "can go to it as they are". The quantifier
     tutorial says the same, and tests in `tests/skills` check each of these
+- `detk-outlier shrink` takes an integer counts matrix, the usual input. In
+  1.0.0 any integer matrix in which a count was shrunk exited 1 with
+  `Invalid value '[...]' for dtype 'int64'`, while the same counts written
+  with decimals ran. Counts are now converted to float before shrinking, and
+  the output is float, the same as for the decimal input; the Python
+  `shrink` and `pmf_transform` return float counts for integer input too
+  and leave their input unchanged (#219)
 - `detk-outlier entropy` without `-p` uses the 5th percentile (0.05)
   instead of failing with `argument -p/--percentile: invalid float value:
   None` (exit 2); `--help` states the default. `-p` given behaves as

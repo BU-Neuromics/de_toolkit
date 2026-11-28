@@ -29,6 +29,12 @@ Iteratively shrink counts that contribute an outsized fraction of a feature's
 mass toward the feature's distribution, using a probability-mass-function
 transform.
 
+The counts may be integers, the usual input, or decimals. The output is
+always decimal: a shrunk count is a fraction (an integer count of 300 may
+become 48.75), so integer counts are converted to decimals first and the
+output is the same as for the same counts written with decimals. The Python
+`shrink` and `pmf_transform` functions do the same and return float counts.
+
 ```text
 usage: detk-outlier shrink [options] <counts_fn>
 

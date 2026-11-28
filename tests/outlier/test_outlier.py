@@ -318,3 +318,64 @@ def test_entropy_help_states_percentile_default(capsys):
     assert exc.value.code == 0
     help_text = " ".join(capsys.readouterr().out.split())
     assert "between 0 and 1 (default: 0.05)" in help_text
+
+
+# an integer matrix where a count is shrunk (g1's 300 in D), and the same
+# counts written with decimals: on 1.0.0 the first exited 1 with
+# "Invalid value '[...]' for dtype 'int64'" in PMFTransform (#219)
+SHRINK_INT = "gene,A,B,C,D\ng1,10,12,11,300\ng2,20,22,21,23\ng3,30,31,33,32\n"
+SHRINK_FLOAT = (
+    "gene,A,B,C,D\ng1,10.0,12.0,11.0,300.0\ng2,20.0,22.0,21.0,23.0\ng3,30.0,31.0,33.0,32.0\n"
+)
+
+
+def _shrink_cli(counts, tmp_path, name):
+    from de_toolkit.outlier import main
+
+    counts_fn = tmp_path / f"{name}.csv"
+    counts_fn.write_text(counts)
+    out = tmp_path / f"{name}_shrunk.csv"
+    try:
+        main(["detk-outlier", "shrink", str(counts_fn), "--no-report", "-o", str(out)])
+    except SystemExit as e:
+        return e.code, None
+    return 0, pandas.read_csv(out, index_col=0)
+
+
+def test_shrink_cli_integer_counts(tmp_path):
+    int_code, int_out = _shrink_cli(SHRINK_INT, tmp_path, "int")
+    float_code, float_out = _shrink_cli(SHRINK_FLOAT, tmp_path, "float")
+    assert (int_code, float_code) == (0, 0)
+    # a count was shrunk, to a fraction
+    assert int_out.loc["g1", "D"] < 300
+    assert int_out.loc["g1", "D"] != int(int_out.loc["g1", "D"])
+    assert all(t.kind == "f" for t in int_out.dtypes)
+    pandas.testing.assert_frame_equal(int_out, float_out)
+
+
+@pytest.mark.parametrize("counts", [SHRINK_INT, SHRINK_FLOAT], ids=["int", "float"])
+def test_shrink_integer_counts_python(counts, tmp_path):
+    from de_toolkit.common import CountMatrix
+    from de_toolkit.outlier import shrink
+
+    counts_fn = tmp_path / "counts.csv"
+    counts_fn.write_text(counts)
+    frame = pandas.read_csv(counts_fn, index_col=0)
+    out = shrink(CountMatrix(frame))
+    assert all(t.kind == "f" for t in out.dtypes)
+    assert out.loc["g1", "D"] < 300
+    # the input is not changed
+    assert frame.loc["g1", "D"] == 300
+
+
+def test_pmf_transform_integer_counts():
+    from de_toolkit.outlier import pmf_transform
+
+    ints = pandas.Series([10, 12, 11, 300], index=list("ABCD"))
+    out = pmf_transform(ints, p_max=0.5)
+    assert out.dtype == float
+    assert out["D"] < 300
+    pandas.testing.assert_series_equal(out, pmf_transform(ints.astype(float), p_max=0.5))
+    assert ints.dtype.kind == "i" and ints["D"] == 300
+    # nothing to shrink: still float
+    assert pmf_transform(pandas.Series([1, 1, 1, 1]), p_max=0.5).dtype == float

@@ -6,15 +6,19 @@ acceptance:
   - pmf_transform and shrink called from Python with integer counts work too; the output is float (shrunk counts are fractional, as the float input's run already shows), and docs/tools/outlier.md and the shrink and pmf_transform docstrings say so; CHANGELOG 1.0.1 under Fixed
 prev: [release-1-0-1/count-checks-readers]
 scope: [de_toolkit/outlier.py, tests/outlier/, +docs/tools/outlier.md, +CHANGELOG]
+issue: 219
+visited: bfbc2c1
+status: done
+done: f9f3f54
 ---
 
 # detk-outlier shrink takes integer counts
 
 ## Implementation plan
 
-- [ ] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

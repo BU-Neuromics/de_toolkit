@@ -7,6 +7,8 @@ acceptance:
 from: [DETK-0600, DETK-0861]
 prev: [DETK-0861, release-1-0-1/outlier-shrink-int]
 scope: [de_toolkit/outlier.py, tests/outlier/, +docs/tools/outlier.md, +CHANGELOG]
+issue: 226
+visited: 873d65c
 ---
 
 # detk-outlier shrink judges each feature across its samples

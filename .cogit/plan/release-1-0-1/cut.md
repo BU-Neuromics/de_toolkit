@@ -16,7 +16,7 @@ visited: 424b5e5
 ## Implementation plan
 
 - [x] @developer Bump `version.py` to 1.0.1, date the CHANGELOG's 1.0.1 heading and read its entries against the code: a "Behaviour changes" list first (DETK-0600's two errors, the count checks of DETK-0601), each naming what a 1.0.0 user must change; open the PR <!-- s1 -->
-- [ ] @reviewer Review the version-bump PR against the outcome's acceptance: every other 1.0.1 node done, each audit reproduction test present, no command or option added and the schema unchanged, packaging (`uv build`, `twine check`), CI green including the R job <!-- s2 -->
+- [x] @reviewer Review the version-bump PR against the outcome's acceptance: every other 1.0.1 node done, each audit reproduction test present, no command or option added and the schema unchanged, packaging (`uv build`, `twine check`), CI green including the R job <!-- s2 -->
 - [ ] @human Accept the PR and say to cut the release <!-- s3 -->
 - [ ] @developer Push the `v1.0.1` tag, create the GitHub Release, check PyPI, the attached artifacts and the Zenodo version DOI <!-- s4 -->
 - [ ] @developer Update CITATION.cff (version 1.0.1, date-released, the version DOI beside the concept DOI); open the PR <!-- s5 -->

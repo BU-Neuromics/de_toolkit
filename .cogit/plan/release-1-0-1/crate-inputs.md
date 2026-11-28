@@ -8,6 +8,8 @@ scope: [de_toolkit/util.py, de_toolkit/filter.py, de_toolkit/stats.py, de_toolki
 prev: [release-1-0-1/fgsea-input, DETK-0890]
 issue: 209
 visited: c490c55
+status: done
+done: 42a38b5
 ---
 
 # Annotate's mapping file in the provenance
@@ -16,7 +18,7 @@ visited: c490c55
 
 - [x] @developer Write the reproduction tests of the first acceptance criterion and confirm they fail on v1.0.0; then fix, with a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

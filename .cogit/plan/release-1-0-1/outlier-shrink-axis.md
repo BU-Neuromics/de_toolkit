@@ -9,6 +9,8 @@ prev: [DETK-0861, release-1-0-1/outlier-shrink-int, DETK-1020]
 scope: [de_toolkit/outlier.py, tests/outlier/, +docs/tools/outlier.md, +CHANGELOG]
 issue: 226
 visited: 873d65c
+status: done
+done: 545386a
 ---
 
 # detk-outlier shrink judges each feature across its samples
@@ -17,7 +19,7 @@ visited: 873d65c
 
 - [x] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
 - [x] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

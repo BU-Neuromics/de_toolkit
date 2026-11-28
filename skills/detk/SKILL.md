@@ -80,51 +80,111 @@ Feature IDs and sample names are read as text exactly as written, so a
 zero-padded ID such as `007` stays `007`, and a sample named `001` stays
 `001`, through every detk command, the R-backed ones (`detk-de`,
 `detk-transform vst` and `rlog`) and `detk-enrich fgsea` included. Two IDs
-that differ only as text (`1.10` and `1.1`) stay distinct. The R-backed
-commands stop on a counts file that lists the same ID twice; the Python
-commands do not check, so look for duplicate IDs before running them.
+that differ only as text (`1.10` and `1.1`) stay distinct. Since 1.0.1,
+every command that reads a counts file (`detk-norm`, `detk-de`,
+`detk-transform`, `detk-stats`, `detk-filter`, `detk-outlier`,
+`detk-util tidy`, `tidy-counts` and `tidy-covs`, and `detk-wrapr run`)
+exits 1 on one that names a sample twice in its header or lists a feature
+ID twice, naming the repeat. Fix the file with the user rather than
+dropping or renaming a repeat yourself.
 
 ### Starting from quantifier outputs
 
 If the user has one output file per sample from a quantifier rather than a
-counts matrix, build the matrix with `detk-util gather`. It reads salmon
-(`quant.sf`, `quant.genes.sf`), kallisto (`abundance.tsv`), htseq-count and
-featureCounts outputs, detects the format from each file's header, and takes
-each format's count column (salmon `NumReads`, kallisto `est_counts`):
+counts matrix, build the matrix with `detk-util gather`. What
+`detk-de deseq2` wants is raw gene-level read counts, which featureCounts and
+htseq-count write: gather them directly.
+
+```bash
+detk-util gather -o counts.csv featurecounts.txt
+detk-util gather -o counts.csv htseq/*.counts
+```
+
+- In featureCounts output each count column is a sample, named from the BAM
+  path in its header; one file can hold every sample.
+- htseq-count's summary lines (`__no_feature`, ...) are left out of the
+  matrix and recorded in the report.
+
+**salmon and kallisto** estimate how many reads came from each transcript.
+Their `NumReads` and `est_counts` are fractional, per transcript, and come
+with each sample's own effective transcript lengths. For gene-level
+differential expression, summarize them to genes with tximport (Bioconductor,
+`BiocManager::install("tximport")`), which gives gene counts scaled to each
+gene's average transcript length (`countsFromAbundance =
+"lengthScaledTPM"`), the form of tximport's output that can be used as a
+plain counts matrix. Run it through `detk-util record`, so the step and its
+inputs are in the report and the provenance crate. It needs a
+transcript-to-gene table (a CSV with a header line: transcript ID, gene ID, as written
+in the quantifier files); ask the user for one, or build it from the GTF used
+to build the index. Save this as `tximport_counts.R`:
+
+```r
+# Rscript tximport_counts.R salmon|kallisto TX2GENE OUT FILE...
+args <- commandArgs(trailingOnly = TRUE)
+files <- args[-(1:3)]
+names(files) <- basename(dirname(files))  # one directory per sample
+tx2gene <- read.csv(args[2])
+txi <- tximport::tximport(files, type = args[1], tx2gene = tx2gene,
+                          countsFromAbundance = "lengthScaledTPM",
+                          dropInfReps = TRUE)
+write.csv(txi$counts, args[3])
+```
+
+```bash
+version=$(Rscript -e "cat(format(packageVersion('tximport')))")
+detk-util record --tool=tximport --tool-version="$version" \
+    -i tximport_counts.R -i tx2gene.csv -o counts.csv -- \
+    Rscript tximport_counts.R salmon tx2gene.csv counts.csv salmon/*/quant.sf
+```
+
+The files to summarize follow the output; for kallisto give type
+`kallisto` and its `abundance.tsv` files. Add an `-i` for each of them too if
+the crate should list them as inputs. The sample names are the directory names: check them against
+the sample info. tximport's counts are still fractional; `detk-de deseq2`
+rounds them.
+
+**The gather-only route** reads the quantifier's estimates straight into a
+matrix, and is what the user gets if tximport is not available:
 
 ```bash
 detk-util gather -o counts.csv salmon/*/quant.genes.sf
 detk-util gather --name-from='([^/]+)_quant/' -o counts.csv 'quant/*_quant/quant.sf'
-detk-util gather -o counts.csv htseq/*.counts
-detk-util gather -o counts.csv featurecounts.txt
 ```
+
+gather takes each format's count column (salmon `NumReads`, kallisto
+`est_counts`) as written and does not aggregate transcripts to genes.
+salmon `quant.sf` and kallisto `abundance.tsv` are per transcript; salmon's
+`quant.genes.sf` (written when salmon is given a transcript-to-gene map) sums
+them per gene. Fed to `detk-de deseq2`, these counts rest on two
+assumptions; say so when you use them:
+
+- the estimates are rounded to whole numbers, as if they were read counts;
+- there is no sample-specific effective-length offset, which the standard
+  tximport and DESeq2 route uses: where fragment lengths or isoform usage
+  differ between samples, fold changes can be biased by length rather than
+  expression.
+
+The gather-only route is fine for CPM or TPM tables, plots and clustering.
+For differential expression prefer gene-level counts, from featureCounts or
+htseq-count, or from tximport as above.
+
+`detk-util gather`, for any format:
 
 - Sample names come from the file names without their last extension, or,
   when those are not unique (several `quant.sf` or `abundance.tsv`), from
   each file's directory, for every file of the run (a single `quant.sf` is
   named `quant`; use `--name-from` for names that do not depend on the other
-  files). The second line above names `quant/A_quant/quant.sf` `A` rather
-  than `A_quant`. A quoted pattern is expanded by gather, in
+  files). The second salmon line above names `quant/A_quant/quant.sf` `A`
+  rather than `A_quant`. A quoted pattern is expanded by gather, in
   natural order (`s2` before `s10`). Pass `--name-from=REGEX` (its first
   group is the name) when the default does not give the names used in the
   sample info, and check the header of `counts.csv` against the sample info
   before going on.
-- In featureCounts output each count column is a sample, named from the BAM
-  path in its header; one file can hold every sample.
-- gather extracts the column as written and does not aggregate transcripts
-  to genes. salmon `quant.sf` and kallisto `abundance.tsv` are per
-  transcript: for a gene-level analysis, gather salmon's `quant.genes.sf`
-  (written when salmon is given a transcript-to-gene map) or ask the user
-  how to summarize to genes.
 - Every sample must list the same features, or gather stops and names the
   differences; `--on-mismatch=fill` (absent features get 0) or
   `--on-mismatch=drop` (keep the features all samples share) go on. Ask the
   user before choosing one, since a mismatch often means files from
   different annotations.
-- htseq-count's summary lines (`__no_feature`, ...) are left out of the
-  matrix and recorded in the report.
-- salmon and kallisto counts are estimates with fractions; `detk-de deseq2`
-  rounds them, so they can go to it as they are.
 - `detk-util gather` is not tidyr's or csvtk's `gather`, which pivot a
   table from wide to long format, the opposite direction. Do not use those
   to build a counts matrix from quantifier files. Miller's own wide/long
@@ -132,12 +192,28 @@ detk-util gather -o counts.csv featurecounts.txt
 
 ### Check the two files
 
-Look at both files first (`head`). Confirm the sample names agree. If the two
-files hold different or differently ordered samples, tidy them:
+Look at both files first (`head`). The sample names in the counts header and
+in the first column of the sample info must be the same set. detk matches
+them by name, in any order, but since 1.0.1, when the samples differ,
+every command that reads both files exits 1, naming the samples found in
+only one of them. A mismatch is a question for the user, not something to tidy away
+silently: a misspelt name, a sample that failed or a sheet from another
+study each need a different fix.
+
+Match the two files with `detk-util tidy`, and run the analysis on its
+outputs:
 
 ```bash
 detk-util tidy -o counts_tidy.csv -p sample_info_tidy.csv counts.csv sample_info.csv
 ```
+
+tidy keeps the samples in both files, in the order of the counts columns,
+and logs `counts columns lost: N` and `column data rows lost: N`. When both
+are 0 the tidied files hold the same samples as the originals. Otherwise
+report the samples tidy dropped (compare `head -n 1` of the two counts
+files, and the first column of the two sample info files) and ask the user
+whether that subset is the analysis they want before going on; if it is
+not, fix the files with the user and run tidy again.
 
 Ask the user which covariate is the condition of interest and which level is
 the reference (for example untreated, control) if the request does not say.
@@ -153,7 +229,7 @@ wants another one, and then pass the same `--report-dir=DIR` to every step.
 zeros, entropy and PCA, colored by a covariate:
 
 ```bash
-detk-stats summary --log --color-col=condition -o raw_summary_stats.csv counts.csv sample_info.csv
+detk-stats summary --log --color-col=condition -o raw_summary_stats.csv counts_tidy.csv sample_info_tidy.csv
 ```
 
 **Filter** lowly detected genes. The filter expression describes the rows to
@@ -161,7 +237,7 @@ detk-stats summary --log --color-col=condition -o raw_summary_stats.csv counts.c
 sound default:
 
 ```bash
-detk-filter 'nonzero(all) >= 0.5' -o counts_filtered.csv counts.csv
+detk-filter 'nonzero(all) >= 0.5' -o counts_filtered.csv counts_tidy.csv
 ```
 
 Other forms: `'mean(all) > 10'`, `'mean(all) > 10 and zero(all) < 0.5'`, and,
@@ -225,7 +301,7 @@ counts and normalizes internally.
 **Differential expression** with DESeq2, on the filtered raw counts:
 
 ```bash
-detk-de deseq2 -o deseq2_results.csv "counts ~ condition[control]" counts_filtered.csv sample_info.csv
+detk-de deseq2 -o deseq2_results.csv "counts ~ condition[control]" counts_filtered.csv sample_info_tidy.csv
 ```
 
 The design uses detk's formula mini-language:
@@ -252,7 +328,7 @@ logistic regression puts `counts` on the right and the class on the left, and
 takes normalized counts:
 
 ```bash
-detk-de firth -o firth_results.csv "condition[control] ~ counts" norm_counts.csv sample_info.csv
+detk-de firth -o firth_results.csv "condition[control] ~ counts" norm_counts.csv sample_info_tidy.csv
 ```
 
 Firth output has a `status` column and, for each model term, the columns
@@ -268,10 +344,12 @@ detk-enrich fgsea -i gene -c condition__treated__log2FoldChange -o fgsea_results
 
 - `-i` is the column holding feature IDs (default: the first column) and `-c`
   the column whose values rank the genes, highest first. Always pass `-c`
-  with the full output column name from the DE results: without it detk
-  ranks by the last numeric column, which in DESeq2 output is the last
-  term's `__padj`, so the ranking would be by the wrong quantity and in the
-  wrong direction.
+  with the full output column name from the DE results. Since 1.0.1, on a
+  table with more than one numeric column besides the ID column, as every
+  `detk-de` result is, detk without it exits 2 and names the candidate
+  columns (DETK-0600); do not pick one of them for the user without saying
+  so. detk 1.0.0 instead ranked by the last numeric column, in DESeq2 output
+  the last term's `__padj`: the wrong quantity, in the wrong direction.
 - This example, like detk's published airway example, ranks by
   `__log2FoldChange`. The Wald statistic (`__stat`) is the other common
   choice; it down-weights noisy low-count genes that unshrunk fold changes
@@ -328,7 +406,8 @@ included, to start over.
 
 Tell the user: the commands run, how many genes the filter kept (detk logs
 `features kept after filtering`), the number of genes at `padj < 0.05` for the
-term of interest (DESeq2: `<term>__<level>__padj`; Firth: `<term>__padj`), the top enriched gene sets, and the paths to the result
+term of interest (DESeq2: `<term>__<level>__padj`; Firth: `<term>__padj`), the samples tidy left out (if any, and that the user agreed),
+the column fgsea ranked by, the top enriched gene sets, and the paths to the result
 tables (the annotated one if you added symbols), the HTML report and the
 provenance crate. State any step skipped and
 why.

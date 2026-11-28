@@ -34,7 +34,8 @@ Reproduced on v1.0.0 with
 `gene,A,B,C,D / g1,10.0,10.0,10.0,10.0 / g2..g4,1.0,1.0,1.0,1.0`:
 every g1 written as 1.5625. Per feature, the method zeroes a feature whose
 counts are all in samples over `p_max` and crashes on `-p` below 1/n:
-DETK-0861 (Proposed) settles both, and this node waits on it. After
+DETK-0861 (accepted 2026-11-27) settles both: such a feature is left
+unchanged and counted in the log, and `-p` below 1/n is a usage error, exit 2. After
 outlier-shrink-int, which fixes the integer input in the same function;
 every shrink result changes, so the existing tests' expected values are
 recomputed by hand, per feature, not copied from the new output.

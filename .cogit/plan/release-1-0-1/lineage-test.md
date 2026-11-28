@@ -6,15 +6,19 @@ acceptance:
   - it runs in the R CI job and skips, naming the package, where DESeq2 or fgsea is absent (as r-test-skips makes the others)
 scope: [tests/report/]
 prev: [release-1-0-1/fgsea-input, release-1-0-1/run-identity, release-1-0-1/r-test-skips]
+issue: 207
+visited: c490c55
+status: done
+done: 9a87c92
 ---
 
 # Test that an enrichment table traces back to its counts and sample information
 
 ## Implementation plan
 
-- [ ] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
 

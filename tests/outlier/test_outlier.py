@@ -325,3 +325,39 @@ def test_pmf_transform_integer_counts():
     assert ints.dtype.kind == "i" and ints["D"] == 300
     # nothing to shrink: still float
     assert pmf_transform(pandas.Series([1, 1, 1, 1]), p_max=0.5).dtype == float
+
+
+# -------------------------------------------------- shrink judges per feature
+# shrink compares each sample's count with the feature's total across the
+# samples (Labadorf et al. 2015; --help, the shrink docstring). On 1.0.0 it
+# compared it with the sample's total across features: with g1 = 10 in every
+# sample beside g2-g4 = 1, each sample's g1 is 10/13 of that sample's counts,
+# over p_max = sqrt(1/4) = 0.5, and every g1 was written 1.5625 (#226)
+SHRINK_AXIS = "gene,A,B,C,D\ng1,10.0,10.0,10.0,10.0\ng2,1.0,1.0,1.0,1.0\ng3,1.0,1.0,1.0,1.0\ng4,1.0,1.0,1.0,1.0\n"
+
+# 1, 1, 1, 300 by hand, p_max 0.5, shrink factor 0.25; each step shrinks D
+# toward the largest sample under p_max (1): D = 1 + (D - 1) * 0.25
+#   D = 300:        300 / 303        > 0.5 -> 1 + 299 * 0.25     = 75.75
+#   D = 75.75:      75.75 / 78.75    > 0.5 -> 1 + 74.75 * 0.25   = 19.6875
+#   D = 19.6875:    19.6875 / 22.6875 > 0.5 -> 1 + 18.6875 * 0.25 = 5.671875
+#   D = 5.671875:   5.671875 / 8.671875 > 0.5 -> 1 + 4.671875 * 0.25 = 2.16796875
+#   D = 2.16796875: 2.16796875 / 5.16796875 = 0.42 <= 0.5, done
+SHRUNK_300 = 2.16796875
+
+
+def test_shrink_cli_judges_each_feature(tmp_path):
+    code, out = _shrink_cli(SHRINK_AXIS, tmp_path, "axis")
+    assert code == 0
+    # each sample holds 1/4 of each feature's counts: nothing is shrunk (on
+    # 1.0.0 every g1 was 1.5625)
+    expected = pandas.read_csv(tmp_path / "axis.csv", index_col=0)
+    pandas.testing.assert_frame_equal(out, expected)
+
+
+def test_shrink_cli_shrinks_the_dominant_sample_alone(tmp_path):
+    counts = SHRINK_AXIS + "g5,1.0,1.0,1.0,300.0\n"
+    code, out = _shrink_cli(counts, tmp_path, "dominant")
+    assert code == 0
+    expected = pandas.read_csv(tmp_path / "dominant.csv", index_col=0)
+    expected.loc["g5", "D"] = SHRUNK_300
+    pandas.testing.assert_frame_equal(out, expected)

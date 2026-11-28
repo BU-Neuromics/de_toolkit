@@ -4,18 +4,26 @@ objective: 'no test writes into the repository or the directory pytest runs from
 acceptance:
   - 'reproduced first: with DESeq2 installed, pytest tests/de on v1.0.0 leaves ./tmp_output/ (counts.csv, script.R, params_*.json, stdout, stderr) in the directory it ran from, from deseq2(..., routput_dir="tmp_output") at tests/de/test_de.py:58; after, it writes under tmp_path and nothing is left'
   - 'a check keeps it so: a session-scoped conftest guard (or a CI step) fails when the suite leaves an untracked file in the repository root, and it is shown to fail on the v1.0.0 test; CHANGELOG 1.0.1 notes it under the tests'
-scope: [tests/, +.github/workflows/ci.yml, +CHANGELOG]
+scope: [tests/, +.github/workflows/ci.yml, +CHANGELOG, README.md]
+issue: 210
+visited: 2bac95c
+status: done
+done: 65d434e
 ---
 
 # The test suite leaves the working tree clean
 
 ## Implementation plan
 
-- [ ] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
-- [ ] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
-- [ ] @human Accept <!-- s3 -->
+- [x] @developer Write the reproduction test(s) of the first acceptance criterion and confirm they fail on v1.0.0 as stated; then fix, with tests, docs and a CHANGELOG entry under 1.0.1; open the PR <!-- s1 -->
+- [x] @reviewer Review the PR: the reproduction test fails on v1.0.0 and passes here, each acceptance criterion holds, and nothing outside the node's scope changed <!-- s2 -->
+- [x] @human Accept <!-- s3 -->
 
 ## Notes
+
+README.md added to the scope after review (s2): one sentence in Development on the
+guard, as the reviewer suggested; by Adam's delegation via the driver session,
+2026-11-20 (DETK-0063), extended to the post-1.0 plan 2026-11-27.
 
 Found by Adam (a `tmp_output/` folder of counts.csv, script.R,
 params_*.json, stdout and stderr in the working tree after a test run). The

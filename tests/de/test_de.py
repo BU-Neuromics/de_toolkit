@@ -20,10 +20,7 @@ deseq2_test = pytest.mark.skipif(
 
 
 @deseq2_test
-def test_R_check_names_nonsense(deseq2_test_counts_obj):
-
-    with NamedTemporaryFile() as f:
-        out_fn = f.name
+def test_R_check_names_nonsense(deseq2_test_counts_obj, tmp_path):
 
     main(
         [
@@ -33,7 +30,7 @@ def test_R_check_names_nonsense(deseq2_test_counts_obj):
             "tests/de/R_check_names_counts.csv",
             "tests/de/R_check_names_meta.csv",
             "-o",
-            out_fn,
+            str(tmp_path / "out.tsv"),
         ]
     )
 
@@ -55,7 +52,9 @@ def test_R_check_names_nonsense(deseq2_test_counts_obj):
     counts_obj = CountMatrix(cnts, covs, "counts ~ cov[low] + category[control]")
 
     # full model results
-    res = deseq2(counts_obj, normalized=True, all_coeff_results=True, routput_dir="tmp_output")
+    res = deseq2(
+        counts_obj, normalized=True, all_coeff_results=True, routput_dir=str(tmp_path / "routput")
+    )
 
     # these counts have true lfc in range(-4,5)
     assert all(res.index == counts_obj.counts.index)

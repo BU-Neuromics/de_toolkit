@@ -364,12 +364,14 @@ from .common import (
     add_command_options,
     add_common_options,
     add_subcommands,
+    check_counts,
     CountMatrix,
     parse_cli,
     read_delimited,
     read_id_table,
     set_logging,
     write_output,
+    _source_name,
 )
 
 # setup logging, null on the library level
@@ -543,6 +545,10 @@ def _tidy_main(args):
     # a sample named 001 in the column data matches the counts column 001
     counts = read_id_table(args.counts_fn)
     logger.info("shape of counts: %s", counts.shape)
+    # a repeated sample header or feature ID is an error, checked as read,
+    # before the column data selects any sample (DETK-0830, DETK-0850); the
+    # counts may be normalized or transformed, so their values are not
+    check_counts(counts, _source_name(args.counts_fn), values=False)
     column_data = read_column_data(args.cov_fn)
     logger.info("shape of column data: %s", column_data.shape)
 
